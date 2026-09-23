@@ -33,6 +33,7 @@
 .claude/tests/test_graph_inspection.py
 .claude/tests/test_graph_store.py
 .claude/tests/test_handoff_f0.py
+.claude/tests/test_handoff_workflow.py
 .claude/tests/test_hook_invocation.py
 .claude/tests/test_hooks_gates.py
 .claude/tests/test_knowledge_lifecycle.py

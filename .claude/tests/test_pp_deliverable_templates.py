@@ -1320,8 +1320,10 @@ class TestTD16Manifest(Base):
         """
         self.requireYaml()
         version = str(PACK["pack_version"])
-        self.assertRegex(version, r"^1\.(?:8|9)\.\d+$",
-                         "deliverable-projection layer left the 1.8/1.9 line: %s" % version)
+        # 1.10.0 (handoff-v1 F1) only declares workflow capabilities; the projection layer
+        # did not move, so the line it lives on is 1.8-1.10.
+        self.assertRegex(version, r"^1\.(?:8|9|10)\.\d+$",
+                         "deliverable-projection layer left the 1.8-1.10 line: %s" % version)
         self.assertPhrase("pack_version 1.8.0 (Step 6B)", PACK_RAW, "pack.yaml rationale")
 
     def test_manifest_declares_the_estimate_calculation_owner(self):
@@ -1339,6 +1341,11 @@ class TestTD16Manifest(Base):
         for line in PACK_RAW.splitlines():
             if line.lstrip().startswith("#"):
                 continue
+            # One declared exception: `supported_routes:` lists the workflow routes the pack
+            # supports (handoff-v1, orchestration.md -> "Dispatch is not routing"), not a map
+            # from outcome to template. Every other occurrence stays banned.
+            if line.lstrip().startswith("supported_routes:"):
+                line = line.replace("supported_routes:", "", 1)
             for banned_key in ("router:", "routes:", "concern_map:", "outcome_map:",
                                "template_map:", "load_order:"):
                 self.assertNotIn(banned_key, line, "pack.yaml declares %s" % banned_key)

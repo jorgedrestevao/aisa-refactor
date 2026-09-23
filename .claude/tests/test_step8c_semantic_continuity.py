@@ -1072,7 +1072,9 @@ class Guards(unittest.TestCase):
         Nothing this file guards — stage, concern, outcome class, composed row,
         blocking entry, knowledge unit, architecture unit, deliverable contract —
         was touched by it, and the 8C rationale must survive in the changelog."""
-        self.assertEqual(str(PACK["pack_version"]), "1.9.0")
+        # 1.10.0 (handoff-v1 F1): workflow capabilities declared, recorded in the changelog.
+        self.assertEqual(str(PACK["pack_version"]), "1.10.0")
+        self.assertIn("pack_version 1.10.0 (handoff-v1 F1)", PACK_TEXT)
         self.assertIn("pack_version 1.9.0", PACK_TEXT)
         self.assertIn("PLATFORM FORMS ARE NAMED IN OPTIONS", PACK_TEXT)
         self.assertIn("pack_version 1.8.2 (Step 8C)", PACK_TEXT)

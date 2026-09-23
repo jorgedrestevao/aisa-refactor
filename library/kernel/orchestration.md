@@ -112,6 +112,8 @@ An orchestrator **must not**:
 - convert signals into mandatory checklist coverage;
 - become a routing or rules engine.
 
+**Dispatch is not routing** (`handoff-v1`). Choosing which step or role runs next from the profile and route the engagement declares (`_state.json.workflow`, checked by `library/kernel/tools/workflow.py` against the pack's `supported_workflow_profiles` and `supported_routes`) is allowed. Choosing by content — which evidence matters, which architecture, which template for which outcome — stays on the list above.
+
 If a revision has the orchestrator scoring evidence relevance, ranking signals, or selecting questions, that is the line being crossed.
 
 ## Pack context — Discovery vs Options

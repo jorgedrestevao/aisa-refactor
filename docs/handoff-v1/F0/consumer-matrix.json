@@ -1053,6 +1053,10 @@
     {
      "file": ".claude/tests/fixtures/**",
      "reason": "Coverage fixtures (fx-coverage-f06/shared-understanding.md, records/*.json, build_fixtures.py, inventory-expected.json) used only by coverage tests."
+    },
+    {
+     "file": "library/kernel/tools/workflow.py",
+     "reason": "Docstring names `graph.py`/`resolve.py` and `_graph/` to say what the module does NOT do (workflow.py:17, :22); it never reads the SU or the graph."
     }
    ],
    "handoff_v1_impact": [
@@ -3767,6 +3771,10 @@
     {
      "file": ".github/run_tests.py",
      "reason": "Menciona os testes de coverage só no docstring de tempos de execução (linha 8); não lê nem escreve _coverage/."
+    },
+    {
+     "file": "library/kernel/tools/workflow.py",
+     "reason": "Docstring names `coverage.py` as the owner of semantic freshness (workflow.py:17); the module never reads coverage records."
     }
    ],
    "handoff_v1_impact": [
@@ -6229,6 +6237,26 @@
      "evidence": "resolve.py:42-43 (runpy operation.py, bootstrap.py); :69-93 (read_base); :256-259 (operation_id); :351 (apply -> _O['run']); :799-800 (sync_mirror op id + run); :806-820 (_expected_for); :843, :865, :889, :945 (op ids); :973 (_apply_plan -> _O['run']); grep: no '_state.json' in file.",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/workflow.py",
+     "kind": "engine",
+     "role": "validator",
+     "mechanism": "Read-only (handoff-v1 F1.4a). JSON-parses _state.json and reads the `workflow` block only: absent file = unborn, unparseable = unreadable (INTEGRITY_FAILURE, never legacy), no block = legacy (UNSUPPORTED_PROFILE, source_code legacy_profile_absent), otherwise validates the block against library/kernel/schemas/handoff-state.schema.json and the pack's declared capabilities. Writes nothing.",
+     "via": "",
+     "evidence": "workflow.py:172 (_read_state); :185 (profile_of: unborn/unreadable/legacy/handoff); :205 (pack_capabilities); :260 (validate_profile: legacy -> UNSUPPORTED_PROFILE, schema -> SCHEMA_UNSUPPORTED, block -> INTEGRITY_FAILURE). Tested by .claude/tests/test_handoff_workflow.py",
+     "confidence": "verified",
+     "source": "F1.4a"
+    },
+    {
+     "file": "library/kernel/schemas/handoff-state.schema.json",
+     "kind": "schema",
+     "role": "declares-contract",
+     "mechanism": "JSON Schema (subset validated by workflow.validate) of the `workflow` block of _state.json: profile, schema_version handoff-state/1, route, route_revision, route_basis, route_history.",
+     "via": "",
+     "evidence": "handoff-state.schema.json (required + properties); consumed by workflow.py load_schema('handoff-state').",
+     "confidence": "verified",
+     "source": "F1.4a"
     }
    ],
    "mention_only": [
