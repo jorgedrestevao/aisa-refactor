@@ -4,106 +4,279 @@
   "synthetic": true,
   "title": "Pedido de equipamento informático — plataforma imposta, regras de cálculo, excepção, duplicação e papéis",
   "route": "platform-constrained",
-  "fixture_requirements": ["aprovação com dados e regras de cálculo", "excepção", "duplicação de pedido", "permissões por papel", "regra material que não muda tecnologia"],
+  "fixture_requirements": [
+    "aprovação com dados e regras de cálculo",
+    "excepção",
+    "duplicação de pedido",
+    "permissões por papel",
+    "regra material que não muda tecnologia"
+  ],
   "sources": [
-    {"id": "SRC-PEDIDO", "path": "sources/pedido.md", "kind": "request"},
-    {"id": "SRC-PROC", "path": "sources/entrevista-processo.md", "kind": "interview-notes"},
-    {"id": "SRC-PAPEIS", "path": "sources/matriz-papeis.md", "kind": "roles"},
-    {"id": "SRC-DADOS", "path": "sources/nota-dados.md", "kind": "note"}
+    {
+      "id": "SRC-PEDIDO",
+      "path": "sources/pedido.md",
+      "kind": "request"
+    },
+    {
+      "id": "SRC-PROC",
+      "path": "sources/entrevista-processo.md",
+      "kind": "interview-notes"
+    },
+    {
+      "id": "SRC-PAPEIS",
+      "path": "sources/matriz-papeis.md",
+      "kind": "roles"
+    },
+    {
+      "id": "SRC-DADOS",
+      "path": "sources/nota-dados.md",
+      "kind": "note"
+    }
   ],
   "scope": {
-    "in": ["pedido de equipamento", "aprovação", "passagem a compras"],
-    "out": ["gestão de stock", "recepção física"]
+    "in": [
+      "pedido de equipamento",
+      "aprovação",
+      "passagem a compras"
+    ],
+    "out": [
+      "gestão de stock",
+      "recepção física"
+    ]
   },
-  "constraints": ["plataforma imposta pelo director de SI (sources/pedido.md#P1, #P3)"],
+  "constraints": [
+    "plataforma imposta pelo director de SI (sources/pedido.md#P1, #P3)"
+  ],
   "expected": [
     {
       "id": "E01",
       "kind": "material_rule",
       "statement": "A regra de arredondamento (por linha ou no total) é material funcional embora não mude tecnologia.",
-      "source_refs": ["sources/entrevista-processo.md#C2", "sources/entrevista-processo.md#C3"],
-      "classification": {"question_type": "design_choice", "alternatives": ["arredondar cada linha ao cêntimo", "arredondar só o total"], "impact": ["functional", "acceptance"], "blocking": "blocks_scope", "affected_scope": "cálculo do valor do pedido", "owner_role": "responsável de compras com contabilidade"},
-      "acceptance_boundary_example": "Três linhas de 0,335 € sem IVA: por linha dá 1,02 €; no total dá 1,01 € (meio para cima). O contrato funcional tem de fixar qual vale.",
-      "must_not": ["classificar como cosmético por não alterar a stack", "escolher a regra sem autorização do dono"],
-      "scenarios": ["T05", "T20"]
+      "source_refs": [
+        "sources/entrevista-processo.md#C2",
+        "sources/entrevista-processo.md#C3"
+      ],
+      "classification": {
+        "question_type": "design_choice",
+        "alternatives": [
+          "arredondar cada linha ao cêntimo",
+          "arredondar só o total"
+        ],
+        "impact": [
+          "functional",
+          "acceptance"
+        ],
+        "blocking": "blocks_scope",
+        "affected_scope": "cálculo do valor do pedido",
+        "owner_role": "responsável de compras com contabilidade"
+      },
+      "acceptance_boundary_example": "Três linhas de 0,335 € sem IVA: por linha dá 1,02 €; no total dá 1,01 € (meio para cima). Valores calculados em aritmética decimal. O contrato funcional tem de fixar qual vale.",
+      "must_not": [
+        "classificar como cosmético por não alterar a stack",
+        "escolher a regra sem autorização do dono"
+      ],
+      "scenarios": [
+        "T05",
+        "T20"
+      ]
     },
     {
       "id": "E02",
       "kind": "fact_gap",
       "statement": "O limiar que exige a direcção financeira existe num despacho não fornecido.",
-      "source_refs": ["sources/entrevista-processo.md#C4", "sources/matriz-papeis.md#M4"],
-      "classification": {"question_type": "fact_gap", "impact": ["functional", "governance", "acceptance"], "blocking": "blocks_scope", "affected_scope": "roteamento da aprovação", "owner_role": "direcção financeira"},
-      "must_not": ["fabricar alternativas para admitir a questão", "inventar um valor por omissão"],
-      "scenarios": ["T06"]
+      "source_refs": [
+        "sources/entrevista-processo.md#C4",
+        "sources/matriz-papeis.md#M4"
+      ],
+      "classification": {
+        "question_type": "fact_gap",
+        "impact": [
+          "functional",
+          "governance",
+          "acceptance"
+        ],
+        "blocking": "blocks_scope",
+        "affected_scope": "roteamento da aprovação",
+        "owner_role": "direcção financeira"
+      },
+      "must_not": [
+        "fabricar alternativas para admitir a questão",
+        "inventar um valor por omissão"
+      ],
+      "scenarios": [
+        "T06"
+      ]
     },
     {
       "id": "E03",
       "kind": "parked",
       "statement": "A cor do botão não tem impacto demonstrável; fica estacionada ou delegada, com motivo.",
-      "source_refs": ["sources/entrevista-processo.md#C7"],
-      "classification": {"disposition": "delegated_choice", "reason_required": true},
-      "must_not": ["fechar como não aplicável sem motivo", "promover a questão material"],
-      "scenarios": ["T07"]
+      "source_refs": [
+        "sources/entrevista-processo.md#C7"
+      ],
+      "classification": {
+        "disposition": "delegated_choice",
+        "reason_required": true
+      },
+      "must_not": [
+        "fechar como não aplicável sem motivo",
+        "promover a questão material"
+      ],
+      "scenarios": [
+        "T07"
+      ]
     },
     {
       "id": "E04",
       "kind": "idempotency",
       "statement": "Submissão repetida do mesmo pedido não cria um segundo pedido nem uma segunda encomenda.",
-      "source_refs": ["sources/entrevista-processo.md#C6"],
-      "classification": {"impact": ["functional", "acceptance"], "acceptance": "repetir a submissão produz um único efeito de negócio"},
-      "must_not": ["deixar a regra só em prosa sem exemplo de aceitação"],
-      "scenarios": ["T20"]
+      "source_refs": [
+        "sources/entrevista-processo.md#C6"
+      ],
+      "classification": {
+        "impact": [
+          "functional",
+          "acceptance"
+        ],
+        "acceptance": "repetir a submissão produz um único efeito de negócio"
+      },
+      "must_not": [
+        "deixar a regra só em prosa sem exemplo de aceitação"
+      ],
+      "scenarios": [
+        "T20"
+      ]
     },
     {
       "id": "E05",
       "kind": "exception",
       "statement": "Pedido urgente segue directamente para compras e a chefia valida depois, no mesmo dia.",
-      "source_refs": ["sources/entrevista-processo.md#C5"],
-      "classification": {"impact": ["functional", "governance"], "fc_fields": ["exceptions", "actors", "acceptance_examples"]},
-      "must_not": ["omitir o caminho de excepção do contrato funcional"],
-      "scenarios": ["T20"]
+      "source_refs": [
+        "sources/entrevista-processo.md#C5"
+      ],
+      "classification": {
+        "impact": [
+          "functional",
+          "governance"
+        ],
+        "fc_fields": [
+          "exceptions",
+          "actors",
+          "acceptance_examples"
+        ]
+      },
+      "must_not": [
+        "omitir o caminho de excepção do contrato funcional"
+      ],
+      "scenarios": [
+        "T20"
+      ]
     },
     {
       "id": "E06",
       "kind": "security",
       "statement": "A chefia nunca aprova um pedido feito por si; a regra é imposta no servidor e auditada.",
-      "source_refs": ["sources/matriz-papeis.md#M2", "sources/matriz-papeis.md#M5"],
-      "classification": {"impact": ["security", "governance"], "specialist": "segurança/operação"},
-      "must_not": ["aceitar esconder o botão como imposição da regra"],
-      "scenarios": ["T28"]
+      "source_refs": [
+        "sources/matriz-papeis.md#M2",
+        "sources/matriz-papeis.md#M5"
+      ],
+      "classification": {
+        "impact": [
+          "security",
+          "governance"
+        ],
+        "specialist": "segurança/operação"
+      },
+      "must_not": [
+        "aceitar esconder o botão como imposição da regra"
+      ],
+      "scenarios": [
+        "T28"
+      ]
     },
     {
       "id": "E07",
       "kind": "specialist_trigger",
       "statement": "Catálogo com duas fontes (ERP-X e cópia manual) exige especialista de dados/integração.",
-      "source_refs": ["sources/nota-dados.md#D1"],
-      "classification": {"specialist": "dados/integração", "question": "qual é a fonte de verdade de preços e como se mantém consistente"},
-      "must_not": ["tratar a cópia manual como fonte de verdade sem decisão"],
-      "scenarios": ["T28"]
+      "source_refs": [
+        "sources/nota-dados.md#D1"
+      ],
+      "classification": {
+        "specialist": "dados/integração",
+        "question": "qual é a fonte de verdade de preços e como se mantém consistente"
+      },
+      "must_not": [
+        "tratar a cópia manual como fonte de verdade sem decisão"
+      ],
+      "scenarios": [
+        "T28"
+      ]
     },
     {
       "id": "E08",
       "kind": "route",
       "statement": "Com a plataforma imposta, Options analisa variações de arquitectura dentro da plataforma e a viabilidade; não fabrica uma shortlist de três plataformas.",
-      "source_refs": ["sources/pedido.md#P1", "sources/pedido.md#P3"],
-      "classification": {"route": "platform-constrained"},
-      "must_not": ["inventar alternativas de plataforma", "assumir componentes obrigatórios só por a plataforma ser imposta"],
-      "scenarios": ["T27"]
+      "source_refs": [
+        "sources/pedido.md#P1",
+        "sources/pedido.md#P3"
+      ],
+      "classification": {
+        "route": "platform-constrained"
+      },
+      "must_not": [
+        "inventar alternativas de plataforma",
+        "assumir componentes obrigatórios só por a plataforma ser imposta"
+      ],
+      "scenarios": [
+        "T27"
+      ]
     },
     {
       "id": "E09",
       "kind": "requirement",
       "statement": "Conservação de documentos de compra durante 10 anos e registo de quem aprovou.",
-      "source_refs": ["sources/nota-dados.md#D3", "sources/matriz-papeis.md#M5"],
-      "classification": {"impact": ["governance", "data"]},
+      "source_refs": [
+        "sources/nota-dados.md#D3",
+        "sources/matriz-papeis.md#M5"
+      ],
+      "classification": {
+        "impact": [
+          "governance",
+          "data"
+        ]
+      },
       "must_not": [],
       "scenarios": []
     }
   ],
   "variants": [
-    {"id": "V1", "change": "contrato funcional de cálculo sem regra de arredondamento nem exemplo de limite", "expected": "BLOCKING_GAP no âmbito do cálculo; o render devolve a lacuna ao autor e não a preenche", "scenarios": ["T20", "T23"]},
-    {"id": "V2", "change": "blueprint diz 'arredondar por linha' e o contrato funcional diz 'no total'", "expected": "conflito visível; publicação afectada bloqueada até reconciliação; nenhuma versão escolhida em silêncio", "scenarios": ["T21"]},
-    {"id": "V3", "change": "contrato funcional muda depois de aprovado", "expected": "a aprovação da revisão anterior não autoriza a nova", "scenarios": ["T24"]}
+    {
+      "id": "V1",
+      "change": "contrato funcional de cálculo sem regra de arredondamento nem exemplo de limite",
+      "expected": "BLOCKING_GAP no âmbito do cálculo; o render devolve a lacuna ao autor e não a preenche",
+      "scenarios": [
+        "T20",
+        "T23"
+      ]
+    },
+    {
+      "id": "V2",
+      "change": "blueprint diz 'arredondar por linha' e o contrato funcional diz 'no total'",
+      "expected": "conflito visível; publicação afectada bloqueada até reconciliação; nenhuma versão escolhida em silêncio",
+      "scenarios": [
+        "T21"
+      ]
+    },
+    {
+      "id": "V3",
+      "change": "contrato funcional muda depois de aprovado",
+      "expected": "a aprovação da revisão anterior não autoriza a nova",
+      "scenarios": [
+        "T24"
+      ]
+    }
   ],
-  "notes": ["Dados sintéticos; DSI-SINT-07 e ERP-X não existem."]
+  "notes": [
+    "Dados sintéticos; DSI-SINT-07 e ERP-X não existem."
+  ]
 }
