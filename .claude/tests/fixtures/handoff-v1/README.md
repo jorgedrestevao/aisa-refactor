@@ -20,4 +20,4 @@ As âncoras `[X1]` nas fontes são os pontos que `source_refs` cita (`<ficheiro>
 
 O registo completo, incluindo as fixtures existentes reutilizadas e as que ficam fora, está em `docs/handoff-v1/F0/fixture-registry.json`.
 
-Em F0 estas fixtures são só dados. Os testes que as executam nascem com o perfil novo (F1 em diante). O teste de F0 valida apenas a estrutura, a proveniência e as referências.
+Em F0 estas fixtures são só dados. Os testes que as executam nascem com o perfil novo (F1 em diante). `.claude/tests/test_handoff_f0.py` valida apenas a estrutura, a proveniência e as referências.
