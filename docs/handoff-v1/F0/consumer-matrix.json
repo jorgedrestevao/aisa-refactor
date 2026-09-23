@@ -4593,6 +4593,16 @@
      "source": "handoff-v1 F6.1",
      "via": "",
      "evidence": "handoff-work-packages.schema.json description"
+    },
+    {
+     "file": "library/kernel/tools/trace.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.3",
+     "mechanism": "`estimate-check --spec` reads the rendered implementation-spec's inventory rows (WP-NNNN) for durations (EFFORT_IN_SPEC, T32). Read-only.",
+     "evidence": "trace.py spec_effort_check"
     }
    ],
    "mention_only": [

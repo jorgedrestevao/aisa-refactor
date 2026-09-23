@@ -80,12 +80,12 @@ E01 = EXP["E01"]["classification"]
 ANALISE = {
     "Confirmed": [
         "| C-002 | business | O valor do pedido é a soma de quantidade × preço unitário por "
-        "linha, mais IVA | entrevista-processo.md#¶3 | 2026-09-23 | organizacional | R-01 |",
+        "linha, mais IVA | entrevista-processo.md#¶2 | 2026-09-23 | organizacional | R-01 |",
         "| C-003 | operations | Pedidos urgentes seguem para compras e a chefia valida no mesmo "
-        "dia | entrevista-processo.md#¶6 | 2026-09-23 | organizacional | R-01 |",
+        "dia | entrevista-processo.md#¶5 | 2026-09-23 | organizacional | R-01 |",
         "| C-004 | governance | A chefia nunca aprova um pedido feito por si própria | "
-        "matriz-papeis.md#¶3 | 2026-09-23 | organizacional | R-01 |",
-        "| C-005 | user | Requerente cria e consulta os seus pedidos | matriz-papeis.md#¶2 "
+        "matriz-papeis.md#¶2 | 2026-09-23 | organizacional | R-01 |",
+        "| C-005 | user | Requerente cria e consulta os seus pedidos | matriz-papeis.md#¶1 "
         "| 2026-09-23 | organizacional | R-01 |",
     ],
     "Unknown": [
@@ -94,7 +94,7 @@ ANALISE = {
         "| funcional, aceitação: três linhas de 0,335 € dão 1,02 € por linha e 1,01 € no total "
         "| {} (proposed_to_be) | role: {} | regra escolhida pelo dono, com o exemplo de limite "
         "como teste de aceitação | {} | Critical | reuniao | dimensionante: (a) {} (b) {} | "
-        "entrevista-processo.md#¶3; entrevista-processo.md#¶4 | R-01 |".format(
+        "entrevista-processo.md#¶2; entrevista-processo.md#¶3 | R-01 |".format(
             E01["affected_scope"], E01["owner_role"], E01["blocking"],
             E01["alternatives"][0], E01["alternatives"][1]),
         # E02 — T06: fact_gap, sem alternativas.
@@ -102,11 +102,11 @@ ANALISE = {
         "funcional, aceitação: muda o roteamento da aprovação | roteamento da aprovação "
         "(observed_as_is) | fonte: despacho da direcção financeira | valor do despacho, com data "
         "| blocks_scope | Critical | documento | dimensionante: o valor define quem aprova | "
-        "entrevista-processo.md#¶5; matriz-papeis.md#¶5 | R-01 |",
+        "entrevista-processo.md#¶4; matriz-papeis.md#¶4 | R-01 |",
         # E03 — T07: sem impacto demonstrável, estacionada com motivo.
         "| U-003 | user | O botão de submeter deve ser verde? | design_choice | — | ecrã de "
         "submissão | role: requerente | — | none | Low | email | cosmético: (a) verde (b) outra "
-        "cor | entrevista-processo.md#¶8 | R-01 — estacionada (R-01: sem impacto "
+        "cor | entrevista-processo.md#¶7 | R-01 — estacionada (R-01: sem impacto "
         "demonstrável) |",
     ],
 }

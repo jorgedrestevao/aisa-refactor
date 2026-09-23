@@ -199,6 +199,128 @@ def trace(eng) -> dict:
             "findings": findings, "ok": not findings}
 
 
+# ------------------------------------------------------------------ derivados (T32)
+
+WP_RE = re.compile(r"\bWP-\d{4}\b")
+INV_REV_RE = re.compile(r"(?:invent[aá]rio|inventory|work-packages)\s*r(\d+)", re.I)
+EFFORT_RE = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:dias?|days?|horas?|hours?|semanas?|weeks?|"
+                       r"person[- ]days?|pessoa[- ]dias?|pd)\b", re.I)
+
+
+def derived_check(eng, text: str, kind: str = "estimate") -> dict:
+    """A estimativa (`estimate`) ou o backlog (`backlog`) contra o inventário (DESENHO Q2):
+    cada linha de tabela que cita `WP-NNNN` é uma unidade; a revisão do inventário citada tem
+    de ser a corrente. Estimativa: cada WP exactamente uma vez. Backlog: cada WP pelo menos
+    uma vez. Um WP citado que não existe é sempre achado. Nunca compara esforços."""
+    eng = Path(eng)
+    inv = _load(eng / "_design/work-packages.json")
+    rev = inv.get("revision")
+    ids = {w["id"] for w in inv.get("items") or [] if isinstance(w, dict)}
+    linhas = [l for l in (text or "").splitlines() if l.lstrip().startswith("|")]
+    contagem: dict = {}
+    for l in linhas:
+        for w in set(WP_RE.findall(l)):
+            contagem[w] = contagem.get(w, 0) + 1
+    out = []
+    revs = {int(r) for r in INV_REV_RE.findall(text or "")}
+    if not revs:
+        out.append(_f("NO_INVENTORY_REVISION", kind, "não cita a revisão do inventário que leu"))
+    elif revs != {rev}:
+        out.append(_f("STALE_INVENTORY", kind, "cita inventário r{}; o corrente é r{}".format(
+            "/r".join(str(r) for r in sorted(revs)), rev)))
+    for w in sorted(set(contagem) - ids):
+        out.append(_f("UNKNOWN_WP", w, "{} cita um WP que não existe no inventário".format(kind)))
+    for w in sorted(ids - set(contagem)):
+        out.append(_f("UNESTIMATED_WP" if kind == "estimate" else "MISSING_IN_BACKLOG", w,
+                      "WP do inventário sem unidade em {}".format(kind)))
+    if kind == "estimate":
+        for w, n in sorted(contagem.items()):
+            if n > 1 and w in ids:
+                out.append(_f("DUPLICATE_ESTIMATE", w, "estimado {} vezes — esforço concorrente"
+                              .format(n)))
+    return {"kind": kind, "inventory_revision": rev, "units": contagem, "findings": out,
+            "ok": not out}
+
+
+def spec_effort_check(text: str) -> list:
+    """Duração ou esforço numa linha de tabela da spec que cita `WP-NNNN`: o esforço é só da
+    estimativa (Q2). Só as linhas do inventário — uma regra de negócio com «dias» não conta."""
+    out = []
+    for l in (text or "").splitlines():
+        if l.lstrip().startswith("|") and WP_RE.search(l) and EFFORT_RE.search(l):
+            out.append(_f("EFFORT_IN_SPEC", WP_RE.search(l).group(0),
+                          "a linha do inventário na spec leva duração: «{}»".format(
+                              EFFORT_RE.search(l).group(0))))
+    return out
+
+
+# ------------------------------------------------------------------ gate de âmbito (T33, N4)
+
+def scope_gate(eng) -> dict:
+    """`complete` · `partial` · `blocked`. Um bloqueio num item incluído bloqueia a entrega;
+    um parcial só passa com exclusões autorizadas (garantido pelo `inventory.py`) e coerente:
+    nenhum WP trabalha para o excluído nem depende de quem trabalha, e nenhum campo
+    obrigatório do desenho fica sem quem o produza (N4)."""
+    eng = Path(eng)
+    F = _mod("functional")
+    t = trace(eng)
+    scope = _load(eng / "_design/scope.json")
+    fcdata = _load(eng / "_design/functional-contracts.json")
+    fcs = {i["id"]: i for i in fcdata.get("items") or [] if isinstance(i, dict)}
+    wps = [w for w in _load(eng / "_design/work-packages.json").get("items") or []]
+    show = F["show"](eng)["items"] if fcs else {}
+    excluded = {e["ref"] for s in scope.get("items") or [] for e in s.get("excludes") or []}
+    blockers = list(t["findings"])
+    for f, v in show.items():
+        if f in excluded:
+            continue
+        if not v["authorizable"]:
+            blockers.append(_f("FC_NOT_AUTHORIZABLE", f, "lacunas ou conflitos: {}".format(
+                ", ".join(sorted({g["code"] for g in v["gaps"] + v["conflicts"]})))))
+        elif v["authorization"]["state"] != "current":
+            blockers.append(_f("FC_NOT_AUTHORIZED", f, "autorização {}".format(
+                v["authorization"]["state"])))
+    try:
+        md = (eng / "shared-understanding.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    for r in _mod("dashboard")["parse_su"](md)[1]:
+        if r.get("state") == "Unknown" and r.get("bloqueio") == "blocks_all" and not (
+                r.get("resolved") or r.get("parked") or r.get("retired")):
+            blockers.append(_f("BLOCKS_ALL_OPEN", r["id"], "pergunta em aberto bloqueia tudo"))
+    incoerente = []
+    trabalha_excl = {w["id"] for w in wps if set(w.get("realizes") or []) & excluded}
+    for w in sorted(trabalha_excl):
+        incoerente.append(_f("WORK_FOR_EXCLUDED", w, "realiza um item excluído"))
+    for w in wps:
+        if w["id"] not in trabalha_excl and set(w.get("depends_on") or []) & trabalha_excl:
+            incoerente.append(_f("DEPENDS_ON_EXCLUDED", w["id"], "depende de trabalho do "
+                                 "excluído: {}".format(", ".join(sorted(
+                                     set(w["depends_on"]) & trabalha_excl)))))
+    bp = _blueprint(eng)
+    campos = F["blueprint_index"](eng, bp["rel"]).get("fields", {}) if bp["rel"] else {}
+
+    def produz(it):
+        txt = " ".join(str(x) for x in it.get("postconditions") or [])
+        return {"{}.{}".format(*m) for m in F["DOTTED_RE"].findall(txt)}
+    incluidos = [it for f, it in fcs.items() if f not in excluded]
+    for f in sorted(excluded & set(fcs)):
+        for ref in sorted(produz(fcs[f])):
+            campo = campos.get(ref) or {}
+            if campo.get("required") in (True, "true", "yes") and not any(
+                    ref in produz(i) for i in incluidos):
+                incoerente.append(_f("REQUIRED_FIELD_WITHOUT_PRODUCER", ref, "obrigatório em "
+                                     "{} e só {} (excluído) o produz".format(bp["rel"], f)))
+    if blockers:
+        estado = "blocked"
+    elif excluded:
+        estado = "partial" if not incoerente else "blocked"
+    else:
+        estado = "complete"
+    return {"delivery": estado, "blockers": blockers, "incoherent": incoerente,
+            "excluded": sorted(excluded)}
+
+
 def main(argv=None) -> int:
     import argparse
     try:
@@ -206,15 +328,30 @@ def main(argv=None) -> int:
     except Exception:                                                   # noqa: BLE001
         pass
     ap = argparse.ArgumentParser(description="rastreabilidade vertical (só leitura)")
-    ap.add_argument("command", choices=["show"])
+    ap.add_argument("command", choices=["show", "estimate-check", "backlog-check", "scope-gate"])
     ap.add_argument("--engagement", required=True)
+    ap.add_argument("--file", default="", help="estimate-check/backlog-check: o deliverable")
+    ap.add_argument("--spec", default="", help="estimate-check: a implementation-spec")
     a = ap.parse_args(argv)
     eng = Path(a.engagement)
     if not eng.is_dir():
         eng = Path("projects") / a.engagement
-    out = trace(eng)
+    if a.command in ("estimate-check", "backlog-check"):
+        texto = (eng / a.file).read_text(encoding="utf-8") if a.file else ""
+        out = derived_check(eng, texto, "estimate" if a.command == "estimate-check"
+                            else "backlog")
+        if a.spec:
+            out["findings"] += spec_effort_check((eng / a.spec).read_text(encoding="utf-8"))
+            out["ok"] = not out["findings"]
+        ok = out["ok"]
+    elif a.command == "scope-gate":
+        out = scope_gate(eng)
+        ok = out["delivery"] != "blocked"
+    else:
+        out = trace(eng)
+        ok = out["ok"]
     print(json.dumps(out, ensure_ascii=False, indent=2))
-    return 0 if out["ok"] else 4
+    return 0 if ok else 4
 
 
 if __name__ == "__main__":

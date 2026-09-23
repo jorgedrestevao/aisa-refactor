@@ -62,14 +62,14 @@ def analysis(tmp):
     E2E["publish_analysis"](eng, rows)
     _append_decision(eng, "\n## D-001 — Plataforma imposta\n\n- **Decisão**: a solução "
                      "constrói-se na {} (imposta pela direcção de SI, sintético)\n"
-                     "- **Evidência**: pedido.md#¶2\n- **Validated by**: owner (dados de "
+                     "- **Evidência**: pedido.md#¶3\n- **Validated by**: owner (dados de "
                      "teste)\n- **Timestamp**: 2026-09-23T20:00:00Z\n".format(PLATAFORMA))
     p = eng / "_state.json"
     st = json.loads(p.read_text(encoding="utf-8"))
     st["phase"] = "options"
     st["workflow"]["route"] = "platform-constrained"
     st["workflow"]["route_basis"] = {"justification": "plataforma imposta pela direcção de SI "
-                                     "(sintético)", "source_refs": ["pedido.md#¶2"],
+                                     "(sintético)", "source_refs": ["pedido.md#¶3"],
                                      "authority_ref": AUTORIDADE}
     p.write_text(json.dumps(st, ensure_ascii=False) + "\n", encoding="utf-8")
     return eng
@@ -138,7 +138,7 @@ def reviews(eng):
         "closing_condition": "regra escolhida pelo dono e fixada no FC do valor"}])
     review(eng, mandatos["security-operation"], [{
         "target": "O-001", "severity": "blocking", "kind": "recommendation",
-        "evidence": "matriz-papeis.md#¶3 (C-004)",
+        "evidence": "matriz-papeis.md#¶2 (C-004)",
         "failure_scenario": "um chefe aprova o próprio pedido se a regra só esconder o botão",
         "closing_condition": "a regra aplicada no servidor e um teste negativo no FC"}])
     review(eng, mandatos["ux-process"], [])

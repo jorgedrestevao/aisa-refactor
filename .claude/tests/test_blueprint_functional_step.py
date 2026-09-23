@@ -28,7 +28,11 @@ class PassoFuncional(unittest.TestCase):
         nomes = set(re.findall(r"functional\.py ([a-z-]+)", SKILL))
         self.assertTrue({"draft", "check", "publish", "show", "authorization-block",
                          "conflicts"} <= nomes, nomes)
-        escolhas = {"draft", "check", "publish", "show", "authorization-block", "conflicts"}
+        # handoff-v1 F6.3: os comandos que o motor declara no argparse, lidos do motor
+        motor = (ROOT / "library" / "kernel" / "tools" / "functional.py").read_text(
+            encoding="utf-8")
+        bloco = motor.split('ap.add_argument("command", choices=[', 1)[1].split("]", 1)[0]
+        escolhas = set(re.findall(r'"([a-z-]+)"', bloco))
         self.assertEqual(nomes - escolhas, set())
 
     def test_no_gap_is_filled_and_no_side_is_picked(self):

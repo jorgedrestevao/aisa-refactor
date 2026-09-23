@@ -137,12 +137,12 @@ architecture:
 HEADLESS_ROWS = {
     "Confirmed": [
         "| C-002 | operations | O ERP-X recusa pedidos entre as 02:00 e as 03:00 | "
-        "nota-integracao.md#¶4 | 2026-09-23 | organizacional | R-01 |"],
+        "nota-integracao.md#¶3 | 2026-09-23 | organizacional | R-01 |"],
     "Unknown": [
         "| U-001 | data | Qual é o limite de pedidos por minuto do ERP-X? | fact_gap | "
         "operação: muda o ritmo de envio | envio ao ERP-X (observed_as_is) | fonte: fornecedor "
         "do ERP-X | limite documentado | delegated_choice | Med | documento | dimensionante: "
-        "define o ritmo | nota-integracao.md#¶5 | R-01 |"],
+        "define o ritmo | nota-integracao.md#¶4 | R-01 |"],
 }
 
 
@@ -154,7 +154,7 @@ def headless(tmp):
     su = E2E["SU_BIRTH"].replace("fx-hv1-02", "fx-hv1-04").replace(
         "| C-001 | enquadramento | Âmbito: pedido, aprovação e passagem a compras | pedido.md#¶4 |",
         "| C-001 | enquadramento | Âmbito: envio de pedidos aprovados ao ERP-X, sem ecrãs | "
-        "pedido.md#¶1 |")
+        "pedido.md#¶2 |")
     (eng / "shared-understanding.md").write_text(su, encoding="utf-8", newline="\n")
     (eng / "answers.md").write_text("# Respostas\n", encoding="utf-8", newline="\n")
     (eng / "decisions.md").write_text("# Decisions\n", encoding="utf-8", newline="\n")

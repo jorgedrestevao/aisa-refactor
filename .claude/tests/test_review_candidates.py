@@ -30,7 +30,7 @@ def engagement(tmp, route="solution-choice"):
     st["workflow"]["route"] = route
     if route == "platform-constrained":
         st["workflow"]["route_basis"] = {"justification": "plataforma imposta pela direcção "
-                                         "de SI (sintético)", "source_refs": ["pedido.md#¶2"],
+                                         "de SI (sintético)", "source_refs": ["pedido.md#¶3"],
                                          "authority_ref": AUTORIDADE}
     p.write_text(json.dumps(st, ensure_ascii=False) + "\n", encoding="utf-8")
     return eng

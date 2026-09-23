@@ -32,7 +32,7 @@ PROOF_ROW = ("| U-009 | operations | A plataforma garante unicidade sob 50 submi
              "simultâneas? | proof_obligation | viabilidade: sem isto a submissão idempotente "
              "cai | submissão (proposed_to_be) | fonte: ensaio técnico | ensaio com 50 "
              "submissões | blocks_scope | Critical | ensaio | dimensionante: decide a forma | "
-             "entrevista-processo.md#¶7 | R-01 |")
+             "entrevista-processo.md#¶6 | R-01 |")
 
 
 def escopo(eng, includes=("J-0001", "J-0003")):

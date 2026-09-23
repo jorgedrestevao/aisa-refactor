@@ -159,7 +159,10 @@ def blueprint_index(eng: Path, rel: str) -> dict:
     for c in arch.get("compositions") or []:
         if isinstance(c, dict) and c.get("component"):
             refs.add(str(c["component"]))
-    return {"refs": refs, "fields": fields, "draft": bool(obj.get("draft"))}
+    personas = [str(n["name"]) for n in obj.get("personas") or []
+                if isinstance(n, dict) and n.get("name")]
+    return {"refs": refs, "fields": fields, "draft": bool(obj.get("draft")),
+            "personas": personas}
 
 
 def _blueprint_of(data: dict) -> str:
@@ -366,6 +369,70 @@ def approved_blueprint(eng) -> str:
     return "_blueprint/ux-blueprint_v{}.yaml".format(ver) if ver else ""
 
 
+BP_SHA_RE = re.compile(r"\*\*Blueprint sha256\*\*\s*:\s*([0-9a-f]{64})")
+
+
+def blueprint_approval_state(eng) -> dict:
+    """A aprovação do desenho mais recente e se ainda cobre o ficheiro (T43 N2): `current`
+    — o `sha256` do bloco é o da versão; `stale` — a versão mudou depois da aprovação;
+    `unverified` — o bloco não leva impressão digital; `missing` — não há aprovação."""
+    eng = Path(eng)
+    rel = approved_blueprint(eng)
+    if not rel:
+        return {"state": "missing", "ref": ""}
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    D = _D()
+    ultimo = None
+    for b in D["classify_decisions"](md):
+        if b.get("kind") == "blueprint-approval":
+            ultimo = b
+    chunk = md.split("## " + ultimo["id"], 1)[-1].split("\n## ", 1)[0] if ultimo else ""
+    m = BP_SHA_RE.search(chunk)
+    actual = _digest(eng / rel)
+    if not m:
+        return {"state": "unverified", "ref": rel, "block": ultimo and ultimo["id"],
+                "actual": actual}
+    return {"state": "current" if m.group(1) == actual else "stale", "ref": rel,
+            "block": ultimo["id"], "declared": m.group(1), "actual": actual}
+
+
+def blueprint_approval_block(eng, version: str, validated_by: str,
+                             timestamp: str | None = None) -> str:
+    """O texto do bloco de aprovação do desenho, com a impressão digital calculada pelo motor
+    (T43 N2). Recusa um validador que não é humano, uma versão que não existe ou é rascunho,
+    e uma data anterior a uma decisão já registada (S7)."""
+    eng = Path(eng)
+    ver = str(version).lstrip("v").zfill(2)
+    rel = "_blueprint/ux-blueprint_v{}.yaml".format(ver)
+    prob = validator_problem(validated_by)
+    if prob:
+        raise FunctionalError("aprovação recusada: " + prob, _W()["AUTHORIZATION_REQUIRED"],
+                              {"validated_by": validated_by})
+    if not (eng / rel).is_file():
+        raise FunctionalError("{} não existe".format(rel), _W()["INTEGRITY_FAILURE"],
+                              {"ref": rel})
+    if blueprint_index(eng, rel).get("draft"):
+        raise FunctionalError("{} é rascunho — não se aprova".format(rel),
+                              _W()["INTEGRITY_FAILURE"], {"ref": rel})
+    ts = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    antes = sorted(t for t in re.findall(r"\*\*Timestamp\*\*\s*:\s*(\S+)", md) if t > ts)
+    if antes:
+        raise FunctionalError("o bloco teria data {} anterior a uma decisão já registada ({})"
+                              .format(ts, antes[-1]), _W()["INTEGRITY_FAILURE"],
+                              {"timestamp": ts, "latest": antes[-1]})
+    did = "D-{:03d}".format(max([int(d[2:]) for d in _W()["_decision_ids"](eng)] or [0]) + 1)
+    return ("\n## {} — Blueprint bp-v{} aprovado\n\n- **Blueprint sha256**: {}\n"
+            "- **Validated by**: {}\n- **Timestamp**: {}\n").format(
+                did, ver, _digest(eng / rel), validated_by, ts)
+
+
 def render_gate(eng, fc_ids=None, text: str = "") -> dict:
     """O que um deliverable pode publicar em versão final (DESENHO §5).
 
@@ -389,6 +456,14 @@ def render_gate(eng, fc_ids=None, text: str = "") -> dict:
     if ids and not aprovado:
         blocked.append({"code": "NO_APPROVED_BLUEPRINT", "fc": "",
                         "detail": "nenhuma versão do desenho aprovada"})
+    if ids and aprovado:
+        ap = blueprint_approval_state(eng)
+        if ap["state"] in ("stale", "unverified"):
+            blocked.append({"code": "BLUEPRINT_APPROVAL_" + ap["state"].upper(), "fc": "",
+                            "detail": "a aprovação ({}) {}".format(
+                                ap.get("block"), "não cobre a versão actual de " + aprovado
+                                if ap["state"] == "stale" else "não leva a impressão digital "
+                                "do desenho")})
     for fc in ids:
         it = por_id.get(fc)
         if it is None:
@@ -646,6 +721,39 @@ def publish(eng, draft_id: str) -> dict:
             "receipt": recibo, "gaps": res["gaps"], "code": res["code"]}
 
 
+DOTTED_RE = re.compile(r"\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b")
+
+
+def concept_warnings(eng, data: dict) -> list:
+    """Avisos, não lacunas (T43 N3): uma referência `<domínio>.<campo>` escrita na regra, nas
+    pós-condições ou nas excepções que o desenho não define; um actor que não é persona do
+    desenho, quando o desenho declara personas. O juízo sobre conceitos em prosa ("o
+    requerente", "quem decidiu") continua a ser do `fc-reviewer`."""
+    eng = Path(eng)
+    bp = _blueprint_of(data)
+    index = blueprint_index(eng, bp) if bp else {}
+    refs, personas = index.get("refs") or set(), index.get("personas") or []
+    domains = {r.split(".", 1)[0] for r in refs if "." in r}
+    out = []
+    for it in data.get("items") or []:
+        textos = [str(it.get("rule") or "")] + [str(x) for x in it.get("postconditions") or []]
+        for e in it.get("exceptions") or []:
+            if isinstance(e, dict):
+                textos += [str(e.get("condition") or ""), str(e.get("behavior") or "")]
+        for dom, campo in sorted({m for t in textos for m in DOTTED_RE.findall(t)}):
+            ref = "{}.{}".format(dom, campo)
+            if dom in domains and ref not in refs:
+                out.append({"fc": it["id"], "code": "UNDEFINED_FIELD_REF",
+                            "detail": "`{}` citado no texto e não definido em {}".format(ref, bp)})
+        if personas:
+            for a in it.get("actors") or []:
+                if a not in personas:
+                    out.append({"fc": it["id"], "code": "ACTOR_NOT_IN_DESIGN",
+                                "detail": "actor `{}` não é persona de {} ({})".format(
+                                    a, bp, ", ".join(personas))})
+    return out
+
+
 def show(eng) -> dict:
     eng = Path(eng)
     cur = read_current(eng)
@@ -654,6 +762,7 @@ def show(eng) -> dict:
     conf = conflicts(eng, data)
     blocks = authorization_blocks(eng)
     su = _su_rows(eng)
+    avisos = concept_warnings(eng, data)
     por_fc = {}
     for it in data.get("items") or []:
         auth = authorization_state(eng, it, blocks)
@@ -666,6 +775,7 @@ def show(eng) -> dict:
             "authorization": auth,
             "assumed_premises": assumed_premises(eng, it, su),
             "conflicts": [c for c in conf if c["fc"] == it["id"]],
+            "warnings": [w for w in avisos if w["fc"] == it["id"]],
             "authorizable": not any(g["fc"] == it["id"] for g in gaps + conf)}
     return {"revision": data.get("revision"), "digest": cur["digest"],
             "blueprint": _blueprint_of(data), "items": por_fc,
@@ -682,7 +792,9 @@ def main(argv=None) -> int:
         pass
     ap = argparse.ArgumentParser(description="contratos funcionais (publica pelo coordenador)")
     ap.add_argument("command", choices=["draft", "check", "publish", "show",
-                                        "authorization-block", "conflicts", "render-gate"])
+                                        "authorization-block", "conflicts", "render-gate",
+                                        "approval-block"])
+    ap.add_argument("--version", default="", help="approval-block: a versão do desenho")
     ap.add_argument("--file", default="", help="render-gate: o deliverable (relativo ao "
                     "engagement) cujas citações FC-NNNN se verificam")
     ap.add_argument("--blueprint", default="", help="conflicts: a versão do desenho a "
@@ -718,6 +830,9 @@ def main(argv=None) -> int:
             rc = 4 if out["conflicts"] else 0
         elif a.command == "authorization-block":
             print(authorization_block(eng, a.fc, a.validated_by, a.scope))
+            return 0
+        elif a.command == "approval-block":
+            print(blueprint_approval_block(eng, a.version, a.validated_by))
             return 0
         else:
             out, rc = show(eng), 0

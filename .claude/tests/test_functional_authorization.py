@@ -22,7 +22,7 @@ R = runpy.run_path(str(TOOLS / "resolve.py"))
 
 OWNER = "owner (responsável de compras, dados de teste — via AskUserQuestion)"
 PREMISSA = ("| A-001 | operations | A chefia valida os urgentes no próprio dia útil | "
-            "entrevista-processo.md#¶6 (inferido: «no mesmo dia») | 2026-09-23 | "
+            "entrevista-processo.md#¶5 (inferido: «no mesmo dia») | 2026-09-23 | "
             "organizacional | R-01 |")
 
 

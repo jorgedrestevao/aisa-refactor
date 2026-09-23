@@ -22,6 +22,7 @@ AU = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_functional_authorizat
 FC = AU["FC"]
 F = AU["F"]
 R = AU["R"]
+O = runpy.run_path(str(TOOLS / "operation.py"))
 DOC = "## 6. Comportamento\n\nA submissão segue FC-0001 (contrato funcional).\n"
 
 
@@ -30,8 +31,10 @@ def approve_blueprint(eng, version="01", did=None):
     p = eng / "_drafts" / d["draft"] / "decisions.md"
     texto = p.read_text(encoding="utf-8")
     n = did or "D-{:03d}".format(len([l for l in texto.splitlines() if l.startswith("## D-")]) + 1)
-    p.write_text(texto + "\n## {} — Blueprint bp-v{} aprovado\n\n- **Validated by**: owner "
-                 "(dados de teste)\n- **Timestamp**: 2026-09-23T23:00:00Z\n".format(n, version),
+    sha = O["digest"](eng / "_blueprint" / "ux-blueprint_v{}.yaml".format(version))
+    p.write_text(texto + "\n## {} — Blueprint bp-v{} aprovado\n\n- **Blueprint sha256**: {}\n"
+                 "- **Validated by**: owner (dados de teste)\n- **Timestamp**: "
+                 "2026-09-23T23:00:00Z\n".format(n, version, sha),
                  encoding="utf-8", newline="\n")
     R["publish"](eng, d["draft"])
 

@@ -91,3 +91,5 @@ library/kernel/tools/tests/test_fields_draft.py
 .claude/tests/test_hv1_vertical.py
 .claude/tests/test_inventory.py
 .claude/tests/test_trace.py
+.claude/tests/test_locator_convention.py
+.claude/tests/test_scope_gate.py
