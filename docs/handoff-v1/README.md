@@ -11,7 +11,7 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 | Relatório da fase F2 (**concluída**; continuidade transacional: read-set, rascunho e publicação, checkpoint, retoma a frio) | [F2/RELATORIO.md](F2/RELATORIO.md) · [desenho](F2/DESENHO.md) |
 | Relatório da fase F3 (**concluída**; análise integrada, cobertura das seis perspectivas, `/frame` com revisor independente) | [F3/RELATORIO.md](F3/RELATORIO.md) · [desenho](F3/DESENHO.md) |
 | Relatório da fase F4 (**concluída**; contratos funcionais, autorização, coerência com o desenho, render) | [F4/RELATORIO.md](F4/RELATORIO.md) · [desenho](F4/DESENHO.md) |
-| Fase corrente | **F5** (autorizada em 2026-09-23); desenho em `F5/DESENHO.md` quando existir |
+| Fase corrente | **F5** (autorizada em 2026-09-23) — [desenho](F5/DESENHO.md) (Q1–Q6); relatório em `F5/RELATORIO.md` quando existir |
 | Artefactos de F0 | [F0/](F0/) |
 | Fixtures sintéticas do programa | `.claude/tests/fixtures/handoff-v1/` |
 | Teste de F0 (T02 + fixtures) | `.claude/tests/test_handoff_f0.py` |
