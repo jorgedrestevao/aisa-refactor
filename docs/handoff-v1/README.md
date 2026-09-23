@@ -8,7 +8,8 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 | Fases, gates e rollback | [plan/05_FASES.md](plan/05_FASES.md) |
 | Relatório da fase F0 (**concluída**; decisões, testes, retoma) | [F0/RELATORIO.md](F0/RELATORIO.md) |
 | Relatório da fase F1 (**concluída**; contratos, perfil, legado só-leitura, admissão, evidência) | [F1/RELATORIO.md](F1/RELATORIO.md) · [desenho](F1/DESENHO-CONTRATOS.md) · [leitor/escritor/schema](F1/LEITOR-ESCRITOR.md) |
-| Fase corrente | **F2** — gate T09–T17 cumprido, por aceitar pelo mantenedor — [F2/RELATORIO.md](F2/RELATORIO.md) · [desenho](F2/DESENHO.md) |
+| Relatório da fase F2 (**concluída**; continuidade transacional: read-set, rascunho e publicação, checkpoint, retoma a frio) | [F2/RELATORIO.md](F2/RELATORIO.md) · [desenho](F2/DESENHO.md) |
+| Fase corrente | **F3** (autorizada em 2026-09-23); relatório em `F3/RELATORIO.md` quando existir |
 | Artefactos de F0 | [F0/](F0/) |
 | Fixtures sintéticas do programa | `.claude/tests/fixtures/handoff-v1/` |
 | Teste de F0 (T02 + fixtures) | `.claude/tests/test_handoff_f0.py` |

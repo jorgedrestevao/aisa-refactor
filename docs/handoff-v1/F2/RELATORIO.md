@@ -1,6 +1,6 @@
 # F2 — Relatório da fase (continuidade transacional mínima)
 
-Estado: **gate cumprido — por aceitar pelo mantenedor** (autorizada em 2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md). Avaliação do gate: §5.
+Estado: **completed** (2026-09-23). Gate T09–T17 cumprido e aceite pelo mantenedor, com o limite declarado da T10. Desenho e decisões Q1–Q6: [DESENHO.md](DESENHO.md). Avaliação do gate: §5. F3 autorizado.
 
 ## 1. Incrementos
 
@@ -40,7 +40,7 @@ Estado: **gate cumprido — por aceitar pelo mantenedor** (autorizada em 2026-09
 - O schema `handoff-work/1` ganhou `results[].sha256`, um campo opcional e aditivo. A versão não mudou; um leitor antigo reporta-o como desconhecido e preserva-o.
 - H2 ficou feito nos ficheiros normativos (skills, hooks, kernel, pack, comandos) e no motor (`dashboard.py`, `CALIBRACAO` anonimizado). Dois testes de integração em `library/kernel/tools/tests/` (`test_fields_draft`, `test_text_extract`) continuam a nomear pilotos reais: só correm com o engagement montado e saltam sem ele. A disposição do F0 manda-os consolidar em F4.
 - O nascimento são duas operações: o `init` do grafo e a publicação do scaffold. Entre as duas, o engagement só tem o grafo, sem `_state.json`. Um `/start` repetido pára, porque a pasta já existe. A recuperação é abrir o rascunho e publicar, sem apagar nada.
-- **Por decidir (mantenedor):** as linhas `[ÂMBITO AUTORIZADO]` de `states.md` regra 3 dizem «evidence = the decision record». Com ids `C-`, não têm classe de localizador, porque a regra Q5 vale só para ids `D-`. É um desvio anterior (F1), agora visível. Proposta para a F2.7: apresentar as opções.
+- ~~As linhas `[ÂMBITO AUTORIZADO]` de `states.md` regra 3 não tinham classe de localizador.~~ Decidido em Q6 (2026-09-23): com a marca, um `C-` pode citar `decisions.md#D-NNN` de uma aprovação (frame, solução, desenho) presente; sem a marca, continua recusado (`LinhaDeDecisao.test_an_authorized_scope_row_cites_an_approval`).
 - O guarda passou a recusar também a remoção de uma linha da SU (`SU_ROW_REMOVED`). A regra (append-only) já era do kernel; faltava quem a impusesse.
 
 - ~~`MODEL_INPUTS` enumera o que `build_model` lê hoje; uma leitura nova fora da lista ficava fora da janela.~~ Mitigada em F2.7: o teste de contrato espia as leituras do modelo na fixture mais rica e falha se alguma, de um ficheiro existente, cair fora das autoridades, dos inputs declarados (semântica real de `Path.glob`) ou de `_ops/`.
@@ -91,7 +91,8 @@ Complementa `../F1/LEITOR-ESCRITOR.md`.
 ## 7. Decisões e pontos por decidir
 
 - Q1–Q5: DESENHO.md, todas decididas pelo mantenedor em 2026-09-23.
-- **Por decidir:** `[ÂMBITO AUTORIZADO]` (§4). Hoje não há nenhum escritor de linhas `C-` com essa marca; a marca só aparece no campo *Validated by* do registo de aprovação. A regra de `states.md` (regra 3) promete uma evidência que o limiar já não aceita.
+- Q6 (2026-09-23): `[ÂMBITO AUTORIZADO]` estende a regra do registo de decisão — cita uma aprovação presente, e só com a marca.
+- Fecho: gate aceite pelo mantenedor em 2026-09-23, com o limite da T10 como limitação conhecida.
 
 ## 8. Próxima fase
 

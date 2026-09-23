@@ -139,6 +139,25 @@ class LinhaDeDecisao(unittest.TestCase):
                                               eng)
             self.assertEqual(a["ids"], ["D-004"])
 
+    def test_an_authorized_scope_row_cites_an_approval(self):
+        """states.md regra 3 (Q6): `[ÂMBITO AUTORIZADO]` + `decisions.md#D-NNN` de uma
+        aprovação (frame, solução, desenho) — e só com a marca."""
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = Path(tmp)
+            (eng / "decisions.md").write_text(
+                "# Decisions\n\n## D-001 — Frame agreed (F-01)\n\nx\n\n"
+                "## D-002 — Nota interna\n\ny\n", encoding="utf-8")
+
+            def c(rid, claim, evid):
+                return dict(self.linha(rid, evid), claim=claim)
+            rows = [c("C-010", "[ÂMBITO AUTORIZADO] o âmbito é só a loja", "decisions.md#D-001"),
+                    c("C-011", "[ÂMBITO AUTORIZADO] x", "decisions.md#D-002"),
+                    c("C-012", "[ÂMBITO AUTORIZADO] y", "decisions.md#D-009"),
+                    c("C-013", "sem marca", "decisions.md#D-001")]
+            a = D["audit_confirmed_locators"](rows, eng)
+            self.assertEqual(sorted(a["ids"]), ["C-011", "C-012", "C-013"])
+            self.assertEqual(a["com_locator"], 1)
+
     def test_the_decide_template_has_the_seven_confirmed_cells(self):
         """D09: a linha tinha 5 células numa tabela de 7."""
         t = texto(ROOT / ".claude" / "skills" / "aisa-decide" / "SKILL.md")

@@ -1271,6 +1271,10 @@ def evidence_targets(eng: Path, overlay: dict | None = None) -> dict:
     dec = ov["decisions.md"] if "decisions.md" in ov \
         else (_read(eng / "decisions.md") or "")
     decision_ids = {m.upper() for m in re.findall(r"(?m)^#{1,4}\s*\**\s*(D-\d+)\b", dec)}
+    # The approvals among them (frame, solution, blueprint) — the only blocks an
+    # `[ÂMBITO AUTORIZADO]` row may cite (states.md rule 3; maintainer decision Q6).
+    approval_ids = {b["id"].upper() for b in classify_decisions(dec)
+                    if b["kind"] in ("frame", "solution", "blueprint-approval")}
     ctx_path = eng / "context.json"
     if "context.json" in ov:
         ctx_raw = ov["context.json"]
@@ -1284,6 +1288,7 @@ def evidence_targets(eng: Path, overlay: dict | None = None) -> dict:
     return {
         "files": names,
         "decision_ids": decision_ids,
+        "approval_ids": approval_ids,
         "answers_anchors": anchors,
         "has_answers": "answers.md" in ov or (eng / "answers.md").is_file(),
         "enq_ids": set(re.findall(r"\bM-\d+\b", enq)),
@@ -1401,6 +1406,8 @@ def locator_target_gaps(text: str, classes: list[str], tgt: dict) -> list[str]:
 
 
 DECISION_ROW_RE = re.compile(r"^D-\d+$")
+AUTHORIZED_SCOPE_RE = re.compile(r"\[(?:ÂMBITO|AMBITO) AUTORIZADO\]", re.I)
+DECISION_CITE_RE = re.compile(r"decisions\.md#(D-\d+)\b", re.I)
 
 CAPTURE_RUN_RE = re.compile(r"\brun\s+(\d+)\b")
 
@@ -1455,6 +1462,28 @@ def audit_confirmed_locators(rows: list[dict], eng: Path,
                 alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
                              "classes": ["decision"],
                              "motivo": "decisions.md sem o bloco {}".format(r["id"])})
+            else:
+                ok += 1
+            continue
+        escopo = AUTHORIZED_SCOPE_RE.search(" ".join((r.get("claim") or "", text)))
+        cita = DECISION_CITE_RE.search(text)
+        if escopo and cita:
+            # states.md rule 3 (Q6): a fact of the ENGAGEMENT itself — authorised scope, a
+            # registration decision — confirmed by the executor and marked as such. Its
+            # locator is the approval that authorised it; the block must exist and be an
+            # approval (frame, solution, blueprint). Without the mark, citing
+            # `decisions.md` is not evidence of anything.
+            por_classe["authorized-scope"] = por_classe.get("authorized-scope", 0) + 1
+            did = cita.group(1).upper()
+            if did not in tgt["decision_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["authorized-scope"],
+                             "motivo": "decisions.md sem o bloco {}".format(did)})
+            elif did not in tgt["approval_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["authorized-scope"],
+                             "motivo": "{} nao e uma aprovacao (frame, solucao ou "
+                                       "desenho)".format(did)})
             else:
                 ok += 1
             continue

@@ -10,6 +10,7 @@ Decisões do mantenedor (2026-09-23), todas na opção recomendada:
 | Q2 | Âmbito de F2 | Os escritores das 6 autoridades (`_state.json`, SU, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md`). Os artefactos de fase ficam para F4–F6 |
 | Q3 | `coverage finalize` (D07) | Pelo coordenador: um só mecanismo de publicação. A idempotência vem do conteúdo do rascunho; a versão é a maior emitida + 1, nunca reutilizada |
 | Q4 | `su-confirmed-guard` | Retirado. A regra fica em `dashboard.audit_confirmed_locators`, consultada pelo guarda e pelo coordenador |
+| Q6 | `[ÂMBITO AUTORIZADO]` (states.md regra 3) sem classe de localizador | Estender Q5: um `C-` marcado pode citar `decisions.md#D-NNN` de uma **aprovação** (frame, solução, desenho) presente; sem a marca, recusado |
 | Q5 | Linha `D-NNN` na SU (o `/decide` era recusado desde F1: `decisions.md#D-NNN` não é localizador das cinco classes) | Classe própria só para ids `D-`: localizador `decisions.md#D-NNN`, com o bloco presente (conta se for publicado na mesma operação). Um facto nunca se confirma citando `decisions.md` (`states.md` → *Confirmed threshold*) |
 
 Nenhum motor novo. `operation.py` continua a ser o único publicador e `bootstrap.py` a única reconstrução. `resolve.py` continua dono do espelho SU→grafo. O `workflow.py` só liga tarefa, inputs e próxima acção a estes três.
