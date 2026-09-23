@@ -46,26 +46,6 @@
    "pattern": "shared-understanding\\.md|answers\\.md|_graph/|\\bgraph\\.py\\b|sync_mirror|on-su-mirror|su-confirmed-guard",
    "consumers": [
     {
-     "file": ".claude/agents/business-analyst.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona: receives SU excerpt (_council-prep) in Framing/Options and full SU+answers in retro; Read/Grep/Glob only; declares it does not write SU.",
-     "via": "reads derived SU excerpts produced by aisa-frame/aisa-options step 4",
-     "evidence": "business-analyst.md:3-4; aisa-frame/SKILL.md:107-122; aisa-retro/SKILL.md:14",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/agents/cfo-lens.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona, same pattern (excerpt/retro reader, no SU write).",
-     "via": "reads derived SU excerpts",
-     "evidence": "cfo-lens.md:3-4; aisa-frame/SKILL.md:107-122",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/agents/chairman.md",
      "kind": "agent",
      "role": "appender",
@@ -76,52 +56,12 @@
      "source": "inventory"
     },
     {
-     "file": ".claude/agents/compliance-officer.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona, same pattern.",
-     "via": "reads derived SU excerpts",
-     "evidence": "compliance-officer.md:3-4; aisa-frame/SKILL.md:107-122",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/agents/data-steward.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona, same pattern.",
-     "via": "reads derived SU excerpts",
-     "evidence": "data-steward.md:3-4; aisa-frame/SKILL.md:107-122",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/agents/operations-lead.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona, same pattern.",
-     "via": "reads derived SU excerpts",
-     "evidence": "operations-lead.md:3-4; aisa-frame/SKILL.md:107-122",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/agents/solution-architect.md",
      "kind": "agent",
      "role": "reader",
      "mechanism": "Options persona (7th excerpt) and aisa-decide --consult reviewer against the SU; never writes SU.",
      "via": "reads derived SU excerpts / SU on --consult",
      "evidence": "solution-architect.md:3-4; aisa-options/SKILL.md:116-122; aisa-decide/SKILL.md:76",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/agents/user-advocate.md",
-     "kind": "agent",
-     "role": "reader",
-     "mechanism": "Council persona, same pattern.",
-     "via": "reads derived SU excerpts",
-     "evidence": "user-advocate.md:3-4; aisa-frame/SKILL.md:107-122",
      "confidence": "verified",
      "source": "inventory"
     },
@@ -4027,22 +3967,22 @@
    "pattern": "implementation-spec",
    "consumers": [
     {
-     "file": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md",
+     "file": ".claude/agent-memory/_universal/cost-estimate/universal-constraints.md",
      "kind": "other",
      "role": "declares-contract",
      "mechanism": "Persona memory loaded at runtime by the cfo-lens agent. It states that implementation effort is calculated once, by the Estimate, 'from the Implementation Specification's inventory'. This is prose that reasserts the spec->estimate edge to a council persona. The literal pattern misses it because it spells 'Implementation Specification'.",
      "via": "agent persona context load (cfo-lens.md:29)",
-     "evidence": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md:24-27; read by .claude/agents/cfo-lens.md:29 ('.claude/agent-memory/_universal/cfo-lens/*.md (if present)')",
+     "evidence": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md:24-27; read by .claude/agents/cfo-lens.md:29 ('.claude/agent-memory/_universal/cfo-lens/*.md (if present)') (migrado em handoff-v1 F5.4, Q7)",
      "confidence": "verified",
      "source": "critic"
     },
     {
-     "file": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md",
+     "file": ".claude/agent-memory/_universal/architect/universal-constraints.md",
      "kind": "other",
      "role": "declares-contract",
      "mechanism": "Persona memory loaded at runtime by the solution-architect agent (Options/Decision). It states that effort is calculated by the Estimate 'against the Implementation Specification's inventory'. This is the same edge restated to a persona. The regex misses it.",
      "via": "agent persona context load (solution-architect.md:35)",
-     "evidence": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md:17; read by .claude/agents/solution-architect.md:35",
+     "evidence": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md:17; read by .claude/agents/solution-architect.md:35 (migrado em handoff-v1 F5.4, Q7)",
      "confidence": "verified",
      "source": "critic"
     },
@@ -4773,35 +4713,24 @@
    "pattern": "estimate\\.template|estimation-model|\\bestimate_v\\d|\\bestimate\\.md|/estimate\\b",
    "consumers": [
     {
-     "file": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md",
+     "file": ".claude/agent-memory/_universal/cost-estimate/universal-constraints.md",
      "kind": "agent",
      "role": "declares-contract",
      "mechanism": "COMPETING VOCABULARY: 'Build effort bands' Small 1-4 weeks / Medium 4-12 weeks / Large 12+ weeks for /options (calendar duration, not person-days); restates Estimate as sole effort calculator from spec inventory + estimation-model.md; rate is an engagement fact.",
      "via": "read at runtime by cfo-lens agent (.claude/agents/cfo-lens.md:29) and passed as memory pointer (aisa-options/SKILL.md:141)",
-     "evidence": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md:3-17,19-28",
+     "evidence": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md:3-17,19-28 (migrado em handoff-v1 F5.4, Q7)",
      "confidence": "verified",
      "source": "inventory"
     },
     {
-     "file": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md",
+     "file": ".claude/agent-memory/_universal/architect/universal-constraints.md",
      "kind": "agent",
      "role": "declares-contract",
      "mechanism": "COMPETING VOCABULARY: 'At Options, return effort as Small / Medium / Large bands' with no source marker (not one of the chairman's four markers); restates that implementation effort is calculated once by the Estimate and that S8 'never produces an effort figure' (while decision-tree S8 prices 'build and change effort').",
      "via": "read at runtime by solution-architect agent (.claude/agents/solution-architect.md:35) and passed as memory pointer (aisa-options/SKILL.md:141)",
-     "evidence": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md:16-17",
+     "evidence": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md:16-17 (migrado em handoff-v1 F5.4, Q7)",
      "confidence": "verified",
      "source": "inventory"
-    },
-    {
-     "file": ".claude/agents/cfo-lens.md",
-     "kind": "agent",
-     "role": "competes",
-     "mechanism": "Options mandate: per candidate 'cost envelope (build + run + change)' — a build-cost figure per option pre-decision, outside the Estimate and without a declared method.",
-     "via": "council persona output -> chairman-synthesis",
-     "evidence": ".claude/agents/cfo-lens.md:24,27-31",
-     "confidence": "verified",
-     "source": "inventory",
-     "adjudication": "Adjudicado F0 (crítico): só tem ferramentas de leitura; devolve o envelope de custo por candidato ao chairman, que o escreve. Fonte concorrente, não escritor."
     },
     {
      "file": ".claude/agents/chairman.md",
@@ -5459,8 +5388,9 @@
      "reason": "B-28 team skills 'changes the build effort' (line 97) — requirement/risk consequence, no figure."
     },
     {
-     "file": ".claude/agent-memory/_universal/data-steward/anti-patterns.md",
-     "reason": "Runtime memory hint: historical migration under-estimated, discrete work package (line 26); no figure."
+     "file": ".claude/agent-memory/_universal/data-integration/anti-patterns.md",
+     "reason": "Runtime memory hint: historical migration under-estimated, discrete work package (line 26); no figure.",
+     "evidence": " (migrado em handoff-v1 F5.4, Q7)"
     },
     {
      "file": ".claude/hooks/HOOKS.md",
@@ -5529,12 +5459,6 @@
    "critic": {
     "ran": true,
     "wrong": [
-     {
-      "file": ".claude/agents/cfo-lens.md",
-      "claimed": "role writer — per-candidate build-cost envelope written pre-decision",
-      "corrected": "The agent cannot write files: its tools are [Read, Grep, Glob]. It returns text to chairman-synthesis, the only writer of options.md in council mode. Role: declares-contract / text producer, not writer.",
-      "evidence": ".claude/agents/cfo-lens.md:4,24; .claude/agents/chairman.md:3-4"
-     },
      {
       "file": ".claude/agents/solution-architect.md",
       "claimed": "role writer — returns §14.1 field set incl. order of magnitude",

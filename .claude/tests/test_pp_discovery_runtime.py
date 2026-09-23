@@ -186,15 +186,12 @@ class TestDegradation(unittest.TestCase):
                 text = fh.read()
             self.assertIn("extra_signals", text)
             self.assertIn("empty list", text, "%s does not state empty-signal degradation" % skill)
-        # `aisa-options` inherits the resolution/degradation from `aisa-frame` step 4b.
         with open(os.path.join(ROOT, ".claude", "skills", "aisa-options", "SKILL.md"),
                   encoding="utf-8") as fh:
             options = fh.read()
-        self.assertIn("extra_signals", options)
-        # handoff-v1 F3.4: /frame no longer runs the council, so Options carries the
-        # resolution itself instead of inheriting it from /frame step 4b.
-        self.assertIn("the same resolution `aisa-round` step 3.6 performs", options)
-        self.assertIn("empty list", options)
+        # handoff-v1 F5.4: Options runs no persona council, so no Discovery cue is resolved
+        # there; the technical author says so, and pulls the pack itself.
+        self.assertIn("receives no Discovery `extra_signals`", options)
 
     def test_status_degrades_without_a_question_bank(self):
         with open(os.path.join(ROOT, ".claude", "skills", "aisa-status", "SKILL.md"),

@@ -160,9 +160,9 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 
 **Goal**: Generate 3-5 applicable options — technologies and implementation patterns — each with its high-level architecture, order of magnitude, cost drivers, risks and reversibility; close with the aisa's reasoned recommendation, which is not the decision. **The technology lens enters here for the first time.**
 
-**Lenses active**: technology (new) + business + operations + financial (others read-only).
+**Lenses active**: technology (new, the author) + the specialist roles the router selects (`specialists.md`); the SU of every perspective is read.
 
-**Mode**: `council-independent`.
+**Mode**: `author + specialist reviewers` (handoff-v1 F5): the technical author writes and publishes the candidates by route; the router selects the specialist reviewers; each reviews the published revision on its mandate; `chairman-synthesis` disposes the findings (`orchestration.md` → *Options mode*).
 
 **Entry criteria**:
 - Phase 2 frame validated by sponsor **for the sentence currently on file** —
@@ -220,7 +220,7 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 
 **Lenses active**: none by default — the decision is the **user's**. `lens-technology` (via the solution-architect agent) may be consulted ad-hoc with `/decide --consult` for an advisory review of the chosen option.
 
-**Mode**: `interactive` (user-driven). No council synthesis runs in Decision — the council's work ended at Options; here the user chooses and justifies.
+**Mode**: `interactive` (user-driven). No synthesis runs in Decision — the review ended at Options; here the user chooses and justifies.
 
 **Entry criteria**:
 - Phase 3 options reviewed by sponsor.

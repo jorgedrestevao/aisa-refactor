@@ -1,9 +1,11 @@
-"""Phase E — council persona wiring checks.
+"""Agent wiring after the persona council (handoff-v1 F5.4).
 
-Asserts what the simplification claims: seven distinct personas, no framework
-duplication inside them, one centrally supplied set of council mechanics, and a
-chairman that still parses what the personas return. Deliberately small: no
-council driver, no fixture engagement, no new framework.
+The Phase E council checks (seven personas, a launch preamble, persona memory) are retired
+with the council: Discovery and Framing run an integrated analyst plus one reviewer (F3),
+Options an inline technical author plus the specialist reviewers the router selects (F5).
+What survives is asserted here: each agent is an independent perspective with a mandate,
+the return schema has one owner, the reviewers write nothing and see only what they are
+given, the architect stays out of the pre-technology phases, and memory is bound by role.
 
     python .claude/tests/test_council_wiring.py
 """
@@ -12,26 +14,9 @@ import os
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-PERSONAS = (
-    "business-analyst",
-    "operations-lead",
-    "user-advocate",
-    "data-steward",
-    "compliance-officer",
-    "cfo-lens",
-    "solution-architect",
-)
-DISCOVERY_PERSONAS = PERSONAS[:6]
-PERSONA_LENS = {
-    "business-analyst": "business",
-    "operations-lead": "operations",
-    "user-advocate": "user",
-    "data-steward": "data",
-    "compliance-officer": "governance",
-    "cfo-lens": "financial",
-    "solution-architect": "technology",
-}
+RETIRED = ("business-analyst", "operations-lead", "user-advocate", "data-steward",
+           "compliance-officer", "cfo-lens")
+REVIEWERS = ("lens-coverage-reviewer", "frame-reviewer", "fc-reviewer", "specialist-reviewer")
 SCHEMA_SECTIONS = (
     "### Headline",
     "### Evidence anchors",
@@ -47,242 +32,108 @@ def read(*parts):
         return fh.read()
 
 
-AGENTS = {p: read(".claude", "agents", p + ".md") for p in PERSONAS}
+AGENTS_DIR = os.path.join(ROOT, ".claude", "agents")
 FRAME = read(".claude", "skills", "aisa-frame", "SKILL.md")
 OPTIONS = read(".claude", "skills", "aisa-options", "SKILL.md")
+RETRO = read(".claude", "skills", "aisa-retro", "SKILL.md")
 CHAIRMAN = read(".claude", "skills", "chairman-synthesis", "SKILL.md")
 ORCH = read("library", "kernel", "orchestration.md")
-PREAMBLE = CHAIRMAN.split("## Council launch preamble")[1].split("\n## Hard rules")[0]
+ARCHITECT = read(".claude", "agents", "solution-architect.md")
+SPECIALIST = read(".claude", "agents", "specialist-reviewer.md")
+SCHEMA = CHAIRMAN.split("## Return schema (canonical)")[1].split("\n## Hard rules")[0]
 
 
-class TestPersonasExistAndStayDistinct(unittest.TestCase):
-    def test_all_seven_exist_with_identity_and_mandate(self):
-        for name, text in AGENTS.items():
-            self.assertIn("## Identity", text, name)
-            self.assertIn("## Mandate per phase", text, name)
-            self.assertIn("## Memory consulted", text, name)
-            for phase in ("**Framing**", "**Options**", "**Decision**"):
-                self.assertIn(phase, text, name + " missing " + phase + " mandate")
+class TestThePersonaCouncilIsRetired(unittest.TestCase):
+    def test_no_persona_agent_remains(self):
+        for name in RETIRED:
+            self.assertFalse(os.path.exists(os.path.join(AGENTS_DIR, name + ".md")), name)
 
-    def test_each_persona_states_what_it_challenges(self):
-        for name, text in AGENTS.items():
-            self.assertIn("What you challenge", text, name)
+    def test_no_skill_launches_personas(self):
+        for name, text in (("aisa-options", OPTIONS), ("aisa-retro", RETRO),
+                           ("aisa-frame", FRAME)):
+            for persona in RETIRED:
+                self.assertNotIn("`" + persona + "`,", text, name + " still lists " + persona)
+            self.assertNotIn("Launch the 7 personas", text, name)
+        self.assertNotIn("## Council launch preamble", CHAIRMAN)
+        self.assertNotIn("## Council-independent mode", ORCH)
 
-    def test_identities_are_not_interchangeable(self):
-        bodies = {}
-        for name, text in AGENTS.items():
-            body = text.split("## Identity")[1].split("\n## ")[0].strip()
-            self.assertTrue(len(body) > 200, name + " identity is too thin to be a voice")
-            self.assertNotIn(body, bodies, name + " duplicates " + str(bodies.get(body)))
-            bodies[body] = name
-
-    def test_bound_perspectives_are_preserved(self):
-        markers = {
-            "business-analyst": ("impact", "urgency", "stakeholder"),
-            "operations-lead": ("exception", "handoff", "documented process"),
-            "user-advocate": ("adoption", "accessibility", "context"),
-            "data-steward": ("owns the data", "sensitiv", "quality"),
-            "compliance-officer": ("audit", "access control", "compliance"),
-            "cfo-lens": ("cost", "payback", "run cost"),
-            "solution-architect": ("architect", "integration", "reversib"),
-        }
-        for name, needles in markers.items():
-            low = AGENTS[name].lower()
-            for needle in needles:
-                self.assertIn(needle.lower(), low, name + " lost '" + needle + "'")
+    def test_orchestration_declares_the_options_mode(self):
+        self.assertIn("## Options mode (handoff-v1 F5)", ORCH)
+        self.assertIn("**Agent = independent perspective + mandate.**", ORCH)
 
 
-class TestNoFrameworkDuplicationInPersonas(unittest.TestCase):
-    def test_no_persona_carries_the_return_schema(self):
-        for name, text in AGENTS.items():
-            self.assertNotIn("## Output format", text, name)
+class TestReviewersAreIndependentAndReadOnly(unittest.TestCase):
+    def test_every_reviewer_has_read_only_tools(self):
+        for name in REVIEWERS:
+            text = read(".claude", "agents", name + ".md")
+            self.assertIn("tools: [Read, Grep, Glob]", text, name)
+
+    def test_the_specialist_sees_only_its_mandate(self):
+        self.assertIn("The invocation gives you one path: the mandate", SPECIALIST)
+        self.assertIn("Read only what the mandate lists", SPECIALIST)
+        self.assertIn("do not see what any other reviewer said", SPECIALIST)
+        self.assertIn("the engagement root and the mandate path — nothing else", OPTIONS)
+
+    def test_the_specialist_returns_the_output_contract(self):
+        for key in ("task_id", "input_revision", "coverage", "findings", "assumptions",
+                    "unanswered", "recommended_actions", "sources_used"):
+            self.assertIn('"' + key + '"', SPECIALIST, key)
+        self.assertIn("Concedo / Contesto / Síntese proposta", SPECIALIST)
+
+    def test_reviewers_run_after_publication(self):
+        self.assertIn("No reviewer runs before this", OPTIONS)
+        self.assertIn("published **before** the reviewer runs", OPTIONS)
+
+
+class TestReturnSchemaHasOneOwner(unittest.TestCase):
+    def test_schema_lives_once_in_chairman_synthesis(self):
+        self.assertEqual(CHAIRMAN.count("## Return schema (canonical)"), 1)
+        for section in SCHEMA_SECTIONS:
+            self.assertIn(section, SCHEMA, "schema missing " + section)
+        self.assertIn("*Return schema* → the six sections", FRAME)
+
+    def test_no_agent_copies_the_schema(self):
+        for name in os.listdir(AGENTS_DIR):
+            text = read(".claude", "agents", name)
             for section in SCHEMA_SECTIONS:
-                self.assertNotIn(section, text, name + " still copies the return schema")
+                self.assertNotIn(section, text, name + " copies the return schema")
 
-    def test_no_persona_carries_council_mode_mechanics(self):
-        for name, text in AGENTS.items():
-            low = text.lower()
-            self.assertNotIn("## mode (council-independent)", low, name)
-            self.assertNotIn("in-flight", low, name)
-            self.assertNotIn("read-only by tool grant", low, name)
-            self.assertNotIn("every file under", low, name)
-
-    def test_no_persona_restates_kernel_state_semantics(self):
-        for name, text in AGENTS.items():
-            for token in ("verificado_em", "validade", "states.md", "was <id>", "append-only"):
-                self.assertNotIn(token, text, name + " restates kernel state semantics")
-
-    def test_personas_are_not_told_to_read_their_lens_skill(self):
-        for name, text in AGENTS.items():
-            # handoff-v1 F3.2: as perspectivas de Discovery vivem em
-            # `library/kernel/lens-checklists.md`; `lens-technology` continua skill.
-            self.assertTrue("You do not read that file" in text
-                            or "You do not read its `SKILL.md`" in text, name)
-            self.assertNotIn("lens-" + PERSONA_LENS[name] + "/SKILL.md", text, name)
-
-    def test_council_prompts_do_not_send_personas_to_the_lens_skill(self):
-        for name, skill in (("aisa-frame", FRAME), ("aisa-options", OPTIONS)):
-            self.assertNotIn("your lens skill at", skill, name)
-        # only Options still launches personas (handoff-v1 F3.4)
-        self.assertIn("do not tell", OPTIONS.lower())
-
-    def test_personas_shrank(self):
-        for name, text in AGENTS.items():
-            self.assertLess(len(text), 3200, name + " is " + str(len(text)) + " chars")
-
-
-class TestCommonMechanicsCentralized(unittest.TestCase):
-    def test_preamble_exists_once(self):
-        self.assertEqual(CHAIRMAN.count("## Council launch preamble"), 1)
-        # handoff-v1 F3.4: only Options launches personas; the /frame analyst writes the
-        # preamble's return schema, so it still names the preamble.
-        self.assertIn("Council launch preamble", OPTIONS)
-        self.assertIn("chairman-synthesis/SKILL.md", OPTIONS)
-        self.assertIn("Council launch preamble", FRAME)
-
-    def test_preamble_carries_every_required_context_item(self):
-        for needle in (
-            "Council-independent mode",
-            "<phase>",
-            "<round>",
-            "engagement",
-            "pack",
-            "_council-prep",
-            "evidence-index.md",
-            "agent-memory",
-            "Independence:",
-            "Technology neutrality:",
-            "Evidence integrity:",
-            "Mandate:",
-        ):
-            self.assertIn(needle, PREAMBLE, "preamble missing " + needle)
-
-    def test_independence_rule_present_once_in_the_launch_context(self):
-        self.assertIn("do not see, request or wait on any", PREAMBLE)
-        self.assertIn("Only the chairman writes", PREAMBLE)
-        for name, text in AGENTS.items():
-            self.assertNotIn("Only the chairman writes", text, name)
-
-    def test_orchestration_owns_the_persona_boundary(self):
-        self.assertIn("Common council mechanics live here", ORCH)
-        self.assertIn("not required to re-read its lens", ORCH)
-
-
-class TestSharedEvidenceInCouncil(unittest.TestCase):
-    def test_read_every_input_instruction_is_gone(self):
-        for name, skill in (("aisa-frame", FRAME), ("aisa-options", OPTIONS)):
-            self.assertNotIn("every file under `<engagement>/inputs/`", skill, name)
-
-    def test_index_is_the_source_map(self):
-        self.assertIn("_capture/evidence-index.md", PREAMBLE)
-        self.assertIn("source map", PREAMBLE)
-        self.assertIn("authoritative on conflict", PREAMBLE)
-
-    def test_no_persona_specific_evidence_routing(self):
-        low = (FRAME + OPTIONS + PREAMBLE).lower()
-        self.assertIn("do not build a per-persona evidence view", OPTIONS.lower())
-        self.assertIn("no evidence has been assigned to you", PREAMBLE.lower())
-        for banned in ("evidence bundle", "relevance score", "evidence router"):
-            self.assertNotIn(banned, low)
-
-    def test_absence_is_stated_not_assumed(self):
-        self.assertIn("raw `inputs/` is the evidence surface", PREAMBLE)
-        self.assertIn("raw `inputs/` is the evidence surface", FRAME)
-
-
-class TestPackCues(unittest.TestCase):
-    def test_cues_keep_attention_cue_semantics(self):
-        self.assertIn("cues, not a checklist", PREAMBLE)
-        self.assertIn("an uncovered cue is not a gap", PREAMBLE)
-
-    def test_cues_are_resolved_verbatim_and_degrade(self):
-        for skill in (FRAME, OPTIONS):
-            self.assertIn("extra_signals", skill)
-            self.assertIn("verbatim", skill)
-            self.assertIn("omit the cue line", skill.lower())
-            self.assertIn("no scoring, ranking, filtering, reordering or rewriting", skill)
-
-    def test_technology_is_excluded_from_the_discovery_cue_model(self):
-        self.assertIn("receives no Discovery `extra_signals`", OPTIONS)
-        self.assertIn("Pack knowledge is pull-based", AGENTS["solution-architect"])
-
-    def test_domain_knowledge_is_not_preloaded(self):
-        self.assertIn("Your pack access is pull-based and Options-only", OPTIONS)
-        self.assertIn("never place `decision-tree.md` or `domain-knowledge/` contents", OPTIONS)
-        self.assertIn(
-            "Never load the domain-knowledge base by default",
-            AGENTS["solution-architect"],
-        )
-        self.assertIn("Do not dump", PREAMBLE)
+    def test_chairman_parses_the_schema_it_owns(self):
+        self.assertIn("Parse the six sections", CHAIRMAN)
+        self.assertIn("- (none)", SCHEMA)
 
 
 class TestPhaseBoundaries(unittest.TestCase):
     def test_framing_stays_technology_neutral(self):
-        self.assertIn("[Framing, all personas] No vendor or product names", PREAMBLE)
-        # handoff-v1 F3.4: Framing runs the analyst + one reviewer, both vendor-neutral.
         self.assertIn("Framing is pre-technology — no vendor or product names", FRAME)
-        self.assertIn("no vendor or product names", read(".claude", "agents",
-                                                         "frame-reviewer.md").lower())
-        vendors = (
-            "power platform",
-            "outsystems",
-            "mendix",
-            "dataverse",
-            "canvas app",
-            "power automate",
-            "sharepoint",
-        )
-        for name in DISCOVERY_PERSONAS:
-            low = AGENTS[name].lower()
-            for vendor in vendors:
-                self.assertNotIn(vendor, low, name + " names a vendor")
+        self.assertIn("no vendor or product names",
+                      read(".claude", "agents", "frame-reviewer.md").lower())
 
     def test_solution_architect_is_not_launched_in_framing(self):
         self.assertIn("solution-architect is NOT invoked in Framing", FRAME)
-        self.assertIn("**Framing**: **not invoked**", AGENTS["solution-architect"])
-        self.assertIn("## Phase gate", AGENTS["solution-architect"])
+        self.assertIn("**Framing**: **not invoked**", ARCHITECT)
+        self.assertIn("## Phase gate", ARCHITECT)
 
-    def test_options_allows_technology_reasoning_only_for_the_architect(self):
-        self.assertIn("[Options, solution-architect]", PREAMBLE)
-        self.assertIn("[Options, the six Discovery personas]", PREAMBLE)
-        self.assertIn("Naming products belongs to `solution-architect` alone", PREAMBLE)
-
-
-class TestChairmanCompatibility(unittest.TestCase):
-    def test_chairman_parses_the_schema_it_owns(self):
-        for section in SCHEMA_SECTIONS:
-            self.assertIn(section, PREAMBLE, "schema missing " + section)
-        for label in ("Headline", "Evidence anchors", "Proposal", "Conflicts seen", "Risks"):
-            self.assertIn(label, CHAIRMAN, "chairman stopped consuming " + label)
-        self.assertIn("Parse the six sections", CHAIRMAN)
-
-    def test_chairman_no_longer_points_at_persona_files_for_the_schema(self):
-        self.assertNotIn("see persona agent files for the schema", CHAIRMAN)
-        self.assertNotIn("*Output format*", CHAIRMAN)
-
-    def test_empty_section_convention_survives(self):
-        self.assertIn("- (none)", PREAMBLE)
-
-    def test_synthesis_reasoning_untouched(self):
-        for step in (
-            "Step 1 — Read the persona outputs",
-            "Step 2 — Build the synthesis map",
-            "Step 2b — Dialectic hand-back",
-            "Step 3 — Assign Shared Understanding states",
-        ):
-            self.assertIn(step, CHAIRMAN)
+    def test_the_architect_authors_inline_and_pulls_the_pack(self):
+        self.assertIn("inline, not as a Task subagent", OPTIONS)
+        self.assertIn("Pack knowledge is pull-based", ARCHITECT)
+        self.assertIn("Never load the domain-knowledge base by default", ARCHITECT)
+        self.assertIn("receives no Discovery `extra_signals`", OPTIONS)
 
 
-class TestMemoryBinding(unittest.TestCase):
-    def test_each_persona_keeps_its_own_memory_paths(self):
-        for name, text in AGENTS.items():
-            self.assertIn("_universal/" + name + "/", text)
-            self.assertIn("_tenant/<tenant>/" + name + "/", text)
-            self.assertIn("diary.md", text)
+class TestMemoryByRole(unittest.TestCase):
+    def test_the_architect_reads_its_role_memory(self):
+        self.assertIn("_universal/architect/", ARCHITECT)
+        self.assertIn("_tenant/<tenant>/architect/", ARCHITECT)
 
-    def test_memory_is_a_pointer_not_a_dump(self):
-        self.assertIn("Memory (optional)", PREAMBLE)
-        self.assertIn("A pointer, never contents", OPTIONS)
+    def test_retro_writes_by_role_after_curation(self):
+        self.assertIn(".claude/agent-memory/_universal/<role>/diary.md", RETRO)
+        self.assertIn("NUNCA escrever em agent-memory sem aprovação humana", RETRO)
+
+    def test_a_reviewer_gets_memory_only_through_its_mandate(self):
+        self.assertIn("files of your role's memory", SPECIALIST)
+        spec = read("library", "kernel", "specialists.md")
+        self.assertIn("never another role's", spec)
 
 
 if __name__ == "__main__":

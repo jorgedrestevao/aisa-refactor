@@ -136,6 +136,17 @@ class Mandato(unittest.TestCase):
             self.assertEqual(k["pack"], "pp")
             self.assertRegex(k["pack_version"], r"^\d+\.\d+\.\d+$")
 
+    def test_q8_the_role_memory_enters_only_through_the_mandate_of_that_role(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = publicado(tmp)
+            mem = ".claude/agent-memory/_universal/security-operation/anti-patterns.md"
+            d = RV["mandate"](eng, "security-operation", ["x?"], knowledge=[mem])["data"]
+            self.assertEqual(d["knowledge_refs"][0]["kind"], "memory")
+            self.assertEqual(d["knowledge_refs"][0]["sha256"], O["digest"](ROOT / mem))
+            with self.assertRaises(RV["ReviewError"]) as err:
+                RV["mandate"](eng, "ux-process", ["x?"], knowledge=[mem])
+            self.assertEqual(err.exception.code, "INTEGRITY_FAILURE")
+
     def test_t29_a_unit_outside_the_active_pack_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = publicado(tmp)

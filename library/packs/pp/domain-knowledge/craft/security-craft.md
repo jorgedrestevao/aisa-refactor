@@ -130,7 +130,7 @@ From the approval workflow transitions, one row per transition the process actua
   requester is a **question for the obligation in scope** — cite the regulation, contract or policy that
   splits them, and record the split as a permission model the target must enforce. Uncited, no split is
   imposed: a generic separation of duties invents a control nobody asked for
-  (`agent-memory/_universal/compliance-officer/universal-constraints.md`)
+  (`agent-memory/_universal/security-operation/universal-constraints.md`)
 - Cancel, and any other post-transition correction: the role the requirement names, with the audited action
   it produces. No role holds it by default
 - Export: the role(s) a requirement authorises, and the classification of what leaves. Export is privileged

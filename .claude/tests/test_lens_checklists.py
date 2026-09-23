@@ -133,13 +133,18 @@ class SkillsRetiradas(unittest.TestCase):
                 falhas.append("{}: {}".format(p.relative_to(ROOT), m.group(0)))
         self.assertEqual(falhas, [])
 
-    def test_the_personas_point_at_their_section(self):
-        for agente, titulo in (("business-analyst", "Business"), ("cfo-lens", "Financial"),
-                               ("compliance-officer", "Governance"),
-                               ("data-steward", "Data"), ("operations-lead", "Operations"),
-                               ("user-advocate", "User")):
-            t = (ROOT / ".claude" / "agents" / (agente + ".md")).read_text(encoding="utf-8")
-            self.assertIn("`library/kernel/lens-checklists.md` → *{}*".format(titulo), t)
+    def test_the_retired_personas_left_their_memory_to_the_roles(self):
+        # handoff-v1 F5.4 (Q4, Q7): the six Discovery personas are retired; their perspective
+        # lives in this file (and the specialist roles), their memory under the analyst or role.
+        mem = ROOT / ".claude" / "agent-memory" / "_universal"
+        for agente, papel in (("business-analyst", "analyst"), ("operations-lead", "analyst"),
+                              ("cfo-lens", "cost-estimate"), ("compliance-officer",
+                                                              "security-operation"),
+                              ("data-steward", "data-integration"), ("user-advocate",
+                                                                     "ux-process")):
+            self.assertFalse((ROOT / ".claude" / "agents" / (agente + ".md")).exists(), agente)
+            self.assertTrue(list((mem / papel).glob("*.md")), papel)
+        self.assertTrue(list((mem / "analyst").glob("business-analyst-*.md")))
 
 
 if __name__ == "__main__":

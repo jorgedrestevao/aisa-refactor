@@ -67,7 +67,7 @@ class OFrameSemConselho(unittest.TestCase):
 class ASinteseAplicaAsRegras(unittest.TestCase):
 
     def test_framing_inputs_carry_the_evidence_rules(self):
-        sec = flat(CHAIR.split("## Framing inputs")[1].split("## Council launch preamble")[0])
+        sec = flat(CHAIR.split("## Framing inputs")[1].split("## Options inputs in a handoff-v1 engagement")[0])
         self.assertIn("Agreement is not evidence", sec)
         self.assertIn("`partes = analista∧revisor`", sec)
         self.assertIn("is not settled here", sec)

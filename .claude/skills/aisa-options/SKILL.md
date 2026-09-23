@@ -1,6 +1,6 @@
 ---
 name: aisa-options
-description: Transition Framing → Options. Checks Framing's exit gate, flips _state.json to phase=options/round=O-01, launches 7 council personas in parallel via the Task tool (council-independent mode — adds solution-architect for the first time), then invokes chairman-synthesis to write options.md and synthesised Shared Understanding rows.
+description: Transition Framing → Options. Checks Framing's exit gate, flips _state.json to phase=options/round=O-NN, has the technical author write and publish the candidates by route (review.py), routes the independent review to the specialists the risk calls for (one specialist-reviewer subagent per published mandate), then invokes chairman-synthesis to dispose the findings and write options.md and the Shared Understanding rows.
 ---
 
 # aisa-options
@@ -16,7 +16,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 - **From**: `phase: framing`.
 - **To**: `phase: options`, `round: O-01` (subsequent options rounds become `O-02`, `O-03`, …).
-- **Mode**: `council-independent` with **7** personas (the 6 Discovery personas + `solution-architect`). The solution-architect activates here for the first time in the engagement — this is where vendor/product naming becomes allowed (via `lens-technology`).
+- **Mode** (handoff-v1 F5): the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`). No persona council runs.
 
 ## Inputs (read)
 
@@ -24,16 +24,15 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 - `<engagement>/frame.md` (the agreed problem sentence from Framing).
 - `<engagement>/lens-outputs/*.md` (incl. any prior chairman-synthesis logs).
 - `library/kernel/phases.md` (Options entry criteria).
-- `<engagement>/_capture/evidence-index.md` (the shared evidence surface handed to every persona).
-- `library/packs/<pack>/pack.yaml` — `lenses_config.<lens>.extra_signals` as attention cues for the six
-  Discovery personas. `decision-tree.md` and `domain-knowledge/*.md` are **not** read here: they are
-  `solution-architect`'s to pull, selectively, for the option it is actually evaluating
-  (`library/kernel/orchestration.md` → *Pack context*).
-- `.claude/skills/chairman-synthesis/SKILL.md` → *Council launch preamble* (the persona prompt is built from it).
+- `<engagement>/_capture/evidence-index.md` (the shared evidence surface).
+- `<engagement>/_design/candidates.json` and `_design/reviews/` (published by `review.py`).
+- `library/kernel/specialists.md` (roles, router rules, output contract).
+- `decision-tree.md` and `domain-knowledge/*.md` are the technical author's to pull, selectively, for the option it is actually evaluating (`library/kernel/orchestration.md` → *Pack context*).
 
 ## Outputs (written, via chairman-synthesis except where noted)
 
 - `<engagement>/_state.json` — through the coordinator (this skill; `library/kernel/orchestration.md` → *Writing an authority*).
+- `<engagement>/_design/candidates.json` (+ `_design/history/`), `_design/reviews/REV-NNNN.mandate.json`, `REV-NNNN.json` and `ledger.json` — only through `review.py` (this skill and chairman-synthesis).
 - `<engagement>/options.md` (chairman-synthesis).
 - New rows in `<engagement>/shared-understanding.md` (chairman-synthesis).
 - `<engagement>/lens-outputs/chairman-synthesis-O-<NN>.md` (chairman-synthesis).
@@ -113,106 +112,55 @@ If a soft criterion is red and no `--override` was passed → stop with a one-li
    episode to `story.md` ("voltámos a pôr as alternativas na mesa — <porquê>").
 3. Update the SU header `Fase actual: Options` and `Última actualização: <ISO timestamp>`.
 
-### 4. Compose thematic Shared Understanding excerpts
+### 4. Author the candidates (inline — the technical author)
 
-For each of the 7 personas, slice the SU into a thematic excerpt (the council stays in Options until F5; `/frame` no longer runs it — handoff-v1 F3.4):
+The session runs the technical author's mandate, `.claude/agents/solution-architect.md` — inline, not as a Task subagent: it needs the whole engagement, and the candidates are the product (`docs/handoff-v1/F5/DESENHO.md` §0, Q1). It reads the **full** Shared Understanding (resolved rows and their resolutions included — closed conflicts are not re-litigated), `frame.md`, `decisions.md`, `context.json`, the shared evidence (`<engagement>/_capture/evidence-index.md`; when absent, the explicit line *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*), the process synopsis when it exists (`_capture/process-model.md` §4 — the compact cross-source reconstruction; markers OBSERVED / INFERRED / HYPOTHESIS / UNKNOWN are evidence markers, not states; open its detail sections or a raw source only when material to your confidence), and its memory `.claude/agent-memory/_universal/architect/*.md` — a pointer, never contents in a prompt. Its pack access is pull-based and Options-only: the `decision-tree.md` stage it is executing and the `domain-knowledge/` it actually needs, cited. The technical author receives no Discovery `extra_signals`.
 
-| Persona | Slice |
-|---|---|
-| business-analyst | All rows where `lens = business` + any row touching shadow stakeholders, KPIs, sponsor authority |
-| operations-lead | All rows where `lens = operations` + any row touching as-is process steps, volumes, cycle times |
-| user-advocate | All rows where `lens = user` + any row touching personas, devices, accessibility |
-| data-steward | All rows where `lens = data` + any row touching sensitivity, ownership, retention |
-| compliance-officer | All rows where `lens = governance` + every Conflicted row + every row touching audit/access control |
-| cfo-lens | All rows where `lens = financial` + any row touching cost, volume × time anchors |
-| solution-architect | The **full** Shared Understanding (the architect needs the cross-lens picture) + the pack metadata files listed in *Inputs* + `frame.md` |
+1. `python library/kernel/tools/review.py draft-candidates --engagement <slug> --json` → edit the draft's `candidates.json` (`handoff-candidates/1`): each candidate `O-NNN` with its option class, technology and form, high-level architecture, order of magnitude with its source, risks, reversibility, premises (SU ids) and sources; at the set level the criteria, the exclusions with their reason and the route.
+2. The route is `_state.json.workflow.route`, and the engine enforces its rule (`library/kernel/handoff-contract.md` → *Options candidates*):
 
-Each excerpt is a Markdown fragment with the section headers preserved. **Every excerpt must ALSO include the resolved rows and their resolutions** (rows marked `resolved →` plus the `C-` rows carrying `(was …)`), under a heading "Resoluções já fechadas (não re-litigar)" — otherwise personas whose slice missed a resolution re-raise closed conflicts (observed in live validation).
+   | Route | What the candidates are |
+   |---|---|
+   | `solution-choice` | the options that really apply; fewer than three only with `reduction_reason` |
+   | `platform-constrained` | variations of architecture and implementation **inside** the imposed platform (`imposed_platform`, `imposition_ref` = the route's authority); one viable candidate is admitted with its reason — no artificial shortlist of platforms |
+   | `change-impact` | the delta on a `baseline_ref`, with its `impact_refs` and the decisions to reopen |
 
-Each excerpt is saved transiently under `<engagement>/lens-outputs/_council-prep/O-<NN>-<persona>.md` for the audit trail.
+3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, a missing architecture or reversibility) stays visible and may be published.
+4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed.
 
-### 4b. Assemble the common council context
+### 5. Route the review and publish the mandates
 
-Bookkeeping only — the same resolution `aisa-round` step 3.6 performs, reused here. The orchestrator
-resolves paths and one manifest key; it decides nothing about what any of it means.
+1. `review.py route --engagement <slug> --json` → every role evaluated: `selected` (with the evidence that fired it) and `not_called` (with what was checked). Both go into the synthesis log; a role is never dropped silently.
+2. For each selected role, the author maps the material questions to it — each with its closing condition — and names the scope ids, the pack units it judged relevant and, when useful, files of that role's memory (`.claude/agent-memory/_universal/<role>/`): `review.py mandate --engagement <slug> --role <role> --question "<…>" [--question …] --scope <id> [--knowledge <path> …] --json`. The mandate is published **before** the reviewer runs; a `BLOCKING_GAP` refusal (no published revision, or a candidates draft open) means publish first.
 
-a. **Shared evidence** — `<engagement>/_capture/evidence-index.md`. Present → carry its path into every
-   persona prompt. Absent → carry the explicit line
-   *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*; never let a persona
-   assume a shared capture exists. Name likewise any source reported `failed` or `skipped`. Do **not** rank, assign, summarize or bundle sources,
-   and do not build a per-persona evidence view: the index is a source map, and which of it matters
-   is the persona's judgement.
-b. **Pack attention cues** — read `_state.json.pack`, resolve `library/packs/<pack>/pack.yaml` →
-   `lenses_config.<lens>.extra_signals` for the lens each Discovery persona is the council voice of
-   (business-analyst → business · operations-lead → operations · user-advocate → user · data-steward →
-   data · compliance-officer → governance · cfo-lens → financial). Missing `pack` key, missing
-   `lenses_config.<lens>`, missing `extra_signals` or an empty list → inject nothing for that persona
-   and omit the cue line. A `pack.yaml` that does not parse is a visible failure — report it and stop.
-   Pass the tokens through **verbatim**: no scoring, ranking, filtering, reordering or rewriting.
-   **`solution-architect` receives no Discovery `extra_signals`.** Its pack access is pull-based and
-   its own (see step 5).
-c. **Memory pointer** — `.claude/agent-memory/_universal/<persona>/*.md` (incl. `diary.md`) and
-   `_tenant/<tenant>/<persona>/*.md`. A pointer, never contents.
+### 5a. Launch one specialist reviewer per mandate
 
-### 5. Launch the 7 personas in parallel via the Task tool
+Send **one assistant message with one Task call per mandate** (they read the same published revision and do not depend on each other). Each Task call:
 
-Send **one assistant message with 7 Task tool calls** so they execute concurrently. Each Task call:
+- `subagent_type`: `specialist-reviewer`;
+- `prompt`: the engagement root and the mandate path — nothing else. No author reasoning, no other review, no summary of the candidates.
 
-- `subagent_type`: persona name (`business-analyst`, `operations-lead`, `user-advocate`, `data-steward`, `compliance-officer`, `cfo-lens`, `solution-architect`).
-- `description`: e.g., "Options O-01 — architecture proposal".
-- `prompt`: the **council launch preamble**, authored once in `.claude/skills/chairman-synthesis/SKILL.md`
-  → *Council launch preamble*, used verbatim with these substitutions:
-  - `<phase>` = `Options` · `<round>` = `O-<NN>` · `<slug>`, `<pack>`, `<engagement>` = this engagement
-  - `<persona>` = the persona being launched; its `_council-prep` excerpt path is `O-<NN>-<persona>.md`
-  - keep the `frame.md` read — Options personas reason against the agreed problem
-  - shared evidence · pack cues · memory pointer = whatever step 4b resolved for that persona
-  - technology-neutrality selector: `[Options, the six Discovery personas]` for the six;
-    `[Options, solution-architect]` for the architect
+Save each return as `<engagement>/lens-outputs/_council-prep/O-<NN>-REV-NNNN.json` (audit trail) and publish it: `review.py receive --engagement <slug> --task REV-NNNN --file <that path>`. An `INTEGRITY_FAILURE` (contract, coverage, a source outside the mandate) goes back to the same reviewer once, with the refusal reason; a `STALE_INPUT` means a new mandate on the current base.
 
-  For `solution-architect` only, append one line naming the resolved pack root:
+### 5b. Dialectic round (conditional, bounded by the engine)
 
-  ```
-  Your pack access is pull-based and Options-only (see your agent file → *Lens binding*). The active
-  pack lives at `library/packs/<pack>/`.
-  ```
-
-  That is the whole architect addition. Its option-set mandate is in its agent file; do not restate it
-  here, and never place `decision-tree.md` or `domain-knowledge/` contents in the prompt — the
-  architect pulls what it needs.
-
-  The preamble is otherwise the whole prompt. Do not restate its mechanics, and do not tell a persona
-  to read its lens `SKILL.md` (`library/kernel/orchestration.md` → *Persona boundary*).
-
-Wait for all 7 to return. Collect their tool results verbatim.
-
-### 5b. Dialectic round (conditional)
-
-If chairman-synthesis returns material divergences (its Step 2b), run the antithesis round BEFORE it writes anything: for each divergence (max 3 per round), launch 2 Task calls in parallel — each side's persona receives the other's full thesis with this prompt:
-
-```
-Estás na ronda dialéctica de <fase> <ronda> do engagement <slug>. A tua proposta diverge da
-da persona <X> neste ponto: <divergência, citada verbatim com ids>.
-Lê a tese completa dela (em anexo). A tua tarefa NÃO é defender a tua — é atacar a tese
-mais forte dela com a melhor evidência disponível, e depois dizer honestamente:
-(1) onde ela tem razão; (2) onde falha e porquê (com ids/inputs);
-(3) a síntese que proporias se tivesses de assinar as duas.
-Devolve nas secções: Concedo / Contesto / Síntese proposta. Máx. 300 palavras.
-```
-
-Collect the `Concedo / Contesto / Síntese proposta` returns and re-invoke chairman-synthesis with theses + antitheses. Cost cap: ≤6 extra calls per round; if there are more than 3 material divergences, take the 3 with the highest impact on the phase artefact and record the rest as Conflicted directly.
+When chairman-synthesis reports a material divergence (two findings, or a finding against the author's candidate), open it — `review.py diverge --engagement <slug> --finding <REV-NNNN.Fnn> [--finding …] --subject "<…>"` — and run the antithesis: two `specialist-reviewer` Task calls in parallel, each receiving its own mandate path and the other side's review path, with the *Antithesis mode* of its agent file. Record each call: `review.py dialectic-call --divergence DIV-NN --outcome synthesis_accepted|contested [--synthesis "<…>"] [--locator <…>]`. The engine keeps the cap (3 divergences × 2 calls per candidate revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a factual divergence is never synthesised without a locator. An escalated divergence goes to the owner through `AskUserQuestion` — never accepted by exhaustion.
 
 ### 6. Hand off to chairman-synthesis
 
-Invoke `chairman-synthesis` with the 7 persona outputs and phase = `options`, round = `O-<NN>`. The chairman writes `options.md` (≥3 options) and the new SU rows.
+Invoke `chairman-synthesis` with phase = `options`, round = `O-<NN>`; it reads the published candidates and `review.py show-reviews` (*Options inputs in a handoff-v1 engagement*), disposes every finding of a current review through `review.py dispose`, and writes `options.md` and the new SU rows.
 
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' '_design/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
-Four contract checks before reporting to the user, all owned by `chairman-synthesis`:
+When a finding is accepted by changing a candidate, the author publishes the next revision (step 4); `show-reviews` then marks the old reviews `stale` and names the findings to revalidate — new mandates go only to the roles those findings belong to. A review of an earlier revision never becomes a review of the new one by copy.
 
-1. **Every option names its technology**, and a platform option names its **form** — surface and store, one option per form (`decision-tree.md` §14.1; for `pp`, `decision-model/alternatives-register.md` §1.2). A round whose architect returned a platform class with no form-level candidate is reported as such in `Summary` and raised as an open question — a form is never invented to fill the column.
+Five contract checks before reporting to the user, all owned by `chairman-synthesis`:
+
+1. **Every option names its technology**, and a platform option names its **form** — surface and store, one option per form (`decision-tree.md` §14.1; for `pp`, `decision-model/alternatives-register.md` §1.2). A round whose author produced a platform class with no form-level candidate is reported as such in `Summary` and raised as an open question — a form is never invented to fill the column.
 2. **Every option carries an order of magnitude with its source marker**, or `ORDER OF MAGNITUDE UNAVAILABLE — <what is missing>`. A band with no source is invented; a blank cell is a contract breach.
 3. **The round closes with the recommendation** — the option, what separates it from its siblings, what it rests on, what would flip it. Where the terminal is *decision blocked* or *multiple defensible options*, `no recommendation — <what would produce one>`. The recommendation is the aisa's; the choice is the owner's, at `/decide`.
 4. **The artefact is within budget** (~1 500 words of prose, ≤120 per option). The full field set, the concern coverage and the `DO-NOTHING` / `PROCESS-CHANGE` class coverage live in `lens-outputs/chairman-synthesis-O-<NN>.md`.
+5. **Every finding of a current review has a disposition** (`show-reviews` → `open_findings` holds only `deferred` / `escalated` ones, shown to the user), and every mandate was received or is reported as not received.
 
 ### 7. Present options to the user
 
@@ -248,10 +196,8 @@ A seguir: ensaiar antes de escolher → `/simulate`; o obituário do projecto �
 
 ## Notes
 
-- **Concurrency**: the 7 personas must launch in a single assistant message (one message with 7 parallel Task tool uses). Whether the Options council keeps its personas is decided in F5 by the subagent rule (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
-- **One prompt template.** Every persona prompt is the same preamble with substitutions (plus the two
-  architect-only lines); the return schema inside it is owned by `chairman-synthesis`, its only consumer.
-- **Domain knowledge is pulled, never preloaded.** The orchestrator does not read `decision-tree.md` or
-  `domain-knowledge/` and never puts their contents in a prompt — pointers only.
-- **solution-architect is the lone vendor-naming surface.** The other 6 personas keep returning *needs and constraints*, never vendor choices, per `.claude/rules/no-tech-mention-before-options.md` (they run isolated and never see the solution-architect's output in-flight). The chairman, when synthesising, may name a vendor only where it is anchored to a solution-architect output; cross-lens rows not pinned to such an anchor stay technology-neutral.
-- **Idempotence**: re-running `/options` produces O-02, O-03, …. The previous `options.md` is overwritten; each round's `chairman-synthesis-O-<NN>.md` is preserved.
+- **Subagents** (README → *Regras de execução*; `docs/handoff-v1/F5/DESENHO.md` §0): the author and the chairman run inline — they need the session's context and their detail is the product. The specialist reviewers are subagents, one per published mandate, in parallel with each other and never with the author, who publishes first; they must **not** have the author's context nor each other's, and only their findings come back. The six Discovery personas are retired (handoff-v1 F5.4, Q4); their perspectives live in `library/kernel/lens-checklists.md` (Discovery) and `library/kernel/specialists.md` (Options).
+- **Reviews, not votes.** How many reviewers agree never changes an epistemic state; a factual finding changes the SU only through a locator (`chairman-synthesis` → *Framing inputs*, the same rules).
+- **Domain knowledge is pulled, never preloaded.** The author pulls what it needs; a reviewer reads only the pack units its mandate lists, with their `sha256`.
+- **The technical author is the lone vendor-naming surface** before the reviews; a specialist names a technology only as the candidates already name it.
+- **Idempotence**: re-running `/options` produces O-02, O-03, …. The previous `options.md` is overwritten; each round's `chairman-synthesis-O-<NN>.md` is preserved; the candidates move by revision, never overwritten in place.

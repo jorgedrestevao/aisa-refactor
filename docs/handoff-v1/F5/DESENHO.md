@@ -4,7 +4,7 @@ Plano: `../plan/05_FASES.md` F5; `../plan/03_AGENTES_E_PACK.md` (papéis e manda
 
 Objectivo: provar o ciclo completo em escala pequena antes da expansão.
 
-Decisões do mantenedor (2026-09-23), todas na opção recomendada:
+Decisões do mantenedor (2026-09-23), todas na opção recomendada (Q7–Q8 tomadas no início da F5.4):
 
 | # | Decisão | Escolha |
 | --- | --- | --- |
@@ -14,6 +14,8 @@ Decisões do mantenedor (2026-09-23), todas na opção recomendada:
 | Q4 | Personas e `/retro` | As seis personas de Discovery são retiradas (sem consumidor), com cobertura registada. O `/retro` passa a escrever a memória por papel (analista, arquitecto, especialistas), com curadoria humana. O `solution-architect` fica como mandato do autor técnico |
 | Q5 | Conhecimento do pack (T29) | O mandato publica as unidades do pack permitidas (caminho + `sha256` + versão do pack); o parecer devolve `sources_used` com as mesmas referências; o motor verifica que cada fonte usada estava no mandato e não mudou. Reusam-se os metadados existentes; um índice por competência fica para quando for preciso |
 | Q6 | Primeiro ensaio T43 | Um pacote experimental da fixture `fx-hv1-02` (ficheiros + `sha256`, rotulado incompleto) e um subagente de contexto novo que só recebe os caminhos do pacote; perguntas bloqueantes e lacunas registadas no relatório. Julgamento assistido documentado; não vale como aceitação |
+| Q7 | Memória das personas retiradas (F5.4) | Migrada por papel com `git mv` (história preservada): `business-analyst` + `operations-lead` → `analyst/` (ficheiros com o prefixo da persona de origem); `solution-architect` → `architect/`; `data-steward` → `data-integration/`; `compliance-officer` → `security-operation/`; `user-advocate` → `ux-process/`; `cfo-lens` → `cost-estimate/`. O `/retro` escreve nestas pastas |
+| Q8 | Quem lê a memória por papel (F5.4) | Os papéis inline (analista em `/round`/`/frame`, arquitecto em `/options`) leem a sua pasta como ponteiro; um revisor especialista só a recebe se o mandato a listar em `knowledge_refs`, com `sha256` (mesma regra T29), e só a do seu papel |
 
 ## 0. Subagentes e paralelismo — avaliados antes de definidos
 

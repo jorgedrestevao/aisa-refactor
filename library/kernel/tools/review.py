@@ -46,6 +46,8 @@ SPECIALISTS = _HERE.parent / "specialists.md"
 REVIEWS_DIR = "_design/reviews"
 REV_RE = re.compile(r"^(REV-\d{4})\.mandate\.json$")
 PACKS_DIR = _HERE.parent.parent / "packs"
+REPO = PACKS_DIR.parent.parent
+MEMORY_DIR = ".claude/agent-memory/_universal"
 OUTPUT_CONTRACT = ["task_id", "input_revision", "coverage", "findings", "assumptions",
                    "unanswered", "recommended_actions", "sources_used"]
 PROHIBITED = ["escrever numa autoridade", "autorizar pelo cliente", "confirmar um facto por "
@@ -472,13 +474,17 @@ def mandate(eng, role: str, questions, knowledge=(), objective: str = "",
     pack = json.loads((eng / "_state.json").read_text(encoding="utf-8")).get("pack", "")
     kref = []
     for k in knowledge:
-        path = (PACKS_DIR.parent.parent / k).resolve()
+        path = (REPO / k).resolve()
         base = (PACKS_DIR / pack).resolve()
-        if base not in path.parents or not path.is_file():
-            raise ReviewError("unidade do pack fora do pack activo ou inexistente: {}".format(k),
-                              W["INTEGRITY_FAILURE"], {"ref": k})
-        kref.append({"ref": k, "sha256": _digest(path), "pack": pack,
-                     "pack_version": _pack_version(pack)})
+        memoria = (REPO / MEMORY_DIR / role).resolve()
+        if base in path.parents and path.is_file():
+            kref.append({"ref": k, "sha256": _digest(path), "kind": "pack", "pack": pack,
+                         "pack_version": _pack_version(pack)})
+        elif memoria in path.parents and path.is_file():
+            kref.append({"ref": k, "sha256": _digest(path), "kind": "memory", "role": role})
+        else:
+            raise ReviewError("fonte fora do pack activo e da memória do papel, ou inexistente: "
+                              "{}".format(k), W["INTEGRITY_FAILURE"], {"ref": k})
     inputs = [CAND_PATH, "shared-understanding.md", "frame.md", "decisions.md",
               "_design/functional-contracts.json"]
     irefs = [{"ref": r, "sha256": _digest(eng / r)} for r in inputs if _digest(eng / r)]
@@ -526,7 +532,7 @@ def read_review(eng, rid: str) -> dict:
 
 
 def _source_digest(eng: Path, ref: str) -> str:
-    base = PACKS_DIR.parent.parent if ref.startswith("library/") else eng
+    base = REPO if ref.startswith(("library/", ".claude/")) else eng
     return _digest(base / ref)
 
 
@@ -598,7 +604,7 @@ def receive(eng, rid: str, payload: dict) -> dict:
     rev["received_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     texto = json.dumps(rev, ensure_ascii=False, indent=1) + "\n"
     rs = {s["ref"]: s["sha256"] for s in rev["sources_used"]
-          if not s["ref"].startswith("library/")}
+          if not s["ref"].startswith(("library/", ".claude/"))}
     rs[mrel] = rev["mandate_sha256"]
     recibo = O["run"](eng, "review-{}".format(hashlib.sha256(texto.encode("utf-8"))
                                               .hexdigest()[:16]),

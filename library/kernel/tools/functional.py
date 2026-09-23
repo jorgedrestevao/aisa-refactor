@@ -60,7 +60,9 @@ OWNER_RE = re.compile(r"^owner\s*\((?P<quem>[^)]+)\)")
 NOT_HUMAN = ("executor", "agente", "agent", "claude", "chairman", "persona", "revisor",
              "reviewer", "business-analyst", "operations-lead", "user-advocate",
              "data-steward", "compliance-officer", "cfo-lens", "solution-architect",
-             "frame-reviewer", "fc-reviewer", "lens-coverage-reviewer", "[âmbito autorizado]")
+             "frame-reviewer", "fc-reviewer", "lens-coverage-reviewer", "specialist-reviewer",
+             "architecture-review", "data-integration", "security-operation", "ux-process",
+             "cost-estimate", "[âmbito autorizado]")
 
 
 def _mod(name: str) -> dict:

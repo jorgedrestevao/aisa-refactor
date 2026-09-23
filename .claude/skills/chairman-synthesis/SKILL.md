@@ -1,13 +1,13 @@
 ---
 name: chairman-synthesis
-description: Synthesize the returns of a phase into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame (the integrated analyst's proposal + one independent reviewer's findings) and by aisa-options (the parallel council personas). The only writer to the Shared Understanding in council-independent mode. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
+description: Synthesize the returns of a phase into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame (the integrated analyst's proposal + one independent reviewer's findings) and by aisa-options (the published candidates + the published specialist reviews, handoff-v1 F5). The only writer of the phase's Shared Understanding rows, always into the caller's draft. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
 ---
 
 # chairman-synthesis
 
 ## Role
 
-You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of the council. The personas (business-analyst, operations-lead, user-advocate, data-steward, compliance-officer, cfo-lens, and, in Options, solution-architect) ran in parallel as Task subagents in the calling skill (`aisa-frame` / `aisa-options`). They returned their structured proposals in the schema this skill owns (*Council launch preamble* below — the launch prompt carries it to them; the persona files do not). You now read them all side by side and produce:
+You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). No persona council runs (retired in handoff-v1 F3.4 and F5.4). You produce:
 
 1. New rows in `<engagement>/shared-understanding.md`.
 2. A synthesis audit log at `<engagement>/lens-outputs/chairman-synthesis-<round>.md`, where `<round>` is the current round id from `_state.json` (`F-<NN>` in Framing, `O-<NN>` in Options — e.g., `chairman-synthesis-F-01.md`).
@@ -19,7 +19,7 @@ You are executing the **chairman** role described in `.claude/agents/chairman.md
 
 ## Inputs
 
-- The N persona outputs collected by the calling skill, each shaped per the return schema in *Council launch preamble* below.
+- The returns collected by the calling skill: in Framing the analyst's proposal in the *Return schema* below and the reviewer's findings; in Options the published candidates and reviews (`review.py show-candidates` / `show-reviews`).
 - `<engagement>/context.json`, `<engagement>/shared-understanding.md`, `<engagement>/decisions.md`, `<engagement>/_state.json`.
 - `<engagement>/_capture/process-model.md` §4 (the process synopsis, when it exists) — in Framing, to project the *What must survive into Options* block from SU ids; the synopsis itself is evidence, never a source of frame.md entries without an SU row.
 - Pack metadata if needed: `library/packs/<pack>/pack.yaml`, plus `frame.md` (Options/Decision) and the previous round's synthesis log (if any).
@@ -51,62 +51,15 @@ When `_state.json` has the `workflow` block, Options runs no persona council. Yo
 - **Agreement is not evidence.** Two reviewers agreeing never raises a state; a `fact` finding changes the SU only by the rules of *Framing inputs* above (locator → correction by evidence; none → `Conflicted`), published by the coordinator.
 - **Material divergence** → `review.py diverge` opens it and `review.py dialectic-call` records each antithesis call; the engine keeps the cap (3 divergences × 2 calls per revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a `fact` divergence is never synthesised without a locator. Escalated divergences go to the owner through `AskUserQuestion`.
 - `options.md` projects the published candidates and the dispositions; the recommendation is aisa's, never the decision.
+- Read every step below with "persona" meaning the technical author (its published candidates) or a specialist review (by role); *Step 2b* hands divergences back to `aisa-options` step 5b, which runs them through `review.py diverge` / `dialectic-call`.
 
-## Council launch preamble (canonical)
+## Return schema (canonical)
 
-`aisa-options` step 5 builds **every** persona Task prompt from this one block (`aisa-frame` no longer launches personas; its analyst writes the return schema at the foot of this block),
-substituting the `<…>` placeholders. It is authored here because the schema at its foot has exactly one
-consumer — the synthesis procedure below — and a schema authored away from its parser drifts from it.
-No persona file carries any of this (`library/kernel/orchestration.md` → *Council-independent mode* and
-*Persona boundary*).
+The one schema a phase return is written in, authored here because its one consumer is the synthesis procedure below. The integrated analyst of `aisa-frame` writes its proposal in it (`<persona>` = `analista integrado`, `<phase>` = `Framing`). No agent file carries it. (The persona launch preamble that used to wrap it was retired with the persona council — handoff-v1 F5.4.)
+
+A section with nothing in it gets `- (none)` — never omit a header:
 
 ```
-Council-independent mode · phase <phase> · round <round> · engagement `<slug>` · pack `<pack>`.
-
-You are `<persona>`. Your identity, mandate and memory binding are in `.claude/agents/<persona>.md` —
-your whole briefing. Do not read your lens `SKILL.md`: what binds you is carried here, one channel.
-
-Read:
-- `<engagement>/context.json`
-- `<engagement>/lens-outputs/_council-prep/<round>-<persona>.md` — your thematic Shared Understanding
-  excerpt, including its "Resoluções já fechadas (não re-litigar)" block: do not re-litigate them
-- `<engagement>/frame.md` — the agreed problem sentence  [Options only]
-- Shared evidence: `<engagement>/_capture/evidence-index.md` — this engagement's source map
-  (source · format · normalized evidence · status · cite as). Raw sources stay at `<engagement>/inputs/`,
-  always openable and authoritative on conflict. Open what bears on your mandate, and a raw source
-  when material to your confidence: nobody ranked it for you, and no evidence has been assigned to you.
-  [when absent: "no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"]
-  [name here any source step 3.5 left stale, `failed` or `skipped`]
-  [when it exists: "Process synopsis: `<engagement>/_capture/process-model.md` §4 — the compact cross-source
-  reconstruction (markers OBSERVED / INFERRED / HYPOTHESIS / UNKNOWN are evidence markers, not states);
-  open its detail sections or a raw source only when material to your confidence"]
-- Memory (optional): `.claude/agent-memory/_universal/<persona>/*.md` (incl. `diary.md` — cite a prior
-  pattern by domain, never by client name) · `.claude/agent-memory/_tenant/<tenant>/<persona>/*.md`
-
-Pack attention cues (`<pack>`): <token>, <token>, … — cues, not a checklist. Follow only what is
-material to this engagement; an uncovered cue is not a gap and never becomes an `Unknown`.
-
-Independence: you run in parallel with the other personas. You do not see, request or wait on any
-peer's in-flight output — your value is the view none of them can supply. Read-only by tool grant:
-you write no file; you return your proposal as your tool result. Only the chairman writes.
-
-Technology neutrality:
-  [Framing, all personas] No vendor or product names. Framing is pre-technology by construction; an
-  existing system may be named only as current state.
-  [Options, the six Discovery personas] You supply needs, constraints and consequences — not vendor
-  choices. Naming products belongs to `solution-architect` alone.
-  [Options, solution-architect] You are the one persona that may name vendors and products; anchor
-  each to a `decision-tree.md` branch or a `domain-knowledge/` file you actually consulted.
-
-Evidence integrity: nothing is `Confirmed` without evidence — uncertain is `Unknown`, inferred is
-`Assumed` with the basis declared. Cite what you actually opened (SU id, value, passage or locator),
-never a filename alone, and never claim stronger support than the evidence gives.
-
-Mandate: apply your `## Mandate per phase` line for <phase>.
-
-Return exactly these sections, in this order. A section with nothing in it gets `- (none)` — never
-omit a header:
-
 ## <persona> — Round <round> / Phase <phase>
 
 ### Headline
@@ -129,15 +82,10 @@ option set for solution-architect (Options)>
 - <risk> — `impacto: <…>` — `mitigação: <…>`
 ```
 
-**Do not dump.** Pointers, not contents: no evidence bodies, no `pack.yaml`, no `question-bank.md`, no
-domain-knowledge files in the prompt. Omit the cue line entirely when the pack resolved nothing for
-that persona's lens, and say nothing in its place. Bracketed `[…]` lines are selectors — keep the one
-that applies to this phase and persona, drop the rest.
-
 ## Hard rules
 
 1. **Append-only to `shared-understanding.md`.** Never delete or rewrite existing rows. State transitions add a new row that references the prior id (`was X-NNN`).
-2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to a persona output that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
+2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to the technical author's published candidate that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
 3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven personas saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the personas' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
 4. **Surface contradictions as Conflicted rows.** Never silently pick a winner. The user resolves at `/decide` time.
 5. **Through the coordinator, never in place.** The SU rows, the `_state.json` round and the `council-log.md` line go into the **draft copies** the calling skill opened for you (`_drafts/<id>/`), and the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*). The phase artefact and the synthesis log are written directly. A refusal on publish (`INTEGRITY_FAILURE` — e.g. a `Confirmed` without a resolvable locator) comes back to you to fix in the copy.
@@ -163,7 +111,7 @@ Maintain a working table per category:
 
 ### Step 2b — Dialectic hand-back (when ≥1 material divergence)
 
-Options only — in Framing this step does not run (*Framing inputs* above). Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-options`); it runs the antithesis round (max 3 divergences × 2 Task calls) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: an accepted synthesis settles a **recommendation or a disposition** only — it goes to the phase artefact or to a finding, never to a `Confirmed` row. A **factual** divergence becomes `Confirmed` only if the antithesis produced a locator (*Confirmed threshold*); otherwise it is a `Conflicted` row (never silently pick a winner). Divergences still open when the cap is reached are escalated, never accepted by exhaustion (`library/kernel/orchestration.md` → *Dialectic round*). If there are no material divergences — or this is already the second invocation — continue to Step 3.
+Options only — in Framing this step does not run (*Framing inputs* above). Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-options` step 5b); it opens each through `review.py diverge`, runs the antithesis calls (the engine keeps the cap: 3 divergences × 2 calls per candidate revision) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: an accepted synthesis settles a **recommendation or a disposition** only — it goes to the phase artefact or to a finding, never to a `Confirmed` row. A **factual** divergence becomes `Confirmed` only if the antithesis produced a locator (*Confirmed threshold*); otherwise it is a `Conflicted` row (never silently pick a winner). Divergences still open when the cap is reached are escalated, never accepted by exhaustion (`library/kernel/orchestration.md` → *Dialectic round*). If there are no material divergences — or this is already the second invocation — continue to Step 3.
 
 ### Step 3 — Assign Shared Understanding states
 

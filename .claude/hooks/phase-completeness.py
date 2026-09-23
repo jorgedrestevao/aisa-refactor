@@ -11,7 +11,8 @@ Silent when the phase is complete.
 Every check below is grounded in a skill's documented "Outputs (written)" section:
   .claude/skills/aisa-frame/SKILL.md    steps 3-6 (analyst + reviewer since handoff-v1 F3.4;
                                         the six personas on the historical version) and 8/8c
-  .claude/skills/aisa-options/SKILL.md  same shape, 7 personas
+  .claude/skills/aisa-options/SKILL.md  steps 4-6 (author + specialist reviewers by route since
+                                        handoff-v1 F5.4; seven personas on the historical version)
   .claude/skills/aisa-decide/SKILL.md   D-NNN + chained _synthesis/
   .claude/skills/chairman-synthesis/SKILL.md  the options.md content rule
 
@@ -167,8 +168,8 @@ def check_options(eng: Path, rnd: str, su: str) -> tuple[list, list]:
     opts = read_text(eng / "options.md")
     blocks = re.findall(r"^###\s+(O-\d+)", opts, re.M)
     prep = eng / "lens-outputs" / "_council-prep"
-    missing_prep = [p for p in COUNCIL_7 if not (prep / f"{rnd}-{p}.md").is_file()]
     rows = su_has_round(su, rnd)
+    wf = read_state(eng).get("workflow")
     # As duas classes condicionais: o hook reporta a DECLARACAO em falta, nunca a classe
     # em falta. Le os marcadores do log da ronda, que sao verbatim e nao traduzidos — uma
     # palavra inglesa procurada no artefacto falha em falso, porque o artefacto sai na
@@ -177,7 +178,7 @@ def check_options(eng: Path, rnd: str, su: str) -> tuple[list, list]:
     log = read_text(eng / "lens-outputs" / f"chairman-synthesis-{rnd}.md")
     council = [
         (bool(opts.strip()), "options.md escrito", f"{len(opts)} caracteres"),
-        (len(blocks) >= 3, "pelo menos 3 opcoes", f"{len(blocks)}: {', '.join(blocks) or '-'}"),
+        options_count_check(eng, wf, blocks),
         ("DO-NOTHING" in log, "cobertura da classe DO-NOTHING declarada",
          "no log da ronda: na mesa (O-NNN) ou NOT PLAUSIBLE com ids"),
         ("PROCESS-CHANGE" in log, "cobertura da classe PROCESS-CHANGE declarada",
@@ -186,8 +187,8 @@ def check_options(eng: Path, rnd: str, su: str) -> tuple[list, list]:
          "options.md fecha com a recomendacao", "chairman-synthesis, seccao Recommendation"),
         ((eng / "lens-outputs" / f"chairman-synthesis-{rnd}.md").is_file(),
          f"chairman-synthesis-{rnd}.md", ""),
-        (not missing_prep, "_council-prep 7/7 personas",
-         "em falta: " + ", ".join(missing_prep) if missing_prep else "7/7 (inclui solution-architect)"),
+    ] + (review_checks(eng) if wf else [
+        _council7(prep, rnd)]) + [
         (rows > 0, f"rows novas no SU com ronda {rnd}", f"{rows} rows"),
         (rnd in read_text(eng / "council-log.md"), f"council-log menciona {rnd}", ""),
     ]
@@ -197,6 +198,62 @@ def check_options(eng: Path, rnd: str, su: str) -> tuple[list, list]:
          "episodio da story sobre as opcoes", "step story"),
     ]
     return council, validation
+
+
+def _council7(prep: Path, rnd: str) -> tuple:
+    """The historical version (no `workflow`, read-only): seven persona excerpts."""
+    missing = [p for p in COUNCIL_7 if not (prep / f"{rnd}-{p}.md").is_file()]
+    return (not missing, "_council-prep 7/7 personas",
+            "em falta: " + ", ".join(missing) if missing else "7/7 (inclui solution-architect)")
+
+
+def _candidates(eng: Path) -> dict:
+    try:
+        return json.loads((eng / "_design" / "candidates.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def options_count_check(eng: Path, wf, blocks: list) -> tuple:
+    """handoff-v1 F5.4: the option count follows the route (phases.md → Options exit).
+    Only `solution-choice` asks for three, and fewer with the reason written; the other
+    routes admit one candidate. The historical version keeps the three."""
+    if not wf:
+        return (len(blocks) >= 3, "pelo menos 3 opcoes",
+                f"{len(blocks)}: {', '.join(blocks) or '-'}")
+    cand = _candidates(eng)
+    ids = [c.get("id") for c in cand.get("items") or []]
+    route = wf.get("route") or cand.get("route") or "-"
+    detalhe = f"rota {route}: {len(ids)} ({', '.join(ids) or '-'})"
+    if route == "solution-choice":
+        ok = len(ids) >= 3 or (len(ids) > 0 and bool(str(cand.get("reduction_reason") or "")
+                                                     .strip()))
+        return (ok, "candidatos da rota (>= 3 ou motivo da reducao)", detalhe)
+    return (len(ids) > 0, "candidatos da rota (pelo menos 1, com motivo se for um)", detalhe)
+
+
+def review_checks(eng: Path) -> list:
+    """Candidates published, every mandate received, every finding of a current review
+    disposed — read through `review.py show-reviews` (read-only)."""
+    cand = _candidates(eng)
+    out = [(bool(cand.get("revision")), "candidatos publicados (_design/candidates.json)",
+            f"revisao {cand.get('revision') or '-'}")]
+    try:
+        import runpy
+        rv = runpy.run_path(str(repo_root() / "library" / "kernel" / "tools" / "review.py"))
+        s = rv["show_reviews"](eng)
+    except Exception as exc:                                            # noqa: BLE001
+        return out + [(False, "estado da revisao legivel", str(exc)[:120])]
+    por_receber = [r["task_id"] for r in s["reviews"] if r["state"] == "mandated"]
+    out.append((not por_receber, "pareceres recebidos para todos os mandatos",
+                "em falta: " + ", ".join(por_receber) if por_receber
+                else f"{len(s['reviews'])} mandato(s)"))
+    closing = {"accepted", "rejected", "delegated", "deferred", "escalated"}
+    sem = [f["id"] for r in s["reviews"] if r["state"] == "current"
+           for f in r.get("findings", []) if f["disposition"] not in closing]
+    out.append((not sem, "achados dos pareceres correntes com disposicao",
+                "sem disposicao: " + ", ".join(sem) if sem else "todos"))
+    return out
 
 
 def blueprint_versions(eng: Path) -> list[str]:

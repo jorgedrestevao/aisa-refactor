@@ -86,7 +86,7 @@ LENS_GOV = CHECKLISTS
 LENS_TECH = read(SKILLS, "lens-technology", "SKILL.md")
 CHAIRMAN = read(SKILLS, "chairman-synthesis", "SKILL.md")
 COMPLIANCE_MEM = read(ROOT, ".claude", "agent-memory", "_universal",
-                      "compliance-officer", "universal-constraints.md")
+                      "security-operation", "universal-constraints.md")
 FIXTURE = read(FIXTURES, "admission-cases.md")
 
 

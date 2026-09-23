@@ -1089,11 +1089,11 @@ class Guards(unittest.TestCase):
         self.assertEqual(len(re.findall(r"^## Phase \d", PHASES, re.M)), 4)
         agents = sorted(a for a in os.listdir(os.path.join(ROOT, ".claude", "agents")) if a.endswith(".md"))
         # handoff-v1: the agents added are the independent reviewers — of the lens coverage
-        # (F3 Q3, T19), of the frame (F3 Q4) and of the functional contracts (F4 Q5).
-        self.assertEqual(agents, ["business-analyst.md", "cfo-lens.md", "chairman.md", "compliance-officer.md",
-                                  "data-steward.md", "fc-reviewer.md", "frame-reviewer.md",
-                                  "lens-coverage-reviewer.md", "operations-lead.md", "solution-architect.md",
-                                  "user-advocate.md"])
+        # (F3 Q3, T19), of the frame (F3 Q4), of the functional contracts (F4 Q5) and of the
+        # Options candidates (F5 Q3); the six Discovery personas are retired (F5 Q4).
+        self.assertEqual(agents, ["chairman.md", "fc-reviewer.md", "frame-reviewer.md",
+                                  "lens-coverage-reviewer.md", "solution-architect.md",
+                                  "specialist-reviewer.md"])
         for text, name in ((ORCH, "orchestration"), (ROUND, "aisa-round"), (STATUS, "aisa-status"), (FRAME, "aisa-frame")):
             self.assertNotIn("dependency graph:", text.lower(), name)
             self.assertNotIn("compression matrix", text.lower().replace("no compression matrix", "").replace("compression matrix warranted", ""), name)
@@ -1124,7 +1124,11 @@ class Guards(unittest.TestCase):
         self.assertIn("Parse once. Reason many.", ORCH)
         # Options/Architecture are not told to re-read the capture model; the synopsis is a pointer only
         self.assertNotIn("re-read the capture", BLUEPRINT.lower())
-        self.assertIn("open its detail sections or a raw source only when material to your confidence", CHAIRMAN)
+        # handoff-v1 F5.4: the persona preamble is retired; the synopsis pointer now reaches
+        # the technical author in /options step 4.
+        self.assertIn("open its detail sections or a raw source only when material to your confidence",
+                      open(os.path.join(ROOT, ".claude", "skills", "aisa-options", "SKILL.md"),
+                           encoding="utf-8").read())
 
     def test_no_product_licensing_question_pre_options(self):
         self.assertIn("never a product-licensing question", CHAIRMAN)

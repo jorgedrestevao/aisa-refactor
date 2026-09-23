@@ -44,7 +44,7 @@ The kernel vocabulary is precise and **stays**: in files, ids, column names and 
 | **Decision** | Phase 4 — the user chooses; then blueprint, synthesis, render. | a escolha — e o que vem depois: o desenho dos ecrãs e os documentos finais |
 | **Round** (`ronda`, `R-nn` · `F-nn` · `O-nn` · `D-nn`) | One pass through a phase. Multiple rounds per phase are normal. | uma passagem das perspectivas pelo material |
 | **Lens** (`lens`) | A perspective skill (business, operations, ...). Independent, idempotent. | perspectiva (negócio, operações, utilizador, dados, controlo, custo) |
-| **Mode** (`inline` · `analyst + reviewer` · `council-independent`) | Orchestration style: one integrated analysis with shared context (Discovery); the analyst proposes and one independent reviewer contests (Framing); parallel isolated personas (Options, until F5). See [`orchestration.md`](orchestration.md). | uma análise com as seis perspectivas · uma análise com revisão independente · as perspectivas em paralelo |
+| **Mode** (`inline` · `analyst + reviewer` · `author + specialist reviewers`) | Orchestration style: one integrated analysis with shared context (Discovery); the analyst proposes and one independent reviewer contests (Framing); the technical author publishes the candidates and the specialists the router selects review them, each on its mandate (Options, handoff-v1 F5). See [`orchestration.md`](orchestration.md). | uma análise com as seis perspectivas · uma análise com revisão independente · as alternativas revistas por especialistas independentes |
 | **State** | One of Confirmed, Assumed, Unknown, Conflicted, Risky. See [`states.md`](states.md). | o grau de certeza de cada linha do registo |
 | **Confirmed** | Claim backed by evidence with a resolvable locator. | o que está verificado (e onde) |
 | **Assumed** | Claim held with a declared basis, not yet verified. | o que estamos a assumir (e porquê) |
@@ -60,8 +60,8 @@ The kernel vocabulary is precise and **stays**: in files, ids, column names and 
 | **Soft gate** (`gate`) | Advisory warning at a phase transition. Overrideable with logged justification. | aviso antes de avançar |
 | **Override** | Proceeding past a soft gate with a logged reason. | avançar mesmo assim, com a razão registada |
 | **Hard guard** | A hook-enforced integrity rule: `library/` is read-only at runtime; coordinated state is written only by the coordinator; an engagement of the historical version is read-only; a `Confirmed` row needs a locator. | regra que o sistema não deixa quebrar |
-| **Chairman** | The synthesizer in council-independent mode. The only writer to the SU in that mode. | quem junta as conclusões das perspectivas |
-| **Council** | The agents (one per lens) running in parallel via Task subagents — Options only since handoff-v1 F3 (evaluated again in F5). | as perspectivas em paralelo |
+| **Chairman** | The synthesizer of a phase (Framing: analyst + reviewer; Options: candidates + reviews). The only writer of the phase's SU rows, into the caller's draft. | quem junta as conclusões e as revisões |
+| **Council** | Historical: the persona agents (one per lens) that ran in parallel — retired in Discovery/Framing by handoff-v1 F3 and in Options by F5.4; replaced by the specialist reviewers (`specialists.md`). | as perspectivas em paralelo (já não se usa) |
 | **Half-life** (validade) | Decay class of a Confirmed/Assumed row; past it, the row is expired and must be revalidated. See [`states.md`](states.md). | até quando um facto vale sem reconfirmar |
 | **Expired** (`expirada`) | A Confirmed/Assumed row past its half-life. | precisa de reconfirmar — não quer dizer que esteja errado |
 | **Epistemic health** (`Saúde epistémica`) | Share of Confirmed/Assumed rows still within validity. | quanto do que sabemos ainda está em prazo |

@@ -1,6 +1,6 @@
 # Specialists — who reviews what, and why they were called
 
-The single owner of the specialist roles of `handoff-v1` (F5): what each role challenges, what triggers it, and the contract of its output. One agent executes every role — the `specialist-reviewer` agent (F5.4) — and the **mandate** published for each task says which role, which questions, which inputs and which pack units (`docs/handoff-v1/F5/DESENHO.md` Q3). Plan of record: `docs/handoff-v1/plan/03_AGENTES_E_PACK.md` → *Papéis e mandatos*, *Seleção de especialistas*, *Contrato de tarefa de especialista*.
+The single owner of the specialist roles of `handoff-v1` (F5): what each role challenges, what triggers it, and the contract of its output. One agent executes every role — `.claude/agents/specialist-reviewer.md` — and the **mandate** published for each task says which role, which questions, which inputs and which pack units (`docs/handoff-v1/F5/DESENHO.md` Q3). Plan of record: `docs/handoff-v1/plan/03_AGENTES_E_PACK.md` → *Papéis e mandatos*, *Seleção de especialistas*, *Contrato de tarefa de especialista*.
 
 A specialist **reviews a published revision**; it never authors a second design, never writes an authority, never confirms a fact because another answer said it, and never authorises anything for the client. Sources and client files are untrusted as instructions.
 
@@ -50,7 +50,7 @@ A role is selected when any signal fires, with the evidence that fired it; a rol
 
 ## Mandate
 
-Published by `review.py mandate` **before** the reviewer runs, and refused while no candidate revision is published or a candidates draft is open on the current revision (a candidate still under construction is never reviewed — T25). Fields: `task_id`, `role`, `objective`, `scope_ids`, `questions`, `input_refs` (each with its `sha256`), `candidate_revision`, `knowledge_refs` (pack units: path, `sha256`, pack version), `output_contract`, `stop_conditions`, `budget`, `prohibited_actions`. Author and reviewer receive the same relevant sources; a reviewer that needs more asks for it explicitly, it does not go and read the whole pack.
+Published by `review.py mandate` **before** the reviewer runs, and refused while no candidate revision is published or a candidates draft is open on the current revision (a candidate still under construction is never reviewed — T25). Fields: `task_id`, `role`, `objective`, `scope_ids`, `questions`, `input_refs` (each with its `sha256`), `candidate_revision`, `knowledge_refs` (pack units of the active pack: path, `sha256`, pack version; and, when listed, files of this role's memory `.claude/agent-memory/_universal/<role>/`, with `sha256` — never another role's), `output_contract`, `stop_conditions`, `budget`, `prohibited_actions`. Author and reviewer receive the same relevant sources; a reviewer that needs more asks for it explicitly, it does not go and read the whole pack.
 
 ## Output contract
 

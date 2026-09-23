@@ -294,7 +294,7 @@ class P02NoActiveRetiredArchitecture(unittest.TestCase):
     def test_solution_architect_memory_uses_the_current_model(self):
         """The valid lessons survived, re-expressed against the frozen model."""
         body = _read(os.path.join(
-            CLAUDE_DIR, "agent-memory", "_universal", "solution-architect",
+            CLAUDE_DIR, "agent-memory", "_universal", "architect",
             "universal-constraints.md"))
         for anchor in ("**S1**", "**S5**", "**S9**",
                        "settled hard disqualifier",

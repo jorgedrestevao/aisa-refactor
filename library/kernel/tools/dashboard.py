@@ -42,7 +42,7 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-TOOL_VERSION = "1.17.0"
+TOOL_VERSION = "1.18.0"
 ARTEFACT_ID = "aisa.dashboard"
 # Schema 2 unchanged up to 1.14.0: every bump only ADDED keys. 1.15.0 removed some -> 3.
 #   1.2.0  `round_delta` (P-2) · `confirmed_locator` (P-12) · `enquadramento` (P-0) ·
@@ -98,6 +98,8 @@ ARTEFACT_ID = "aisa.dashboard"
 #          `lens` coverage record of the last completed round (valid for that round; freshness
 #          and review in the value) instead of counting six `lens-outputs/` files. The
 #          historical version keeps the file count. Schema stays 3.
+#  1.18.0  handoff-v1 F5.4: the Options -> Decision gate of a profile engagement counts the
+#          options by route (three only on solution-choice, fewer with reduction_reason).
 SCHEMA_VERSION = 3
 DEFAULT_RELOAD_SECS = 5
 
@@ -5564,8 +5566,7 @@ def _gate_options(eng: Path, model_bits: dict) -> list[dict]:
     rec = bool(re.search(r"(?mi)^##+\s+(recomenda|recommendation)", body))
     no_rec = "no recommendation" in body.lower() or "sem recomendação" in body.lower()
     return [
-        _g(">= 3 opções", "codigo", len(ids) >= 3,
-           "{} ({})".format(len(ids), ", ".join(ids) or "-"), ">= 3"),
+        _route_count_criterion(eng, ids),
         _g("cobertura DO-NOTHING declarada", "codigo", "DO-NOTHING" in log,
            "no log da ronda {}".format(rnd or "-"), "marcador presente"),
         _g("cobertura PROCESS-CHANGE declarada", "codigo", "PROCESS-CHANGE" in log,
@@ -5582,6 +5583,32 @@ def _gate_options(eng: Path, model_bits: dict) -> list[dict]:
         _g("decision-tree.md do pacote consultado", "n/a", None, "", "",
            "não há registo mecânico da consulta — não avaliável, nunca 'OK'"),
     ]
+
+
+def _route_count_criterion(eng: Path, ids: list) -> dict:
+    """handoff-v1 F5.4: the option count follows the route (`phases.md` → Options exit).
+    `solution-choice` asks for three, fewer only with `reduction_reason` in the published
+    candidates; `platform-constrained` and `change-impact` admit one. The historical
+    version (no `workflow`) keeps `>= 3`."""
+    try:
+        wf = json.loads((eng / "_state.json").read_text(encoding="utf-8")).get("workflow")
+    except (OSError, ValueError, AttributeError):
+        wf = None
+    detalhe = "{} ({})".format(len(ids), ", ".join(ids) or "-")
+    if not wf:
+        return _g(">= 3 opções", "codigo", len(ids) >= 3, detalhe, ">= 3")
+    route = wf.get("route") or "-"
+    try:
+        cand = json.loads((eng / "_design" / "candidates.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cand = {}
+    if route == "solution-choice":
+        motivo = bool(str(cand.get("reduction_reason") or "").strip())
+        return _g("opções da rota solution-choice", "codigo",
+                  len(ids) >= 3 or (len(ids) > 0 and motivo), detalhe,
+                  ">= 3, ou menos com o motivo da redução")
+    return _g("opções da rota {}".format(route), "codigo", len(ids) > 0, detalhe,
+              ">= 1 (um candidato viável admitido com o motivo)")
 
 
 def _option_segment(body: str, oid: str) -> str:

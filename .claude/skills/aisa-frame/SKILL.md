@@ -132,7 +132,7 @@ Framing mode of the same analyst that runs `/round`. Read the SU (the whole of i
 resolutions of 4c), `enquadramento.md`, the shared evidence of 4a, the earlier `lens-outputs/`, the
 process synopsis when it exists, and the perspectives of `library/kernel/lens-checklists.md`. Then write
 the proposal to `<engagement>/lens-outputs/_council-prep/F-<NN>-analyst.md`, in the return schema that
-`chairman-synthesis` parses (*Council launch preamble* → the six sections), under
+`chairman-synthesis` parses (*Return schema* → the six sections), under
 `## analista integrado — Round F-<NN> / Phase Framing`:
 
 - **Headline** — the proposed single sentence: *the problem is X, felt by Y, costs Z today, evidence is W*.
@@ -274,7 +274,7 @@ A seguir: comparar alternativas — aqui entra pela primeira vez a perspectiva t
 ## Notes
 
 - **Subagents** (README → *Regras de execução*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
-- **One return schema.** The analyst writes its proposal in the schema `chairman-synthesis` owns (*Council launch preamble* → the six sections), so the synthesis reads Framing as it reads any return.
+- **One return schema.** The analyst writes its proposal in the schema `chairman-synthesis` owns (*Return schema* → the six sections), so the synthesis reads Framing as it reads any return.
 - **Only the synthesis writes the SU.** The reviewer has `tools: [Read, Grep, Glob]` and returns findings as text — it cannot write even if it tried.
 - **The survival block is a projection, not a second truth.** Semantic ownership of invariants, constraints, obligations and Unknowns stays in the SU; `frame.md` names ids. If the chairman notices a missing material item while framing, the SU row is written first and projected second (`chairman-synthesis` step 6). `/options` personas read the block; the Options blocking set remains the primary candidate-specific check.
 - **Idempotence**: re-running `/frame` is allowed (produces F-02, F-03, …). The previous `frame.md` is overwritten; chairman-synthesis-F-<NN>.md from each round is preserved.
