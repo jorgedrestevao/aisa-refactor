@@ -973,6 +973,16 @@
      "source": "handoff-v1 F3.4",
      "mechanism": "Independent reviewer of a Framing proposal (Q4): reads the published SU rows the proposal cites and the closed resolutions, returns findings. Tools Read/Grep/Glob; writes nothing — chairman-synthesis applies the findings.",
      "evidence": ".claude/agents/frame-reviewer.md: Inputs (shared-understanding.md); tools line"
+    },
+    {
+     "file": "library/kernel/tools/functional.py",
+     "kind": "engine",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F4.1",
+     "role": "reader",
+     "mechanism": "Reads the SU to resolve FC requirement_refs and the open blocking questions (open_refs); declares it in the draft read-set so a changed SU is STALE_INPUT. Never writes the SU.",
+     "evidence": "functional.py _su_rows, _reads, integrity, completeness"
     }
    ],
    "mention_only": [
@@ -2031,6 +2041,16 @@
      "evidence": "aisa-round/SKILL.md step 4a2",
      "confidence": "verified",
      "source": "F2.3"
+    },
+    {
+     "file": "library/kernel/tools/functional.py",
+     "kind": "engine",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F4.1",
+     "role": "reader",
+     "mechanism": "Resolves FC authorization_ref to existing D- blocks (workflow._decision_ids); in the draft read-set. Never writes decisions.md.",
+     "evidence": "functional.py integrity, _reads"
     }
    ],
    "mention_only": [
@@ -2999,6 +3019,16 @@
      "role": "declares-contract",
      "mechanism": "Declares that fields, types and mandatoriness are not Discovery: they enter in Architecture from the L1 inventory (fields_draft.py, consumed by /blueprint). Carried over from lens-data.",
      "evidence": "library/kernel/lens-checklists.md:140"
+    },
+    {
+     "file": "library/kernel/tools/functional.py",
+     "kind": "engine",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F4.1",
+     "role": "reader",
+     "mechanism": "Parses the blueprint version named in FC based_on (dashboard.yl_parse) to resolve architecture_refs and inputs[].field_ref; refuses a draft:true blueprint and a changed one.",
+     "evidence": "functional.py blueprint_index, integrity"
     }
    ],
    "mention_only": [

@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "handoff-functional/1",
  "title": "Contratos funcionais (_design/functional-contracts.json)",
- "description": "Semântica de comportamento TO-BE. Referencia ids do blueprint e da SU; não redefine campos. Campos de conteúdo ausentes exigem entrada em not_applicable com motivo não vazio (o motivo valida-se aqui; a exigência de presença por campo é do validador de F5). IDs nunca reutilizados: retired_ids.",
+ "description": "Semântica de comportamento TO-BE. Referencia ids do blueprint e da SU; não redefine campos. Campos de conteúdo ausentes exigem entrada em not_applicable com motivo não vazio (o motivo valida-se aqui; a exigência de presença por campo é do validador `library/kernel/tools/functional.py`, F4). IDs nunca reutilizados: retired_ids. Campos aditivos de F4 (sem mudar de versão): inputs[].type/values/default/default_ref/validation, acceptance_examples[].kind, calculation, authorization, conflicts.",
  "type": "object",
  "required": [
   "schema_version",
@@ -153,6 +153,33 @@
         },
         "required": {
          "type": "boolean"
+        },
+        "type": {
+         "type": "string",
+         "minLength": 1
+        },
+        "values": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "minLength": 1
+         }
+        },
+        "default": {
+         "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+         ]
+        },
+        "default_ref": {
+         "type": "string",
+         "minLength": 1
+        },
+        "validation": {
+         "type": "string",
+         "minLength": 1
         }
        }
       }
@@ -208,6 +235,13 @@
         "then": {
          "type": "string",
          "minLength": 1
+        },
+        "kind": {
+         "enum": [
+          "positive",
+          "negative",
+          "boundary"
+         ]
         }
        }
       }
@@ -243,6 +277,45 @@
        "integrated",
        "superseded"
       ]
+     },
+     "calculation": {
+      "type": "object",
+      "properties": {
+       "units": {
+        "type": "string"
+       },
+       "rounding": {
+        "type": "string"
+       }
+      }
+     },
+     "authorization": {
+      "type": "object",
+      "required": [
+       "ref",
+       "revision",
+       "sha256"
+      ],
+      "properties": {
+       "ref": {
+        "type": "string",
+        "minLength": 1
+       },
+       "revision": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "sha256": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+       }
+      }
+     },
+     "conflicts": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
      }
     }
    }

@@ -52,6 +52,15 @@ A field that does not apply is listed in `not_applicable` **with its reason**; a
 
 The functional author proposes the `FC`; the architect checks that it can be realised and that it matches the blueprint; the business owner authorises material semantics. A later change reopens only the approvals and outputs that depend on it.
 
+**How it is written** (F4, `docs/handoff-v1/F4/DESENHO.md`). Only `library/kernel/tools/functional.py` publishes `_design/functional-contracts.json`, through the coordinator — `_design/` is guarded and never drafted by `resolve.py`:
+
+- `draft` opens a copy in `_drafts/FCDRAFT-…/` with the base and the inputs it reads (SU, `decisions.md`, the blueprint versions);
+- `check` validates without writing;
+- `publish` writes, in one operation, the new revision and its immutable copy in `_design/history/functional-contracts.r<NNNN>.json`;
+- `show` gives the state per `FC`.
+
+Integrity refuses the publication (`INTEGRITY_FAILURE`): the schema, ids never reused and never dropped outside `retired_ids`, the revision moving by one, and references that resolve (requirements to SU rows, authorisations to `D-` blocks, `architecture_refs` and `inputs[].field_ref` to the blueprint named in `based_on`). A changed base or input is `STALE_INPUT`. Completeness never refuses: an `FC` without `rule`, `acceptance_examples`, `actors`, `trigger`, `postconditions` or `exceptions` (and no reason in `not_applicable`), a calculation without units, rounding or positive/negative/boundary examples, an incomplete delegated choice, or an open `blocks_scope`/`blocks_all` question in `open_refs` is published with `BLOCKING_GAP` on its scope, and is not authorisable.
+
 ## Work packages and completeness
 
 A `WP` is a unit of the implementation-spec — build, configuration, migration, proof or acceptance — that references the `FC`s and blueprint obligations it serves. Its effort lives in the estimate, per `WP`. Traceability is checked both ways: a requirement without work or test, and work without a design reason, are both findings.
@@ -86,6 +95,6 @@ The graph (schema 2) carries typed dependencies between the new artefacts and th
 | Admission of a question, evidence rule | F1 |
 | Checkpoint schema and states | F2 (publication through the coordinator) |
 | Lens coverage vocabulary | F3 |
-| Review policy, Options by route | F4 |
-| `FC`, `WP`, completeness, typed dependencies | F5 |
+| Review policy, Options by route, `FC` and its completeness (plan 05: F4) | F4 |
+| `WP`, typed dependencies | F5 |
 | Readiness predicates, release index | F6 |
