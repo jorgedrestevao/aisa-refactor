@@ -1,6 +1,6 @@
 # F5 — Relatório da fase (candidatos comuns, especialistas e primeiro percurso vertical)
 
-Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](DESENHO.md). Gate: T25–T30 e o primeiro ensaio T43; revisões na versão certa; zero confirmação por maioria; handoff incompleto rotulado.
+Estado: **gate avaliado — aguarda aceitação do mantenedor** (2026-09-23). Desenho e decisões Q1–Q9: [DESENHO.md](DESENHO.md). Gate: T25–T30 e o primeiro ensaio T43; revisões na versão certa; zero confirmação por maioria; handoff incompleto rotulado.
 
 ## 1. Incrementos
 
@@ -12,7 +12,7 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 | F5.4 `/options` por rota, `specialist-reviewer`, personas, `/retro` | integrado | 515377e | Decisões Q7 (memória migrada por papel, `git mv`) e Q8 (papéis inline leem a sua pasta; revisor só pelo mandato, com `sha256`, só a do seu papel) — DESENHO. `/options` reescrito: passos 1–3 e 7–8 intactos; 4 autor inline (`solution-architect` como mandato) → `draft/check/publish-candidates` com a tabela das três rotas; 5 `route` + `mandate`; 5a um `specialist-reviewer` por mandato, em paralelo, só com o caminho do mandato → `receive`; 5b dialéctica por `diverge`/`dialectic-call`; 6 `chairman-synthesis` com cinco verificações (a 5.ª: disposições e mandatos recebidos). Agente novo `specialist-reviewer` (Read/Grep/Glob; contrato de saída JSON; modo antítese). Seis personas apagadas; `chairman.md` e `chairman-synthesis` sem conselho (preâmbulo de lançamento → *Return schema*, ainda consumido pelo analista do `/frame`); `/retro` por papel (analista, arquitecto, especialistas com parecer recebido); `/round` aponta a memória do analista. `review.mandate` aceita a memória do próprio papel (`kind: memory`). Hooks por rota: `phase-completeness` (candidatos publicados, contagem por rota, mandatos recebidos, achados com disposição; versão histórica igual) e aviso `options→decision` do dashboard 1.18.0 (`_route_count_criterion`). Texto normativo: `orchestration.md` (*Options mode*, dialéctica, paralelismo entre revisores, custo), `phases.md` Options/Decision, `glossary.md` (Mode, Chairman, Council), `CLAUDE.md` (princípios 4 e 9, `.claude/agents/`, `/retro`), `HOOKS.md`, `specialists.md` e `handoff-contract.md` (memória no mandato). Pack: caminho da memória em `security-craft.md`. Matriz F0: 6 agentes retirados, 5 caminhos de memória migrados. `test_options_by_route.py` 7 casos, `test_review_router.py` +1. Full 100/100, 2926; stdlib 81/81, 2128; ambos exit 0 |
 | F5.5 Percurso vertical e ensaio T43 | integrado (ensaio simulado) | ce218ce + (este) | `test_hv1_vertical.py` (8): `fx-hv1-02` pelos motores — análise → D-001 imposição → candidatos dentro da plataforma (T27) → router: 3 seleccionados com evidência, 2 não chamados com o que se verificou (T28) → 3 mandatos → 3 pareceres recebidos → disposições (um adiado fica visível) → D-002 → desenho aprovado D-003 → FC-0001 autorizado D-004, FC-0002 bloqueado (U-001) → `render_gate` → pacote com `sha256` e índice `handoff-index/1` válido, `preliminary`, `implementation-spec`/estimativa em `exclusions` (Q9). Achado do percurso corrigido: citar `O-NNN` fica coberto por `options.md` ou `_design/candidates.json` (`resolve.py`). Pacote congelado `pacote-fx-hv1-02/` (19 ficheiros, código `ce218ce`). Ensaio T43 (`T43-ENSAIO.md`): 1 subagente de contexto novo, 4 usos de ferramenta, ~79 k tokens, 90,6 s; 17 lacunas (3 `blocks_all`, 7 `blocks_scope`, 3 `delegated_choice`, 4 `implementation_proof`), 4 perguntas bloqueantes; afirmações verificadas na sessão; **7 lacunas sistémicas (S1–S7)** separadas dos artefactos da fixture. Full 101/101, 2934; stdlib 82/82, 2136; ambos exit 0 |
 | F5.5b Correcção das lacunas sistémicas S1–S7 e 2.º ensaio T43 | integrado (ensaio simulado) | 46ad973 + (este) | Motor: `accepted` exige `corrected_by` que existe (S3); autorização de FC não pode ser datada antes de decisão registada (S7). Pacote r2 (28 ficheiros, `46ad973`): estado de autorização, contratos e esquemas (S1), `scope_definition` (S2), `reviews_basis` (S4), unidades do pack dos mandatos (S5), ponteiro da convenção (S6). FC-0003 fecha REV-0002.F01. 2.º ensaio: 13 usos de ferramenta, ~111 k tokens, 169,7 s; 16 lacunas; S1–S5 e S7 deixaram de aparecer; S6 fica (o kernel não fixa a contagem dos `¶`); as 4 perguntas bloqueantes passaram a ser de conteúdo do caso, nenhuma de verificação do pacote. Novas sistémicas N1–N4 para a F6 (`T43-ENSAIO.md` §6.2). Full 101/101, 2937; stdlib 82/82, 2139; ambos exit 0 |
-| F5.6 Relatório e gate | por fazer | | |
+| F5.6 Relatório e gate | avaliado | (este) | §5–§9 abaixo |
 
 ## 2. Subagentes (README → *Regras de execução*)
 
@@ -44,3 +44,57 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 - A memória migrada foi escrita na voz das personas; o conteúdo não foi reescrito por papel (curadoria humana no próximo `/retro`). As entradas do `analyst/` levam o prefixo da persona de origem; o `diary.md` do analista nasce no primeiro `/retro`.
 - O `/options` novo é texto de skill: a cadeia dos motores está provada por testes; que uma sessão a percorre assim é o que o percurso vertical da F5.5 mostra.
 - T43 (F5.5) é simulado: destinatário é um subagente, que também recebe o `CLAUDE.md` do repositório; não substitui a revisão de uma equipa. As lacunas S1–S5 e S7 foram corrigidas na F5.5b; S6 (contagem dos `¶` num `.md`) e N1–N4 (`T43-ENSAIO.md` §6.2) ficam abertas para a F6.
+
+## 5. Gate (05_FASES F5: T25–T30, primeiro ensaio T43; revisões na versão certa; zero confirmação por maioria; handoff incompleto rotulado)
+
+| Teste | Critério (06_VALIDACAO) | Estado | Evidência |
+| --- | --- | --- | --- |
+| T25 | Options dispara revisão antes de candidatos → recusada ou à espera de revisão publicada | **cumprido** | `test_review_router.Mandato`: sem candidatos publicados, ou com rascunho aberto, `mandate` recusa com `BLOCKING_GAP` e nada se escreve em `_design/reviews/`; `/options` passo 4.4 «No reviewer runs before this» (`test_council_wiring`, `test_options_by_route`) |
+| T26 | Parecer refere candidato anterior → `stale`; não fecha achado actual | **cumprido** | `test_review_dispositions.Stale`: revisão nova do candidato → parecer `stale`, `open_findings` da revisão corrente intocado, disposição sobre ele → `STALE_INPUT`, revalidação só dos achados cujo candidato mudou |
+| T27 | Plataforma imposta → viabilidade e padrões sem shortlist artificial | **cumprido** | `test_review_candidates.Rotas` (um candidato viável com motivo; candidato fora da imposta recusado; `imposition_ref` = autoridade da rota); percurso `test_hv1_vertical` (duas formas dentro da plataforma); hooks por rota sem regra dos 3 (`test_options_by_route`) |
+| T28 | Risco concreto pede especialista → mandato com pergunta/input/output; selecção explicável | **cumprido, com limite** | `test_review_router.Router` (cada papel seleccionado com a evidência ou não chamado com o que se verificou; determinístico; headless dispensa UX; linha estacionada não selecciona); mandato com os 12 campos do plano 03. Limite: sinais da SU por termos declarados em `specialists.md`; os FC ainda não são sinal |
+| T29 | Revisor precisa de research/craft → acesso permitido, origem e versão registadas | **cumprido** | Mandato: `knowledge_refs` só do pack activo (e da memória do próprio papel, Q8), com caminho, `sha256` e `pack_version` (`test_review_router`); parecer: `sources_used` ⊆ mandato com o mesmo `sha256`, fonte mudada → `STALE_INPUT` (`test_review_dispositions.Parecer`) |
+| T30 | Limite da dialéctica → escala ou fica aberto; nunca aceita por esgotamento | **cumprido** | `test_review_dispositions.Dialectica`: 2 chamadas sem síntese → `escalated`; a 4.ª divergência nasce `escalated`; facto não se sintetiza sem localizador |
+| T43 (1.º ensaio) | Destinatário em contexto novo só com o pacote → identifica trabalho e testes; lacunas registadas | **cumprido como ensaio simulado** | `T43-ENSAIO.md`: dois ensaios (subagente de contexto novo, só a pasta do pacote); 7 lacunas sistémicas encontradas, 6 corrigidas e confirmadas no 2.º ensaio, S6 aberta; N1–N4 registadas para a F6. Não é aceitação (plano 06: julgamento assistido documentado) |
+| Revisões na versão certa | — | **cumprido** | `receive` exige `input_revision` = `candidate_revision` do mandato; `stale` por revisão; `reviews_basis` no pacote diz, por parecer, a base e se continua corrente |
+| Zero confirmação por maioria | — | **cumprido** | receber e dispor pareceres não escreve a SU (`test_review_dispositions`); divergência de facto só com localizador; `chairman-synthesis` → *Options inputs* e `orchestration.md` → *Dialectic round* («How many reviewers agree never changes an epistemic state») |
+| Handoff incompleto rotulado | — | **cumprido** | índice `handoff-index/1` com `delivery_level: preliminary`, rótulo «preliminary · incompleto», `receiver_acceptance: null`, `exclusions` com motivo (`test_hv1_vertical`) |
+
+Suites no fecho: full 101/101 ficheiros, 2937 testes; stdlib 82/82, 2139; ambos exit 0. CI #58 (desenho) a #65 (F5.5b) verdes; #66 (pacote r2) a correr no fecho deste relatório.
+
+## 6. Itens do plano (05_FASES F5)
+
+| # | Trabalho | Estado | Onde |
+| --- | --- | --- | --- |
+| 1 | Três rotas e router explicável por competência/risco | feito, com limite | regras por rota (F5.1), `route` (F5.2), hooks por rota (F5.4); limite de T28 |
+| 2 | Candidatos publicados antes dos revisores; revisão e input set fixados | feito | `publish-candidates` antes de `mandate` (T25); `input_refs` com `sha256` e `candidate_revision` (F5.2–F5.3) |
+| 3 | Mandatos/contratos de saída; acesso selectivo ao pack para autor e revisor | feito | `specialists.md`, `mandate`, `specialist-reviewer`; autor puxa o pack, revisor só o que o mandato lista (T29) |
+| 4 | Chairman: concordância não promove evidência; achados com disposição e condição de fecho | feito | `chairman-synthesis` → *Options inputs*; `dispose` (append-only; `accepted` com o que corrige — S3) |
+| 5 | Dialéctica limitada e escalamento | feito | `diverge` / `dialectic-call` (T30) |
+| 6 | Percurso PP constrained da captura ao desenho, implementation-spec e estimate; handoff experimental a uma sessão nova | feito, com desvio | percurso pelos motores a partir da análise publicada (a captura está provada na F3.5); `implementation-spec` e estimativa **não** produzidas (Q9, desvio registado); pacote experimental e ensaio |
+| 7 | Registar lacunas, chamadas, contexto, retrabalho; corrigir as sistémicas antes de aumentar cobertura | feito | `T43-ENSAIO.md` (custos, lacunas, retrabalho F5.5b); S6 e N1–N4 abertas para a F6 |
+
+**Entregável**: ciclo completo em escala pequena — feito na fixture `fx-hv1-02`, com o pacote rotulado preliminar e incompleto.
+
+**Rollback** (plano): o perfil `handoff-v1` continua experimental. Desactivar o router é deixar de chamar `route`/`mandate` no `/options`: os pareceres, o registo e as decisões ficam em `_design/` e `decisions.md`, nada se apaga. As personas retiradas voltam por `git revert` do commit da F5.4. A memória migrada preserva a história (`git mv`).
+
+## 7. Leitor, escritor e schema — o que F5 acrescenta
+
+| Artefacto | Escritor | Leitores | Schema |
+| --- | --- | --- | --- |
+| `_design/candidates.json` + `_design/history/candidates.r<NNNN>.json` | `review.py publish-candidates` (coordenador) | `route`, `mandate`, `show-reviews`, `/options`, `chairman-synthesis`, hooks de fase, dashboard (contagem por rota), `resolve.py` (citação `O-NNN`) | `handoff-candidates/1` |
+| `_design/reviews/REV-NNNN.mandate.json` | `review.py mandate` (coordenador) | `specialist-reviewer`, `receive`, `show-reviews`, `phase-completeness` | campos do plano 03 (`specialists.md` → *Mandate*) |
+| `_design/reviews/REV-NNNN.json` | `review.py receive` (coordenador) | `show-reviews`, `dispose`, `diverge`, `chairman-synthesis`, `/retro` | `handoff-review/1` |
+| `_design/reviews/ledger.json` + `_design/history/review-ledger.r<NNNN>.json` | `review.py dispose` / `diverge` / `dialectic-call` (coordenador) | `show-reviews`, `chairman-synthesis`, `phase-completeness`, `/retro` | `aisa-review-ledger/1` (append-only) |
+| `library/kernel/specialists.md` | administrativo (git) | `route`, `mandate`, `specialist-reviewer` | bloco `router-rules` |
+| `.claude/agent-memory/_universal/<role>/` | `/retro` (depois da curadoria humana) | analista e arquitecto (ponteiro); revisor só pelo mandato | — |
+
+## 8. Decisões e pontos por decidir
+
+- Tomadas (mantenedor, 2026-09-23): Q1–Q6 do desenho; Q7–Q8 no início da F5.4; Q9 no início da F5.5; a correcção de S1–S7 com o 2.º ensaio.
+- Desvios registados: sem `implementation-spec` nem estimativa no percurso (Q9); a retirada das personas deixa `docs/ARCHITECTURE.md` e `docs/ONBOARDING.md` desactualizados.
+- Para a F6: S6 (contagem dos `¶` num `.md`, no kernel); N1 (âmbito sem contrato nem exclusão — rastreabilidade nos dois sentidos); N2 (impressão digital na aprovação do desenho); N3 (conceitos da regra contra o desenho — hoje só o `fc-reviewer`); N4 (coerência de uma entrega parcial); os FC como sinal do router (T28).
+
+## 9. Próxima fase
+
+F6 — rastreabilidade completa e handoff implementável (`../plan/05_FASES.md`). Arranca com o seu `DESENHO.md` (§0 dos subagentes) e as decisões de contrato levadas ao mantenedor. Começa pelas lacunas S6 e N1–N4 do ensaio T43.
