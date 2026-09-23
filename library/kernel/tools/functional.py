@@ -323,6 +323,17 @@ def authorization_block(eng, fc_ids, validated_by: str, scope: str,
         linhas.append("{} (sha256 {})".format(fc, item_sha256(por_id[fc])))
     did = "D-{:03d}".format(max([int(d[2:]) for d in _W()["_decision_ids"](eng)] or [0]) + 1)
     ts = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    # T43 S7: o bloco acrescenta-se ao fim de `decisions.md`; datado antes de uma decisão
+    # já registada (a aprovação do desenho em que assenta, por exemplo), mente sobre a ordem.
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    antes = sorted(t for t in re.findall(r"\*\*Timestamp\*\*\s*:\s*(\S+)", md) if t > ts)
+    if antes:
+        raise FunctionalError("o bloco teria data {} anterior a uma decisão já registada ({})"
+                              .format(ts, antes[-1]), _W()["INTEGRITY_FAILURE"],
+                              {"timestamp": ts, "latest": antes[-1]})
     return ("\n## {} — {} (functional-contracts r{:04d})\n\n"
             "- **Authorizes**: {}\n- **Revision**: r{:04d}\n- **Scope**: {}\n"
             "- **Validated by**: {}\n- **Timestamp**: {}\n").format(

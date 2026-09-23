@@ -660,10 +660,31 @@ def _finding(eng: Path, fid: str) -> tuple:
     return rid, rev, f
 
 
+def _resolves(eng: Path, ref: str) -> bool:
+    """Uma referência de correcção que existe agora: `FC-NNNN` na revisão corrente dos
+    contratos, `D-NNN` em `decisions.md`, uma linha da SU, ou um ficheiro do engagement."""
+    ref = str(ref).strip()
+    if re.fullmatch(r"FC-\d{4}", ref):
+        try:
+            fcs = json.loads((eng / "_design/functional-contracts.json").read_text(
+                encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        return ref in {i.get("id") for i in fcs.get("items") or []}
+    if re.fullmatch(r"D-\d{3,}", ref):
+        return ref in set(_W()["_decision_ids"](eng))
+    if SU_ID_RE.match(ref):
+        return ref in _su_ids(eng)
+    return bool(ref) and not ref.startswith(("/", "..")) and (eng / ref).is_file()
+
+
 def dispose(eng, finding_id: str, disposition: str, rationale: str, evidence: str = "",
-            envelope: str = "", owner: str = "", impact: str = "", to: str = "") -> dict:
+            envelope: str = "", owner: str = "", impact: str = "", to: str = "",
+            corrected_by=()) -> dict:
     """Regista a disposição de um achado (plano 03 passo 4). Append-only: a disposição
-    anterior e o parecer ficam; um achado de um parecer `stale` não se fecha (T26)."""
+    anterior e o parecer ficam; um achado de um parecer `stale` não se fecha (T26).
+    `accepted` diz o que o corrigiu, e o motor verifica que existe (T43 S3): uma correcção
+    ainda por fazer é `delegated` (envelope e dono) ou `deferred` (impacto)."""
     eng = Path(eng)
     W = _W()
     _workflow(eng)
@@ -681,16 +702,26 @@ def dispose(eng, finding_id: str, disposition: str, rationale: str, evidence: st
                           W["INTEGRITY_FAILURE"], {"finding": finding_id})
     em_falta = [k for k, v in [("rationale", rationale)] + falta[disposition]
                 if not str(v).strip()]
+    corr = [str(c).strip() for c in ([corrected_by] if isinstance(corrected_by, str)
+                                     else corrected_by) if str(c).strip()]
+    if disposition == "accepted" and not corr:
+        em_falta.append("corrected_by")
     if em_falta:
         raise ReviewError("disposição `{}` sem {}".format(disposition, ", ".join(em_falta)),
                           W["INTEGRITY_FAILURE"], {"finding": finding_id, "missing": em_falta})
+    orfas = [c for c in corr if not _resolves(eng, c)]
+    if orfas:
+        raise ReviewError("a correcção não existe: {} — `accepted` só com o que já corrige; "
+                          "senão `delegated` ou `deferred`".format(", ".join(orfas)),
+                          W["INTEGRITY_FAILURE"], {"finding": finding_id, "missing": orfas})
     cur = read_ledger(eng)
     d = cur["data"]
     ent = {"seq": len(d["dispositions"]) + 1, "finding": finding_id,
            "disposition": disposition, "rationale": rationale, "candidate_revision": cur_rev,
            "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     ent.update({k: v for k, v in (("evidence", evidence), ("envelope", envelope),
-                                  ("owner", owner), ("impact", impact), ("to", to)) if v})
+                                  ("owner", owner), ("impact", impact), ("to", to),
+                                  ("corrected_by", corr)) if v})
     novo = dict(d, dispositions=d["dispositions"] + [ent])
     return _publish_ledger(eng, cur, novo, {_review_rel(rid): _digest(eng / _review_rel(rid)),
                                             CAND_PATH: _digest(eng / CAND_PATH)}, "dispose")
@@ -827,6 +858,7 @@ def main(argv=None) -> int:
     ap.add_argument("--outcome", default="")
     ap.add_argument("--synthesis", default="")
     ap.add_argument("--locator", default="")
+    ap.add_argument("--corrected-by", action="append", default=[])
     ap.add_argument("--phase", default="options")
     ap.add_argument("--role", default="")
     ap.add_argument("--question", action="append", default=[])
@@ -865,7 +897,7 @@ def main(argv=None) -> int:
             out, rc = show_reviews(eng), 0
         elif a.command == "dispose":
             out = dispose(eng, (a.finding or [""])[0], a.disposition, a.rationale, a.evidence,
-                          a.envelope, a.owner, a.impact, a.to)
+                          a.envelope, a.owner, a.impact, a.to, a.corrected_by)
             out, rc = {k: v for k, v in out.items() if k not in ("receipt", "data")}, 0
         elif a.command == "diverge":
             out = diverge(eng, a.finding, a.subject)

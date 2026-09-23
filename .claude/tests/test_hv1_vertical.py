@@ -6,8 +6,9 @@ Desenho: `docs/handoff-v1/F5/DESENHO.md` §5 (Q6, Q9).
 `fx-hv1-02` (plataforma imposta), de ponta a ponta:
     análise publicada (F3) → decisão de imposição D-001 → candidatos dentro da plataforma
     (T27) → router com evidência (T28) → mandatos (T25, T29) → pareceres recebidos e
-    dispostos (T26, T29) → decisão D-002 → desenho aprovado D-003 → FC-0001 autorizado D-004,
-    FC-0002 bloqueado pela regra de arredondamento (U-001) → `render_gate` →
+    dispostos (T26, T29) → decisão D-002 → desenho aprovado D-003 → FC-0001 e
+    FC-0003 (segregação) autorizados D-004, FC-0002 bloqueado pela regra de arredondamento
+    (U-001) → `render_gate` →
     pacote experimental: ficheiros com `sha256` e índice `handoff-index/1`,
     `delivery_level: preliminary`, com `implementation-spec` e estimativa em `exclusions` (Q9).
 
@@ -143,13 +144,37 @@ def reviews(eng):
     review(eng, mandatos["ux-process"], [])
     RV["dispose"](eng, "REV-0001.F01", "deferred", "fica para o FC do valor",
                   impact="FC-0002 não é autorizável enquanto U-001 estiver aberta")
-    RV["dispose"](eng, "REV-0002.F01", "accepted", "entra no desenho como regra do servidor "
-                  "e no FC como exemplo negativo")
+    RV["dispose"](eng, "REV-0002.F01", "delegated", "a regra entra no desenho e no FC da "
+                  "aprovação", envelope="recusa no servidor quando quem aprova é o requerente; "
+                  "exemplo negativo no FC", owner="autor funcional (/blueprint)")
     return rota
 
 
+def fc_aprovacao():
+    """A aprovação com a segregação de C-004 aplicada no servidor (fecha REV-0002.F01)."""
+    return FC["fc_submissao"](
+        id="FC-0003", journey_id="J-0003", purpose="Aprovar ou rejeitar um pedido submetido",
+        requirement_refs=["C-004"], architecture_refs=["pedidos"], actors=["Chefia"],
+        trigger="a chefia decide um pedido submetido da sua equipa",
+        inputs=[{"field_ref": "pedidos.id_pedido", "required": True},
+                {"field_ref": "pedidos.estado", "required": True,
+                 "values": ["submetido", "aprovado", "rejeitado"]}],
+        rule="só uma chefia que não é o requerente muda o estado de submetido para aprovado "
+             "ou rejeitado; a regra é aplicada no servidor",
+        postconditions=["o pedido fica aprovado ou rejeitado, com quem decidiu"],
+        exceptions=[{"condition": "quem aprova é o requerente",
+                     "behavior": "o servidor recusa e o pedido fica submetido"}],
+        acceptance_examples=[
+            {"kind": "positive", "given": "um pedido de outro membro da equipa",
+             "when": "a chefia aprova", "then": "o pedido fica aprovado"},
+            {"kind": "negative", "given": "um pedido feito pela própria chefia",
+             "when": "a chefia tenta aprovar pela interface ou pela API",
+             "then": "o servidor recusa e o estado não muda"}])
+
+
 def decide_and_design(eng):
-    """Decisão D-002, desenho aprovado D-003, FC publicado e FC-0001 autorizado D-004."""
+    """Decisão D-002, desenho aprovado D-003, FC publicado e FC-0001/FC-0003 autorizados
+    D-004; o achado de segregação fecha com o FC que o corrige (T43 S3)."""
     _append_decision(eng, "\n## D-002 — Solução escolhida: O-001\n\n- **Escolhida**: O-001 "
                      "(candidatos r1)\n- **Descartada**: O-002 — reversibilidade baixa\n"
                      "- **Validated by**: owner (dados de teste)\n- **Timestamp**: "
@@ -158,11 +183,23 @@ def decide_and_design(eng):
     (eng / "_blueprint" / "ux-blueprint_v01.yaml").write_text(
         FC["BLUEPRINT"].replace("concretizes_decision: D-001", "concretizes_decision: D-002"),
         encoding="utf-8", newline="\n")
+    p = eng / "_state.json"
+    st = json.loads(p.read_text(encoding="utf-8"))
+    st["phase"] = "decision"
+    p.write_text(json.dumps(st, ensure_ascii=False) + "\n", encoding="utf-8")
     RG["approve_blueprint"](eng)
-    AU["publish"](eng, [AU["fc_idempotencia"](), DP["fc_valor"]()], 1)
-    AU["authorize"](eng, ["FC-0001"])
+    AU["publish"](eng, [AU["fc_idempotencia"](), DP["fc_valor"](), fc_aprovacao()], 1)
+    AU["authorize"](eng, ["FC-0001", "FC-0003"])
+    RV["dispose"](eng, "REV-0002.F01", "accepted", "a segregação está no FC da aprovação, com "
+                  "o exemplo negativo", corrected_by=["FC-0003"])
 
 
+CONTRATOS = ["library/kernel/handoff-contract.md", "library/kernel/states.md",
+             "library/kernel/specialists.md",
+             "library/kernel/schemas/handoff-candidates.schema.json",
+             "library/kernel/schemas/handoff-review.schema.json",
+             "library/kernel/schemas/handoff-functional.schema.json",
+             "library/kernel/schemas/handoff-index.schema.json"]
 PACOTE = ["shared-understanding.md", "decisions.md", "answers.md", "_state.json",
           "_design/candidates.json", "_design/functional-contracts.json",
           "_blueprint/ux-blueprint_v01.yaml"]
@@ -179,11 +216,27 @@ def package(eng, out):
     for rel in rels:
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(eng / rel, out / rel)
-    gate = F["render_gate"](eng, text="Submissão: FC-0001. Valor: FC-0002.")
+    # T43 S5: as unidades do pack (e da memória) que os mandatos deram aos revisores
+    for m in sorted((eng / "_design" / "reviews").glob("REV-*.mandate.json")):
+        for k in json.loads(m.read_text(encoding="utf-8"))["knowledge_refs"]:
+            if k["ref"] not in rels:
+                (out / k["ref"]).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / k["ref"], out / k["ref"])
+                rels.append(k["ref"])
+    # T43 S1/S6: os contratos que tornam o pacote verificável sem correr o motor
+    for rel in CONTRATOS:
+        if rel not in rels:
+            (out / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / rel, out / rel)
+            rels.append(rel)
+    show = F["show"](eng)
+    (out / "functional-state.json").write_text(json.dumps(show, ensure_ascii=False, indent=1)
+                                               + "\n", encoding="utf-8", newline="\n")
+    rels.append("functional-state.json")
+    gate = F["render_gate"](eng, text="Submissão: FC-0001. Valor: FC-0002. Aprovação: FC-0003.")
     (out / "render-gate.json").write_text(json.dumps(gate, ensure_ascii=False, indent=1) + "\n",
                                           encoding="utf-8", newline="\n")
     rels.append("render-gate.json")
-    show = F["show"](eng)
     rv = RV["show_reviews"](eng)
     try:
         code = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
@@ -218,6 +271,19 @@ def package(eng, out):
         "files": [{"path": r, "sha256": O["digest"](out / r)} for r in rels],
         "authorization_refs": ["decisions.md#D-001", "decisions.md#D-002",
                                "decisions.md#D-003", "decisions.md#D-004"],
+        # T43 S2: o âmbito autorizado, projectado dos FC que o levam e dos blocos que o
+        # autorizam — nada acrescentado.
+        "scope_definition": scope_definition(eng, fcs, show),
+        # T43 S4: a base que cada parecer leu, e se ainda é a corrente.
+        "reviews_basis": reviews_basis(eng),
+        # T43 S6: onde está a convenção dos localizadores.
+        "locator_convention": "library/kernel/states.md → Confirmed threshold (`<ficheiro>.md#¶n`"
+                              " ou `· §<título> ¶n`). O kernel não fixa como se contam os ¶ de "
+                              "um .md sem `§` — lacuna registada (T43 S6), não resolvida aqui",
+        "verification": "item_sha256 de um FC = sha256 do JSON do item sem authorization_ref, "
+                        "authorization e publication_status, chaves ordenadas, separadores "
+                        "',' e ':', UTF-8 (library/kernel/handoff-contract.md → Functional "
+                        "contract, Authorisation); functional-state.json é a leitura do motor",
         "readiness": {
             "render_final_allowed": gate["final_allowed"],
             "fc": {k: {"authorizable": v["authorizable"],
@@ -235,6 +301,35 @@ def package(eng, out):
     (out / "handoff-index.json").write_text(json.dumps(index, ensure_ascii=False, indent=1)
                                             + "\n", encoding="utf-8", newline="\n")
     return index
+
+
+def scope_definition(eng, fcs, show):
+    out = {}
+    for it in fcs.get("items") or []:
+        sc = out.setdefault(it.get("scope_id") or "-", {"fc": [], "requirement_refs": [],
+                                                        "authorized_by": []})
+        sc["fc"].append({"id": it["id"], "purpose": it["purpose"],
+                         "authorization": show["items"][it["id"]]["authorization"]["state"]})
+        sc["requirement_refs"] += [r for r in it.get("requirement_refs") or []
+                                   if r not in sc["requirement_refs"]]
+    for b in F["authorization_blocks"](eng):
+        for sc in out.values():
+            if set(b["items"]) & {f["id"] for f in sc["fc"]} and b["id"] not in sc["authorized_by"]:
+                sc["authorized_by"].append(b["id"])
+    return out
+
+
+def reviews_basis(eng):
+    out = {}
+    for m in sorted((eng / "_design" / "reviews").glob("REV-*.mandate.json")):
+        d = json.loads(m.read_text(encoding="utf-8"))
+        out[d["task_id"]] = {
+            "role": d["role"], "candidate_revision": d["candidate_revision"],
+            "inputs": {r["ref"]: {"sha256": r["sha256"],
+                                  "now": "current" if O["digest"](eng / r["ref"]) == r["sha256"]
+                                  else "changed since the review"}
+                       for r in d["input_refs"]}}
+    return out
 
 
 def percurso(tmp):
@@ -274,9 +369,10 @@ class Percurso(unittest.TestCase):
         self.assertEqual({r["state"] for r in s["reviews"]}, {"current"})
         self.assertEqual(s["open_findings"], ["REV-0001.F01"], "o adiado fica visível")
 
-    def test_the_design_carries_one_authorised_contract_and_one_blocked(self):
+    def test_the_design_carries_authorised_contracts_and_one_blocked(self):
         v = F["show"](self.eng)["items"]
         self.assertEqual(v["FC-0001"]["authorization"]["state"], "current")
+        self.assertEqual(v["FC-0003"]["authorization"]["state"], "current")
         self.assertFalse(v["FC-0002"]["authorizable"])
         g = json.loads((self.out / "render-gate.json").read_text(encoding="utf-8"))
         self.assertFalse(g["final_allowed"])
@@ -307,6 +403,29 @@ class Percurso(unittest.TestCase):
         for lido in ("_design/candidates.json", "options.md"):
             self.assertEqual(R["read_set_gaps"](self.eng, dict(base, reads={lido: ""}), novo),
                              {}, lido)
+
+    def test_t43_fixes_are_in_the_package(self):
+        files = {f["path"] for f in self.index["files"]}
+        self.assertIn("functional-state.json", files)                       # S1
+        self.assertIn("library/kernel/handoff-contract.md", files)
+        sc = self.index["scope_definition"]["SCOPE-0001"]                    # S2
+        self.assertEqual([f["id"] for f in sc["fc"]], ["FC-0001", "FC-0002", "FC-0003"])
+        self.assertEqual(sc["authorized_by"], ["D-004"])
+        rb = self.index["reviews_basis"]["REV-0001"]["inputs"]["decisions.md"]  # S4
+        self.assertEqual(rb["now"], "changed since the review")
+        self.assertIn(UNIDADE, files)                                        # S5
+        self.assertIn("library/kernel/states.md", files)                     # S6
+        led = RV["read_ledger"](self.eng)["data"]["dispositions"]             # S3
+        self.assertEqual([(d["finding"], d["disposition"]) for d in led],
+                         [("REV-0001.F01", "deferred"), ("REV-0002.F01", "delegated"),
+                          ("REV-0002.F01", "accepted")])
+        self.assertEqual(led[-1]["corrected_by"], ["FC-0003"])
+
+    def test_t43_s7_an_authorisation_dated_before_a_recorded_decision_is_refused(self):
+        with self.assertRaises(F["FunctionalError"]) as err:
+            F["authorization_block"](self.eng, ["FC-0001"], AU["OWNER"], "SCOPE-0001",
+                                     timestamp="2026-09-23T19:00:00Z")
+        self.assertEqual(err.exception.code, "INTEGRITY_FAILURE")
 
     def test_the_package_carries_no_operational_state(self):
         for f in self.index["files"]:

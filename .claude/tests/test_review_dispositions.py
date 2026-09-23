@@ -166,6 +166,22 @@ class Disposicoes(unittest.TestCase):
                         "INTEGRITY_FAILURE")
             refused(self, lambda: RV["dispose"](eng, f, "accepted", " "), "INTEGRITY_FAILURE")
 
+    def test_t43_s3_accepted_names_a_correction_that_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = dois(tmp)
+            m = mandato(eng)
+            RV["receive"](eng, m["task_id"], parecer(m))
+            f = "REV-0001.F01"
+            refused(self, lambda: RV["dispose"](eng, f, "accepted", "corrigido"),
+                    "INTEGRITY_FAILURE")
+            e = refused(self, lambda: RV["dispose"](eng, f, "accepted", "corrigido",
+                                                    corrected_by=["FC-0009"]),
+                        "INTEGRITY_FAILURE")
+            self.assertEqual(e.detail["missing"], ["FC-0009"])
+            r = RV["dispose"](eng, f, "accepted", "a regra já está na SU",
+                              corrected_by=["C-004"])
+            self.assertEqual(r["data"]["dispositions"][-1]["corrected_by"], ["C-004"])
+
     def test_dispositions_append_and_the_minority_opinion_stays(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = dois(tmp)

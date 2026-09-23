@@ -53,7 +53,7 @@ def publish(eng, items, revision):
 
 def authorize(eng, fcs, validated_by=OWNER):
     bloco = F["authorization_block"](eng, fcs, validated_by, "SCOPE-0001",
-                                     timestamp="2026-09-23T22:00:00Z")
+                                     timestamp="2026-09-23T23:30:00Z")
     d = R["draft"](eng, ["decisions.md"], reads=["_design/functional-contracts.json"])
     p = eng / "_drafts" / d["draft"] / "decisions.md"
     p.write_text(p.read_text(encoding="utf-8") + bloco, encoding="utf-8", newline="\n")
