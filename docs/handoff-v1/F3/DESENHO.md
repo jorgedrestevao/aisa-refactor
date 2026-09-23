@@ -27,6 +27,16 @@ Critério do mantenedor (README → *Regras de execução*, estendido ao framewo
 
 Nenhum paralelismo em F3: os dois revisores correm em sequência, depois do autor, porque revêem o que ele publicou.
 
+**Inventário do framework actual** (levantamento de 2026-09-23 sobre skills, agentes, comandos e kernel). Os usos fora de F3 recebem aqui uma avaliação provisória; decide-os a fase dona, com o mantenedor:
+
+| Onde | Hoje | Avaliação pelo critério | Fase dona |
+| --- | --- | --- | --- |
+| `/frame` | 6 personas em paralelo + antítese | falha o critério: contexto montado pelo orquestrador, e o detalhe alimenta a síntese | **F3** — retirado (Q4, Q5) |
+| `/options` | 7 personas em paralelo + antítese | as personas falham o critério pela mesma razão. Passam: o arquitecto como **autor** (inline, porque o detalhe é o produto) e **revisores** independentes de candidatos já publicados (03 → *Sequência de Options*), escolhidos pelo router só onde um trigger dispara | F5 |
+| `/decide --consult` | 1 `solution-architect` que revê a opção escolhida | passa: revisão independente de uma escolha já escrita; volta só o parecer | manter |
+| `/retro` | 7 personas em paralelo a escrever diários | passa no critério (sem contexto da sessão; o detalhe vai para a memória das personas, não volta) — mas o benefício depende de as personas sobreviverem a F5 | F5 (com a retirada das personas) |
+| Texto normativo | `orchestration.md` (*Council-independent mode*, *Why parallel*), `phases.md:101`, `glossary.md` (*Council*, *Mode*), `CLAUDE.md` princípio 4 | descreve o paralelismo como regra da fase, sem avaliação de benefício | F3.4 (enquadramento) e F5 (Options): o texto passa a dizer quando um subagente se justifica |
+
 Nenhum motor novo. A cobertura entra no `coverage.py`, o único dono da conferência e da frescura, e publica pelo coordenador de F2. As escritas na SU seguem o protocolo *Writing an authority*.
 
 ## 1. Checklists (Q1)
