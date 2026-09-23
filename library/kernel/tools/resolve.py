@@ -30,9 +30,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import runpy
 import sys
+import time
 from datetime import date
 from pathlib import Path
 
@@ -368,6 +370,9 @@ def utf8_console() -> None:
 
 
 def main(argv=None):
+    args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] in ("draft", "publish", "reconcile"):
+        return main_publish(args)
     utf8_console()
     import argparse
     ap = argparse.ArgumentParser(description="resolver uma linha da SU")
@@ -1077,6 +1082,324 @@ def impact_of(eng, changed_ids) -> dict:
         "successors": _G_dependents(eng, alterados),
         "verdict": "candidatos — citar nao prova anterioridade; o julgamento e de quem le",
     }
+
+
+# ============================================================================
+# F2 — rascunho e publicacao pelo coordenador (handoff-v1, DESENHO F2 §3)
+#
+# Uma skill que escreve uma autoridade nao a edita no sitio: copia-a para um rascunho,
+# edita a copia, e publica. A publicacao e UMA operacao do coordenador — os ficheiros
+# mudados, o espelho do grafo quando a SU muda e, a partir de F2.3, o checkpoint — com a
+# base que o rascunho leu como pre-condicao e os inputs que declarou como read-set.
+#
+# O rascunho nao e verdade de ninguem: vive em `_drafts/`, fora das autoridades, fora de
+# qualquer read-set, e nenhum leitor o consome. Uma recusa deixa-o como estava.
+# ============================================================================
+
+DRAFTS_DIR = "_drafts"
+DRAFT_MANIFEST = "_draft.json"
+DRAFT_SCHEMA = "aisa-draft/1"
+# O que nunca se escreve por rascunho: o estado coordenado e o proprio rascunho.
+NOT_DRAFTABLE = ("_graph/", "_ops/", "_migration/", "_work/", "_design/", DRAFTS_DIR + "/")
+NOT_DRAFTABLE_NAMES = ("dashboard.html",)
+
+
+def _rel_ok(rel: str) -> str:
+    rel = str(rel).replace("\\", "/")
+    if rel.startswith("./"):
+        rel = rel[2:]
+    partes = [p for p in rel.split("/") if p]
+    if not partes or ".." in partes or rel.startswith("/") or ":" in partes[0]:
+        raise ResolveError("caminho fora do engagement: {!r}".format(rel), "BAD_PATH",
+                           {"path": rel})
+    rel = "/".join(partes)
+    if any(rel.startswith(n) for n in NOT_DRAFTABLE) or rel in NOT_DRAFTABLE_NAMES:
+        raise ResolveError(
+            "`{}` nao se escreve por rascunho — e estado coordenado ou derivado".format(rel),
+            "NOT_DRAFTABLE", {"path": rel})
+    return rel
+
+
+def draft_dir(eng, draft_id) -> Path:
+    return Path(eng) / DRAFTS_DIR / draft_id
+
+
+def _read_digests(eng: Path, reads) -> dict:
+    """Digests dos inputs declarados. Autoridades incluidas: um rascunho da SU que leu o
+    `answers.md` declara-o. Recibos, migracao e rascunhos nunca entram."""
+    fora = {}
+    for pad in reads or ():
+        pad = str(pad).replace("\\", "/")
+        if pad.startswith("./"):
+            pad = pad[2:]
+        achados = ([p.relative_to(eng).as_posix() for p in eng.glob(pad) if p.is_file()]
+                   if any(c in pad for c in "*?[") else [pad])
+        for rel in achados:
+            if any(rel.startswith(n) for n in _B["NOT_INPUTS"]):
+                continue
+            fora[rel] = _O["digest"](eng / rel)
+    return dict(sorted(fora.items()))
+
+
+def draft(eng, files, reads=(), task=None) -> dict:
+    """Abre um rascunho: copia os ficheiros a escrever e regista a base e os inputs.
+
+    `files`: os caminhos que a skill vai escrever (existentes ou novos). `reads`: o que
+    vai ler sem escrever (caminhos ou globs). A base e o digest de cada ficheiro NESTE
+    instante — e ela que a publicacao exige, e e por ela que uma escrita de outro entre o
+    rascunho e a publicacao da `STALE_INPUT` em vez de desaparecer."""
+    eng = Path(eng)
+    _O["_refuse_foreign_profile"](eng)
+    rels = sorted({_rel_ok(f) for f in files})
+    if not rels:
+        raise ResolveError("rascunho sem ficheiros", "EMPTY_DRAFT", {})
+    semente = "{}|{}|{}".format(time.time_ns(), os.getpid(),
+                                "|".join(rels))
+    did = "DRAFT-" + hashlib.sha256(semente.encode("utf-8")).hexdigest()[:12]
+    d = draft_dir(eng, did)
+    d.mkdir(parents=True)
+    base = {}
+    for rel in rels:
+        src = eng / rel
+        base[rel] = _O["digest"](src)
+        if src.is_file():
+            dst = d / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_bytes(src.read_bytes())
+    lidos = {k: v for k, v in _read_digests(eng, reads).items() if k not in base}
+    manifesto = {"schema_version": DRAFT_SCHEMA, "id": did, "files": base, "reads": lidos,
+                 "task": task, "published": None,
+                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    _O["_atomic_write"](d / DRAFT_MANIFEST,
+                        json.dumps(manifesto, ensure_ascii=False, indent=2))
+    return {"draft": did, "path": str(d), "files": rels, "reads": sorted(lidos),
+            "summary": {"rascunho": did,
+                        "editar": ", ".join("{}/{}".format(d, r) for r in rels),
+                        "proximo passo": "resolve.py publish --engagement {} --draft {}"
+                                         .format(eng.name, did)}}
+
+
+def read_draft(eng, draft_id) -> dict:
+    p = draft_dir(eng, draft_id) / DRAFT_MANIFEST
+    try:
+        m = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raise ResolveError("rascunho inexistente ou ilegivel: {}".format(draft_id),
+                           "DRAFT_MISSING", {"draft": draft_id})
+    if m.get("schema_version") != DRAFT_SCHEMA:
+        raise ResolveError("versao de rascunho nao suportada", "DRAFT_SCHEMA",
+                           {"have": m.get("schema_version")})
+    return m
+
+
+def publish_id(m: dict, novos: dict) -> str:
+    """Deriva do rascunho — base e conteudo novo —, nunca do estado do mundo: publicar o
+    mesmo rascunho outra vez e a MESMA operacao (T13). O grafo nao entra: depois da
+    primeira publicacao ele ja mudou, e o id tem de continuar o mesmo."""
+    corpo = json.dumps({"draft": m["id"], "base": m["files"], "reads": m.get("reads") or {},
+                        "new": novos}, sort_keys=True, ensure_ascii=False)
+    return "publish-" + hashlib.sha256(corpo.encode("utf-8")).hexdigest()[:16]
+
+
+def plan_publish(eng, draft_id) -> dict:
+    """O plano de uma publicacao, sem publicar. Verifica a integridade do conteudo novo
+    com as MESMAS regras que o guarda aplica a um Edit (`workflow.su_problems`,
+    `workflow.state_problems`) — o caminho coordenado nao pode ser mais largo que o outro."""
+    eng = Path(eng)
+    m = read_draft(eng, draft_id)
+    d = draft_dir(eng, draft_id)
+    novos_txt, novos = {}, {}
+    for rel, base in sorted(m["files"].items()):
+        cp = d / rel
+        if not cp.is_file():
+            raise ResolveError(
+                "o rascunho perdeu `{}` — apagar uma autoridade nao e uma edicao".format(rel),
+                "DRAFT_INCOMPLETE", {"path": rel})
+        bruto = cp.read_bytes()
+        dg = hashlib.sha256(bruto).hexdigest()
+        if dg != base:
+            novos_txt[rel] = bruto.decode("utf-8")
+            novos[rel] = dg
+    op_id = publish_id(m, novos)
+    if not novos:
+        return {"operation_id": op_id, "draft": draft_id, "write_set": {}, "expected": {},
+                "read_set": {}, "changed": [], "problems": []}
+    # Frescura ANTES da integridade. A integridade compara o rascunho com a autoridade
+    # actual; se ela ja nao e a base do rascunho, a comparacao acusa o que outra sessao
+    # publicou entretanto (uma linha dela «apagada», um alvo dela «em falta») e o
+    # diagnostico sai errado. O que o caso e, e rascunho desactualizado. O coordenador
+    # volta a verificar sob o lock; isto so poe o diagnostico certo a frente.
+    if _O["read_receipt"](eng, op_id) is None:
+        mudados = [{"path": rel, "expected": want, "actual": _O["digest"](eng / rel)}
+                   for rel, want in sorted(list(m["files"].items())
+                                           + list((m.get("reads") or {}).items()))
+                   if _O["digest"](eng / rel) != want]
+        if mudados:
+            raise _O["OperationError"](
+                "o rascunho assentou numa versao de `{}` que ja nao existe — refazer sobre "
+                "a actual, nao publicar".format(mudados[0]["path"]),
+                "STALE_INPUT", {"paths": mudados, "path": mudados[0]["path"],
+                                "draft": draft_id})
+    W = _B["_W"]
+    problemas = []
+    if SU_FILE in novos_txt:
+        antes = (eng / SU_FILE).read_text(encoding="utf-8") if (eng / SU_FILE).is_file() \
+            else ""
+        problemas += W["su_problems"](eng, antes, novos_txt[SU_FILE])
+    if "_state.json" in novos_txt and (eng / "_state.json").is_file():
+        problemas += W["state_problems"]((eng / "_state.json").read_text(encoding="utf-8"),
+                                         novos_txt["_state.json"])
+    write_set = dict(novos_txt)
+    expected = {rel: m["files"][rel] for rel in novos_txt}
+    if SU_FILE in novos_txt:
+        espelho = mirror_write_set(eng, novos_txt[SU_FILE])
+        write_set.update(espelho)
+        expected.update({rel: _O["digest"](eng / rel) for rel in espelho})
+    read_set = {k: v for k, v in (m.get("reads") or {}).items() if k not in write_set}
+    # Um ficheiro do rascunho que NAO mudou continua a ser base lida: se outro o mudar
+    # entretanto, a decisao da skill assentou numa versao que ja nao existe.
+    read_set.update({rel: base for rel, base in m["files"].items()
+                     if rel not in write_set})
+    return {"operation_id": op_id, "draft": draft_id, "write_set": write_set,
+            "expected": expected, "read_set": read_set, "changed": sorted(novos_txt),
+            "problems": problemas}
+
+
+def publish(eng, draft_id) -> dict:
+    """Publica um rascunho como UMA operacao. Bootstrap pronto primeiro, integridade antes
+    de publicar, base e read-set como pre-condicao. Uma recusa deixa o rascunho intacto."""
+    eng = Path(eng)
+    m = read_draft(eng, draft_id)
+    if m.get("published"):
+        recibo = _O["read_receipt"](eng, m["published"])
+        return {"operation_id": m["published"], "draft": draft_id, "replayed": True,
+                "receipt": dict(recibo or {}, replayed=True), "published": [],
+                "summary": {"o que mudou": "nada — este rascunho ja tinha sido publicado",
+                            "proximo passo": "/status"}}
+    p = plan_publish(eng, draft_id)
+    prior = _O["read_receipt"](eng, p["operation_id"])
+    if prior:
+        _marca_publicado(eng, draft_id, m, p["operation_id"])
+        return dict(p, replayed=True, receipt=dict(prior, replayed=True), published=[],
+                    summary={"o que mudou": "nada — este rascunho ja tinha sido publicado",
+                             "proximo passo": "/status"})
+    if p["problems"]:
+        raise ResolveError(
+            "o rascunho viola a integridade da autoridade: {}".format(
+                " · ".join(r["detail"] for r in p["problems"])),
+            "INTEGRITY_FAILURE", {"problems": p["problems"], "draft": draft_id})
+    if not p["write_set"]:
+        return dict(p, replayed=False, receipt=None, published=[],
+                    summary={"o que mudou": "nada — o rascunho e igual a base",
+                             "proximo passo": "/status"})
+    boot = _B["bootstrap"](eng)
+    if not boot["ready"]:
+        raise ResolveError("bootstrap nao pronto — publicacao recusada", "NOT_READY",
+                           {"limitations": boot["limitations"], "draft": draft_id})
+    recibo = _O["run"](eng, p["operation_id"], p["write_set"], expected=p["expected"],
+                       read_set=p["read_set"])
+    _marca_publicado(eng, draft_id, m, p["operation_id"])
+    return dict(p, replayed=bool(recibo.get("replayed")), receipt=recibo,
+                published=recibo.get("published", []),
+                summary={"o que mudou": ", ".join(p["changed"]),
+                         "operacao": p["operation_id"], "proximo passo": "/status"})
+
+
+def _marca_publicado(eng, draft_id, m, op_id):
+    """O rascunho publicado fica so com o manifesto, que aponta o recibo: repetir a
+    publicacao responde com ele em vez de procurar copias que ja nao sao de ninguem."""
+    d = draft_dir(eng, draft_id)
+    for rel in m["files"]:
+        try:
+            (d / rel).unlink()
+        except OSError:
+            pass
+    _O["_atomic_write"](d / DRAFT_MANIFEST,
+                        json.dumps(dict(m, published=op_id), ensure_ascii=False, indent=2))
+
+
+def reconcile(eng, apply=False) -> dict:
+    """Reconciliacao EXPLICITA do grafo com a SU depois de uma edicao directa (T17).
+
+    Em `handoff-v1` o hook ja nao espelha sozinho: uma edicao directa fica preservada, o
+    bootstrap deixa de estar pronto e nada publica sobre o estado divergente. Isto mostra o
+    que o espelho vai passar a dizer — com as mudancas de estado material a parte — e so
+    com `apply` publica, pelo coordenador, com recibo. A SU prevalece."""
+    eng = Path(eng)
+    boot = _B["bootstrap"](eng)
+    codigos = [l.get("code") for l in boot.get("limitations", [])]
+    if boot.get("ready"):
+        return {"status": "unchanged", "material": [], "new_rows": [], "published": [],
+                "summary": {"estado": "grafo e SU coerentes — nada a reconciliar"}}
+    fora = [c for c in codigos if c not in MIRROR_RECOVERABLE]
+    if fora:
+        recup = [l.get("recovery") for l in boot.get("limitations", [])
+                 if l.get("code") in fora and l.get("recovery")]
+        return {"status": "refused", "blocking": fora, "published": [],
+                "recovery": recup[0] if recup else
+                "python library/kernel/tools/operation.py recover --engagement <slug>"}
+    material = [d for d in boot.get("drift") or []
+                if d.get("code") in ("MIRROR_DRIFT", "MIRROR_SOURCE_MISSING")]
+    novas = []
+    for lim in boot.get("limitations", []):
+        if lim.get("code") == "AUTHORITY_UNMIRRORED":
+            novas = list(lim.get("rows") or [])
+    out = {"status": "planned", "material": material, "new_rows": novas, "published": [],
+           "summary": {"estado mudado no grafo": ", ".join(
+                           "{} ({}: {!r} -> {!r})".format(d.get("id"), d.get("field"),
+                                                          d.get("graph"), d.get("authority"))
+                           for d in material) or "nenhum",
+                       "linhas novas": ", ".join(novas) or "nenhuma",
+                       "proximo passo": "resolve.py reconcile --engagement {} --apply"
+                                        .format(eng.name)}}
+    if not apply:
+        return out
+    r = sync_mirror(eng)
+    return dict(out, status=r.get("status"), receipt=r.get("receipt"),
+                published=r.get("published", []),
+                summary=dict(out["summary"], proximo_passo="/status"))
+
+
+def main_publish(argv) -> int:
+    """`resolve.py draft|publish|reconcile …` — a CLI do caminho coordenado das skills."""
+    utf8_console()
+    import argparse
+    ap = argparse.ArgumentParser(description="rascunho e publicacao de autoridades")
+    ap.add_argument("command", choices=["draft", "publish", "reconcile"])
+    ap.add_argument("--engagement", required=True)
+    ap.add_argument("--files", nargs="*", default=[], help="draft: ficheiros a escrever")
+    ap.add_argument("--reads", nargs="*", default=[], help="draft: inputs lidos (globs)")
+    ap.add_argument("--task", default=None, help="draft: TASK-NNN servida (F2.3)")
+    ap.add_argument("--draft", default="", help="publish: o id do rascunho")
+    ap.add_argument("--apply", action="store_true", help="reconcile: publicar o espelho")
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args(argv)
+    eng = Path(a.engagement)
+    if not eng.is_dir():
+        eng = Path("projects") / a.engagement
+    try:
+        if a.command == "draft":
+            out = draft(eng, a.files, a.reads, a.task)
+        elif a.command == "publish":
+            if not a.draft:
+                raise ResolveError("`publish` exige `--draft`", "MISSING_ARG", {})
+            out = publish(eng, a.draft)
+        else:
+            out = reconcile(eng, apply=a.apply)
+    except _O["OperationError"] as exc:
+        env = _O["response_from_error"](exc)
+        print(json.dumps(env, ensure_ascii=False, indent=2), file=sys.stderr)
+        return 1
+    except (ResolveError, _G["GraphError"]) as exc:
+        print(json.dumps(exc.as_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
+        return 1
+    if a.json:
+        print(json.dumps({k: v for k, v in out.items() if k != "write_set"},
+                         ensure_ascii=False, indent=2))
+    else:
+        for k, v in (out.get("summary") or {}).items():
+            print("{:22} {}".format(k, v))
+    return 0 if out.get("status") != "refused" else 1
 
 
 # O guard fica no FIM, e so no fim: tudo o que vier depois dele existe para quem

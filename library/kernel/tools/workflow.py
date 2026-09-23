@@ -218,6 +218,78 @@ def profile_of(eng) -> dict:
     return {"kind": HANDOFF, "workflow": state["workflow"], "state": state, "detail": ""}
 
 
+# ------------------------------------------------------------ escrita de autoridades
+
+def state_problems(actual_text: str, new_text: str) -> list:
+    """Razoes para recusar `new_text` como `_state.json` sobre `actual_text` (F1 I-07).
+
+    Nenhuma chave existente desaparece em silencio, e o bloco `workflow` nao muda por
+    esta via: muda-o o `workflow.py` pelo coordenador. Um `_state.json` actual que nao se
+    le nao tem nada a comparar — quem decide e o bootstrap. Uma regra, dois consumidores:
+    o guarda (escrita por ferramenta) e `resolve.publish` (escrita pelo coordenador)."""
+    try:
+        actual = json.loads(actual_text)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(actual, dict):
+        return []
+    try:
+        novo = json.loads(new_text)
+    except ValueError as exc:
+        return [_reason("o `_state.json` novo não é JSON ({})".format(exc),
+                        source_code="STATE_NOT_JSON")]
+    if not isinstance(novo, dict):
+        return [_reason("o `_state.json` novo não é um objecto JSON",
+                        source_code="STATE_NOT_JSON")]
+    fora = []
+    perdidas = sorted(set(actual) - set(novo))
+    if perdidas:
+        fora.append(_reason(
+            "o `_state.json` novo deixa cair {} — campos existentes não se descartam em "
+            "silêncio".format(", ".join("`{}`".format(k) for k in perdidas)),
+            source_code="STATE_KEYS_DROPPED"))
+    if "workflow" in actual and novo.get("workflow") != actual.get("workflow"):
+        fora.append(_reason(
+            "o bloco `workflow` (perfil e rota) não muda por esta via: muda-o o "
+            "`workflow.py` pelo coordenador", source_code="WORKFLOW_CHANGED"))
+    return fora
+
+
+def su_problems(eng, old_text: str, new_text: str) -> list:
+    """Razoes para recusar `new_text` como SU de um engagement `handoff-v1` (T08, F0 D19).
+
+    1. Nenhuma linha desaparece: a SU e append-only; uma transicao acrescenta a sucessora e
+       as edicoes sancionadas mudam celulas, nunca apagam a linha.
+    2. Uma linha `Confirmed` nova, ou existente que a escrita muda (promocao no lugar com o
+       mesmo id incluida), traz um localizador das classes de `states.md` → *Confirmed
+       threshold*, com o alvo presente. Verificador do motor (`audit_confirmed_locators`),
+       o mesmo que o `/status` le: presenca e existencia do alvo, nunca a verdade."""
+    D = _dash()
+    velhas = {r["id"]: (r["state"], r["raw"]) for r in D["parse_su"](old_text or "")[1]}
+    linhas = D["parse_su"](new_text)[1]
+    fora = []
+    sumidas = sorted(set(velhas) - {r["id"] for r in linhas})
+    if sumidas:
+        fora.append(_reason(
+            "linha(s) apagada(s) da SU: {} — a SU é append-only; uma transição acrescenta a "
+            "sucessora (`was <id>`)".format(", ".join(sumidas)),
+            source_code="SU_ROW_REMOVED"))
+    tocadas = {r["id"] for r in linhas
+               if r["state"] == "Confirmed" and not r["resolved"]
+               and velhas.get(r["id"]) != (r["state"], r["raw"])}
+    if tocadas:
+        audit = D["audit_confirmed_locators"](linhas, Path(eng), only_ids=tocadas)
+        falhas = ["{} ({})".format(x["id"], x["motivo"])
+                  for x in audit["sem_locator"] + audit["alvo_ausente"]]
+        if falhas:
+            fora.append(_reason(
+                "linha(s) `Confirmed` sem prova localizável: {} — concordância entre "
+                "personas não é evidência (`library/kernel/states.md` → *Confirmed "
+                "threshold*); escrever como `Assumed` com a base, ou `Unknown`".format(
+                    "; ".join(falhas)), source_code="CONFIRMED_WITHOUT_LOCATOR"))
+    return fora
+
+
 def pack_capabilities(pack: str, packs_dir: Path | None = None) -> dict:
     """As capacidades que `pack.yaml` DECLARA. O que nao esta declarado nao e suportado."""
     p = Path(packs_dir or PACKS_DIR) / (pack or "") / "pack.yaml"

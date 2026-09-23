@@ -306,6 +306,12 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
             self.hook(h, payload)
         return None
 
+    def resolve(self, cmd, *args):
+        return subprocess.run([sys.executable, str(TOOLS / "resolve.py"), cmd,
+                               "--engagement", str(self.eng)] + list(args),
+                              capture_output=True, text=True, encoding="utf-8",
+                              env=self.env, cwd=str(ROOT))
+
     def init(self):
         return subprocess.run([sys.executable, str(TOOLS / "migrate.py"), "init",
                                "--engagement", str(self.eng)], capture_output=True,
@@ -335,18 +341,28 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
                   # guarda de `Confirmed` (T08) encontra o alvo do localizador
                   ("enquadramento.md", "# Enquadramento — eng-x\n\n| id | invariante | o que "
                                        "orienta | fonte |\n|---|---|---|---|\n| M-1 | O preço "
-                                       "segue a tabela | cálculo | dono |\n"),
-                  ("shared-understanding.md", SU.replace(
-                      "|---|---|---|---|---|---|---|\n\n## Assumed",
-                      "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1))]
+                                       "segue a tabela | cálculo | dono |\n")]
         for nome, conteudo in passos:
             self.assertIsNone(self.escreve(nome, conteudo))
+        # passo 9c (handoff-v1 F2): as linhas R-00 entram pelo coordenador — rascunho,
+        # edição da cópia, publicação —, SU e espelho numa operação. O hook já não espelha.
+        p = self.resolve("draft", "--files", "shared-understanding.md", "council-log.md",
+                         "--reads", "enquadramento.md", "answers.md", "--json")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        d = json.loads(p.stdout)
+        copia = Path(d["path"]) / "shared-understanding.md"
+        copia.write_text(copia.read_text(encoding="utf-8").replace(
+            "|---|---|---|---|---|---|---|\n\n## Assumed",
+            "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1),
+            encoding="utf-8", newline="\n")
+        p = self.resolve("publish", "--draft", d["draft"])
+        self.assertEqual(p.returncode, 0, p.stderr)
         boot = B["bootstrap"](self.eng)
         self.assertTrue(boot["ready"], boot.get("limitations"))
         g = G["read"](self.eng)
         self.assertEqual(g["status"], G["OK"])
         m1 = [n for n in g["nodes"] if n["id"] == "M-1"]
-        self.assertEqual(len(m1), 1, "a linha M-1 não chegou ao grafo pelo espelho")
+        self.assertEqual(len(m1), 1, "a linha M-1 não chegou ao grafo com a publicação")
         self.assertEqual(m1[0]["provenance"]["mirror_of"], "SU:M-1")
 
     def test_the_old_order_is_refused_so_this_test_can_see_d01(self):

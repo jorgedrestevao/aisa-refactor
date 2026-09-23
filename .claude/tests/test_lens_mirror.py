@@ -15,7 +15,9 @@ O caminho dominante do Discovery nao passa: a lente edita a SU directamente. 258
 verdes nunca exercitaram «Edit de lente -> guarda na Edit seguinte».
 
 A regra do kernel ja estava escrita — **quem escreve a autoridade escreve o espelho dela**
-— e faltava-lhe um escritor. Este hook e esse escritor para o caminho Edit/Write.
+— e faltava-lhe um escritor. O hook foi esse escritor ate handoff-v1 F2; desde entao o
+escritor e `resolve.publish` (rascunho -> SU e espelho numa operacao) e o hook so reporta
+uma edicao directa, que bloqueia ate `resolve.reconcile` explicito (T17, classe L1).
 
 O que o espelho pode resolver, e so isso: `AUTHORITY_UNMIRRORED` (linha que o grafo nao
 conhece) e `AUTHORITY_DRIFT` (campo espelhado divergente). O bootstrap para por ordem —
@@ -75,39 +77,73 @@ def guarda_decide(projects, su):
 
 
 class L1_OCicloQueRebentou(unittest.TestCase):
+    """O mesmo ciclo, com a resposta de F2 (handoff-v1, DESENHO §3, T17).
 
-    def test_the_second_lens_write_is_no_longer_denied(self):
-        """O erro real, ponta a ponta: escrita, hook, escrita seguinte."""
+    Antes: o hook espelhava depois de cada Edit e a segunda escrita passava. Isso fazia de
+    um hook uma segunda via de publicacao, que tambem espelhava em silencio uma promocao de
+    estado feita no sitio (F0 D19). Agora a lente escreve por rascunho e publica pelo
+    coordenador; um Edit directo e preservado, detectado, bloqueia, e so uma reconciliacao
+    explicita o repoe."""
+
+    def test_a_direct_edit_is_preserved_reported_and_blocks_until_reconciled(self):
         with tempfile.TemporaryDirectory() as tmp:
             projects, eng = eng_migrado(tmp)
             su = lente_acrescenta(eng)
+            editado = su.read_bytes()
             p = hook("on-su-mirror.py", projects, su)
             self.assertEqual(p.returncode, 0, p.stderr)
-            self.assertEqual(guarda_decide(projects, su), "allow",
-                             "a segunda escrita da lente continua recusada")
-
-    def test_after_the_hook_the_kernel_is_ready(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            projects, eng = eng_migrado(tmp)
-            su = lente_acrescenta(eng)
-            self.assertFalse(B["bootstrap"](eng)["ready"], "a premissa do caso caiu")
-            hook("on-su-mirror.py", projects, su)
+            self.assertIn("reconcile", p.stderr, "a divergencia nao foi reportada")
+            self.assertIn("C-050", p.stderr, "o relatorio nao nomeia a linha nova")
+            self.assertEqual(su.read_bytes(), editado, "o hook mexeu na edicao")
+            self.assertNotIn("C-050", {n["id"] for n in G["read"](eng)["nodes"]},
+                             "o hook publicou o espelho sozinho")
+            self.assertFalse(B["bootstrap"](eng)["ready"])
+            self.assertEqual(guarda_decide(projects, su), "deny",
+                             "escrita seguinte aceite sobre estado divergente")
+            plano = R["reconcile"](eng)
+            self.assertEqual(plano["status"], "planned")
+            self.assertIn("C-050", plano["new_rows"])
+            self.assertFalse(B["bootstrap"](eng)["ready"], "ver o plano publicou")
+            feito = R["reconcile"](eng, apply=True)
+            self.assertTrue(feito["published"])
             self.assertTrue(B["bootstrap"](eng)["ready"])
+            self.assertEqual(su.read_bytes(), editado, "a reconciliacao reescreveu a SU")
+            self.assertEqual(guarda_decide(projects, su), "allow")
 
-    def test_many_writes_in_a_row_stay_ready(self):
-        """Uma passagem tem seis lentes. Nenhuma pode bloquear a seguinte."""
+    def test_a_state_promotion_in_place_is_named_before_it_is_mirrored(self):
+        """D19: mudar o estado de uma linha no sitio ja nao passa calado."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _p, eng = eng_migrado(tmp)
+            su = eng / "shared-understanding.md"
+            t = su.read_text(encoding="utf-8")
+            resolvida = ANCORA.replace("| R-01 |", "| R-01 - resolved -> C-050 |")
+            su.write_text(t.replace(ANCORA, resolvida, 1), encoding="utf-8", newline="\n")
+            plano = R["reconcile"](eng)
+            self.assertTrue([d for d in plano["material"] if d.get("id") == "C-001"],
+                            plano)
+
+    def test_many_lens_writes_through_the_coordinator_stay_ready(self):
+        """Uma passagem tem seis lentes. Pelo rascunho, nenhuma bloqueia a seguinte."""
         with tempfile.TemporaryDirectory() as tmp:
             projects, eng = eng_migrado(tmp)
             su = eng / "shared-understanding.md"
             for i in range(6):
-                # a ordem real: o guarda (PreToolUse) decide ANTES, a escrita acontece,
-                # o espelho (PostToolUse) corre DEPOIS. A primeira versao escrevia e so
-                # depois perguntava ao guarda — um ciclo que o Claude Code nunca faz.
-                self.assertEqual(guarda_decide(projects, su), "allow",
-                                 "a escrita {} foi recusada".format(i + 1))
-                lente_acrescenta(eng, rid="C-0{}".format(60 + i))
-                hook("on-su-mirror.py", projects, su)
-            self.assertTrue(B["bootstrap"](eng)["ready"])
+                d = R["draft"](eng, ["shared-understanding.md"], reads=["answers.md"])
+                copia = Path(d["path"]) / "shared-understanding.md"
+                t = copia.read_text(encoding="utf-8")
+                # evidencia com localizador cujo alvo existe: o publish aplica o limiar
+                # de `Confirmed` como o guarda (sem ele, recusa com INTEGRITY_FAILURE)
+                nova = ("| C-0{} | business | Linha {} | answers.md#U-001 | 2026-03-01 | "
+                        "organizacional | R-02 |".format(60 + i, i))
+                copia.write_text(t.replace(ANCORA, ANCORA + "\n" + nova, 1),
+                                 encoding="utf-8", newline="\n")
+                r = R["publish"](eng, d["draft"])
+                self.assertIn("shared-understanding.md", r["published"])
+                self.assertTrue(B["bootstrap"](eng)["ready"],
+                                "a publicacao {} deixou o kernel por reconstruir".format(i))
+                self.assertEqual(guarda_decide(projects, su), "allow")
+            ids = {n["id"] for n in G["read"](eng)["nodes"]}
+            self.assertTrue({"C-0{}".format(60 + i) for i in range(6)} <= ids)
 
 
 class L2_OQueOEspelhoFaz(unittest.TestCase):

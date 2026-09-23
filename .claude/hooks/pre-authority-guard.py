@@ -202,25 +202,25 @@ def estado_novo(eng: Path, nome: str, tool: dict) -> tuple[bool, str]:
         if not base or velho not in base:
             return True, ""
         texto = base.replace(velho, novo) if ti.get("replace_all") else base.replace(velho, novo, 1)
-    try:
-        novo_obj = json.loads(texto)
-    except ValueError as exc:
-        return False, "o `{}` novo não é JSON ({})".format(nome, exc)
-    if not isinstance(novo_obj, dict):
-        return False, "o `{}` novo não é um objecto JSON".format(nome)
-    perdidas = sorted(set(actual) - set(novo_obj))
-    if perdidas:
-        return False, "o `{}` novo deixa cair {} — campos existentes não se descartam " \
-                      "em silêncio".format(nome, ", ".join("`{}`".format(k) for k in perdidas))
-    if "workflow" in actual and novo_obj.get("workflow") != actual.get("workflow"):
-        return False, "o bloco `workflow` (perfil e rota) não muda por ferramenta: muda-o " \
-                      "o `workflow.py` pelo coordenador"
+    # A regra vive no kernel (`workflow.state_problems`), partilhada com o coordenador.
+    fora = _wf()["state_problems"](actual_p.read_text(encoding="utf-8"), texto)
+    if fora:
+        return False, " · ".join(r["detail"] for r in fora)
     return True, ""
+
+
+def _wf() -> dict:
+    """`workflow.py`, carregado uma vez e com o mesmo dashboard do bootstrap."""
+    if "W" not in _CACHE:
+        W = runpy.run_path(str(REPO_ROOT / "library" / "kernel" / "tools" / "workflow.py"))
+        W["_CACHE"]["D"] = _boot()["_D"]
+        _CACHE["W"] = W
+    return _CACHE["W"]
 
 
 def _perfil_handoff(eng: Path) -> bool:
     """O engagement é handoff-v1? (o resolver único vive em `workflow.py`)."""
-    W = runpy.run_path(str(REPO_ROOT / "library" / "kernel" / "tools" / "workflow.py"))
+    W = _wf()
     return W["profile_of"](eng)["kind"] == W["HANDOFF"]
 
 
@@ -252,27 +252,16 @@ def confirmados_sem_prova(eng: Path, tool: dict) -> tuple[bool, str]:
     novo = texto_novo(eng, "shared-understanding.md", tool)
     if novo is None:
         return True, ""
-    D = _boot()["_D"]
     try:
         antes = (eng / "shared-understanding.md").read_text(encoding="utf-8")
     except OSError:
         antes = ""
-    velhas = {r["id"]: (r["state"], r["raw"]) for r in D["parse_su"](antes)[1]}
-    linhas = D["parse_su"](novo)[1]
-    tocadas = {r["id"] for r in linhas
-               if r["state"] == "Confirmed" and not r["resolved"]
-               and velhas.get(r["id"]) != (r["state"], r["raw"])}
-    if not tocadas:
+    # A regra vive no kernel (`workflow.su_problems`), partilhada com o coordenador:
+    # linhas apagadas e `Confirmed` sem prova.
+    fora = _wf()["su_problems"](eng, antes, novo)
+    if not fora:
         return True, ""
-    audit = D["audit_confirmed_locators"](linhas, eng, only_ids=tocadas)
-    falhas = ["{} ({})".format(x["id"], x["motivo"])
-              for x in audit["sem_locator"] + audit["alvo_ausente"]]
-    if not falhas:
-        return True, ""
-    return False, "linha(s) `Confirmed` sem prova localizável: {} — concordância entre " \
-                  "personas não é evidência (`library/kernel/states.md` → *Confirmed " \
-                  "threshold*); escrever como `Assumed` com a base, ou `Unknown`".format(
-                      "; ".join(falhas))
+    return False, " · ".join(r["detail"] for r in fora)
 
 
 def main() -> int:
