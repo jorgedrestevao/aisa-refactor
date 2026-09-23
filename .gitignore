@@ -1,0 +1,47 @@
+# Personal Claude Code settings (per-user)
+.claude/settings.local.json
+
+# Environment with real credentials
+.env
+.env.local
+
+# Tenant-specific memory (lives in private repo)
+.claude/agent-memory/_tenant/
+
+# Engagement data (lives in private repo; this folder is mount point)
+projects/*
+!projects/.gitkeep
+
+# Pilot campaigns (real engagement inputs + runs; same nature as projects/)
+campaigns/*
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor noise
+.vscode/
+.idea/
+.obsidian/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+# excepcao: a evidencia bruta de R7 e o proprio artefacto (DEF-P1-02)
+!docs/pilot-runtime-correction/R7-evidence/*.log
+
+# Local test virtualenv (pytest runner; not part of the repo)
+.test-venv/
