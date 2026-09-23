@@ -23,6 +23,7 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 ## Regras de execução
 
 - **Workflows paralelos (subagentes) só para tarefas que não precisam do contexto da sessão e cujo detalhe não acrescenta nada à sessão** (regra do mantenedor, 2026-09-23). Servem: varrimentos mecânicos, inventários, verificações de consistência, testes de refutação de uma afirmação já escrita. Ficam na sessão: tudo o que depende das decisões do mantenedor, e tudo cujo detalhe a implementação a seguir precisa (desenho de contratos, código, testes, decisões a apresentar ao mantenedor). Na dúvida, fica na sessão. Circunstância: em F1.3 o desenho dos contratos foi lançado como workflow paralelo (6 desenhadores + revisão); o mantenedor fixou esta regra e o workflow foi parado sem resultados integrados ([F1/RELATORIO.md](F1/RELATORIO.md) §3).
+- **A mesma regra vale para o desenho do framework** (mantenedor, 2026-09-23). Um subagente ou uma execução paralela no runtime do aisa — personas, revisores, especialistas, rondas de antítese — só se define depois de avaliado o benefício, pelo mesmo critério: a tarefa não precisa do contexto de quem a lança, e o detalhe dela não volta a ser preciso ali, só o veredicto. Serve sobretudo a revisão independente, porque a independência é o próprio benefício. O que depende do contexto, ou cujo detalhe alimenta o passo seguinte, corre inline. Na dúvida, inline. Cada fase regista a avaliação no seu desenho.
 
 ## Ambiente de testes
 
