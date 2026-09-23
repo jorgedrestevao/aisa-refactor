@@ -1,0 +1,29 @@
+{
+  "package_version": "1.2",
+  "baseline_commit": "85baf1018ca2b238c41745f7f13dbb539589867f",
+  "implementation_tests_executed_by_this_validator": false,
+  "checks": {
+    "files": 15,
+    "phases": 10,
+    "specified_tests": 46,
+    "relative_links": "valid",
+    "json_examples": "parseable"
+  },
+  "sha256": {
+    "README.md": "d7ab40c36e7f8586a7faa422c484375a0e155fed7e96cb469cd000ff8fc7e7c7",
+    "01_BASELINE.md": "bb735acc4adb41db6662c1044f807a8ac1788ac939650a878a525032db3b2a09",
+    "02_CONTRATOS.md": "8a2915540b53c57b595f6dd524b4eb58c9906dbf26e3675fc3535d87deff361f",
+    "03_AGENTES_E_PACK.md": "4b370f057176514de81c2a40681815172e9848f3752904b7289e109e7358d90a",
+    "04_CONTINUIDADE.md": "b6d037aa72d3876743a45afd73b185b96a8f4f10d5b9bf7311df729e3fba4372",
+    "05_FASES.md": "f5e7864723eb70d8bb53ed69e32bf013f501af38a58a48d124486cf86713c349",
+    "06_VALIDACAO.md": "3d39042bf32e1fe8ae19a93aa88caa31e7aa189f8947dbd4e676829d1bb5f951",
+    "07_MIGRACAO.md": "a704d0ff731c1fb611eaf176a9212010f23eeb7b9e6deb56be6eb82f38644592",
+    "08_HANDOFF.md": "78e500653dbc1ee5f8a08bf9cdaf9385a9b31cf73eec8a8034ad24eb9376bd90",
+    "09_DEPENDENCIAS_E_TESTES.md": "408228ef5fef84875b3432cda10c22bb655eec9bef8d75b69bb44e8f93e17f47",
+    "PROMPT_IMPLEMENTACAO.md": "a47f8889af97dedd71b6887c3666cfa772b34e32d58cedff08ca94791435181d",
+    "templates/RELATORIO_FASE.md": "4518b45215ea34c8d90d9d2ccbffb52f3c34f7d1ef466ee62bdc6484e2e01cea",
+    "examples/functional-contract.json": "7021dd097761ffab6799efb2397717439e4fc55ee003ef361a18eee8ab7212e5",
+    "examples/work-checkpoint.json": "948ec67068d6673ed9d01c51953f15e85b0fb1bed633dedbe4f19ee333847531",
+    "validate_package.py": "2f60a623a4f47693c662021d2b621d5adf8365ba955c46e2474159df0119b0f9"
+  }
+}
