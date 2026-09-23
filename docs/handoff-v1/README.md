@@ -7,7 +7,7 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 | Plano (direcção de trabalho, v1.2, com MANIFEST e validador) | [plan/README.md](plan/README.md) — cópia idêntica ao zip enviado pelo mantenedor (sha256 `70aa0f4a6fe28557…`, `diff -r` sem diferenças, 2026-09-23). O zip vive nos uploads da sessão, que são efémeros; a cópia versionada é a referência. |
 | Fases, gates e rollback | [plan/05_FASES.md](plan/05_FASES.md) |
 | Relatório da fase F0 (**concluída**; decisões, testes, retoma) | [F0/RELATORIO.md](F0/RELATORIO.md) |
-| Fase corrente | **F1** (autorizada em 2026-09-23, em curso) — [F1/RELATORIO.md](F1/RELATORIO.md) |
+| Fase corrente | **F1** — trabalho integrado; gate cumprido com uma excepção por aceitar (T07, cobertura por lente → F3) — [F1/RELATORIO.md](F1/RELATORIO.md) · [desenho](F1/DESENHO-CONTRATOS.md) · [leitor/escritor/schema](F1/LEITOR-ESCRITOR.md) |
 | Artefactos de F0 | [F0/](F0/) |
 | Fixtures sintéticas do programa | `.claude/tests/fixtures/handoff-v1/` |
 | Teste de F0 (T02 + fixtures) | `.claude/tests/test_handoff_f0.py` |
