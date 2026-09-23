@@ -79,6 +79,7 @@ library/kernel/tools/tests/test_fields_draft.py
 .claude/tests/test_blueprint_functional_step.py
 .claude/tests/test_functional_render.py
 .claude/tests/test_hv1_design_path.py
+.claude/tests/test_review_candidates.py
 .claude/tests/test_handoff_continuity.py
 .claude/tests/test_handoff_publish.py
 .claude/tests/test_handoff_skill_writes.py

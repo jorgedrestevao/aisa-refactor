@@ -993,6 +993,16 @@
      "source": "handoff-v1 F4.4",
      "mechanism": "Independent reviewer of a published functional-contracts revision: reads the SU rows the contracts cite (epistemics of assumed premises). Read/Grep/Glob; writes nothing.",
      "evidence": ".claude/agents/fc-reviewer.md Inputs"
+    },
+    {
+     "file": "library/kernel/tools/review.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F5.1",
+     "mechanism": "Resolves candidate premise_refs to SU rows; the SU is in the candidates draft read-set (STALE_INPUT). Never writes the SU.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow"
     }
    ],
    "mention_only": [
@@ -2071,6 +2081,16 @@
      "source": "handoff-v1 F4.4",
      "mechanism": "Reads the decisions the contracts cite. Never authorises; writes nothing.",
      "evidence": ".claude/agents/fc-reviewer.md Inputs"
+    },
+    {
+     "file": "library/kernel/tools/review.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F5.1",
+     "mechanism": "decisions.md is in the candidates draft read-set; imposition_ref compared with the route authority. Never writes decisions.md.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow"
     }
    ],
    "mention_only": [
@@ -6336,6 +6356,16 @@
      "evidence": "handoff-contract.md:12",
      "confidence": "verified",
      "source": "F1.6"
+    },
+    {
+     "file": "library/kernel/tools/review.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F5.1",
+     "mechanism": "Reads _state.json.workflow (route, route_basis.authority_ref) for the route rules; in the read-set. Never writes _state.json.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow"
     }
    ],
    "mention_only": [
