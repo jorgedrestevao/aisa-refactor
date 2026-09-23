@@ -42,6 +42,15 @@ DRAFT_MANIFEST = "_canddraft.json"
 DRAFT_SCHEMA = "aisa-candidates-draft/1"
 SCHEMA = "handoff-candidates/1"
 SU_ID_RE = re.compile(r"^[CAUXRMD]-\d+$")
+SPECIALISTS = _HERE.parent / "specialists.md"
+REVIEWS_DIR = "_design/reviews"
+REV_RE = re.compile(r"^(REV-\d{4})\.mandate\.json$")
+PACKS_DIR = _HERE.parent.parent / "packs"
+OUTPUT_CONTRACT = ["task_id", "input_revision", "coverage", "findings", "assumptions",
+                   "unanswered", "recommended_actions", "sources_used"]
+PROHIBITED = ["escrever numa autoridade", "autorizar pelo cliente", "confirmar um facto por "
+              "constar de outra resposta", "ler o parecer de outro revisor",
+              "rever um candidato ainda em construção"]
 
 
 def _mod(name: str) -> dict:
@@ -331,6 +340,171 @@ def show_candidates(eng) -> dict:
             "gaps": candidate_gaps(data), "open_drafts": open_candidate_drafts(eng)}
 
 
+# ------------------------------------------------------------------ router (F5.2)
+
+def router_rules() -> list:
+    """As regras do bloco ```router-rules``` de `library/kernel/specialists.md` (dono único)."""
+    text = SPECIALISTS.read_text(encoding="utf-8")
+    m = re.search(r"```router-rules\n(.*?)```", text, re.S)
+    if not m:
+        raise ReviewError("specialists.md sem bloco router-rules", _W()["INTEGRITY_FAILURE"])
+    return json.loads(m.group(1))
+
+
+def _latest_blueprint(eng: Path) -> dict:
+    vs = sorted(eng.glob("_blueprint/ux-blueprint_v*.yaml"),
+                key=lambda p: int(re.search(r"v(\d+)", p.name).group(1)))
+    for p in reversed(vs):
+        obj, _i = _D()["yl_parse"](p.read_text(encoding="utf-8"))
+        if isinstance(obj, dict) and not obj.get("draft"):
+            return {"rel": "_blueprint/" + p.name, "obj": obj}
+    return {}
+
+
+def _blueprint_flags(bp: dict) -> dict:
+    """`{flag: [evidência]}` dos sinais estruturados de um desenho."""
+    obj = bp.get("obj") or {}
+    arch = obj.get("architecture") if isinstance(obj.get("architecture"), dict) else {}
+    out = {"outside-platform": [], "external-access": [], "human-surface": [],
+           "headless": []}
+    for c in arch.get("compositions") or []:
+        if isinstance(c, dict) and str(c.get("boundary", "")).strip() == "outside-platform":
+            out["outside-platform"].append("{}#{}".format(bp["rel"], c.get("component")))
+    for d in arch.get("record_authority") or []:
+        if isinstance(d, dict) and str(d.get("access_mode", "owned")).strip() != "owned":
+            out["external-access"].append("{}#{}".format(bp["rel"], d.get("key")))
+    mode = str((arch.get("experience") or {}).get("mode") or "").strip() \
+        if isinstance(arch.get("experience"), dict) else ""
+    if obj.get("screens") or (mode and mode != "none"):
+        out["human-surface"].append("{}#screens".format(bp["rel"]))
+    if bp and mode == "none" and not obj.get("screens"):
+        out["headless"].append("{}#experience.mode=none".format(bp["rel"]))
+    return out
+
+
+def route(eng, phase: str = "options") -> dict:
+    """Os especialistas que o risco pede, com a razão, e os não chamados, com o que se
+    verificou (plano 03 → *Seleção de especialistas*). Determinístico: as mesmas entradas dão
+    sempre a mesma selecção."""
+    eng = Path(eng)
+    _workflow(eng)
+    try:
+        md = (eng / "shared-understanding.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    _h, rows, _s, _d = _D()["parse_su"](md)
+    rows = [r for r in rows if not (r.get("retired") or r.get("parked") or r.get("resolved"))]
+    bp = _latest_blueprint(eng)
+    flags = _blueprint_flags(bp)
+    cands = read_candidates(eng)["data"]
+    cflags = {"om-unavailable": [c["id"] for c in cands.get("items") or []
+                                 if not (c.get("order_of_magnitude") or {}).get("source")]}
+    selected, not_called = [], []
+    for rule in router_rules():
+        role, ev = rule["role"], []
+        if phase in (rule.get("always_in") or []):
+            ev.append("always_in:{} — {}".format(phase, rule.get("reason", "")))
+        terms = [t.casefold() for t in rule.get("su_terms") or []]
+        for r in rows:
+            if r.get("lens") in (rule.get("su_lens") or []) and \
+                    (not terms or any(t in (r.get("claim") or "").casefold()
+                                      for t in terms)):
+                ev.append("{} ({})".format(r["id"], r.get("lens")))
+        for f in rule.get("blueprint") or []:
+            ev += ["{}: {}".format(f, e) for e in flags.get(f, [])]
+        for f in rule.get("candidates") or []:
+            ev += ["{}: {}".format(f, e) for e in cflags.get(f, [])]
+        na = [w for w in rule.get("not_applicable_when") or [] if flags.get(w)]
+        checked = "lentes {} por {} · desenho {} · candidatos {}".format(
+            rule.get("su_lens") or "-", rule.get("su_terms") or "-",
+            rule.get("blueprint") or "-", rule.get("candidates") or "-")
+        if na:
+            not_called.append({"role": role, "justification": "não aplicável: {} ({})".format(
+                ", ".join(na), ", ".join(flags[na[0]]))})
+        elif ev:
+            selected.append({"role": role, "evidence": ev})
+        else:
+            not_called.append({"role": role, "justification": "nenhum sinal — verificado: "
+                               + checked})
+    return {"phase": phase, "candidate_revision": cands.get("revision"),
+            "blueprint": bp.get("rel", ""), "selected": selected, "not_called": not_called}
+
+
+# ------------------------------------------------------------------ mandato (F5.2)
+
+def _pack_version(pack: str) -> str:
+    try:
+        text = (PACKS_DIR / pack / "pack.yaml").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    m = re.search(r"(?m)^pack_version:\s*(\S+)", text)
+    return m.group(1) if m else ""
+
+
+def _next_rev(eng: Path) -> str:
+    n = [int(REV_RE.match(p.name).group(1)[4:]) for p in (eng / REVIEWS_DIR).glob("REV-*")
+         if REV_RE.match(p.name)]
+    return "REV-{:04d}".format(max(n or [0]) + 1)
+
+
+def mandate(eng, role: str, questions, knowledge=(), objective: str = "",
+            scope_ids=(), budget: str = "uma leitura; sem rondas próprias") -> dict:
+    """Publica o mandato ANTES de o revisor correr. Recusado sem candidatos publicados ou
+    com um rascunho de candidatos aberto sobre a revisão corrente (T25); as unidades do pack
+    ficam com caminho, `sha256` e versão (T29)."""
+    eng = Path(eng)
+    W, O = _W(), _O()
+    wf = _workflow(eng)
+    cur = read_candidates(eng)
+    if not cur["digest"] or not cur["data"].get("items"):
+        raise ReviewError("nenhum candidato publicado — um revisor só corre sobre uma revisão "
+                          "publicada", W["BLOCKING_GAP"], {"role": role})
+    abertos = open_candidate_drafts(eng)
+    if abertos:
+        raise ReviewError("candidatos em construção ({}) — publicar antes de rever".format(
+            ", ".join(abertos)), W["BLOCKING_GAP"], {"drafts": abertos})
+    roles = {r["role"] for r in router_rules()}
+    if role not in roles:
+        raise ReviewError("papel `{}` não existe em specialists.md".format(role),
+                          W["INTEGRITY_FAILURE"], {"role": role})
+    if not [q for q in questions if str(q).strip()]:
+        raise ReviewError("mandato sem perguntas", W["INTEGRITY_FAILURE"], {"role": role})
+    pack = json.loads((eng / "_state.json").read_text(encoding="utf-8")).get("pack", "")
+    kref = []
+    for k in knowledge:
+        path = (PACKS_DIR.parent.parent / k).resolve()
+        base = (PACKS_DIR / pack).resolve()
+        if base not in path.parents or not path.is_file():
+            raise ReviewError("unidade do pack fora do pack activo ou inexistente: {}".format(k),
+                              W["INTEGRITY_FAILURE"], {"ref": k})
+        kref.append({"ref": k, "sha256": _digest(path), "pack": pack,
+                     "pack_version": _pack_version(pack)})
+    inputs = [CAND_PATH, "shared-understanding.md", "frame.md", "decisions.md",
+              "_design/functional-contracts.json"]
+    irefs = [{"ref": r, "sha256": _digest(eng / r)} for r in inputs if _digest(eng / r)]
+    rid = _next_rev(eng)
+    corpo = {"schema_version": "aisa-review-mandate/1", "task_id": rid, "role": role,
+             "objective": objective or "rever a revisão publicada dos candidatos",
+             "route": wf.get("route"), "scope_ids": list(scope_ids),
+             "questions": [str(q) for q in questions], "input_refs": irefs,
+             "candidate_revision": int(cur["data"]["revision"]), "knowledge_refs": kref,
+             "output_contract": OUTPUT_CONTRACT,
+             "stop_conditions": ["todas as perguntas com cobertura ou em `unanswered`"],
+             "budget": budget, "prohibited_actions": PROHIBITED,
+             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    texto = json.dumps(corpo, ensure_ascii=False, indent=1) + "\n"
+    rel = "{}/{}.mandate.json".format(REVIEWS_DIR, rid)
+    recibo = O["run"](eng, "mandate-{}".format(hashlib.sha256(texto.encode("utf-8"))
+                                               .hexdigest()[:16]),
+                      {rel: texto}, expected={rel: ""},
+                      read_set={r["ref"]: r["sha256"] for r in irefs})
+    return {"task_id": rid, "mandate": rel, "receipt": recibo, "data": corpo}
+
+
+def read_mandate(eng, rid: str) -> dict:
+    return _load(Path(eng) / REVIEWS_DIR / "{}.mandate.json".format(rid), rid + ".mandate")
+
+
 # ------------------------------------------------------------------ CLI
 
 def main(argv=None) -> int:
@@ -341,7 +515,14 @@ def main(argv=None) -> int:
         pass
     ap = argparse.ArgumentParser(description="candidatos e revisão independente (coordenador)")
     ap.add_argument("command", choices=["draft-candidates", "check-candidates",
-                                        "publish-candidates", "show-candidates"])
+                                        "publish-candidates", "show-candidates", "route",
+                                        "mandate"])
+    ap.add_argument("--phase", default="options")
+    ap.add_argument("--role", default="")
+    ap.add_argument("--question", action="append", default=[])
+    ap.add_argument("--knowledge", action="append", default=[])
+    ap.add_argument("--objective", default="")
+    ap.add_argument("--scope", action="append", default=[])
     ap.add_argument("--engagement", required=True)
     ap.add_argument("--draft", default="")
     ap.add_argument("--json", action="store_true")
@@ -359,6 +540,12 @@ def main(argv=None) -> int:
             rc = 0 if out["ok"] else (4 if out["code"] == W["BLOCKING_GAP"] else 1)
         elif a.command == "publish-candidates":
             out = publish_candidates(eng, a.draft)
+            out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
+            rc = 0
+        elif a.command == "route":
+            out, rc = route(eng, a.phase), 0
+        elif a.command == "mandate":
+            out = mandate(eng, a.role, a.question, a.knowledge, a.objective, a.scope)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
         else:

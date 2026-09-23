@@ -1000,9 +1000,9 @@
      "role": "reader",
      "via": "",
      "confidence": "verified",
-     "source": "handoff-v1 F5.1",
-     "mechanism": "Resolves candidate premise_refs to SU rows; the SU is in the candidates draft read-set (STALE_INPUT). Never writes the SU.",
-     "evidence": "review.py candidate_integrity, _reads, _workflow"
+     "source": "handoff-v1 F5.1–F5.2",
+     "mechanism": "Resolves candidate premise_refs to SU rows; the SU is in the candidates draft read-set (STALE_INPUT). Never writes the SU. F5.2: `route` reads live SU rows (lens + terms) as selection signals; `mandate` pins the SU sha256 in input_refs and the operation read-set.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow, route, mandate"
     }
    ],
    "mention_only": [
@@ -2088,9 +2088,9 @@
      "role": "reader",
      "via": "",
      "confidence": "verified",
-     "source": "handoff-v1 F5.1",
-     "mechanism": "decisions.md is in the candidates draft read-set; imposition_ref compared with the route authority. Never writes decisions.md.",
-     "evidence": "review.py candidate_integrity, _reads, _workflow"
+     "source": "handoff-v1 F5.1–F5.2",
+     "mechanism": "decisions.md is in the candidates draft read-set; imposition_ref compared with the route authority. Never writes decisions.md. F5.2: `mandate` pins decisions.md sha256 in input_refs and the read-set.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow, mandate"
     }
    ],
    "mention_only": [
@@ -3069,6 +3069,16 @@
      "role": "reader",
      "mechanism": "Parses the blueprint version named in FC based_on (dashboard.yl_parse) to resolve architecture_refs and inputs[].field_ref; refuses a draft:true blueprint and a changed one.",
      "evidence": "functional.py blueprint_index, integrity"
+    },
+    {
+     "file": "library/kernel/tools/review.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F5.2",
+     "mechanism": "`route` parses the latest non-draft blueprint version (dashboard.yl_parse) for selection signals: outside-platform compositions, record domains not owned, screens/experience mode (human surface or headless). Never writes the blueprint.",
+     "evidence": "review.py _latest_blueprint, _blueprint_flags, route"
     }
    ],
    "mention_only": [
@@ -6363,9 +6373,9 @@
      "role": "reader",
      "via": "",
      "confidence": "verified",
-     "source": "handoff-v1 F5.1",
-     "mechanism": "Reads _state.json.workflow (route, route_basis.authority_ref) for the route rules; in the read-set. Never writes _state.json.",
-     "evidence": "review.py candidate_integrity, _reads, _workflow"
+     "source": "handoff-v1 F5.1–F5.2",
+     "mechanism": "Reads _state.json.workflow (route, route_basis.authority_ref) for the route rules; in the read-set. Never writes _state.json. F5.2: `mandate` reads `pack` to confine knowledge_refs to the active pack, and the route.",
+     "evidence": "review.py candidate_integrity, _reads, _workflow, mandate"
     }
    ],
    "mention_only": [
