@@ -155,7 +155,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    <n> perguntas novas · <n> fechadas · <n> em aberto no total (<c> graves) <· abrimos mais do que fechámos>
    Factos novos nesta passagem: <n> verificados · <n> assumidos · <n> contradições entre fontes · <n> riscos   (round_delta.por_ronda[ronda].novas)
    <n> fechos que o motor não consegue datar — não contam em nenhuma passagem   [só se round_delta.indeterminadas]
-   A passagem <M> ficou a meio: faltam <perspectivas em palavras> — `/round <perspectiva em falta>` para continuar (qualquer uma, por qualquer ordem), ou `/round --close` para a dar por fechada   [só se houver passagem em curso (engagement.round_in_progress); as em falta vêm do motor (engagement.lentes_ronda_aberta.em_falta), nunca inferidas da ordem habitual]
+   A passagem <M> ficou a meio: <ainda sem as seis perspectivas registadas | as seis registadas, por fechar<, ainda por rever>> — `/round` para a análise completa, ou `/round --close` para a fechar com o que tem   [só se houver passagem em curso (engagement.round_in_progress); o estado vem do motor (engagement.lentes_ronda_aberta: corridas, fecha, revista, motivos — o registo de cobertura das perspectivas), nunca inferido]
 
    Conferência do desenho (só a partir do momento em que existe desenho)                        [5b]
    Estrutura: <verificada, sem falhas | <N> falhas que impedem a aprovação (códigos entre parênteses) | ilegível>
