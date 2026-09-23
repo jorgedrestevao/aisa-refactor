@@ -408,6 +408,28 @@ def check_integrations(sec: str | None) -> list[dict]:
 
 # ------------------------------------------------------------- orchestration
 
+def inventory_gaps(eng: Path, deliverable: str, rendered: Path) -> list[dict]:
+    """handoff-v1 F6.4: com `_design/work-packages.json`, a spec projecta cada WP (e nenhuma
+    linha do inventário leva duração) e a estimativa cita cada WP uma vez, ambas com a revisão
+    do inventário que leram. Os achados são do `trace.py` — aqui só se registam."""
+    if deliverable not in ("implementation-spec", "estimate") or not (
+            eng / "_design" / "work-packages.json").is_file():
+        return []
+    spec = importlib.util.spec_from_file_location(
+        "aisa_trace", REPO / "library" / "kernel" / "tools" / "trace.py")
+    T = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(T)
+    md = rendered.read_text(encoding="utf-8") if rendered.is_file() else ""
+    kind = "spec" if deliverable == "implementation-spec" else "estimate"
+    achados = T.derived_check(eng, md, kind)["findings"]
+    if kind == "spec":
+        achados += T.spec_effort_check(md)
+    dono = "implementation" if kind == "spec" else "estimate"
+    return [gap("inventory", f["code"], "{}: {}".format(f["ref"], f["detail"]), owner=dono,
+                resolves="projectar o inventário tal como está (trace.py), nunca ajustá-lo")
+            for f in achados]
+
+
 def validate(eng: Path, deliverable: str, rendered: Path, version_override: str | None = None) -> dict:
     D = _load_dashboard()
     state = json.loads((eng / "_state.json").read_text(encoding="utf-8")) if (eng / "_state.json").is_file() else {}
@@ -420,6 +442,7 @@ def validate(eng: Path, deliverable: str, rendered: Path, version_override: str 
               "sufficiency_slots": slots, "blueprint": None, "gaps": [], "notes": []}
     if not slots:
         result["notes"].append("template sem bloco `sufficiency:` — nada a verificar por conteúdo")
+        result["gaps"] = inventory_gaps(eng, deliverable, rendered)
         result["coverage"] = coverage_report(eng, rendered)
         return result
     md = rendered.read_text(encoding="utf-8") if rendered.is_file() else ""
@@ -476,6 +499,7 @@ def validate(eng: Path, deliverable: str, rendered: Path, version_override: str 
         gaps += check_security(section_for(secs, "security_implementation"))
     if "integrations" in slots:
         gaps += check_integrations(section_for(secs, "integrations"))
+    gaps += inventory_gaps(eng, deliverable, rendered)
     result["gaps"] = gaps
     result["record"] = {"domains": len(record["domains"]), "entities": len(record["entities"])}
     result["coverage"] = coverage_report(eng, rendered)

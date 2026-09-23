@@ -208,10 +208,10 @@ EFFORT_RE = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:dias?|days?|horas?|hours?|semana
 
 
 def derived_check(eng, text: str, kind: str = "estimate") -> dict:
-    """A estimativa (`estimate`) ou o backlog (`backlog`) contra o inventário (DESENHO Q2):
+    """A estimativa (`estimate`), a spec (`spec`) ou o backlog (`backlog`) contra o inventário:
     cada linha de tabela que cita `WP-NNNN` é uma unidade; a revisão do inventário citada tem
-    de ser a corrente. Estimativa: cada WP exactamente uma vez. Backlog: cada WP pelo menos
-    uma vez. Um WP citado que não existe é sempre achado. Nunca compara esforços."""
+    de ser a corrente (DESENHO Q2). Estimativa: cada WP exactamente uma vez. Spec e backlog:
+    cada WP pelo menos uma vez. Um WP citado que não existe é sempre achado. Nunca compara esforços."""
     eng = Path(eng)
     inv = _load(eng / "_design/work-packages.json")
     rev = inv.get("revision")
@@ -231,7 +231,8 @@ def derived_check(eng, text: str, kind: str = "estimate") -> dict:
     for w in sorted(set(contagem) - ids):
         out.append(_f("UNKNOWN_WP", w, "{} cita um WP que não existe no inventário".format(kind)))
     for w in sorted(ids - set(contagem)):
-        out.append(_f("UNESTIMATED_WP" if kind == "estimate" else "MISSING_IN_BACKLOG", w,
+        out.append(_f({"estimate": "UNESTIMATED_WP", "spec": "MISSING_IN_SPEC"}.get(
+            kind, "MISSING_IN_BACKLOG"), w,
                       "WP do inventário sem unidade em {}".format(kind)))
     if kind == "estimate":
         for w, n in sorted(contagem.items()):

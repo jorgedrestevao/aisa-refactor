@@ -50,7 +50,9 @@ no_second_estimate_authority: |
 # ── THE FOUR STRUCTURAL DECLARATIONS A CALCULATION-OWNING DELIVERABLE MUST CARRY ──────
 # (§40.4, asserted by T-D19)
 input_inventory_authority:
-  mode_a: the Implementation Specification's inventory
+  mode_a: "the Implementation Specification's inventory — in handoff-v1, `_design/work-packages.json` at
+     the revision the Specification cites: every work unit cites its WP-NNNN and the line
+     `inventário r<N>`, and `trace.py estimate-check` verifies it (F6, Q2)"
   mode_b: the candidate architecture record(s) — per candidate
 method_authority: library/packs/pp/domain-knowledge/craft/estimation-model.md
 # METHOD ONLY, person-days. Its own banner states it is NOT VALID AS COMPARATIVE ECONOMICS,
@@ -416,6 +418,10 @@ slot_sources:
 > acrescentada; uma unidade necessária mas ausente é um **open work item** contra a Especificação
 > (dono: `implementation`). Modo B: nenhuma unidade ausente dos componentes/obrigações **conhecidos**
 > do candidato pode ser acrescentada. *Não haver especificação não é licença para inventar uma.*
+>
+> **handoff-v1** (F6, Q2): cada linha cita o `WP-NNNN` do inventário que estima — **uma** linha por WP, nunca
+> duas — e a secção declara `inventário r<N>`, a revisão lida. Um WP sem linha, uma linha sem WP que exista, ou
+> uma revisão desactualizada são achados de `trace.py estimate-check`, devolvidos antes de publicar.
 
 {{work_breakdown}}
 

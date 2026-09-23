@@ -34,6 +34,12 @@ authority_sources:
   - "_design/functional-contracts.json — behaviour (handoff-v1 F4): ONLY the items `functional.py
      render-gate` reports authorised and current; a missing or gapped one is an open work item with
      owner `functional`, never a value written here"
+  - "_design/work-packages.json — the INVENTORY (handoff-v1 F6, Q1): this deliverable owns the
+     inventory by PROJECTING this file at its current revision (`inventário r<N>`); it never adds,
+     drops, merges or re-sequences a WP-NNNN, and never carries a duration (effort is the Estimate's)"
+  - "_design/scope.json — the authorised scope (handoff-v1 F6, Q3): §1 projects its includes and its
+     excludes, each exclusion with its authorisation; an item neither included nor excluded is never
+     silently built"
 
 conditional_sources:
   - _blueprint/ux-blueprint_v<approved>.yaml     # screens / entities / entities[].state_machine ·
@@ -64,6 +70,8 @@ permitted_transformations:
   # Each is DETERMINISTIC, BOUNDED, DECLARED HERE, and TRACEABLE to an authoritative input.
   - architecture obligation      -> build / configuration obligation
   - proof obligation             -> ONE work package + ONE acceptance condition
+  - work-packages.json item      -> inventory row (WP · propósito · realiza · prova · depende de ·
+                                    aceitação · DoD), cited revision `inventário r<N>` — handoff-v1 F6
   - architecture dependency      -> sequencing constraint (NO durations)
   - A9 replacement + class-14 outcome + access_mode transition -> migration & cutover steps
   - approved UX blueprint screen -> screen/component build block
@@ -271,6 +279,8 @@ conditional_slots:
   - operator_obligations
   - analytical_responsibility
   - operating_path_change
+  - work_package_inventory
+  - inventory_revision
 
 # ── SUFFICIENCY (P-7) — deterministic rules render-validate.py checks BY CONTENT ─────────
 # A rule that fails is a `required` gap in render-gaps.md (owner: architecture), never a slot
@@ -309,6 +319,10 @@ slot_conditions:
     steps. Otherwise not applicable — a skip, never a gap. Where engaged, EVERY step of the as-is table
     appears: replaced (with novo processo · tempo novo · Δ, or `tempo novo: not derivable — <reason>`)
     or `inalterado`. A step with `tempo actual: Unknown (U-nnn)` keeps its Unknown in the row."
+  work_package_inventory: "a handoff-v1 engagement with a published _design/work-packages.json.
+    Engaged, EVERY WP-NNNN renders, one row each, in file order; none is added, merged or dropped, and
+    no row carries a duration. Absent (historical version) — a skip, never a gap."
+  inventory_revision: the same condition as work_package_inventory — the `revision` of the file read
 
 slot_sources:
   build_gates: decisions.md# D-NNN — Conditions + Preconditions (each as condition — owner — funded? — by when — what it gates — status only where recorded; `not named` included; NEVER rendered as satisfied)
@@ -332,6 +346,9 @@ slot_sources:
   migration_and_cutover: architecture-templates/architecture-core.md# A9 conditional — substituição de um artefacto existente + decisions.md# D-NNN — (Scope, outcome) pairs (the class-14 outcome sentence) + the architecture block# record_authority[].access_mode transitions
   build_scope_statement: decisions.md# D-NNN — (Scope, outcome) pairs — UNCOLLAPSED (the PP-owned side, stated as such) + the scope-ownership projection categories
   open_work_items: the architecture block# open_architecture_choices[] (non-structural) + decisions.md# D-NNN — Conditions, Preconditions + implementation-local unknowns
+  work_package_inventory: "_design/work-packages.json# items[] — id · purpose · realizes · proves ·
+    depends_on · acceptance · definition_of_done, verbatim (handoff-v1 F6, Q1)"
+  inventory_revision: _design/work-packages.json# revision
   operating_path_change: _synthesis/as-is.md# Passos e tempo (passo · quem · tempo actual — the ONLY thing read there) x this deliverable's own inventory (§4 A5 volume × cadence · §5 screens · §6 flows · §7 contracts — the novo processo and its tempo novo, where a basis exists) -> passo · quem · tempo actual · novo processo · tempo novo · Δ (P-10)
 ---
 
@@ -354,6 +371,17 @@ slot_sources:
 > uma contraparte não nomeada. O lado de fora nunca entra no âmbito por silêncio.
 
 {{build_scope_statement}}
+
+### Inventário de trabalho (inventário r{{inventory_revision}})
+> Projecção de `_design/work-packages.json` — **uma linha por `WP-NNNN`**, pela ordem do ficheiro, sem
+> durações nem esforço (a Estimativa é a única dona do esforço e cita estes mesmos `WP-NNNN`). Cada
+> obrigação das secções seguintes cita o `WP-NNNN` que a realiza; uma obrigação sem WP é **item em
+> aberto** (§17), nunca um WP inventado aqui. `trace.py show` e `trace.py scope-gate` conferem o
+> inventário antes deste render; um achado deles é lacuna, não slot preenchido.
+
+| WP | Propósito | Realiza | Prova | Depende de | Aceitação | Definição de feito |
+|---|---|---|---|---|---|---|
+{{work_package_inventory}}
 
 ## 2. Portões de construção (condições e pré-condições que travam o arranque)
 > **Condicional — engajada onde a decisão registou pelo menos uma condição ou pré-condição que
@@ -481,7 +509,8 @@ slot_sources:
 ## 14. Sequenciamento
 > **Dependências apenas — sem durações.** Derivado de: fronteiras A3 · rotas de release A8 · pontos
 > fixos A9 · dono de release cross-boundary de cada fronteira. O que tem de aterrar primeiro, e porquê.
-> A narrativa financeira **não** é autoridade de sequenciamento.
+> A narrativa financeira **não** é autoridade de sequenciamento. Em `handoff-v1`, as dependências são as
+> `depends_on` do inventário (`WP-NNNN`), e nenhuma outra é acrescentada aqui.
 
 {{sequencing}}
 
@@ -494,6 +523,10 @@ slot_sources:
 >
 > O **Architecture Blueprint** é dono de: o que é substituído · a fronteira de coexistência · a
 > arquitectura de transição · as dependências de cutover que são arquitecturais (A9).
+>
+> Em `handoff-v1` (T38): reconciliação, cutover, rollback e retenção/destino do legado **cada um** cita o
+> `WP-NNNN` que o realiza e a sua condição de aceitação; o que não se aplica diz porquê (`not_applicable`
+> do inventário). Um passo sem WP é item em aberto.
 
 {{migration_and_cutover}}
 
