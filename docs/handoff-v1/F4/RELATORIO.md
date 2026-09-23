@@ -7,8 +7,8 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 | Inc. | Estado | Commit | Evidência |
 | --- | --- | --- | --- |
 | F4.1 `functional.py` + completude | integrado | `405f3f9` | `library/kernel/tools/functional.py`: `draft`, `check`, `publish`, `show`. Publica pelo coordenador numa operação: a revisão corrente e a cópia imutável em `_design/history/`. A integridade recusa com `INTEGRITY_FAILURE` (schema, ids nunca reutilizados nem largados fora de `retired_ids`, revisão +1, referências a SU, `D-` e desenho que resolvem, desenho de opção recusado). A frescura vem antes da integridade (`STALE_INPUT`). Um replay devolve o mesmo recibo. A completude dá `BLOCKING_GAP` sem recusar: essenciais, cálculo sem unidades, arredondamento ou os três tipos de exemplo, delegação incompleta, pergunta bloqueante aberta. Schema aditivo sem mudar de versão. `handoff-contract.md` descreve o motor e corrige a tabela F1 (FC em F4, pelo plano 05). Matriz F0: 3 entradas. `test_functional_contracts.py` 19 casos (T20). Full 91/91, 2863; stdlib 72/72, 2065; ambos exit 0 |
-| F4.2 Autorização | integrado | (este) | `functional.py`: leitura dos blocos `D-NNN — Contratos funcionais autorizados`; estado por FC (`current` · `stale` · `invalid` · `missing`) por impressão digital do item; `authorization-block` gera o bloco com as impressões do motor e recusa FC com lacunas e validador não humano (`AUTHORIZATION_REQUIRED`); `show` lista as premissas `Assumed` e se o FC é autorizável. Contrato no `handoff-contract.md`. `test_functional_authorization.py` 7 casos (T22, T24, item 6). Full 92/92, 2870; stdlib 73/73, 2072; ambos exit 0 |
-| F4.3 Coerência desenho ↔ FC | por fazer | | |
+| F4.2 Autorização | integrado | `475fbb4` | `functional.py`: leitura dos blocos `D-NNN — Contratos funcionais autorizados`; estado por FC (`current` · `stale` · `invalid` · `missing`) por impressão digital do item; `authorization-block` gera o bloco com as impressões do motor e recusa FC com lacunas e validador não humano (`AUTHORIZATION_REQUIRED`); `show` lista as premissas `Assumed` e se o FC é autorizável. Contrato no `handoff-contract.md`. `test_functional_authorization.py` 7 casos (T22, T24, item 6). Full 92/92, 2870; stdlib 73/73, 2072; ambos exit 0 |
+| F4.3 Coerência desenho ↔ FC | integrado | (este) | `functional.py conflicts`: por `field_ref`, compara `required`, `values` (sem ordem), `default` e `type` entre o desenho e o FC; divergência = `FC_BLUEPRINT_CONFLICT` com os dois lados e os localizadores, sem escolher um. O FC afectado sai não autorizável (`show`, `check`, `authorization-block`); `conflicts --blueprint <versão>` compara uma versão em aprovação com os FC correntes (exit 4). Faceta *calculado* deixada ao revisor (nota no desenho §3). `test_functional_coherence.py` 6 casos (T21). Full 93/93, 2876; stdlib 74/74, 2078; ambos exit 0 |
 | F4.4 Passo funcional do `/blueprint` + `fc-reviewer` | por fazer | | |
 | F4.5 Render | por fazer | | |
 | F4.6 Percurso, relatório e gate | por fazer | | |
@@ -20,6 +20,7 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 | F4.0 | levantamento e desenho | precisa do contexto da sessão (plano, contratos, motores); o detalhe volta a ser preciso | na sessão |
 | F4.1 | motor, schema, testes | idem | na sessão |
 | F4.2 | autorização, testes | idem | na sessão |
+| F4.3 | coerência, testes | idem | na sessão |
 
 ## 3. Testes adaptados
 
@@ -31,3 +32,5 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 - «Cálculo» é declarado pelo autor (campo `calculation`); o motor não deduz que um FC calcula. Um cálculo não declarado escapa à exigência de arredondamento e dos três exemplos — é achado do revisor.
 - O validador humano é verificado por forma (`owner (<papel>, … via AskUserQuestion)`) e por uma lista fechada de nomes que nunca autorizam (executor, agentes, personas, revisores). Não prova que a pessoa respondeu: isso vem da regra do `AskUserQuestion` na sessão.
 - O bloco de autorização é classificado pelo dashboard como `other` (não é aprovação de frase, solução ou desenho); fica assim até alguém precisar de outra leitura.
+- A comparação desenho ↔ FC só vê o que os dois declaram de forma estruturada, por campo. Uma regra dita em prosa no desenho, ou um estado de uma máquina de estados de entidade, fica para o revisor.
+- A linha `Conflicted` na SU e o bloqueio da aprovação do desenho são escritos pelo `/blueprint` (F4.4); o motor dá o conflito e a recusa de autorizar.

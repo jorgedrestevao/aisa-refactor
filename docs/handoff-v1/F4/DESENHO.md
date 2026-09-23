@@ -84,6 +84,8 @@ O schema ganha, de forma aditiva e sem mudar de versão, o que o contrato já pe
 | tipo | `type` | `inputs[].type` (quando declarado) |
 | calculado | `computed: true` | um FC que escreve o campo tem `rule` |
 
+**Nota de implementação (F4.3).** A faceta *calculado* não é comparada pelo motor: um FC pode ler um campo calculado como entrada legítima, e distinguir isso de uma contradição exige leitura. Fica com o `fc-reviewer`. As outras quatro são comparadas.
+
 Uma divergência:
 
 - é um conflito `FC_BLUEPRINT_CONFLICT` com os dois lados e os seus localizadores;

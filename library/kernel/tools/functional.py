@@ -177,6 +177,52 @@ def item_sha256(item: dict) -> str:
                                      separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
+# ------------------------------------------------------------------ coerência (F4.3)
+
+# As facetas que o desenho e o FC declaram de forma estruturada sobre o mesmo campo
+# (DESENHO §3). `computed` não entra: um FC pode ler um campo calculado como entrada, e
+# a leitura dessa diferença é do revisor, não de uma comparação de chaves.
+FACETS = (("required", "obrigatoriedade"), ("values", "valores permitidos"),
+          ("default", "valor por omissão"), ("type", "tipo"))
+
+
+def _norm(facet: str, v):
+    if facet == "values" and isinstance(v, list):
+        return sorted(str(x) for x in v)
+    return v
+
+
+def conflicts(eng, data: dict | None = None, blueprint: str = "") -> list:
+    """`FC_BLUEPRINT_CONFLICT` por faceta: o desenho diz uma coisa, o FC outra. Só se compara
+    o que os dois declaram — uma faceta que um deles não declara não é conflito. O motor não
+    escolhe um lado."""
+    eng = Path(eng)
+    data = read_current(eng)["data"] if data is None else data
+    bp = blueprint or _blueprint_of(data)
+    if not bp:
+        return []
+    campos = blueprint_index(eng, bp).get("fields", {})
+    out = []
+    for it in data.get("items") or []:
+        for inp in it.get("inputs") or []:
+            campo = campos.get(inp.get("field_ref"))
+            if not campo:
+                continue
+            for facet, nome in FACETS:
+                if facet not in inp or facet not in campo:
+                    continue
+                a, b = _norm(facet, campo[facet]), _norm(facet, inp[facet])
+                if a != b:
+                    out.append({"code": "FC_BLUEPRINT_CONFLICT", "fc": it["id"],
+                                "field_ref": inp["field_ref"], "facet": facet,
+                                "blueprint": {"ref": bp, "value": campo[facet]},
+                                "functional": {"ref": "{}#{}".format(FC_PATH, it["id"]),
+                                               "value": inp[facet]},
+                                "detail": "{}: o desenho diz {!r}, {} diz {!r}".format(
+                                    nome, campo[facet], it["id"], inp[facet])})
+    return out
+
+
 # ------------------------------------------------------------------ autorização (F4.2)
 
 def validator_problem(validated_by: str) -> str:
@@ -259,6 +305,7 @@ def authorization_block(eng, fc_ids, validated_by: str, scope: str,
         raise FunctionalError("autorização recusada: " + prob, _W()["AUTHORIZATION_REQUIRED"],
                               {"validated_by": validated_by})
     gaps = completeness(eng, cur)
+    conf = conflicts(eng, cur)
     linhas = []
     for fc in fc_ids:
         if fc not in por_id:
@@ -267,6 +314,10 @@ def authorization_block(eng, fc_ids, validated_by: str, scope: str,
         if any(g["fc"] == fc for g in gaps):
             raise FunctionalError("{} tem lacunas — não é autorizável".format(fc),
                                   _W()["BLOCKING_GAP"], {"fc": fc})
+        if any(c["fc"] == fc for c in conf):
+            raise FunctionalError("{} contradiz o desenho — reconciliar antes de autorizar"
+                                  .format(fc), _W()["BLOCKING_GAP"],
+                                  {"fc": fc, "conflicts": [c for c in conf if c["fc"] == fc]})
         linhas.append("{} (sha256 {})".format(fc, item_sha256(por_id[fc])))
     did = "D-{:03d}".format(max([int(d[2:]) for d in _W()["_decision_ids"](eng)] or [0]) + 1)
     ts = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -403,7 +454,7 @@ def check(eng, data: dict | None = None, prev: dict | None = None) -> dict:
     data = prev if data is None else data
     prova = dict(prev, revision=int(prev.get("revision") or 0) - 1) if data is prev else prev
     inte = integrity(eng, data, prova)
-    gaps = [] if inte else completeness(eng, data)
+    gaps = [] if inte else completeness(eng, data) + conflicts(eng, data)
     if inte:
         resp = W["response"](False, W["INTEGRITY_FAILURE"],
                              [W["_reason"](p["detail"], "functional", p["code"]) for p in inte],
@@ -516,6 +567,7 @@ def show(eng) -> dict:
     cur = read_current(eng)
     data = cur["data"]
     gaps = completeness(eng, data)
+    conf = conflicts(eng, data)
     blocks = authorization_blocks(eng)
     su = _su_rows(eng)
     por_fc = {}
@@ -529,7 +581,8 @@ def show(eng) -> dict:
             "gaps": [g for g in gaps if g["fc"] == it["id"]],
             "authorization": auth,
             "assumed_premises": assumed_premises(eng, it, su),
-            "authorizable": not any(g["fc"] == it["id"] for g in gaps)}
+            "conflicts": [c for c in conf if c["fc"] == it["id"]],
+            "authorizable": not any(g["fc"] == it["id"] for g in gaps + conf)}
     return {"revision": data.get("revision"), "digest": cur["digest"],
             "blueprint": _blueprint_of(data), "items": por_fc,
             "retired_ids": data.get("retired_ids") or []}
@@ -545,7 +598,9 @@ def main(argv=None) -> int:
         pass
     ap = argparse.ArgumentParser(description="contratos funcionais (publica pelo coordenador)")
     ap.add_argument("command", choices=["draft", "check", "publish", "show",
-                                        "authorization-block"])
+                                        "authorization-block", "conflicts"])
+    ap.add_argument("--blueprint", default="", help="conflicts: a versão do desenho a "
+                    "comparar (por omissão, a de based_on)")
     ap.add_argument("--fc", action="append", default=[])
     ap.add_argument("--validated-by", default="")
     ap.add_argument("--scope", default="")
@@ -568,6 +623,9 @@ def main(argv=None) -> int:
             out = publish(eng, a.draft)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
+        elif a.command == "conflicts":
+            out = {"conflicts": conflicts(eng, blueprint=a.blueprint)}
+            rc = 4 if out["conflicts"] else 0
         elif a.command == "authorization-block":
             print(authorization_block(eng, a.fc, a.validated_by, a.scope))
             return 0
