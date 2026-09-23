@@ -3,8 +3,10 @@
 
     python library/kernel/tools/workflow.py check --engagement <slug> [--json]
     python library/kernel/tools/workflow.py check --pack <id> --profile handoff-v1 --route <rota> [--json]
+    python library/kernel/tools/workflow.py task plan|start|receive|reconcile|show ... --engagement <slug>
 
-Stdlib apenas (ADR-001). Nao escreve nada.
+Stdlib apenas (ADR-001). `check` nao escreve nada; `task` escreve so o checkpoint
+(`_work/checkpoint.json`), e so pelo coordenador.
 
 O QUE E
     O ponto unico onde se responde a tres perguntas antes de escrever num engagement:
@@ -12,7 +14,8 @@ O QUE E
     Hooks, skills e o coordenador perguntam aqui, e so aqui (desenho F1, I-06).
 
 O QUE NAO E
-    Nao e um motor novo de estado: nao publica, nao reconstroi, nao decide conteudo. A
+    Nao e um motor novo de estado: nao reconstroi e nao decide conteudo. O checkpoint e
+    calculado aqui e publicado por `operation.run`, como qualquer autoridade (F2.3). A
     publicacao continua em `operation.py`, a reconstrucao em `bootstrap.py`, o espelho em
     `graph.py`/`resolve.py` e a frescura semantica em `coverage.py`.
 
@@ -28,6 +31,7 @@ CAMPOS DESCONHECIDOS
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import runpy
@@ -390,6 +394,374 @@ def validate_profile(eng=None, *, pack=None, profile=None, route=None,
     return _check_request(who["state"].get("pack"), wf["profile"], wf["route"], packs_dir)
 
 
+# ------------------------------------------------------------ checkpoint e tarefas (F2.3)
+#
+# `_work/checkpoint.json` (`handoff-work/1`): o trabalho do proprio aisa, por referencias.
+# Nunca copia a SU, as decisoes ou o blueprint — guarda ids, caminhos e hashes. Quem o
+# publica e o coordenador (`operation.run`), como a qualquer autoridade: base esperada,
+# recibo, recuperacao. Este modulo so calcula o conteudo novo.
+#
+# Estados (handoff-contract.md → *Checkpoint*): tarefa `planned` · `running` · `blocked` ·
+# `completed` · `cancelled`; resultado `draft` · `received` · `integrated` · `superseded`,
+# com frescura `current` · `stale` · `unverified`. `completed` so com resultado integrado.
+# Depois de uma falha, `running` nao quer dizer que continua a correr: `reconcile` converte.
+
+CHECKPOINT = "_work/checkpoint.json"
+WORK_SCHEMA = "handoff-work/1"
+TASK_RE = re.compile(r"^TASK-(\d{3,})$")
+
+
+class WorkflowError(Exception):
+    def __init__(self, message: str, code: str, detail: dict | None = None):
+        super().__init__(message)
+        self.code = code
+        self.detail = detail or {}
+
+    def as_dict(self) -> dict:
+        return {"error": str(self), "code": self.code, "detail": self.detail}
+
+
+def _op() -> dict:
+    if "O" not in _CACHE:
+        _CACHE["O"] = runpy.run_path(str(_HERE / "operation.py"))
+    return _CACHE["O"]
+
+
+def _digest(p: Path) -> str:
+    return _op()["digest"](p)
+
+
+def read_checkpoint(eng) -> dict:
+    """`{data, digest, unknown}` — `data` None quando ainda nao existe (ausencia e estado).
+
+    Um checkpoint que existe e nao se le, ou que o schema recusa, NAO e ausencia: sobe como
+    `INTEGRITY_FAILURE`, e ninguem escreve por cima dele. Campos que o schema nao declara
+    sao reportados em `unknown` e preservados."""
+    p = Path(eng) / CHECKPOINT
+    dg = _digest(p)
+    if not dg:
+        return {"data": None, "digest": "", "unknown": []}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise WorkflowError("checkpoint ilegivel — nada se escreve por cima", INTEGRITY_FAILURE,
+                            {"path": CHECKPOINT, "detail": str(exc)})
+    if isinstance(data, dict) and data.get("schema_version") not in (None, WORK_SCHEMA):
+        raise WorkflowError("checkpoint com schema `{}`; esta versao le {}".format(
+            data.get("schema_version"), WORK_SCHEMA), SCHEMA_UNSUPPORTED,
+            {"path": CHECKPOINT})
+    errors, unknown = validate(data, load_schema("handoff-work"))
+    if errors:
+        raise WorkflowError("checkpoint invalido — nada se escreve por cima", INTEGRITY_FAILURE,
+                            {"path": CHECKPOINT, "errors": errors})
+    return {"data": data, "digest": dg, "unknown": unknown}
+
+
+def _decision_ids(eng: Path) -> list:
+    try:
+        texto = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        return []
+    return sorted(set(re.findall(r"(?m)^#{1,4}\s*\**\s*(D-\d+)\b", texto)))
+
+
+def new_checkpoint(eng) -> dict:
+    """O checkpoint de partida, so com referencias: o objectivo e o pedido literal
+    (`context.json#literal_request`), o ambito e o enquadramento declarado, as
+    autorizacoes sao os blocos `D-` que existem. Nada e resumido nem copiado."""
+    eng = Path(eng)
+    who = profile_of(eng)
+    if who["kind"] != HANDOFF:
+        raise WorkflowError("checkpoint so num engagement handoff-v1", UNSUPPORTED_PROFILE,
+                            {"kind": who["kind"]})
+    wf = who["workflow"] or {}
+    return {"schema_version": WORK_SCHEMA, "engagement_id": eng.name, "revision": 0,
+            "profile": PROFILE, "route": wf.get("route"),
+            "objective": "context.json#literal_request",
+            "scope_refs": ["enquadramento.md"] if (eng / "enquadramento.md").is_file() else [],
+            "authorization_refs": _decision_ids(eng),
+            "last_integrated_operation": None, "active_task": None,
+            "tasks": [], "results": [], "next_actions": []}
+
+
+def next_actions(cp: dict) -> list:
+    """Derivadas, nunca escritas a mao: o que esta pronto e porque e seguro."""
+    por_id = {t["id"]: t for t in cp.get("tasks", [])}
+    fora = []
+    for r in cp.get("results", []):
+        if r["status"] == "received":
+            fora.append({"action": "resolve.py publish --draft {}".format(
+                r["ref"].rsplit("/", 1)[-1]),
+                "reason": "resultado {} de {} recebido e por integrar ({})".format(
+                    r["id"], r["task_id"], r["freshness"])})
+    for t in cp.get("tasks", []):
+        deps = [por_id.get(d, {}).get("state") for d in t.get("dependencies", [])]
+        if t["state"] == "planned" and all(s == "completed" for s in deps):
+            fora.append({"action": "workflow.py task start {}".format(t["id"]),
+                         "reason": "planeada; dependencias concluidas"})
+        elif t["state"] == "blocked":
+            fora.append({"action": "resolver o bloqueio de {}".format(t["id"]),
+                         "reason": ", ".join(t.get("blocker_refs") or []) or "bloqueada"})
+    return fora
+
+
+def _render(cp: dict) -> str:
+    cp = dict(cp, revision=int(cp.get("revision") or 0) + 1)
+    running = [t["id"] for t in cp["tasks"] if t["state"] == "running"]
+    cp["active_task"] = running[0] if running else None
+    cp["next_actions"] = next_actions(cp)
+    errors, _u = validate(cp, load_schema("handoff-work"))
+    if errors:
+        raise WorkflowError("checkpoint novo invalido — nao se publica", INTEGRITY_FAILURE,
+                            {"errors": errors})
+    return json.dumps(cp, ensure_ascii=False, indent=1) + "\n"
+
+
+def _publish(eng: Path, prefixo: str, cp_atual: dict, cp_novo: dict,
+             read_set: dict | None = None) -> dict:
+    texto = _render(cp_novo)
+    op_id = "{}-{}".format(prefixo, hashlib.sha256(
+        (cp_atual["digest"] + texto).encode("utf-8")).hexdigest()[:16])
+    recibo = _op()["run"](eng, op_id, {CHECKPOINT: texto},
+                          expected={CHECKPOINT: cp_atual["digest"]}, read_set=read_set)
+    return {"operation_id": op_id, "receipt": recibo, "checkpoint": json.loads(texto)}
+
+
+def _task(cp: dict, task_id: str) -> dict:
+    for t in cp.get("tasks", []):
+        if t["id"] == task_id:
+            return t
+    raise WorkflowError("tarefa inexistente: {}".format(task_id), INTEGRITY_FAILURE,
+                        {"task": task_id})
+
+
+def _atual(eng: Path) -> tuple:
+    cp = read_checkpoint(eng)
+    data = cp["data"] if cp["data"] is not None else new_checkpoint(eng)
+    return cp, json.loads(json.dumps(data))
+
+
+def task_plan(eng, role, criteria, inputs=(), depends=()) -> dict:
+    """Uma tarefa `planned`, com o proximo `TASK-NNN` — um id nunca e reutilizado: as
+    tarefas nao se apagam, canceladas incluidas, e o maximo so cresce."""
+    eng = Path(eng)
+    crit = [c for c in (criteria or []) if str(c).strip()]
+    if not crit:
+        raise WorkflowError("tarefa sem criterio de fecho", INTEGRITY_FAILURE, {})
+    cp, data = _atual(eng)
+    for d in depends or ():
+        _task(data, d)
+    n = max([int(TASK_RE.match(t["id"]).group(1)) for t in data["tasks"]] or [0]) + 1
+    tid = "TASK-{:03d}".format(n)
+    data["tasks"].append({"id": tid, "role": role, "state": "planned",
+                          "input_refs": [{"ref": str(r)} for r in inputs or ()],
+                          "dependencies": list(depends or ()), "blocker_refs": [],
+                          "completion_criteria": crit, "output_refs": []})
+    out = _publish(eng, "task-plan", cp, data)
+    return dict(out, task=tid)
+
+
+def task_start(eng, task_id) -> dict:
+    """`running`, e os inputs ganham o sha256 dos bytes que a tarefa vai consumir: a
+    revisao consumida. Se mudarem ate a integracao, a integracao da `STALE_INPUT`."""
+    eng = Path(eng)
+    cp, data = _atual(eng)
+    t = _task(data, task_id)
+    if t["state"] not in ("planned", "blocked"):
+        raise WorkflowError("{} esta `{}` — so arranca de planned ou blocked".format(
+            task_id, t["state"]), INTEGRITY_FAILURE, {"task": task_id})
+    por_id = {x["id"]: x for x in data["tasks"]}
+    pendentes = [d for d in t["dependencies"] if por_id[d]["state"] != "completed"]
+    if pendentes:
+        raise WorkflowError("{} depende de tarefas por concluir: {}".format(
+            task_id, ", ".join(pendentes)), BLOCKING_GAP, {"task": task_id})
+    for ref in t["input_refs"]:
+        ref["sha256"] = _digest(eng / ref["ref"]) or ("0" * 64)
+    t["state"], t["blocker_refs"] = "running", []
+    return _publish(eng, "task-start", cp, data)
+
+
+def _input_revision(t: dict) -> str:
+    corpo = json.dumps({r["ref"]: r.get("sha256", "") for r in t["input_refs"]},
+                       sort_keys=True)
+    return hashlib.sha256(corpo.encode("utf-8")).hexdigest()
+
+
+def _freshness(eng: Path, t: dict) -> tuple:
+    mudados = [r["ref"] for r in t["input_refs"]
+               if (r.get("sha256") or "") != (_digest(eng / r["ref"]) or "0" * 64)]
+    return ("stale" if mudados else "current"), mudados
+
+
+def _resolve() -> dict:
+    if "R" not in _CACHE:
+        _CACHE["R"] = runpy.run_path(str(_HERE / "resolve.py"))
+    return _CACHE["R"]
+
+
+def task_receive(eng, task_id, draft_id) -> dict:
+    """O resultado chega: `received`, nunca `integrated`. Nao entra na SU nem no grafo, e
+    por isso nao conta para prontidao nem gates (T15); a retoma mostra-o. Um rascunho que
+    cita o que nao declarou ter lido e recusado aqui (T10)."""
+    eng = Path(eng)
+    R = _resolve()
+    m = R["read_draft"](eng, draft_id)
+    if m.get("task") != task_id:
+        raise WorkflowError("o rascunho {} nao serve {}".format(draft_id, task_id),
+                            INTEGRITY_FAILURE, {"draft": draft_id, "task": task_id})
+    d = R["draft_dir"](eng, draft_id)
+    novos = {rel: (d / rel).read_text(encoding="utf-8") for rel, base in m["files"].items()
+             if (d / rel).is_file() and _digest(d / rel) != base}
+    lacunas = R["read_set_gaps"](eng, m, novos)
+    if lacunas:
+        raise WorkflowError("o resultado cita o que nao declarou ter lido", INCOMPLETE_READ_SET,
+                            {"missing": lacunas, "draft": draft_id})
+    cp, data = _atual(eng)
+    t = _task(data, task_id)
+    if t["state"] != "running":
+        raise WorkflowError("{} esta `{}` — so recebe resultado quando running".format(
+            task_id, t["state"]), INTEGRITY_FAILURE, {"task": task_id})
+    frescura, mudados = _freshness(eng, t)
+    base_mudada = [rel for rel, dg in list(m["files"].items()) + list(m["reads"].items())
+                   if _digest(eng / rel) != dg]
+    if base_mudada:
+        frescura = "stale"
+    sha = R["draft_digest"](eng, draft_id)
+    for r in data["results"]:
+        if r["task_id"] == task_id and r["status"] == "received":
+            if r.get("sha256") == sha:
+                return {"operation_id": None, "receipt": None, "checkpoint": data,
+                        "result": r["id"], "replayed": True}
+            r["status"] = "superseded"
+            r["reason_not_integrated"] = "substituido por um resultado mais recente"
+    rid = "RES-{:03d}".format(len(data["results"]) + 1)
+    data["results"].append({
+        "id": rid, "task_id": task_id, "status": "received", "freshness": frescura,
+        "ref": "{}/{}".format(R["DRAFTS_DIR"], draft_id), "input_revision": _input_revision(t),
+        "sha256": sha,
+        "reason_not_integrated": ("por publicar" if frescura == "current" else
+                                  "inputs mudaram desde o inicio da tarefa: {}".format(
+                                      ", ".join(mudados + base_mudada)))})
+    out = _publish(eng, "task-receive", cp, data)
+    return dict(out, result=rid, freshness=frescura)
+
+
+def integrate(eng, cp: dict, task_id, draft_id, op_id, sha) -> tuple:
+    """`(texto do checkpoint novo, inputs consumidos)` — o delta que `resolve.publish` poe
+    na MESMA operacao que as autoridades. Resultado `integrated`, tarefa `completed`,
+    `last_integrated_operation`. So de uma tarefa `running` ou `blocked` a espera de
+    integracao; os inputs consumidos voltam para o read-set da publicacao."""
+    eng = Path(eng)
+    data = json.loads(json.dumps(cp["data"] if cp["data"] is not None
+                                 else new_checkpoint(eng)))
+    t = _task(data, task_id)
+    if t["state"] not in ("running", "blocked"):
+        raise WorkflowError("{} esta `{}` — nao ha o que integrar".format(task_id, t["state"]),
+                            INTEGRITY_FAILURE, {"task": task_id})
+    ref = "{}/{}".format(_resolve()["DRAFTS_DIR"], draft_id)
+    alvo = None
+    for r in data["results"]:
+        if r["task_id"] == task_id and r["status"] == "received":
+            if r["ref"] == ref:
+                alvo = r
+            else:
+                r["status"] = "superseded"
+    if alvo is None:
+        alvo = {"id": "RES-{:03d}".format(len(data["results"]) + 1), "task_id": task_id,
+                "ref": ref, "input_revision": _input_revision(t)}
+        data["results"].append(alvo)
+    alvo.update({"status": "integrated", "freshness": "current", "sha256": sha})
+    alvo.pop("reason_not_integrated", None)
+    t["state"], t["blocker_refs"] = "completed", []
+    t["output_refs"] = sorted(set(t.get("output_refs") or []) | {op_id})
+    data["last_integrated_operation"] = op_id
+    data["authorization_refs"] = sorted(set(data.get("authorization_refs") or [])
+                                        | set(_decision_ids(eng)))
+    consumidos = {r["ref"]: r["sha256"] for r in t["input_refs"]
+                  if r.get("sha256") and r["sha256"] != "0" * 64}
+    return _render(data), consumidos
+
+
+def tasks_reconcile(eng) -> dict:
+    """Depois de uma falha: nenhuma tarefa fica `running` sem prova de que corre.
+
+    Com um resultado recebido → `blocked` a espera de integracao (o trabalho esta feito e
+    guardado; falta publicar). Sem resultado → volta a `planned`, retomavel. Nunca relanca
+    nada e nunca promove um resultado a integrado."""
+    eng = Path(eng)
+    cp, data = _atual(eng)
+    mudou = []
+    for t in data["tasks"]:
+        if t["state"] != "running":
+            continue
+        recebidos = [r["id"] for r in data["results"]
+                     if r["task_id"] == t["id"] and r["status"] == "received"]
+        if recebidos:
+            t["state"] = "blocked"
+            t["blocker_refs"] = ["{}:por-integrar".format(recebidos[-1])]
+        else:
+            t["state"] = "planned"
+            for ref in t["input_refs"]:
+                ref.pop("sha256", None)
+        mudou.append({"task": t["id"], "state": t["state"]})
+    if not mudou:
+        return {"operation_id": None, "receipt": None, "changed": [],
+                "checkpoint": cp["data"]}
+    out = _publish(eng, "task-reconcile", cp, data)
+    return dict(out, changed=mudou)
+
+
+def task_main(argv) -> int:
+    """`workflow.py task plan|start|receive|reconcile|show …`"""
+    import argparse
+    ap = argparse.ArgumentParser(description="tarefas do checkpoint (publica pelo coordenador)")
+    ap.add_argument("task_command", choices=["plan", "start", "receive", "reconcile", "show"])
+    ap.add_argument("task_id", nargs="?", default="")
+    ap.add_argument("--engagement", required=True)
+    ap.add_argument("--role", default="")
+    ap.add_argument("--criteria", action="append", default=[])
+    ap.add_argument("--input", action="append", default=[])
+    ap.add_argument("--depends", action="append", default=[])
+    ap.add_argument("--draft", default="")
+    ap.add_argument("--start", action="store_true", help="plan: arrancar logo a seguir")
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args(argv)
+    eng = Path(a.engagement)
+    if not eng.is_dir():
+        eng = Path("projects") / a.engagement
+    O = _op()
+    try:
+        if a.task_command == "plan":
+            out = task_plan(eng, a.role, a.criteria, a.input, a.depends)
+            if a.start:
+                out = dict(task_start(eng, out["task"]), task=out["task"])
+        elif a.task_command == "start":
+            out = task_start(eng, a.task_id)
+        elif a.task_command == "receive":
+            out = task_receive(eng, a.task_id, a.draft)
+        elif a.task_command == "reconcile":
+            out = tasks_reconcile(eng)
+        else:
+            cp = read_checkpoint(eng)
+            out = {"checkpoint": cp["data"], "unknown": cp["unknown"]}
+    except WorkflowError as exc:
+        print(json.dumps(response(False, exc.code, [_reason(str(exc))],
+                                  affected_ids=[exc.detail.get("task") or ""]
+                                  if exc.detail.get("task") else []),
+                         ensure_ascii=False, indent=2), file=sys.stderr)
+        return 1
+    except O["OperationError"] as exc:
+        print(json.dumps(O["response_from_error"](exc), ensure_ascii=False, indent=2),
+              file=sys.stderr)
+        return 1
+    out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
+    print(json.dumps(out, ensure_ascii=False, indent=2) if a.json else
+          "\n".join("{:22} {}".format(k, v if not isinstance(v, (dict, list)) else
+                                      json.dumps(v, ensure_ascii=False)[:160])
+                    for k, v in out.items()))
+    return 0
+
+
 # ------------------------------------------------------------------ CLI
 
 def utf8_console() -> None:
@@ -398,6 +770,9 @@ def utf8_console() -> None:
 
 def main(argv=None) -> int:
     utf8_console()
+    args = list(sys.argv[1:] if argv is None else argv)
+    if args and args[0] == "task":
+        return task_main(args[1:])
     import argparse
     ap = argparse.ArgumentParser(description="perfil de workflow handoff-v1 (so leitura)")
     ap.add_argument("command", choices=["check"])

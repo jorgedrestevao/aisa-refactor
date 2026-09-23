@@ -208,6 +208,11 @@
      },
      "reason_not_integrated": {
       "type": "string"
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "hash do conteudo do rascunho recebido (F2.3); o resultado integrado guarda o que foi publicado"
      }
     }
    }

@@ -180,7 +180,7 @@ Collect the `Concedo / Contesto / Síntese proposta` returns and re-invoke chair
 
 Invoke `chairman-synthesis` with the 7 persona outputs and phase = `options`, round = `O-<NN>`. The chairman writes `options.md` (≥3 options) and the new SU rows.
 
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
 Four contract checks before reporting to the user, all owned by `chairman-synthesis`:
 

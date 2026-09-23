@@ -77,7 +77,7 @@ If `--consult` was passed (or the user asks for a technical review mid-flow), la
 
 ### 3. Flip state to Decision (through the coordinator)
 
-Steps 3, 4 and 4b are **one** draft, published once at the end of 4b: `python library/kernel/tools/resolve.py draft --engagement <slug> --files _state.json decisions.md shared-understanding.md council-log.md --reads frame.md options.md premortem.md --json`. Every write below goes into its copies, never in place and never through a `.tmp` renamed over `_state.json` (`library/kernel/orchestration.md` → *Writing an authority*). The `D-NNN` row of 4b cites the block of step 4, and both publish in the same operation, so its locator resolves.
+Steps 3, 4 and 4b are **one** draft, published once at the end of 4b: `python library/kernel/tools/resolve.py draft --engagement <slug> --files _state.json decisions.md shared-understanding.md council-log.md --reads frame.md options.md premortem.md enquadramento.md answers.md '_simulation/**/*' 'lens-outputs/*.md' --json`. Every write below goes into its copies, never in place and never through a `.tmp` renamed over `_state.json` (`library/kernel/orchestration.md` → *Writing an authority*). The `D-NNN` row of 4b cites the block of step 4, and both publish in the same operation, so its locator resolves.
 
 1. Update `_state.json`: `phase = decision`, `round = D-<NN>` (D-01 for the first decision in the engagement; if a prior D-NN exists in `_state.json`, increment).
 2. Update SU header `Fase actual: Decision`.

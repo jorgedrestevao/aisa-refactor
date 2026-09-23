@@ -2060,6 +2060,26 @@
      "evidence": "handoff-contract.md:20",
      "confidence": "verified",
      "source": "F1.6"
+    },
+    {
+     "file": "library/kernel/tools/workflow.py",
+     "kind": "tool",
+     "role": "reads",
+     "mechanism": "Checkpoint (F2.3): `_decision_ids` lists the `## D-NNN` block ids of decisions.md as the checkpoint's `authorization_refs` (ids only, never content); `next_actions` never copies a decision.",
+     "via": "new_checkpoint / integrate",
+     "evidence": "workflow.py _decision_ids",
+     "confidence": "verified",
+     "source": "F2.3"
+    },
+    {
+     "file": ".claude/skills/aisa-round/SKILL.md",
+     "kind": "skill",
+     "role": "reads",
+     "mechanism": "Step 4a2: each lens draft declares `decisions.md` in `--reads`, so a lens that cites a D-/TW- id passes the INCOMPLETE_READ_SET check (T10); the round writes no decision.",
+     "via": "resolve.py draft --reads",
+     "evidence": "aisa-round/SKILL.md step 4a2",
+     "confidence": "verified",
+     "source": "F2.3"
     }
    ],
    "mention_only": [
@@ -3785,6 +3805,16 @@
      "evidence": "projection.py MODEL_INPUTS",
      "confidence": "verified",
      "source": "F2.1"
+    },
+    {
+     "file": "library/kernel/tools/resolve.py",
+     "kind": "tool",
+     "role": "reads",
+     "mechanism": "F2.3 `cited_sources`/`read_set_gaps`: a `_coverage/…` path cited in a draft's added lines must be declared in the draft's reads (INCOMPLETE_READ_SET, T10). Path matching only; never parses or writes coverage records.",
+     "via": "resolve.py publish / workflow task receive",
+     "evidence": "resolve.py CITED_DIRS_RE",
+     "confidence": "verified",
+     "source": "F2.3"
     }
    ],
    "mention_only": [

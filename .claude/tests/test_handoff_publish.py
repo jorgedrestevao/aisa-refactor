@@ -82,7 +82,7 @@ class Publicacao(unittest.TestCase):
     def test_the_draft_is_not_an_authority_and_nobody_reads_it(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d)
             boot = B["bootstrap"](eng)
             self.assertTrue(boot["ready"], "um rascunho mudou a leitura da autoridade")
@@ -92,7 +92,7 @@ class Publicacao(unittest.TestCase):
     def test_other_files_publish_with_the_su(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU, "lens-outputs/business.md"])
+            d = R["draft"](eng, [SU, "lens-outputs/business.md"], reads=["answers.md"])
             acrescenta(d)
             out = copia(d, "lens-outputs/business.md")
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -107,7 +107,7 @@ class T13_MesmoRascunho(unittest.TestCase):
     def test_publishing_the_same_draft_twice_is_the_same_operation(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d)
             r1 = R["publish"](eng, d["draft"])
             n = recibos(eng)
@@ -122,7 +122,7 @@ class T13_MesmoRascunho(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
             antes = recibos(eng)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             r = R["publish"](eng, d["draft"])
             self.assertEqual(r["published"], [])
             self.assertEqual(recibos(eng), antes)
@@ -133,10 +133,10 @@ class T11_RascunhoDesactualizado(unittest.TestCase):
     def test_a_base_that_moved_is_stale_and_the_draft_survives(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d)
             # outra sessão publica entretanto
-            d2 = R["draft"](eng, [SU])
+            d2 = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d2, NOVA.replace("C-050", "C-051"))
             R["publish"](eng, d2["draft"])
             conteudo = copia(d).read_bytes()
@@ -175,7 +175,7 @@ class Integridade(unittest.TestCase):
     def test_a_removed_su_row_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             c = copia(d)
             c.write_text(c.read_text(encoding="utf-8").replace(ANCORA + "\n", "", 1),
                          encoding="utf-8")
@@ -184,7 +184,7 @@ class Integridade(unittest.TestCase):
     def test_a_confirmed_row_without_locator_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d, NOVA.replace("answers.md#U-001", "as personas concordam"))
             self._recusa(eng, d, "CONFIRMED_WITHOUT_LOCATOR")
 
@@ -228,14 +228,14 @@ class Integridade(unittest.TestCase):
             (eng / "_state.json").write_text(json.dumps({"pack": "pp"}), encoding="utf-8")
             # cada `runpy` tem a sua classe: a que o motor levanta e a do `_O` dele
             with self.assertRaises(R["_O"]["OperationError"]) as ctx:
-                R["draft"](eng, [SU])
+                R["draft"](eng, [SU], reads=["answers.md"])
             self.assertEqual(ctx.exception.code, "UNSUPPORTED_PROFILE")
             self.assertFalse((eng / "_drafts").exists())
 
     def test_nothing_publishes_over_a_pending_operation(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            d = R["draft"](eng, [SU])
+            d = R["draft"](eng, [SU], reads=["answers.md"])
             acrescenta(d)
             O["_atomic_write"](O["pending_path"](eng), json.dumps(
                 {"intent_version": 1, "operation_id": "op-x", "request_hash": "h",
@@ -296,7 +296,8 @@ class CLI(unittest.TestCase):
     def test_draft_then_publish_from_the_command_line(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)
-            p = self._run("draft", "--engagement", str(eng), "--files", SU, "--json")
+            p = self._run("draft", "--engagement", str(eng), "--files", SU, "--reads", "answers.md",
+                          "--json")
             self.assertEqual(p.returncode, 0, p.stderr)
             d = json.loads(p.stdout)
             acrescenta(d)

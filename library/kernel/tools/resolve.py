@@ -1153,6 +1153,18 @@ def draft(eng, files, reads=(), task=None) -> dict:
     rels = sorted({_rel_ok(f) for f in files})
     if not rels:
         raise ResolveError("rascunho sem ficheiros", "EMPTY_DRAFT", {})
+    if task:
+        # A tarefa declarou os seus inputs no checkpoint; entram nos reads do rascunho.
+        # Tem de estar a correr: um resultado de uma tarefa que nao comecou nao tem
+        # revisao consumida contra a qual se medir.
+        W = _B["_W"]
+        cp = W["read_checkpoint"](eng)
+        t = W["_task"](cp["data"] or {"tasks": []}, task)
+        if t["state"] != "running":
+            raise ResolveError("{} esta `{}` — arrancar a tarefa antes de abrir o "
+                               "rascunho".format(task, t["state"]), "TASK_NOT_RUNNING",
+                               {"task": task})
+        reads = list(reads or ()) + [r["ref"] for r in t["input_refs"]]
     semente = "{}|{}|{}".format(time.time_ns(), os.getpid(),
                                 "|".join(rels))
     did = "DRAFT-" + hashlib.sha256(semente.encode("utf-8")).hexdigest()[:12]
@@ -1190,6 +1202,94 @@ def read_draft(eng, draft_id) -> dict:
         raise ResolveError("versao de rascunho nao suportada", "DRAFT_SCHEMA",
                            {"have": m.get("schema_version")})
     return m
+
+
+# ---------------------------------------------------------------- read-set completo
+#
+# T10: um resultado que usou um input que nao declarou nao se publica. O motor nao ve o que
+# a sessao leu; ve o que o rascunho CITA. Cada id e cada ficheiro do engagement citado nas
+# linhas ACRESCENTADAS tem de estar coberto pela base do rascunho ou pelos seus reads. O
+# mapa id -> ficheiro e este, e so este; o que ele nao ve (uma leitura que nao deixou
+# citacao) fica fora da garantia e declarado como limitacao (DESENHO F2 §4).
+
+CITED_FILES = ("answers.md", "enquadramento.md", "decisions.md", "context.json",
+               "frame.md", "options.md", "premortem.md", "story.md", "council-log.md",
+               SU_FILE)
+CITED_DIRS_RE = re.compile(
+    r"(?<![\w/.-])((?:_capture|inputs|_blueprint|_synthesis|_simulation|_render|_coverage|"
+    r"lens-outputs)/[^\s`|)#,;'\"<>]+)")
+CITED_NAME_RE = re.compile(r"(?<![\w/.-])([\w.\-]+\.(?:xlsx|xlsm|docx|pdf|vtt|srt|txt|csv))",
+                           re.I)
+CITED_IDS = (
+    (re.compile(r"\bPM-(?:U-)?\d+\b"), "_capture/process-model.md"),
+    (re.compile(r"\bD-\d{3,}\b"), "decisions.md"),
+    (re.compile(r"\bTW-\d+\b"), "decisions.md"),
+    (re.compile(r"\bO-\d{3,}\b"), "options.md"),
+    (re.compile(r"\bM-\d+\b"), "enquadramento.md"),
+    (re.compile(r"\b[CAUXR]-\d{3,}\b"), SU_FILE),
+)
+
+
+def cited_sources(eng, text: str) -> dict:
+    """`{rel: [o que o cita]}` para um texto — o mapa acima, deterministico."""
+    eng = Path(eng)
+    fora: dict = {}
+
+    def junta(rel, porque):
+        fora.setdefault(rel, [])
+        if porque not in fora[rel]:
+            fora[rel].append(porque)
+
+    resto = text
+    for rx, rel in CITED_IDS:
+        for m in rx.finditer(resto):
+            junta(rel, m.group(0))
+        if rel == "_capture/process-model.md":
+            resto = rx.sub(" ", resto)          # `PM-U-001` nao e a linha `U-001`
+    for nome in CITED_FILES:
+        if re.search(r"(?<![\w/.-]){}\b".format(re.escape(nome)), text):
+            junta(nome, nome)
+    for m in CITED_DIRS_RE.finditer(text):
+        junta(m.group(1).rstrip(".:"), m.group(1).rstrip(".:"))
+    for m in CITED_NAME_RE.finditer(text):
+        nome = m.group(1)
+        for sub in ("inputs", "_capture"):
+            achados = [p for p in (eng / sub).rglob(nome) if p.is_file()] \
+                if (eng / sub).is_dir() else []
+            for p in achados:
+                junta(p.relative_to(eng).as_posix(), nome)
+    return fora
+
+
+def read_set_gaps(eng, m: dict, novos_txt: dict) -> dict:
+    """`{rel citado e nao declarado: [ids]}` sobre as linhas que o rascunho ACRESCENTA.
+
+    So as linhas novas: a SU inteira cita tudo o que ja foi lido por outros, e exigir isso
+    a cada rascunho seria exigir o engagement inteiro. Um ficheiro citado conta como
+    declarado quando esta na base (`files`) ou nos `reads` do rascunho."""
+    eng = Path(eng)
+    declarados = set(m.get("files") or {}) | set(m.get("reads") or {})
+    faltam: dict = {}
+    for rel, novo in novos_txt.items():
+        try:
+            velho = set((eng / rel).read_text(encoding="utf-8").splitlines())
+        except OSError:
+            velho = set()
+        acrescentado = "\n".join(l for l in novo.splitlines() if l not in velho)
+        for fonte, porque in cited_sources(eng, acrescentado).items():
+            if fonte not in declarados:
+                faltam.setdefault(fonte, [])
+                faltam[fonte] += [p for p in porque if p not in faltam[fonte]]
+    return dict(sorted(faltam.items()))
+
+
+def draft_digest(eng, draft_id) -> str:
+    """Hash do conteudo de um rascunho: o que o checkpoint guarda de um resultado recebido."""
+    m = read_draft(eng, draft_id)
+    d = draft_dir(eng, draft_id)
+    corpo = json.dumps({rel: _O["digest"](d / rel) for rel in sorted(m["files"])},
+                       sort_keys=True)
+    return hashlib.sha256(corpo.encode("utf-8")).hexdigest()
 
 
 def publish_id(m: dict, novos: dict) -> str:
@@ -1241,6 +1341,13 @@ def plan_publish(eng, draft_id) -> dict:
                 "STALE_INPUT", {"paths": mudados, "path": mudados[0]["path"],
                                 "draft": draft_id})
     W = _B["_W"]
+    lacunas = read_set_gaps(eng, m, novos_txt)
+    if lacunas:
+        raise ResolveError(
+            "o rascunho cita o que nao declarou ter lido: {} — declarar em `--reads` e "
+            "refazer".format("; ".join("{} ({})".format(k, ", ".join(v[:4]))
+                                       for k, v in lacunas.items())),
+            "INCOMPLETE_READ_SET", {"missing": lacunas, "draft": draft_id})
     problemas = []
     if SU_FILE in novos_txt:
         antes = (eng / SU_FILE).read_text(encoding="utf-8") if (eng / SU_FILE).is_file() \
@@ -1264,6 +1371,16 @@ def plan_publish(eng, draft_id) -> dict:
     # entretanto, a decisao da skill assentou numa versao que ja nao existe.
     read_set.update({rel: base for rel, base in m["files"].items()
                      if rel not in write_set})
+    # F2.3: um rascunho que serve uma tarefa integra-a na MESMA operacao — resultado
+    # `integrated`, tarefa `completed`. Os inputs que a tarefa consumiu ao comecar entram no
+    # read-set: se mudaram desde entao, a conclusao assentou numa revisao que ja nao existe.
+    if m.get("task"):
+        cp = W["read_checkpoint"](eng)
+        texto, consumidos = W["integrate"](eng, cp, m["task"], draft_id, op_id,
+                                           draft_digest(eng, draft_id))
+        write_set[W["CHECKPOINT"]] = texto
+        expected[W["CHECKPOINT"]] = cp["digest"]
+        read_set.update({k: v for k, v in consumidos.items() if k not in write_set})
     return {"operation_id": op_id, "draft": draft_id, "write_set": write_set,
             "expected": expected, "read_set": read_set, "changed": sorted(novos_txt),
             "problems": problemas}
@@ -1394,7 +1511,7 @@ def main_publish(argv) -> int:
         env = _O["response_from_error"](exc)
         print(json.dumps(env, ensure_ascii=False, indent=2), file=sys.stderr)
         return 1
-    except (ResolveError, _G["GraphError"]) as exc:
+    except (ResolveError, _G["GraphError"], _B["_W"]["WorkflowError"]) as exc:
         print(json.dumps(exc.as_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
         return 1
     if a.json:

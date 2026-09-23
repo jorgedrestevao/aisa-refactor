@@ -8,9 +8,9 @@ Estado: **in_progress** (autorizada em 2026-09-23). Desenho e decisões Q1–Q4:
 | --- | --- | --- | --- |
 | F2.1 Coordenador (read-set, códigos estáveis, envelope) + bootstrap `inputs` + D17 | integrado | `7f10fb5` | `test_handoff_continuity.py` 15 casos (T11, T12 em 5 limites, T13, T14 com 4 corridas de 2 processos, D17). Full 82/82 ficheiros, 2732 testes; stdlib 63/63, 1934; ambos exit 0 |
 | F2.2 Rascunho/publish/reconcile, on-su-mirror a só reportar | integrado | `ee0a8a1` | `test_handoff_publish.py` 17 casos (T17, T13, T11 sobre rascunho, integridade, CLI e envelope); `test_lens_mirror` L1 adaptado; W8d do `/start` passa pelo passo 9c. Full 83/83, 2749; stdlib 64/64, 1951; ambos exit 0 |
-| F2.3 Checkpoint, tarefas, `INCOMPLETE_READ_SET` | por fazer | | |
+| F2.3 Checkpoint, tarefas, `INCOMPLETE_READ_SET` | integrado | (este) | `workflow.py task plan|start|receive|reconcile|show`. Checkpoint publicado pelo coordenador; `publish` de um rascunho com tarefa integra-a na mesma operação. `/round` regista cada lente como tarefa (4a1). `test_handoff_checkpoint.py` 22 casos (T10, T15, T12, T13, reconciliação, integridade, CLI). Full 85/85, 2784; stdlib 66/66, 1986; ambos exit 0 |
 | F2.4 Retoma a frio | por fazer | | |
-| F2.5 Skills das 6 autoridades + nascimento | integrado | (este) | protocolo único em `orchestration.md` → *Writing an authority*; 15 escritores convertidos (6+1 lentes, `/round`, chairman, `/frame`, `/options`, `/decide`, `/answer`, `/blueprint`, `/start`); `/capture` deixou de escrever `_state.json`. Nascimento = `init` + 1 publicação (W8d). `test_handoff_skill_writes.py` 12 casos. Full 84/84, 2762; stdlib 65/65, 1964; ambos exit 0 |
+| F2.5 Skills das 6 autoridades + nascimento | integrado | `e3c0c0f` | protocolo único em `orchestration.md` → *Writing an authority*; 15 escritores convertidos (6+1 lentes, `/round`, chairman, `/frame`, `/options`, `/decide`, `/answer`, `/blueprint`, `/start`); `/capture` deixou de escrever `_state.json`. Nascimento = `init` + 1 publicação (W8d). `test_handoff_skill_writes.py` 12 casos. Full 84/84, 2762; stdlib 65/65, 1964; ambos exit 0 |
 | F2.6 Coverage (D07), su-confirmed-guard, H2, D09, capture_run | por fazer | | |
 | F2.7 Gate | por fazer | | |
 
@@ -34,6 +34,8 @@ Estado: **in_progress** (autorizada em 2026-09-23). Desenho e decisões Q1–Q4:
 
 - ~~Entre F2.2 e F2.5, as skills que editavam a SU no sítio deixavam o engagement por reconciliar.~~ Fechada em F2.5.
 - O contrato das skills é textual (`test_handoff_skill_writes.py`). Prova que as instruções mandam usar rascunho e publicação, e que os comandos existem no motor. Não prova que uma sessão real as segue. O motor recusa o desvio: uma edição no sítio bloqueia até reconciliar (T17), e um `mv` por Bash sobre `_state.json` fica fora dos hooks. Essa última limitação continua declarada.
+- `INCOMPLETE_READ_SET` vê citações, não leituras. O mapa id→ficheiro de `resolve.CITED_IDS` cobre `D-`, `TW-`, `O-NNN`, `M-n`, `PM-`/`PM-U-` e as linhas da SU, mais caminhos do engagement e nomes de ficheiros de `inputs/` e `_capture/`. Um input lido que não deixou citação fica fora da garantia. Só as linhas acrescentadas são verificadas.
+- O schema `handoff-work/1` ganhou `results[].sha256`, um campo opcional e aditivo. A versão não mudou; um leitor antigo reporta-o como desconhecido e preserva-o.
 - O nascimento são duas operações: o `init` do grafo e a publicação do scaffold. Entre as duas, o engagement só tem o grafo, sem `_state.json`. Um `/start` repetido pára, porque a pasta já existe. A recuperação é abrir o rascunho e publicar, sem apagar nada.
 - **Por decidir (mantenedor):** as linhas `[ÂMBITO AUTORIZADO]` de `states.md` regra 3 dizem «evidence = the decision record». Com ids `C-`, não têm classe de localizador, porque a regra Q5 vale só para ids `D-`. É um desvio anterior (F1), agora visível. Proposta para a F2.7: apresentar as opções.
 - O guarda passou a recusar também a remoção de uma linha da SU (`SU_ROW_REMOVED`). A regra (append-only) já era do kernel; faltava quem a impusesse.

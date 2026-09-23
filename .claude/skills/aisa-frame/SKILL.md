@@ -190,7 +190,7 @@ Invoke the `chairman-synthesis` skill with:
 
 The chairman-synthesis skill writes `frame.md`, the new SU rows, and the synthesis log. Wait for it to return.
 
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
 ### 7. Present the frame to the user and ask for validation
 
@@ -246,7 +246,7 @@ Portuguese one in `D-001`: that drift is what this ordering closes).
 2. Run the motor (`--json`) and read `frame.sha256` — never compute a hash by hand.
 3. Read the next free id: `max(D-NNN in decisions.md) + 1`, zero-padded to 3 digits. It is
    **not** always `D-001`; frame, solution and blueprint approvals share one counter.
-4. Append to `<engagement>/decisions.md` — through a draft that declares the frame as read (`resolve.py draft --engagement <slug> --files decisions.md council-log.md --reads frame.md --json`, then `resolve.py publish`; a `frame.md` changed after its fingerprint was read is `STALE_INPUT`) — the record contracted in
+4. Append to `<engagement>/decisions.md` — through a draft that declares the frame as read (`resolve.py draft --engagement <slug> --files decisions.md council-log.md --reads frame.md shared-understanding.md enquadramento.md --json`, then `resolve.py publish`; a `frame.md` changed after its fingerprint was read is `STALE_INPUT`) — the record contracted in
    `library/kernel/phases.md` → *Frame approval record*:
 
 ```markdown
