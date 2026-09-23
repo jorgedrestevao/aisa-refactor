@@ -11,7 +11,7 @@
   {
    "ref": "_design/functional-contracts.json",
    "revision": 1,
-   "sha256": "74a8e1db1802614e1b66531fa62e5749c4d796d76a69cc30995d3b3c924d7a24"
+   "sha256": "c8a138e3388df895a059cf51f5ac29a185ab2cc7e8ba275116dead7cd740c292"
   },
   {
    "ref": "_blueprint/ux-blueprint_v01.yaml",
@@ -43,7 +43,7 @@
    "reason": "fora do âmbito (fixture fx-hv1-02)"
   }
  ],
- "code_version": "ce218ce",
+ "code_version": "46ad973",
  "pack_version": "1.10.0",
  "files": [
   {
@@ -52,7 +52,7 @@
   },
   {
    "path": "decisions.md",
-   "sha256": "5b7ae1834be07bd09a6d17a4f5dfb9d803522602781c4702f4b6fb2f45aaa657"
+   "sha256": "b468f6747470ac6ef5c9f7173184d13a292b287842f7cfce2031ff365d51f992"
   },
   {
    "path": "answers.md",
@@ -60,7 +60,7 @@
   },
   {
    "path": "_state.json",
-   "sha256": "ebb6f0873693ac0e447e95aee6372435e57066d968d724606d33a5df5c549f84"
+   "sha256": "d4cbfeb468e88660c72aa709362092d83b2c11f3bee1065d776d531e6fcdfe9b"
   },
   {
    "path": "_design/candidates.json",
@@ -68,7 +68,7 @@
   },
   {
    "path": "_design/functional-contracts.json",
-   "sha256": "74a8e1db1802614e1b66531fa62e5749c4d796d76a69cc30995d3b3c924d7a24"
+   "sha256": "c8a138e3388df895a059cf51f5ac29a185ab2cc7e8ba275116dead7cd740c292"
   },
   {
    "path": "_blueprint/ux-blueprint_v01.yaml",
@@ -76,31 +76,31 @@
   },
   {
    "path": "_design/reviews/REV-0001.json",
-   "sha256": "37d90f28a6cfd5d998ee08f45b303c5cfd51ee54dccfe2a86e6e0e8ebecd2117"
+   "sha256": "58711fd3fc5deb1435f327b134229f86e557c64045bd4da6f92ecca204cd0d54"
   },
   {
    "path": "_design/reviews/REV-0001.mandate.json",
-   "sha256": "e8ece065fcdc8c9cd42ba53f8145c2223cf3599e56a0d0484aee1ba08d7272cf"
+   "sha256": "ab2e4c49baff476ddfbf283cc07c39e1c35200467aee2bc89602cf163a399c35"
   },
   {
    "path": "_design/reviews/REV-0002.json",
-   "sha256": "337c61138d1fc81a80ee256949e88cc93cb6dd1d5d150d10800772eea0762953"
+   "sha256": "506804b481bfc985be9a9537b921f5a0e989e57cc174462e19c1eb22ecb36ad0"
   },
   {
    "path": "_design/reviews/REV-0002.mandate.json",
-   "sha256": "e83572884f385a12cb38f43e39d6f93994573264ee5cd7a86e34a7f1336445a9"
+   "sha256": "3b73d81cf4e4e9629f7eef7fa4f37dc36418f19b468d7e9b30cebb5a29fcaf74"
   },
   {
    "path": "_design/reviews/REV-0003.json",
-   "sha256": "6b7aa37e6d9e826e562599e9bd6ec3dbb6c662d290e8a5093e82be1a7cfc2b46"
+   "sha256": "1acf23025e66b92d4ef6a413f4c847377ed7c1fc4f95bb7b5baa62831e2545b5"
   },
   {
    "path": "_design/reviews/REV-0003.mandate.json",
-   "sha256": "ae88da9ed7c7184423845d1742e4f614f6008146c2e9d724b39068764a78f45b"
+   "sha256": "9b6807fe65a8dc4c501662ff926f72806796ba6e8cbcb1f3534a2a9ac761fb43"
   },
   {
    "path": "_design/reviews/ledger.json",
-   "sha256": "d87423fdd026d896cc1aa08598289c7a19fd3f60a984f3a7cec2e5e4627eb57e"
+   "sha256": "6d36520916d24545e8ca6a4456009669a932a946ec2a689eb7c97e10e1461c5b"
   },
   {
    "path": "inputs/entrevista-processo.md",
@@ -119,8 +119,44 @@
    "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d"
   },
   {
+   "path": "library/packs/pp/architecture-templates/architecture-core.md",
+   "sha256": "bec7235958c6b465e9576f8a1c5d331c06817737906d7352988a432735fd591b"
+  },
+  {
+   "path": "library/kernel/handoff-contract.md",
+   "sha256": "19efe826097834cf1e00bd5ab94235b67cbc6e655b184ce0c689e5c61f432be1"
+  },
+  {
+   "path": "library/kernel/states.md",
+   "sha256": "50570a60e3385d1fdfa1e0be83626063e86af22d5fa7ac08989d1d42d2d694b5"
+  },
+  {
+   "path": "library/kernel/specialists.md",
+   "sha256": "d4865dbb0c544254b23b61db267a98b1bd77e5551eb7a17e60672fffa7d51fe8"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-candidates.schema.json",
+   "sha256": "06fe3ffbc4087a7d948c4a5280d875e27eee824fbdd2713b490252939c393ba7"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-review.schema.json",
+   "sha256": "e1b0749946ab4e9c86d6c954831e2c895cb70e79f50974ed139eecae76647cc2"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-functional.schema.json",
+   "sha256": "5bb14fabc3d5d8dd20de67c27629cb6c146dd9a153f1f43302beada1bd1440cf"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-index.schema.json",
+   "sha256": "c1e5472df370b4a08c87fe16802e35d2354eeef90da0f5b7d445acf689a23677"
+  },
+  {
+   "path": "functional-state.json",
+   "sha256": "b29f9c5444b0f0b5125bbbbce05fb618673e5a2f25ce5ea39b341c2fb800afc5"
+  },
+  {
    "path": "render-gate.json",
-   "sha256": "f6b5308e003758404f2ac4ad01a0314f89fbc58e6aaef4fb33560539839099df"
+   "sha256": "934247a8b624bde0c04561fcded47d388ad3d0efa3d4357102ff6ce6dd3a0fea"
   }
  ],
  "authorization_refs": [
@@ -129,6 +165,93 @@
   "decisions.md#D-003",
   "decisions.md#D-004"
  ],
+ "scope_definition": {
+  "SCOPE-0001": {
+   "fc": [
+    {
+     "id": "FC-0001",
+     "purpose": "Submeter um pedido de equipamento sem o duplicar",
+     "authorization": "current"
+    },
+    {
+     "id": "FC-0002",
+     "purpose": "Calcular o valor do pedido",
+     "authorization": "missing"
+    },
+    {
+     "id": "FC-0003",
+     "purpose": "Aprovar ou rejeitar um pedido submetido",
+     "authorization": "current"
+    }
+   ],
+   "requirement_refs": [
+    "C-002",
+    "C-003",
+    "C-004"
+   ],
+   "authorized_by": [
+    "D-004"
+   ]
+  }
+ },
+ "reviews_basis": {
+  "REV-0001": {
+   "role": "architecture-review",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "f7f07e49bfdfaabd33b6a8281e8c91dd93173f24f7f3529c584711d1140a359f",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "1022c9617f4ac9857dface6dae621ee6bd366c9f9e3da4e1c649c40c1626756e",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0002": {
+   "role": "security-operation",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "f7f07e49bfdfaabd33b6a8281e8c91dd93173f24f7f3529c584711d1140a359f",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "1022c9617f4ac9857dface6dae621ee6bd366c9f9e3da4e1c649c40c1626756e",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0003": {
+   "role": "ux-process",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "f7f07e49bfdfaabd33b6a8281e8c91dd93173f24f7f3529c584711d1140a359f",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "1022c9617f4ac9857dface6dae621ee6bd366c9f9e3da4e1c649c40c1626756e",
+     "now": "changed since the review"
+    }
+   }
+  }
+ },
+ "locator_convention": "library/kernel/states.md → Confirmed threshold (`<ficheiro>.md#¶n` ou `· §<título> ¶n`). O kernel não fixa como se contam os ¶ de um .md sem `§` — lacuna registada (T43 S6), não resolvida aqui",
+ "verification": "item_sha256 de um FC = sha256 do JSON do item sem authorization_ref, authorization e publication_status, chaves ordenadas, separadores ',' e ':', UTF-8 (library/kernel/handoff-contract.md → Functional contract, Authorisation); functional-state.json é a leitura do motor",
  "readiness": {
   "render_final_allowed": false,
   "fc": {
@@ -145,6 +268,11 @@
      "MISSING_EXAMPLE_BOUNDARY",
      "OPEN_BLOCKER"
     ]
+   },
+   "FC-0003": {
+    "authorizable": true,
+    "authorization": "current",
+    "gaps": []
    }
   },
   "open_findings": [

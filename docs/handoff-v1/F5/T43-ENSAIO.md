@@ -1,4 +1,4 @@
-# T43 — Primeiro ensaio do destinatário em contexto novo (F5.5)
+# T43 — Ensaios do destinatário em contexto novo (F5.5)
 
 Estado: **ensaio assistido documentado, simulado** — não é aceitação (plano 06: T43 exige julgamento humano ou avaliação assistida documentada; plano 08 → *Critério de fecho*: sem equipa disponível, rotular a revisão como simulada).
 
@@ -134,6 +134,115 @@ Falha em FC-0002: «linha sem preço → não submete» — bloqueado.
 
 ## 8. Ficheiros lidos e o mais difícil
 Li os 19 do índice. Não abri nada fora da pasta. O mais difícil: a definição de SCOPE-0001 (não existe); o estado real da autorização do FC-0001 (três fontes discordam); a convenção dos ¶n contra as etiquetas [C1]/[M1]/[P1] das entradas; requisitos que só estão nas entradas e não no SU (duplicação, auditoria, retenção, ERP-X).
+```
+
+</details>
+
+## 6. Segundo ensaio, depois de corrigir S1–S7 (F5.5b)
+
+**Montagem.** Mesmo pedido, subagente novo. O pacote passou a 28 ficheiros (código `46ad973`): leva `functional-state.json`, os contratos e esquemas, a unidade do pack do mandato, `scope_definition`, `reviews_basis`, `locator_convention` e `verification`. O percurso ganhou o FC-0003 (aprovação com a segregação), que fecha REV-0002.F01 por `accepted` com `corrected_by`. Custo: 1 chamada · 13 usos de ferramenta · ~111 k tokens · 169,7 s. O custo sobe porque o pacote tem mais contratos para ler.
+
+**Resultado.** 16 lacunas: `blocks_all` 4 · `blocks_scope` 8 · `delegated_choice` 1 · `implementation_proof` 1 · 2 sem classe (incoerências menores). 4 perguntas bloqueantes.
+
+### 6.1 Antes e depois das correcções
+
+| Lacuna sistémica | 1.º ensaio | 2.º ensaio |
+| --- | --- | --- |
+| S1 autorização legível e verificável | contraditória, hash não reproduzível | D-004 confere com `functional-state.json` pelos `sha256` |
+| S2 âmbito definido | «SCOPE-0001 não existe» | lido em `scope_definition` |
+| S3 `accepted` sem correcção | REV-0002.F01 aceite sem FC | aceite com correcção em FC-0003, usada na jornada de falha |
+| S4 base dos pareceres | sha das decisões diferente, sem explicação | não levantada |
+| S5 unidade do pack fora | levantada | lida (`architecture-core.md`); usada para apontar A8/A10 |
+| S6 convenção dos `¶` | ambígua | ainda ambígua (L14): o kernel não fixa a contagem — lacuna do kernel registada, não resolvida |
+| S7 autorização antes da aprovação | levantada | não levantada |
+
+**Perguntas bloqueantes, antes e depois.**
+
+- No 1.º ensaio, duas das quatro eram sobre verificar o pacote: o que é `SCOPE-0001`, se o FC está autorizado, que desenho aprovou o D-003.
+- No 2.º ensaio, as quatro são sobre o conteúdo do caso: `valor_total` sem FC-0002, itens do âmbito sem contrato, campos de que o FC-0003 depende, sentido de «o mesmo pedido».
+- Nenhuma pede para redescobrir como o pacote se verifica.
+
+Verificadas na sessão: o desenho não tem os campos `requerente`/`decisor` que a regra do FC-0003 usa, o D-003 não leva impressão digital, e os itens do âmbito de C-001 sem FC não estão em `exclusions`.
+
+### 6.2 O que o 2.º ensaio encontrou de novo
+
+**Sistémicas, para a F6 (índice formal e rastreabilidade):**
+
+| # | Lacuna | Porquê sistémica |
+| --- | --- | --- |
+| N1 | Itens do âmbito sem contrato nem exclusão (passagem a compras, caminho urgente, aprovação pela direcção financeira; L2–L4) | `scope_definition` projecta os FC que existem. Não confronta o âmbito declarado (C-001) com o que tem contrato. O plano 08 pede os dois sentidos da rastreabilidade (requisito sem trabalho/teste) |
+| N2 | A aprovação do desenho (D-003) não leva impressão digital | O bloco de aprovação não fixa a versão por `sha256`, ao contrário da autorização de FC |
+| N3 | Um FC sem lacunas pode usar conceitos que o desenho não tem (L5: `requerente`/`decisor`) | A completude verifica presença e `field_ref` dos `inputs`, não os conceitos da regra em prosa. É o limite já declarado na F4 (o revisor `fc-reviewer` é quem o apanha) |
+| N4 | Entrega parcial incoerente (L6: `valor_total` obrigatório com FC-0002 excluído) | Nenhum motor confronta o que se exclui com o que o desenho exige |
+
+**Artefactos da fixture (não são defeitos do método):**
+
+- O desenho foi aprovado sem A7/A8/A10 (L10): a aprovação foi escrita pelo teste, não pelo `/blueprint`, que tem o seu gate.
+- A SU é parcial: auditoria, retenção, [C6] (L7, L13).
+- O cabeçalho da SU diz «Discovery» (L16).
+
+## 7. Relatório do 2.º destinatário (transcrição; conteúdo integral, formatação simplificada)
+
+<details><summary>Relatório devolvido pelo subagente</summary>
+
+```
+## 1. Âmbito, exclusões, decisões
+- Âmbito: SCOPE-0001 (handoff-index.json → scope_definition). FC autorizados: FC-0001 (submeter sem duplicar) e FC-0003 (aprovar/rejeitar). Requisitos: C-002, C-003, C-004. C-001 diz que o âmbito é «pedido, aprovação e passagem a compras» (pedido.md [P2]).
+- Exclusões: implementation-spec, estimate, FC-0002 (arredondamento U-001 por escolher), gestão de stock, recepção física.
+- Decisões (decisions.md): D-001 plataforma imposta · D-002 escolhe O-001 e descarta O-002 · D-003 aprova o blueprint bp-v01 (sem hash) · D-004 autoriza FC-0001 e FC-0003 pelos sha256 do r0001, que batem com functional-state.json.
+- Estado do pacote: delivery_level preliminary, render_final_allowed false, achado em aberto REV-0001.F01, receiver_acceptance null.
+
+## 2. Ordem de construção
+O pacote não dá ordem de construção (não traz WP, dependências tipadas nem implementation-spec). Inferido por mim:
+1. Modelo pedidos (blueprint record_authority). Só tem 4 campos: id_pedido, chave_submissao, valor_total, estado. Faltam linhas, requerente, equipa, decisor e datas.
+2. FC-0001: submissão idempotente (submissao-idempotente, pattern direct) e o único ecrã, PedidoFormScreen.
+3. FC-0003: transição submetido→aprovado/rejeitado, com a regra aplicada no servidor. Depende do estado submetido criado pelo passo 2.
+4. FC-0002: só depois de U-001 fechada e com exemplo de limite.
+5. Sem FC nem ordem possível: passagem a compras (C-001, [M3]), caminho urgente (C-003/A-001), aprovação pela direcção financeira (U-002, [M4]), auditoria ([M5]).
+
+## 3. Jornada e caminho de falha
+Submissão (FC-0001, J-0001): o Requerente abre PedidoFormScreen e o cliente gera chave_submissao (a forma de gerar é escolha delegada; o pacote não a define). Ao submeter, o servidor procura pela chave, com restrição de unicidade. Se não existe, cria o pedido com estado=submetido; se existe, devolve o pedido existente. Pós-condição: um só pedido por chave. valor_total é required: true no blueprint, mas FC-0002 está excluído; não há regra para o preencher — conflito.
+Falha (excepção do FC-0001): «falha de rede depois da gravação» → o cliente repete com a mesma chave e recebe o mesmo pedido; o teste é o exemplo negativo.
+Segundo caminho (FC-0003): a chefia tenta aprovar o próprio pedido, pela interface ou pela API → o servidor recusa e o estado fica submetido (REV-0002.F01, aceite com correcção em FC-0003). O que falta: o FC-0003 compara aprovador com requerente, mas pedidos não tem campo requerente nem decisor, e não há relação chefia↔equipa para aplicar «da sua equipa».
+
+## 4. O que falta do cliente
+- Dados: regra de arredondamento e exemplo de limite (U-001; dono: responsável de compras com contabilidade); limiar da direcção financeira, do despacho, com data (U-002); fonte da hierarquia chefia↔equipa; acesso ao catálogo e preços no ERP-X (nota-dados.md [D1], sem linha na SU); dados de teste; se se migram os pedidos hoje em email e na folha de cálculo ([D2]).
+- Acessos e ambientes: tenant, ambientes dev/test/prod, licenças, identidade de serviço, contas para a equipa — nada disto está no pacote.
+- Decisões: se a entrega parcial sem FC-0002 é aceitável (a chefia aprovaria sem ver o valor); se a passagem a compras, o caminho urgente e a aprovação pela direcção financeira entram no âmbito ou saem; se a auditoria (quem decidiu e quando, [M5]) e a retenção de 10 anos ([D3]) são requisitos — não têm linha na SU.
+
+## 5. Aceitação e operação
+- Aceitação: exemplos positivo/negativo de FC-0001 e FC-0003 (o negativo do FC-0003 cobre interface e API). Provas pendentes (proofs.pending): «submissão repetida não duplica» e «segregação C-004 recusa no servidor»; nenhuma foi feita. Provaria com testes automatizados à API do servidor (repetição com a mesma chave; aprovação pelo próprio requerente) mais um teste na interface, com as evidências guardadas por FC e sha256. Falta ambiente de teste, formato de evidência e quem aceita (receiver_acceptance null).
+- Operação e recuperação: o pacote não dá nada. Sem A7 (identidade), A8 (ambientes/ALM) e A10 (papéis, alertas, recuperação); architecture-core.md exige A8 e A10 e diz que modelo de operação ausente bloqueia a aprovação do blueprint — D-003 aprovou-o mesmo assim. A única semântica de recuperação é a repetição idempotente do FC-0001.
+
+## 6. Lacunas
+| id | lacuna | classe | justificação | ficheiro onde devia estar |
+|---|---|---|---|---|
+| L1 | Regra de arredondamento e exemplo de limite (U-001) | blocks_scope | Declarada; FC-0002 excluído. Trabalho normal do cliente, não defeito | answers.md, functional-contracts.json FC-0002 |
+| L2 | Limiar da direcção financeira (U-002, blocks_scope Critical) sem FC e sem exclusão | blocks_scope | Defeito: a regra de roteamento da aprovação ficou fora do FC-0003 autorizado sem ser excluída; obriga a redescobrir | handoff-index.json exclusions ou FC-0003 |
+| L3 | Passagem a compras (C-001, [M3]) sem FC; falta J-0002 | blocks_scope | Defeito: está no âmbito declarado, sem comportamento e sem exclusão | functional-contracts.json |
+| L4 | Caminho urgente (C-003/A-001) citado em FC-0001 e no âmbito, sem regra; estados não o suportam | blocks_scope | Defeito: a transição essencial é contraditória com o FC-0003 | FC-0001/FC nova; blueprint estado.values |
+| L5 | Modelo de dados incompleto (requerente, decisor, datas, linhas, equipa) | blocks_scope | Defeito: a regra do FC-0003 usa campos que o blueprint não define | ux-blueprint_v01.yaml fields |
+| L6 | valor_total obrigatório no blueprint vs FC-0002 excluído | blocks_scope | Defeito: contradição entre vistas | blueprint e handoff-index.json |
+| L7 | «Mesmo pedido»: repetição técnica ou reenvio pelo utilizador ([C6], sem linha na SU) | blocks_scope | Defeito: FC-0001 cita C-002/C-003 e não a origem; o exemplo negativo é ambíguo | SU e FC-0001 requirement_refs |
+| L8 | Geração e âmbito da chave_submissao | delegated_choice | Dentro do envelope da regra e do exemplo negativo do FC-0001; falta delegated_choices formal | FC-0001 delegated_choices |
+| L9 | Segregação aplicável no servidor da plataforma | implementation_proof | Prova pendente declarada; não deve invalidar a viabilidade | proofs, FC-0003 proof_refs |
+| L10 | Modelo de operação e recuperação (A7/A8/A10) | blocks_all | Defeito: estrutural segundo o pack; bloqueia go-live, não o arranque em dev | blueprint architecture, implementation-spec |
+| L11 | Ambientes, acessos e licenças | blocks_all | Dependência do cliente; sem ela não se começa | implementation-spec / cliente |
+| L12 | Ordem de construção, WP e dependências | blocks_all | Exclusão declarada (implementation-spec); a ordem fica inferida pela equipa | implementation-spec |
+| L13 | Auditoria ([M5]) e retenção de 10 anos ([D3]) fora da SU | blocks_scope | Defeito: requisitos da fonte perdidos; o FC-0003 só guarda «quem» | SU e FC-0003 postconditions |
+| L14 | Locator de D-001/route_basis (pedido.md#¶2) não aponta para [P1] em nenhuma contagem | — | Defeito de rastreio. Não bloqueia: [P1] é claro | decisions.md D-001 |
+| L15 | Estimativa: só a banda de 4–6 semanas, por analogia sintética | blocks_all | Exclusão declarada; o planeamento não tem base | estimate |
+| L16 | FC sem not_applicable para concorrência e cancelamento; D-003 sem hash; cabeçalho da SU diz «Discovery» contra phase: decision | — | Incoerências menores; o motor não as apanha | FC, decisions.md, SU |
+
+## 7. Perguntas bloqueantes ao autor
+1. O valor_total fica opcional em SCOPE-0001 sem FC-0002, ou a entrega parcial não é coerente? (L6)
+2. A passagem a compras, o caminho urgente e a aprovação pela direcção financeira estão autorizados ou excluídos? (L2, L3, L4)
+3. Quais são os campos do Pedido de que o FC-0003 depende (requerente, decisor, equipa)? (L5)
+4. «O mesmo pedido» é só a repetição com a mesma chave? (L7)
+
+## 8. Ficheiros lidos e o mais difícil
+Lidos (todos na pasta): handoff-index.json, shared-understanding.md, decisions.md, answers.md (vazio), _state.json, functional-state.json, render-gate.json, _design/candidates.json, _design/functional-contracts.json, _design/reviews/REV-000{1,2,3}.json e .mandate.json, _design/reviews/ledger.json, _blueprint/ux-blueprint_v01.yaml, inputs/*.md (4), library/kernel/handoff-contract.md, states.md, specialists.md, packs/pp/architecture-templates/architecture-core.md, schemas/handoff-functional.schema.json (só a estrutura; os outros três schemas não foram abertos).
+Mais difícil: a ordem de construção e a operação (não existem); saber o que ficou fora do âmbito sem declaração (compras, urgentes, direcção financeira) — só aparece cruzando C-001, os inputs e os FC; a convenção dos locators ¶ (deduzi que o título conta como ¶1, porque assim os citados da entrevista e da matriz batem; com essa contagem, pedido.md#¶2 aponta para o cabeçalho do email, não para [P1]); o motor (functional-state.json) marca FC-0001 e FC-0003 sem lacunas, mas L5 e L7 são de conteúdo e o motor só verifica presença.
 ```
 
 </details>

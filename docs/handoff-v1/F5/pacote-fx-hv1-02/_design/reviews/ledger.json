@@ -1,6 +1,6 @@
 {
  "schema_version": "aisa-review-ledger/1",
- "revision": 2,
+ "revision": 3,
  "dispositions": [
   {
    "seq": 1,
@@ -8,16 +8,29 @@
    "disposition": "deferred",
    "rationale": "fica para o FC do valor",
    "candidate_revision": 1,
-   "at": "2026-09-23T22:55:37Z",
+   "at": "2026-09-23T23:05:20Z",
    "impact": "FC-0002 não é autorizável enquanto U-001 estiver aberta"
   },
   {
    "seq": 2,
    "finding": "REV-0002.F01",
-   "disposition": "accepted",
-   "rationale": "entra no desenho como regra do servidor e no FC como exemplo negativo",
+   "disposition": "delegated",
+   "rationale": "a regra entra no desenho e no FC da aprovação",
    "candidate_revision": 1,
-   "at": "2026-09-23T22:55:37Z"
+   "at": "2026-09-23T23:05:20Z",
+   "envelope": "recusa no servidor quando quem aprova é o requerente; exemplo negativo no FC",
+   "owner": "autor funcional (/blueprint)"
+  },
+  {
+   "seq": 3,
+   "finding": "REV-0002.F01",
+   "disposition": "accepted",
+   "rationale": "a segregação está no FC da aprovação, com o exemplo negativo",
+   "candidate_revision": 1,
+   "at": "2026-09-23T23:05:21Z",
+   "corrected_by": [
+    "FC-0003"
+   ]
   }
  ],
  "divergences": []

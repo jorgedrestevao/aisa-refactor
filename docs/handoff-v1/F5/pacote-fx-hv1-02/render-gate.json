@@ -2,7 +2,8 @@
  "final_allowed": false,
  "cited": [
   "FC-0001",
-  "FC-0002"
+  "FC-0002",
+  "FC-0003"
  ],
  "approved_blueprint": "_blueprint/ux-blueprint_v01.yaml",
  "blocked": [

@@ -130,6 +130,65 @@
    "open_refs": [
     "U-001"
    ]
+  },
+  {
+   "id": "FC-0003",
+   "journey_id": "J-0003",
+   "purpose": "Aprovar ou rejeitar um pedido submetido",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "owner_role": "responsável de compras",
+   "requirement_refs": [
+    "C-004"
+   ],
+   "architecture_refs": [
+    "pedidos"
+   ],
+   "authorization_ref": null,
+   "actors": [
+    "Chefia"
+   ],
+   "trigger": "a chefia decide um pedido submetido da sua equipa",
+   "inputs": [
+    {
+     "field_ref": "pedidos.id_pedido",
+     "required": true
+    },
+    {
+     "field_ref": "pedidos.estado",
+     "required": true,
+     "values": [
+      "submetido",
+      "aprovado",
+      "rejeitado"
+     ]
+    }
+   ],
+   "rule": "só uma chefia que não é o requerente muda o estado de submetido para aprovado ou rejeitado; a regra é aplicada no servidor",
+   "postconditions": [
+    "o pedido fica aprovado ou rejeitado, com quem decidiu"
+   ],
+   "exceptions": [
+    {
+     "condition": "quem aprova é o requerente",
+     "behavior": "o servidor recusa e o pedido fica submetido"
+    }
+   ],
+   "acceptance_examples": [
+    {
+     "kind": "positive",
+     "given": "um pedido de outro membro da equipa",
+     "when": "a chefia aprova",
+     "then": "o pedido fica aprovado"
+    },
+    {
+     "kind": "negative",
+     "given": "um pedido feito pela própria chefia",
+     "when": "a chefia tenta aprovar pela interface ou pela API",
+     "then": "o servidor recusa e o estado não muda"
+    }
+   ],
+   "publication_status": "draft"
   }
  ]
 }
