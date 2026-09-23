@@ -118,7 +118,7 @@ description: Start a new aisa engagement. Captures the literal request + request
    ```
    The `workflow` block is the engagement's profile and route (`library/kernel/schemas/handoff-state.schema.json`). It is written here once; afterwards no tool write may change it or drop a key of `_state.json` (`pre-authority-guard.py` refuses) — a route change is a new revision through `library/kernel/tools/workflow.py` and the coordinator.
    (`round` seeds at `R-00` — no round has **completed** yet. The first `/round` opens `R-01` and closes it when all six perspectives have stamped it (or on `/round --close`). `round_in_progress` seeds empty — no round open; `/round` fills it while a passagem is in flight and clears it on close (`library/kernel/phases.md` → *Rounds — in progress vs completed*).)
-8. **Write the `shared-understanding.md` skeleton** (the 5 state sections with their column headers, per `library/kernel/states.md`; `verificado_em`/`validade` per its *Epistemic half-lives* section; `custo`/`swing` per its *Question economics* section; the epistemic health is computed on every read — `/status`, the dashboard — and never written into the SU):
+8. **Write the `shared-understanding.md` skeleton** (the 5 state sections with their column headers, per `library/kernel/states.md`; `verificado_em`/`validade` per its *Epistemic half-lives* section; `custo`/`swing` per its *Question economics* section; the question columns per its *Admission of a question* section; the epistemic health is computed on every read — `/status`, the dashboard — and never written into the SU):
    ```markdown
    # Shared Understanding — <slug>
 
@@ -140,13 +140,13 @@ description: Start a new aisa engagement. Captures the literal request + request
 
    ## Unknown
 
-   | id | lens | pergunta | quem responde | criticidade | custo | swing | ronda |
-   |----|------|----------|---------------|-------------|-------|-------|-------|
+   | id | lens | pergunta | tipo | impacto | âmbito | quem responde | fecho | bloqueio | criticidade | custo | swing | referências | ronda |
+   |----|------|----------|------|---------|--------|---------------|-------|----------|-------------|-------|-------|-------------|-------|
 
    ## Conflicted
 
-   | id | lens | conflito | partes | criticidade | ronda |
-   |----|------|----------|--------|-------------|-------|
+   | id | lens | conflito | partes | impacto | âmbito | quem decide | fecho | bloqueio | criticidade | referências | ronda |
+   |----|------|----------|--------|---------|--------|-------------|-------|----------|-------------|-------------|-------|
 
    ## Risky
 

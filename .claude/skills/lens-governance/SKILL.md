@@ -38,17 +38,16 @@ The invocation carries the round context: round id, next free SU ids, the Shared
 5. Stamp and price: `Confirmed`/`Assumed` → `verificado_em` + `validade`; `Unknown` → `custo` + `swing`. In doubt `validade = organizacional`; never blank. Semantics: `library/kernel/states.md`.
 6. An expired row reads as weak `Assumed` — never cite it as `Confirmed`.
 7. **Roles, never people** (P-21). No row and no question names a person as its answer. Authority is a **role**, the operation it may perform, and the plane that enforces it. A signature, an approval, an acceptance, or a document proving a third party's position is not a governance finding here — and separation of duties is recorded as a permission split, never as which person does which task.
-8. **Admission — three declarations, all three** (P-26). Before writing any `Unknown`:
-   - **serve** — the `M-n` of `enquadramento.md` the answer serves, **or** the marker `TO-BE DIVERGENCE` with what the target must decide (either form, framing declared or not);
-   - **respostas** — ≥ 2, named in `swing`;
-   - **eixo** — which of these eight moves with each answer: `tecnologia` · `padrão arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` · `esforço de alto nível` · `custo` · `risco técnico`.
+8. **Admission** — the rule lives in `library/kernel/states.md` → *Admission of a question*; this is the checklist, not the rule. Before writing any `Unknown`:
+   - its answer moves at least one of the five aspects — `solucao` · `funcional` · `aceitacao` · `operacao` · `viabilidade`;
+   - fill `tipo`, `impacto` (`aspecto[, aspecto]: o que muda`), `âmbito`, `quem responde`, `fecho`, `bloqueio` and `referências`;
+   - a missing fact is `fact_gap` and needs no invented second answer; a `design_choice` names its real alternatives in `swing`;
+   - no demonstrable impact → do not write it. `decisivo` also names the option or branch it eliminates, else `dimensionante`.
 
-   An `M-n` **never** waives the eixo. No eixo → write it `cosmético`. No second answer → do not write it. `decisivo` also names the option or branch it eliminates, else `dimensionante`.
-
-   Not every uncertainty is a question: changes only detail, configuration or a band → `Assumed` with basis and revision condition; settles only at implementation → no row. Full rule: `library/kernel/states.md` → *Admission of a question*.
+   Not every uncertainty is a question: changes only detail, configuration or a band → `Assumed` with basis and revision condition; settles only at implementation and cannot invalidate feasibility → no row.
 
    **Form of `quem responde`**: `role: <role>` or `fonte: <artefacto/sistema>`, one prefix per part, never a person and never a council persona. Neither known → leave the cell empty. Full rule: `library/kernel/states.md` → *The form of `quem responde`*.
-9. **You write the technical fact; the organisation's ignorance is not pending work.** That nobody knows who does it, that there is no written policy, no inventory and no demonstrated maturity, describes the organisation — not the system to be built. Where the target must define what the organisation never defined, that is a **requirement** of the to-be, written `Assumed` with its basis, not a question waiting on somebody. Only a divergence that moves one of the eight axes becomes an `Unknown`.
+9. **You write the technical fact; the organisation's ignorance is not pending work.** That nobody knows who does it, that there is no written policy, no inventory and no demonstrated maturity, describes the organisation — not the system to be built. Where the target must define what the organisation never defined, that is a **requirement** of the to-be, written `Assumed` with its basis, not a question waiting on somebody. Only a divergence that moves one of the five aspects becomes an `Unknown`.
 
 ## Signal catalog
 

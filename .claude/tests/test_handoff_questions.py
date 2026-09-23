@@ -41,6 +41,10 @@ class Colunas(unittest.TestCase):
         self.assertEqual(u["bloqueio"], "blocks_scope")
         self.assertIn("#C2", u["referencias"])
 
+    def test_a_conflicted_row_is_recognised_as_the_new_schema(self):
+        """Conflicted nao tem `tipo`; qualquer coluna da admissao marca o schema novo."""
+        self.assertTrue(self.r["X-001"]["handoff_cols"])
+
     def test_the_role_that_answers_is_not_read_from_the_impact_column(self):
         """`impacto` era alias de `support` (coluna do Risky). Numa pergunta, o papel que
         responde nao pode passar a ser o texto do impacto."""

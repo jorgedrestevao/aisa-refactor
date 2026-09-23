@@ -1,8 +1,8 @@
 pack_id: pp
 pack_version: 1.10.0
 display_name: "Power Platform Discovery"
-# SCOPE-STATEMENT v1
-# aisa runs discovery on a process to reach a grounded technical decision: which technology and pattern, against which alternatives, at what cost. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision.
+# SCOPE-STATEMENT v2
+# aisa runs discovery on a process to reach a grounded technical decision and a design a delivery team can build without guessing: which technology and pattern, against which alternatives, at what cost, and which behaviour, acceptance and operation. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision, the functional behaviour, the acceptance, the operation or the effort.
 language: pt
 description: >
   Discovery and sensemaking pack tuned for Power Platform engagements.

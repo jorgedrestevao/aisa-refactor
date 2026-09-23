@@ -710,7 +710,7 @@ class Wiring(unittest.TestCase):
             self.assertIn("\nblueprint:", p.read_text(encoding="utf-8"), pack)
 
     def test_the_motor_version_moved(self):
-        self.assertEqual(D["TOOL_VERSION"], "1.14.0")
+        self.assertEqual(D["TOOL_VERSION"], "1.15.0")
 
 
 if __name__ == "__main__":

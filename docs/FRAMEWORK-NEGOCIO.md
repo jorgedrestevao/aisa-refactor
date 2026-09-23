@@ -2,8 +2,8 @@
 
 ## O que é
 
-<!-- SCOPE-STATEMENT v1 -->
-O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada: que tecnologia e que padrão, com que alternativas e a que custo. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão.
+<!-- SCOPE-STATEMENT v2 -->
+O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, com que alternativas e a que custo, e que comportamento, aceitação e operação. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão, o comportamento funcional, a aceitação, a operação ou o esforço.
 
 Estrutura a fase de descoberta de projetos de digitalização (Power Platform, OutSystems, Mendix, custom) **antes** de escolher tecnologia. Objetivo: decisão informada, não implementação apressada.
 

@@ -4,8 +4,8 @@
 
 ## O que é
 
-<!-- SCOPE-STATEMENT v1 -->
-O aisa parte de um processo e leva-te a uma escolha técnica fundamentada: que tecnologia e que padrão, contra que alternativas e a que custo. Não serve para explorar o negócio sem destino — uma pergunta só entra quando a resposta pode mudar a escolha.
+<!-- SCOPE-STATEMENT v2 -->
+O aisa parte de um processo e leva-te a uma escolha técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, contra que alternativas e a que custo, e como a solução se comporta, se aceita e se opera. Não serve para explorar o negócio sem destino — uma pergunta só entra quando a resposta pode mudar a escolha, o comportamento, a aceitação, a operação ou o esforço.
 
 Uma forma de perceber um processo antes de decidir o que construir. Ouve quem manda no processo, lê os ficheiros que já existem, faz perguntas em passagens, chega a uma frase do problema, compara alternativas — incluindo não construir nada — e só depois escolhe, desenha os ecrãs e entrega documentos.
 

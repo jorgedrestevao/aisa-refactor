@@ -80,13 +80,10 @@ description: Record an answer or resolution for a Shared Understanding row (Unkn
    basis declared, or — **only where the missing input is technical** — an `Unknown` /
    verification obligation (`custo: documento|spike`, `swing` stated). That obligation is an
    `Unknown` like any other and passes the same admission rule (`library/kernel/states.md` →
-   *Admission of a question*, P-26): it cites the `M-n` it serves — or carries the marker
-   `TO-BE DIVERGENCE` with what the target must decide — names ≥ 2 possible answers, **and**
-   names which of the eight technical axes moves with each — `tecnologia` · `padrão
-   arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` ·
-   `esforço de alto nível` · `custo` · `risco técnico`. A verification obligation that names
-   no axis is `cosmético` with `criticidade: Low`; one that names no second answer is not
-   opened at all. Unless independently supported by a cited source. A second-hand statement
+   *Admission of a question*): its answer moves at least one of the five aspects, and it
+   carries `tipo` (usually `proof_obligation` or `fact_gap`), `impacto`, `âmbito`, `quem
+   responde`, `fecho`, `bloqueio` and `referências`. A missing technical fact needs no invented
+   second answer. One whose answer moves nothing demonstrable is not opened at all. Unless independently supported by a cited source. A second-hand statement
    about another team's systems or configuration is `Assumed` with the basis, not
    `Confirmed`, and it **opens nothing**: no `Unknown` is written to chase an email, minutes,
    a written acceptance or a signature, because the gap already lives in the row's basis

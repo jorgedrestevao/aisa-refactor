@@ -22,5 +22,5 @@ For low-code platforms with tenant-level DLP (the case for the `pp` pack and sev
 
 Same reading rule as `anti-patterns.md`: a constraint here is a **hypothesis with its
 requirement and its technical consequence**, never a standing order. It fires where the
-requirement is present; it says which of the eight axes moves; and an organisational gap
+requirement is present; it says which of the five aspects moves; and an organisational gap
 becomes the target's requirement, never pending work.

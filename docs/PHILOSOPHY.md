@@ -2,8 +2,8 @@
 
 **Por que existe esta ferramenta, e o que ela recusa fazer.**
 
-<!-- SCOPE-STATEMENT v1 -->
-> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada: que tecnologia e que padrão, com que alternativas e a que custo. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão.
+<!-- SCOPE-STATEMENT v2 -->
+> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, com que alternativas e a que custo, e que comportamento, aceitação e operação. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão, o comportamento funcional, a aceitação, a operação ou o esforço.
 >
 > É nesta direcção que se resolve a tensão entre *discovery de negócio* e *decisão técnica*: um problema de negócio sem consequência técnica visível **não é ignorado** — entra como invariante do enquadramento (`M-n`) ou como requisito do que o alvo tem de garantir, nunca como pergunta pendente do projecto. A organização não saber uma coisa descreve a organização; não é trabalho do projecto.
 

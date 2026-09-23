@@ -1,7 +1,7 @@
 # aisa
 
-<!-- SCOPE-STATEMENT v1 -->
-**aisa runs discovery on a process to reach a grounded technical decision: which technology and pattern, against which alternatives, at what cost. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision.**
+<!-- SCOPE-STATEMENT v2 -->
+**aisa runs discovery on a process to reach a grounded technical decision and a design a delivery team can build without guessing: which technology and pattern, against which alternatives, at what cost, and which behaviour, acceptance and operation. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision, the functional behaviour, the acceptance, the operation or the effort.**
 
 Built for engagements that precede the choice of digitalization technology (Power Platform, OutSystems, Mendix, custom). It runs as a Claude Code project — skills, agents, hooks and slash commands, no service and no database.
 

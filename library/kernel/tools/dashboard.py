@@ -42,9 +42,9 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-TOOL_VERSION = "1.14.0"
+TOOL_VERSION = "1.15.0"
 ARTEFACT_ID = "aisa.dashboard"
-# Schema 2 unchanged throughout: every bump only ADDS keys.
+# Schema 2 unchanged up to 1.14.0: every bump only ADDED keys. 1.15.0 removed some -> 3.
 #   1.2.0  `round_delta` (P-2) · `confirmed_locator` (P-12) · `enquadramento` (P-0) ·
 #          `arbiter` (P-1) · `facets.lens_producao`.
 #   1.3.0  `funding_gate` (P-4, was living in the comparison script -- one rule, one
@@ -81,7 +81,15 @@ ARTEFACT_ID = "aisa.dashboard"
 #          the divergence it announces is real: that reading is the arbiter's.
 #          `has_enq` keeps its meaning -- with no `enquadramento.md`, (i) was never
 #          owed to the motor and still is not, so no old engagement gains a finding.
-SCHEMA_VERSION = 2
+#  1.15.0  handoff-v1 F1.5 (decisions Q3/Q4): the SU parser reads the admission columns
+#          (tipo, impacto, ambito, fecho, bloqueio, referencias, quem decide) and the
+#          `estacionada (<motivo>)` parking; `arbiter` checks the handoff-v1 admission
+#          (five aspects + fields) instead of the three P-26 declarations. KEYS REMOVED
+#          from `arbiter`: `sem_citacao_m`, `sem_eixo`, `sem_eixo_sem_coluna`,
+#          `sem_coluna_swing`, `conjuncao`, `enquadramento_declarado`, `calibracao`;
+#          added: `sem_colunas_handoff`, `sem_impacto`, `regra`, `aspectos`. A removal,
+#          so the model schema moves to 3.
+SCHEMA_VERSION = 3
 DEFAULT_RELOAD_SECS = 5
 
 # ---------------------------------------------------------------- utilities
@@ -602,15 +610,15 @@ SWING_HEAD_RE = re.compile(
     re.I | re.S)
 
 
-# The sanctioned annotations of P-26 (states.md -> "The arbiter's two effects"): the
-# arbiter appends them to the cell it just reclassified. They are METADATA ABOUT the
+# The sanctioned annotations the arbiter appends to a cell it reclassified: P-26 on SUs
+# written before handoff-v1 (read, never rewritten), P-1/P-21 since. They are METADATA ABOUT the
 # row -- and the first of them quotes the very declaration it says is missing ("nao
 # cita `M-n` nem declara TO-BE DIVERGENCE"), so a presence match over the whole cell
 # reads the audit note as the declaration (DEF-P2-01). Everything from the marker on
 # is annotation; the body is what comes before.
 ARB_ANNOT_RE = re.compile(
     r"\s*(?:\u2014|\u2013|--|-)?\s*"
-    r"(?:reclassificad[oa]|criticidade\s+baixada)\s+P-26\s*"
+    r"(?:reclassificad[oa]|criticidade\s+baixada)\s+P-(?:1|21|26)\s*"
     r"\(\s*[A-Z]{1,2}-\d{1,3}\s*\)\s*:",
     re.I | re.U)
 
@@ -779,7 +787,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 "parked": parked,
                 "parked_reason": parked_reason,
                 # handoff-v1 question fields (empty on a SU without those columns)
-                "handoff_cols": "tipo" in canon,
+                # Conflicted has no `tipo`: any admission column marks the handoff-v1 schema
+                "handoff_cols": bool({"tipo", "fecho"} & set(canon)),
                 "tipo": norm_key(re.sub(r"[*`]", "", rec["tipo"])).replace(" ", "_"),
                 "impacto_raw": rec["impacto"].strip(),
                 "impacto_aspectos": parse_impacto(rec["impacto"])[0],
@@ -872,7 +881,7 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                               "foi recuperada e o texto preservado; corrigir o separador"),
         "nao-lida": ("warn", "swing nao abre por `decisivo`/`dimensionante`/`cosmetico` -- "
                              "classificacao NAO avaliada (nao foi inventada) e o texto ficou "
-                             "inteiro; as declaracoes P-26 continuam a ser lidas do texto"),
+                             "inteiro; as alternativas e o referente continuam a ser lidos do texto"),
     }
     for forma, hits in swing_anomalies.items():
         level, msg = SWING_DIAG[forma]
@@ -1442,7 +1451,6 @@ ENQ_LENS = "enquadramento"
 # validação de R-05 apanhou (step-9c §5.2.1).
 CALIBRACAO = ("pricing-marinha-pilot-3", "dpt-galp-jp", "cae-automation")
 
-ARB_M_RE = re.compile(r"\bM-\d+\b")
 # P-1, terceira declaração: um `decisivo` nomeia o referente que a resposta elimina ou
 # mantém vivo. Vivia no script de comparação -- duas casas para a mesma regra divergem.
 ARB_REF_RE = re.compile(
@@ -1484,24 +1492,6 @@ def funding_term(text: str) -> str | None:
         return None
     # deaccent preserva o comprimento nos acentos latinos, logo o span mapeia de volta
     return raw[m.start():m.end()] if len(flat) == len(raw) else m.group(0)
-# P-26, terceira declaracao: qual dos OITO eixos tecnicos muda com cada resposta.
-# Generoso por desenho -- aqui um falso positivo seria assinalar uma linha que declara
-# o eixo por palavras que o regex nao conhece, e essa e a troca que este ficheiro nao
-# aceita (ver `falsos_negativos`). Le-se so a frase do `swing`: e ai que a regra poe a
-# declaracao.
-ARB_AXIS_RE = re.compile(
-    r"\btecnologia\b|\bplataforma\b|\bproduto\b"                     # tecnologia
-    r"|\bpadr[ãa]o\b|\barquitec?tura\b|\bdesenho da solu"           # padrão arquitetural
-    r"|\bcomponente|\bconector|\bm[óo]dulo|\bintegra[çc][ãa]o\b"      # componentes
-    r"|\bmodelo de dados\b|\bentidade|\besquema\b|\bschema\b|\btabela"
-    r"|\bcampo|\bchave\b"                                            # modelo de dados
-    r"|\bpermiss|\bRBAC\b|\bacesso|\bautoriza|\bperfil"                # imposição de
-    r"|\bimposi[çc][ãa]o\b|\bpartilha\b"                             # permissões
-    r"|\besfor[çc]o|\bdimension|\bordem de grandeza\b|\btamanho\b"     # esforço de
-    r"|\b[âa]mbito\b"                                                # alto nível
-    r"|\bcusto|\blicen[çc]|\bpre[çc]o|\bor[çc]ament"              # custo
-    r"|\brisco",                                                      # risco técnico
-    re.I | re.U)
 # ">= 2 named answers" -- the three shapes the swing phrase uses in live SUs
 ARB_ALT_RE = re.compile(
     r"\(\s*a\s*\)[^|]{2,400}?\(\s*b\s*\)"       # "(a) ... (b)" -- what live SUs write
@@ -1519,13 +1509,8 @@ ARB_ALT_RE = re.compile(
     re.I | re.U | re.S)
 
 
-# P-26 declaracao (i), segunda forma admissivel (veredicto do dono, 2026-09-10).
-# Marcador de CONJUNTO FECHADO e NAO TRADUZIDO, pela mesma razao que os quatro de G1:
-# a SU sai na lingua do pacote e uma frase traduzida faz o teste passar em falso.
-# Presenca, nunca verdade -- o que o marcador anuncia le-se, nao se verifica aqui.
-ARB_TOBE_RE = re.compile(r"TO-BE DIVERGENCE")
-
-# P-26, segunda declaracao: as formas do portugues real que ARB_ALT_RE nao cobria.
+# Alternativas de uma `design_choice` (era a segunda declaracao do P-26): as formas do
+# portugues real que ARB_ALT_RE nao cobria.
 #
 # DEF-P1-03: as 8 perguntas de P1 R-01 nomeiam duas respostas em ORACOES PARALELAS
 # separadas por ponto-e-virgula -- "traducao implica conteudo com variantes de lingua;
@@ -1651,129 +1636,106 @@ def declara_alternativas(texto: str) -> str:
     return "nao"
 
 
-def arbiter_declarations(rows: list[dict], ronda: str | None = None,
-                        has_enq: bool = True) -> dict:
-    """P-1 + P-26 support. Per open `Unknown`, the THREE declarations the row owes,
-    as a conjunction: does it cite an `M-n` (only owed where `enquadramento.md`
-    exists), does its `swing` phrase name >= 2 answers, and does that phrase name
-    which technical axis moves? `ronda` narrows it to the round just run.
+def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
+    """handoff-v1 admission support (states.md -> Admission of a question). Per open
+    `Unknown` / `Conflicted` written with the admission columns: are the fields there and
+    readable? `ronda` narrows it to the round just run.
 
-    Declaration (i) has two admissible forms: cite an `M-n`, or carry the marker
-    `TO-BE DIVERGENCE`. The `M-n` waiver over declaration (iii) is gone (P-26):
-    citing an invariant is the context half and never the consequence half. Presence
-    only -- whether the axis named is the right one is the arbiter's reading, not
-    this function's."""
+    Presence only. Whether the question is material, whether the impact is true and whether
+    the alternatives are the real ones are the arbiter's reading (aisa-round step 5f), never
+    this function's. It never edits a row. A row written before the columns existed is
+    counted apart and never reclassified; a resolved, withdrawn or parked row is skipped.
+    A `fact_gap` owes no alternatives (T06); a `design_choice` owes >= 2, read from the
+    `swing` phrase with the same detector as before."""
     sem: list[dict] = []
+    sem_impacto: list[dict] = []
     sem_ref: list[dict] = []
-    sem_m: list[dict] = []
-    sem_eixo: list[dict] = []
     sem_classe: list[dict] = []
     sem_alt_aval: list[dict] = []
     decisivas = 0
     total = 0
+    sem_colunas = 0
+    vazio = ("", "—", "-", "--")
     for r in rows:
-        if r["state"] != "Unknown" or r["resolved"]:
+        if r["state"] not in QUESTION_SECTIONS or r["resolved"]:
             continue
         if ronda and r["ronda"] != ronda:
             continue
-        total += 1
-        # DEF-P2-01: the metadata of a reclassification never sustains the declaration
-        # it audits. Body only -- the annotation is preserved on the row and in the
-        # file, and is simply not evidence of anything the row declares.
-        body = r.get("swing_body", r.get("swing_text") or "")
-        text = " ".join((split_annotation(r.get("claim") or "")[0], body,
-                         split_annotation(r.get("support") or "")[0]))
-        cita_m = bool(ARB_M_RE.search(text))
-        tobe = bool(ARB_TOBE_RE.search(text))
-        alt = declara_alternativas(body)
-        duas = alt == "sim"
-        if alt == "nao-avaliado":
-            sem_alt_aval.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                                 "motivo": "forma comparativa -- >= 2 respostas nao avaliado"})
-        eixo = bool(ARB_AXIS_RE.search(body))
-        if r.get("swing_form") == "nao-lida":
-            # DEF-P4-01: the class could not be read. It is not `decisivo` and it is
-            # not `cosmetico` either -- it is unknown, and says so in its own list
-            # instead of silently joining a count.
-            sem_classe.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                               "motivo": "classe do swing nao avaliada (forma nao suportada)"})
-        if r["swing_class"] == "decisivo":
-            decisivas += 1
-            if not ARB_REF_RE.search(text):
-                sem_ref.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                                "motivo": "`decisivo` sem referente nomeado"})
-        if not cita_m and not tobe:
-            sem_m.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"]})
-        if not eixo:
-            sem_eixo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                             "swing_class": r["swing_class"],
-                             "swing_inferred": r["swing_inferred"],
-                             "motivo": "o swing nao nomeia o eixo tecnico que muda"})
-        # P-26: conjuncao. A declaracao (i) so e devida ao motor quando ha
-        # enquadramento declarado, e satisfaz-se por qualquer das duas formas.
-        em_falta = []
-        if has_enq and not (cita_m or tobe):
-            em_falta.append("nao cita M-n nem declara TO-BE DIVERGENCE")
-        # `nao-avaliado` nao entra em falta: nao se prova ausencia com uma forma que
-        # o motor admite nao saber ler.
-        if alt == "nao":
-            em_falta.append("o swing nao nomeia >= 2 respostas")
-        if not eixo:
-            em_falta.append("o swing nao nomeia o eixo tecnico que muda")
-        if not em_falta:
+        if not r.get("handoff_cols"):
+            sem_colunas += 1
             continue
-        sem.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                    "swing_class": r["swing_class"],
-                    "swing_inferred": r["swing_inferred"],
-                    "motivo": " + ".join(em_falta)})
+        total += 1
+        pergunta = r["state"] == "Unknown"
+        em_falta = []
+        if pergunta and r.get("tipo") not in QUESTION_TYPES:
+            em_falta.append("tipo ausente ou fora de " + "/".join(QUESTION_TYPES))
+        if r.get("impacto_forma") != "canonica":
+            sem_impacto.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                "forma": r.get("impacto_forma", ""),
+                                "motivo": "o impacto nao nomeia um aspecto legivel"})
+            em_falta.append("impacto sem aspecto legivel")
+        if r.get("ambito", "").strip() in vazio:
+            em_falta.append("sem ambito afectado")
+        papel = r["support"] if pergunta else r.get("quem_decide", "")
+        if (papel or "").strip() in vazio:
+            em_falta.append("sem quem responde" if pergunta else "sem quem decide")
+        if r.get("fecho", "").strip() in vazio:
+            em_falta.append("sem condicao de fecho")
+        if r.get("bloqueio") not in BLOCKING_CLASSES + ("—", "-"):
+            em_falta.append("bloqueio ausente ou fora de " + "/".join(BLOCKING_CLASSES) + "/—")
+        if r.get("referencias", "").strip() in vazio:
+            em_falta.append("sem referencias")
+        body = r.get("swing_body", r.get("swing_text") or "")
+        if pergunta and r.get("tipo") == "design_choice":
+            alt = declara_alternativas(body)
+            if alt == "nao":
+                em_falta.append("design_choice sem >= 2 alternativas no swing")
+            elif alt == "nao-avaliado":
+                # nao se prova ausencia com uma forma que o motor admite nao saber ler
+                sem_alt_aval.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                     "motivo": "forma comparativa -- alternativas nao avaliadas"})
+        if pergunta:
+            if r.get("swing_form") == "nao-lida":
+                sem_classe.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                   "motivo": "classe do swing nao avaliada (forma nao suportada)"})
+            if r["swing_class"] == "decisivo":
+                decisivas += 1
+                text = " ".join((split_annotation(r.get("claim") or "")[0], body))
+                if not ARB_REF_RE.search(text):
+                    sem_ref.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                    "motivo": "`decisivo` sem referente nomeado"})
+        if em_falta:
+            sem.append({"id": r["id"], "state": r["state"], "lens": r["lens"],
+                        "ronda": r["ronda"], "tipo": r.get("tipo", ""),
+                        "motivo": " + ".join(em_falta)})
     return {
         "avaliadas": total,
-        # a pre-v2.3 SU has no `swing` column at all: every row lands here for a
-        # reason the arbiter cannot act on. Say how many, so nobody reads it as a
-        # finding (states.md -> Compatibility).
-        "sem_coluna_swing": sum(1 for x in sem if x["swing_inferred"]),
+        # SUs written before handoff-v1 have no admission columns: nothing to act on.
+        "sem_colunas_handoff": sem_colunas,
         "sem_declaracao": sem,
+        # the arbiter PARKS these (no demonstrable impact); the rest go back to the writer
+        "sem_impacto": sem_impacto,
         "decisivas": decisivas,
-        # DEF-P4-01: rows whose swing class the motor could not read. `decisivas` is a
-        # count of rows READ as decisive, so these are neither in it nor against it.
         "classe_nao_avaliada": sem_classe,
-        # DEF-P1-03: formas em que o motor nao decide se ha duas respostas. Nem contam
-        # como declaradas, nem como em falta -- contam como por ler.
         "alternativas_nao_avaliadas": sem_alt_aval,
         "decisivo_sem_referente": sem_ref,
-        # P-0: quais nao satisfazem (i) por nenhuma das duas formas. Nao e falha por
-        # si onde nao ha enquadramento -- e a lista existe para alguem LER se alguma
-        # pergunta o porque que um `M-n` ja responde.
-        "sem_citacao_m": sem_m,
-        # P-26, terceira declaracao isolada: uteis separadas porque e a que quase
-        # nenhuma linha anterior a regra carrega, e misturada com as outras duas
-        # deixaria de se ver quantas mudaram de estado por causa DESTA.
-        "sem_eixo": sem_eixo,
-        # Mesma razao que `sem_coluna_swing`: numa SU pre-v2.3 nao ha coluna `swing`,
-        # logo NENHUMA linha pode nomear o eixo -- contar isso como falta de declaracao
-        # seria ler como achado o que e ausencia de esquema. Diz-se quantas sao.
-        "sem_eixo_sem_coluna": sum(1 for x in sem_eixo if x["swing_inferred"]),
-        "conjuncao": ("P-26: as tres declaracoes sao devidas em conjunto; citar `M-n` "
-                      "nao dispensa nomear o eixo tecnico. A (i) satisfaz-se por `M-n` "
-                      "ou pelo marcador `TO-BE DIVERGENCE` (veredicto do dono, 2026-09-10)"),
-        "enquadramento_declarado": has_enq,
         "ids": [x["id"] for x in sem] + [x["id"] for x in sem_ref],
+        "regra": ("handoff-v1 (states.md -> Admission of a question): a resposta muda pelo "
+                  "menos um de cinco aspectos, e a linha traz tipo, impacto, ambito, quem "
+                  "responde, fecho, bloqueio e referencias. fact_gap nao deve alternativas; "
+                  "design_choice deve >= 2 no swing"),
+        "aspectos": sorted(set(IMPACT_ASPECTS.values())),
         "regex": {
-            "m_n": ARB_M_RE.pattern,
-            "to_be": ARB_TOBE_RE.pattern,
             "alternativas": ARB_ALT_RE.pattern,
             "referente": ARB_REF_RE.pattern,
-            "eixo": ARB_AXIS_RE.pattern,
         },
-        "falsos_negativos": ("ACEITES por desenho -- uma row que declare a divergencia "
-                             "em palavras que estes regex nao conhecem passa em silencio. "
-                             "Falsos POSITIVOS nao sao aceites: um motor que avisa a torto "
-                             "deixa de ser lido"),
-        "julgamento": ("o motor verifica PRESENCA de declaracao; se a pergunta e material, "
-                       "se o referente e o certo e se a classe do swing esta bem sao "
-                       "julgamento do arbitro (aisa-round step 5f). Lista vazia significa "
-                       "'nada em falta que este regex saiba ver', nunca 'aprovado'"),
-        "calibracao": list(CALIBRACAO),
+        "falsos_negativos": ("ACEITES por desenho -- um aspecto escrito com palavras fora "
+                             "das do plano fica `nao-lida` e e assinalado; o motor nao "
+                             "adivinha o aspecto. Falsos POSITIVOS nao sao aceites"),
+        "julgamento": ("o motor verifica PRESENCA dos campos; se a pergunta e material, se o "
+                       "impacto e verdadeiro e se as alternativas sao as reais sao julgamento "
+                       "do arbitro (aisa-round step 5f). Lista vazia significa 'nada em falta "
+                       "que o motor saiba ver', nunca 'aprovado'"),
     }
 
 
@@ -5870,8 +5832,7 @@ def build_model(eng: Path, today: date) -> dict:
         "round_delta": round_delta(rows, round_dates),
         "confirmed_locator": audit_confirmed_locators(rows, eng),
         "enquadramento": enquadramento_state(eng, rows),
-        "arbiter": arbiter_declarations(
-            rows, has_enq=(eng / "enquadramento.md").is_file()),
+        "arbiter": arbiter_declarations(rows),
         "funding_gate": funding_gate_audit(rows, context),
         "diagnostics": diagnostics,
     }

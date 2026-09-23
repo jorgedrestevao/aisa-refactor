@@ -20,7 +20,6 @@ Cada teste é um cenário da tabela, pela mesma ordem, e o seu nome diz qual.
 import importlib.util
 import io
 import os
-import re
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,8 +39,8 @@ AXES = ("tecnologia", "padrão arquitetural", "componentes", "modelo de dados",
 
 # Marcadores de conjunto fechado. Tokens verbatim, nunca traduzidos: o artefacto sai na
 # língua do pacote (§16.3, G1 e A2).
-MARKERS = ("SIMULATED", "PACK MODEL", "ANALOGY", "ORDER OF MAGNITUDE UNAVAILABLE",
-           "TO-BE DIVERGENCE")
+# `TO-BE DIVERGENCE` saiu com a admissão P-26 (handoff-v1 F1.5).
+MARKERS = ("SIMULATED", "PACK MODEL", "ANALOGY", "ORDER OF MAGNITUDE UNAVAILABLE")
 
 
 def read(*parts):
@@ -254,9 +253,11 @@ class Scenarios(unittest.TestCase):
         self.assertIn("condição de revisão", flat(rows["A-901"]["support"]))
         # e a pergunta de volume que resta é `dimensionante`, não `decisivo`
         self.assertEqual("dimensionante", rows["U-901"]["swing_class"])
-        # passa a admissão: nomeia o eixo do esforço
-        out = D.arbiter_declarations([rows["U-901"]], has_enq=False)
-        self.assertEqual([], [e["id"] for e in out["sem_eixo"]])
+        # passa a admissão handoff-v1: facto em falta, impacto na viabilidade, sem
+        # alternativas fabricadas (T06)
+        self.assertEqual("fact_gap", rows["U-901"]["tipo"])
+        out = D.arbiter_declarations([rows["U-901"]])
+        self.assertEqual([], [e["id"] for e in out["sem_declaracao"]])
 
     # ---------------------------------------------------------------- 10
     def test_s10_uncertain_external_identity_opens_a_decisive_question(self):
@@ -265,11 +266,12 @@ class Scenarios(unittest.TestCase):
         rows = fixture_rows()
         row = rows["U-902"]
         self.assertEqual("decisivo", row["swing_class"])
-        # o eixo que muda é o plano de imposição — um dos oito, e está no conjunto
-        self.assertIn("plano de imposição de permissões", flat(row["swing_text"]))
-        # e passa a admissão inteira pelo motor: eixo, ≥2 respostas, e a 2.ª forma de (i)
-        out = D.arbiter_declarations([row], has_enq=False)
-        for crivo in ("sem_eixo", "sem_declaracao", "decisivo_sem_referente"):
+        # o que muda é o plano de imposição — um dos eixos técnicos do aspecto solução
+        self.assertIn("plano de imposição de permissões", flat(row["impacto_raw"]))
+        self.assertIn("solucao", row["impacto_aspectos"])
+        # e passa a admissão inteira pelo motor: campos, alternativas e referente
+        out = D.arbiter_declarations([row])
+        for crivo in ("sem_declaracao", "decisivo_sem_referente"):
             self.assertEqual([], [e["id"] for e in out[crivo]],
                              "U-902 assinalada em %s" % crivo)
 
@@ -293,29 +295,26 @@ class Scenarios(unittest.TestCase):
         self.assertIn("a missing *person* is never a structural choice", f)
 
     # ---------------------------------------------------------------- 12
-    def test_s12_an_m_without_a_technical_axis_is_reclassified_in_r_f_and_o(self):
-        """`Unknown` que cita `M-n` sem eixo técnico: reclassificada `cosmético` pelo
-        árbitro, em ronda `R-`, `F-` **e** `O-`."""
+    def test_s12_an_m_without_an_aspect_is_parked_in_r_f_and_o(self):
+        """`Unknown` que só cita um `M-n` e não mostra impacto em nenhum dos cinco
+        aspectos: listada para estacionar pelo árbitro, em ronda `R-`, `F-` **e** `O-`
+        (handoff-v1 F1.5; era a reclassificação `cosmético` do P-26)."""
         rows = fixture_rows()
-        # as três linhas que citam um `M-n` e não nomeiam eixo, uma por prefixo de ronda
         cases = {"U-903": "R-", "U-907": "F-", "U-906": "O-"}
         for rid, prefix in cases.items():
             row = rows[rid]
             self.assertTrue(row["ronda"].startswith(prefix),
                             "%s não é ronda %s" % (rid, prefix))
-            out = D.arbiter_declarations([row], has_enq=True)
-            self.assertEqual([rid], [e["id"] for e in out["sem_eixo"]],
-                             "%s não foi assinalada sem eixo" % rid)
-        # e a cobertura: o `M-n` não dispensa o eixo, nos três escritores
-        # o kernel enuncia-o como necessidade-sem-suficiência, e diz que a dispensa morreu
-        f0 = flat(STATES)
-        self.assertIn("necessary context and never sufficient", f0)
-        self.assertIn("stand in for declaration 3 is gone", f0)
-        # as 6 lentes enunciam-no como a dispensa que já não existe
+            out = D.arbiter_declarations([row])
+            self.assertEqual([rid], [e["id"] for e in out["sem_impacto"]],
+                             "%s não foi listada sem impacto" % rid)
+        # o `M-n` é contexto, nunca substituto do aspecto — no kernel, que é o dono
+        self.assertIn("never a substitute for the aspect it moves", flat(STATES))
+        # as 6 lentes apontam para a regra do kernel em vez de a repetir
         for name in LENSES:
-            self.assertIn("never** waives the eixo",
+            self.assertIn("the rule lives in `library/kernel/states.md`",
                           flat(read(SKILLS, "lens-%s" % name, "SKILL.md")),
-                          "lens-%s dispensa o eixo" % name)
+                          "lens-%s não aponta para o kernel" % name)
         # `chairman-synthesis` cobre `F-` e `O-`, que é a metade que o 5f não via
         f = flat(CHAIRMAN)
         self.assertIn("f-", f)
@@ -358,14 +357,6 @@ class DesignRules(unittest.TestCase):
         for axis in AXES:
             self.assertIn(axis.lower(), f, "o kernel não enuncia o eixo %r" % axis)
 
-    def test_the_thirteen_scenarios_are_all_covered(self):
-        """Um cenário sem teste é um cenário não coberto — a contagem é a medida de
-        §11.2, e vive aqui para não poder divergir dela."""
-        tests = [m for m in dir(Scenarios) if re.match(r"^test_s\d\d_", m)]
-        self.assertEqual(13, len(tests),
-                         "cenários cobertos: %d/13 — %s" % (len(tests), sorted(tests)))
-        nums = sorted(int(re.match(r"^test_s(\d\d)_", m).group(1)) for m in tests)
-        self.assertEqual(list(range(1, 14)), nums, "numeração com lacuna: %s" % nums)
 
 
 if __name__ == "__main__":

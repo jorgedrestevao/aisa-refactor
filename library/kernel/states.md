@@ -8,7 +8,7 @@ Each row in the Shared Understanding (`shared-understanding.md`) is in **exactly
 |---|---|---|
 | **Confirmed** | Verified by direct evidence, or declared by the process owner within their authority | A **machine-resolvable locator** of one of the five classes (*Confirmed threshold* below) **and** a claim at the level of that evidence; human confirmation only from the process owner or an authority they named |
 | **Assumed** | Reasonable inference, explicitly declared | The basis: the locators the inference rests on, an industry-standard claim, an industry pattern, a prior engagement, a statement by someone who is not the owner |
-| **Unknown** | Identified gap requiring an answer | Who can answer — a **role** or a **source to consult**, never a person's identity — plus criticality, and the three declarations of *Admission of a question* below |
+| **Unknown** | Identified gap requiring an answer | Who can answer — a **role** or a **source to consult**, never a person's identity — plus criticality, and the fields of *Admission of a question* below |
 | **Conflicted** | Stakeholders or sources disagree | Parties involved + criticality |
 | **Risky** | High uncertainty with material impact | Impact + proposed mitigation |
 
@@ -55,11 +55,11 @@ Two halves enforce this: the deterministic half (a hook that checks the presence
 | Confirmed (expirado) | Confirmed | **Revalidação**: the fact still holds → renew `verificado_em` on the row itself (sanctioned edit; no new row) |
 | Confirmed (expirado) | Unknown | The fact may have changed → re-question; the answer then follows the normal transition (`was <id>`) |
 
-Append rule: when a row transitions, the new row references the old id (`was U-007`). The old row stays for audit, and gains a ` — resolved → <new-id>` marker in its last column. Sanctioned edits to existing rows are exactly six: the `resolved →` marker on transition; **withdrawing a question for scope** (below); renewing `verificado_em` on revalidation (see *Epistemic half-lives*); **normalising terminology** (below); **completing the evidence locator** of a row whose evidence already names the source but not the anchor (`answers.md#<secção>`, `<ficheiro>.extraction.json#<folha>`) — the claim is not touched, and the batch is logged in `council-log.md`; and **the `criticidade` that follows a `swing` the arbiter has just lowered to `cosmético`** (*Admission of a question* below, where its bounds live). Reclassifying a `Confirmed` that says more than its evidence is **not** an edit: it is a transition (`A-nnn was C-nnn`). Nor is **correcting a claim the evidence contradicts**: that is a transition too (`C-nnn was C-nnn`, *Correction by evidence* above), never a sanctioned edit of its own. One question separates the two: **does the evidence settle the corrected value?** Yes → the new row stays `Confirmed`; no → `Assumed` with the locators as basis, or `Unknown` when there is not even a basis. No motor finds this case — the deterministic half checks presence and existence, never truth — so a contradiction is always a reading: the round arbiter's (`aisa-round` step 5f) or a person's. The `swing` class token of an `Unknown` may be corrected by `/simulate` or by the round arbiter (*Question economics*); and a row the arbiter has just lowered to `cosmético` has its `criticidade` lowered with it in the same pass — **the sixth sanctioned edit**, defined in *Admission of a question* below, where the rule that bounds it lives. Status counting treats marked rows as resolved, not open.
+Append rule: when a row transitions, the new row references the old id (`was U-007`). The old row stays for audit, and gains a ` — resolved → <new-id>` marker in its last column. Sanctioned edits to existing rows are exactly six: the `resolved →` marker on transition; **withdrawing a question for scope** (below); renewing `verificado_em` on revalidation (see *Epistemic half-lives*); **normalising terminology** (below); **completing the evidence locator** of a row whose evidence already names the source but not the anchor (`answers.md#<secção>`, `<ficheiro>.extraction.json#<folha>`) — the claim is not touched, and the batch is logged in `council-log.md`; and **parking a question with no demonstrable impact** (`— estacionada (<motivo>)`, *Admission of a question* below, where its bounds live). Reclassifying a `Confirmed` that says more than its evidence is **not** an edit: it is a transition (`A-nnn was C-nnn`). Nor is **correcting a claim the evidence contradicts**: that is a transition too (`C-nnn was C-nnn`, *Correction by evidence* above), never a sanctioned edit of its own. One question separates the two: **does the evidence settle the corrected value?** Yes → the new row stays `Confirmed`; no → `Assumed` with the locators as basis, or `Unknown` when there is not even a basis. No motor finds this case — the deterministic half checks presence and existence, never truth — so a contradiction is always a reading: the round arbiter's (`aisa-round` step 5f) or a person's. The `swing` class token of an `Unknown` may be corrected by `/simulate`, or by the round arbiter for a `decisivo` that names no referent (*Question economics*); parking — **the sixth sanctioned edit** — is defined in *Admission of a question* below, where the rule that bounds it lives. Status counting treats marked rows as resolved, not open.
 
 **Terminology normalisation** (P-20, the fifth sanctioned edit). Restoring a product, vendor, service or technical-artefact **literal** in a row that paraphrased it (`Dataverse` written as “loja governada”, `Azure SQL` as “a base relacional”) is an edit, not a transition: the claim asserts the same thing about the same product, and the paraphrase was a defect of expression that `glossary.md` → *Two languages* rule 5 now forbids. Nothing else in the row is touched — not the state, not `verificado_em`, not the evidence — and the batch is logged in `council-log.md`, one line, naming the literal restored and how many rows carried it. If the wording change would alter **what** is claimed, it is not a normalisation: it is a transition, or a correction by evidence.
 
-**Withdrawal for scope** (P-21, the fourth sanctioned edit). A question that the process does not ask — by the role rule (*Question economics*), by failing *Admission of a question*, or because it sits outside the technical axes that decide anything (`library/packs/<pack>/decision-tree.md` §6.1) — leaves by a marker in its last column and by nothing else:
+**Withdrawal for scope** (P-21, the fourth sanctioned edit). A question that the process does not ask — by the role rule (*Question economics*) or by failing *Admission of a question* — leaves by a marker in its last column and by nothing else:
 
     — retirada P-21 (<razão curta>)
 
@@ -72,8 +72,8 @@ The row **stays** — it is audit, and a question someone once thought material 
 |---|---|
 | `## Confirmed` | `id \| lens \| claim \| evidência \| verificado_em \| validade \| ronda` |
 | `## Assumed` | `id \| lens \| claim \| base da assumption \| verificado_em \| validade \| ronda` |
-| `## Unknown` | `id \| lens \| pergunta \| quem responde \| criticidade (Low/Med/Critical) \| custo \| swing \| ronda` |
-| `## Conflicted` | `id \| lens \| conflito \| partes \| criticidade \| ronda` |
+| `## Unknown` | `id \| lens \| pergunta \| tipo \| impacto \| âmbito \| quem responde \| fecho \| bloqueio \| criticidade (Low/Med/Critical) \| custo \| swing \| referências \| ronda` |
+| `## Conflicted` | `id \| lens \| conflito \| partes \| impacto \| âmbito \| quem decide \| fecho \| bloqueio \| criticidade \| referências \| ronda` |
 | `## Risky` | `id \| lens \| risco \| impacto \| mitigação proposta \| ronda` |
 
 ### The form of `quem responde` (P-21 / F1.1)
@@ -98,7 +98,7 @@ before this form read exactly as it did.
 
 Id prefixes: `C-` (Confirmed), `A-` (Assumed), `U-` (Unknown), `X-` (Conflicted), `R-` (Risky), `D-` (Decision; cross-ref to `decisions.md`).
 
-`lens` values: the six Discovery lenses (`business`, `operations`, `user`, `data`, `governance`, `financial`), `technology` (Options onward), `chair` (council synthesis rows) and `enquadramento` — the process owner's declared business mechanism, written by `/start` **before the first round** as `Confirmed` rows in ronda `R-00`, one per invariant `M-n`, evidence `declaração do dono do processo, <date> — enquadramento.md#M-n`, `validade = organizacional`. `R-00` is a legitimate `ronda` value: it means "declared by the owner, no lens has run". These rows are the owner's **hypothesis**: `/frame` confirms or corrects each one with evidence through the normal transition (`was C-nnn`); the R-00 row is never edited. Every `Unknown` — whoever writes it, in whatever phase — carries the three declarations of *Admission of a question* (*Question economics*): the `M-n` its answer serves, the answers it admits, and the technical axis each answer moves.
+`lens` values: the six Discovery lenses (`business`, `operations`, `user`, `data`, `governance`, `financial`), `technology` (Options onward), `chair` (council synthesis rows) and `enquadramento` — the process owner's declared business mechanism, written by `/start` **before the first round** as `Confirmed` rows in ronda `R-00`, one per invariant `M-n`, evidence `declaração do dono do processo, <date> — enquadramento.md#M-n`, `validade = organizacional`. `R-00` is a legitimate `ronda` value: it means "declared by the owner, no lens has run". These rows are the owner's **hypothesis**: `/frame` confirms or corrects each one with evidence through the normal transition (`was C-nnn`); the R-00 row is never edited. Every `Unknown` — whoever writes it, in whatever phase — carries the fields of *Admission of a question* (*Question economics*); an `M-n` is context the question may cite, never a substitute for the aspect it moves.
 
 ## Epistemic half-lives
 
@@ -130,46 +130,53 @@ Every Unknown carries a price and a return, so discovery INVESTS in questions in
 
 `cosmético` is legitimate and useful — it is what lets `/status` say "do not spend meeting time on this". `/status` renders the **meeting agenda** from these columns; `/simulate`'s value-of-information section consumes the classes and corrects them when the evidence disagrees (a sanctioned metadata edit, noted in its output).
 
-**Admission of a question** (P-26). An `Unknown` is written only when the row itself carries **three** declarations. They are a **conjunction, not a menu**:
+**Admission of a question** (handoff-v1 — replaces P-26). An `Unknown` is written only when its answer can change **at least one of five aspects** of the scope (plan `docs/handoff-v1/plan/02_CONTRATOS.md` §4):
 
-1. **what the answer serves**, in one of two admissible forms: the `M-n` of `enquadramento.md`, **or** the divergence it opens in the **to-be**, written with the marker `TO-BE DIVERGENCE` followed by what the target must decide. The second form is available **with or without** a declared `enquadramento` (owner's ruling, 2026-09-10): a narrow framing must not price a legitimate technical question at zero. It is a declaration, not a bypass — the marker without a stated divergence is an empty cell, and declarations 2 and 3 remain owed in full;
-2. **≥ 2 possible answers**, named in the `swing` phrase;
-3. **which technical axis moves** with each of those answers, from these eight: `tecnologia` · `padrão arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` · `esforço de alto nível` · `custo` · `risco técnico`.
+1. `solucao` — the solution or architecture decision, including the technical axes that decide it: `tecnologia` · `padrão arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` · `esforço de alto nível` · `custo` · `risco técnico`;
+2. `funcional` — functional correctness, a calculation, a transition, an exception or a business result;
+3. `aceitacao` — an acceptance criterion, a contractual obligation or the evidence required;
+4. `operacao` — security, privacy, operation, support, migration or recovery;
+5. `viabilidade` — implementation feasibility, a dependency, cost or material effort.
 
-Citing an `M-n` is **necessary context and never sufficient**: it names the mechanism the answer serves, never what changes in the system to be built. The waiver that let an `M-n` stand in for declaration 3 is gone. A difference only in the **as-is** is not a difference; a divergence inferable with a declared basis is written `Assumed`, not asked.
+The row carries what makes it a question, in its own columns (*Schema of Shared Understanding rows* below):
 
-**The organisation's ignorance is not the project's work.** What the lens owes is the **technical fact** it established. That the organisation has no written policy, no inventory, no demonstrated maturity and nobody who knows who does what describes the organisation, not the target. It becomes a row only through the three declarations above — and where the target must define what the organisation never defined, that is a **requirement** of the to-be (`Assumed` with its basis, or a `decisão` for the owner), never a question waiting on the organisation. The verification is the same either way: which of the eight axes moves.
+- **`tipo`** — `fact_gap` (a fact is missing; it needs **no** fabricated second answer) · `design_choice` (≥ 2 genuinely available alternatives, named in the `swing` phrase) · `conflict` · `proof_obligation` (a proof to plan, with work, owner, prerequisites and criterion). `Conflicted` rows are the `conflict` type and carry no `tipo` column.
+- **`impacto`** — `aspecto[, aspecto]: frase` — the aspects moved, in the words above, and the phrase saying **what** changes. Materiality is never deduced from the length of the text.
+- **`âmbito`** — what the answer affects: journeys, components, rules. Where it matters it is marked `observed_as_is`, `proposed_to_be` or `authorized_to_be`. These markers are not states: approving the TO-BE does not turn an AS-IS premise into `Confirmed`, and a normative rule may be chosen without ever having been observed.
+- **`quem responde`** — a role or a source (*The form of `quem responde`*; `Conflicted`: `quem decide`).
+- **`fecho`** — the condition that closes it.
+- **`bloqueio`** — `blocks_all` (stops the global commitment or implementation) · `blocks_scope` (stops named journeys or components, which may be excluded from an authorised partial delivery) · `delegated_choice` (the team decides inside a defined envelope and acceptance criterion) · `implementation_proof` (a planned proof with work, owner, prerequisites and criterion) · `—` (does not block; priority only).
+- **`referências`** — the SU ids, sources and decisions it rests on.
 
-| Missing | Outcome |
-|---|---|
-| declaration 3 | the row is `cosmético` |
-| declaration 2 | the row **is not written** |
-| a named referent, on a `decisivo` | the class is `dimensionante` |
+**Priority is not blocking.** `criticidade` and `swing` rank a question; `bloqueio` says what it stops. A rounding rule may change no technology and still block the acceptance of a financial journey; a colour may be delegated unless an explicit accessibility, identity or contract requirement says otherwise. An `implementation_proof` whose result could invalidate feasibility blocks the commitment (`blocks_scope` or `blocks_all`); it is not a mere future proof. Accepting a risk never replaces a legal requirement, a mandatory control or a third party's authorisation.
 
-**Whom it binds.** Every writer of an `Unknown`, in every phase: the six Discovery lenses (`R-` rounds), `chairman-synthesis` (`F-` and `O-` rounds), the technical verification obligation `aisa-answer` opens, and the `PM-U` rows `aisa-capture` prices. No writer and no phase sits outside it.
+**No demonstrable impact → not written, or parked with its reason.** A question whose answer moves none of the five aspects is not written. One already written that turns out to move none leaves by a marker in its last column, and by nothing else:
 
-**The arbiter's two effects** (`aisa-round` step 5f). It verifies the three declarations are **present** — never whether they are true, never whether the question is material (its one materiality class is the role rule below). On a row missing one, in this order:
+    — estacionada (<motivo>)
 
-1. lower the `swing` class token and append ` — reclassificado P-26 (<ronda>): <declaration missing>` — a sanctioned metadata edit of the same class as `/simulate`'s correction;
-2. **only if 1 fired**, and only from above `Low`: set `criticidade` to `Low` and append ` — criticidade baixada P-26 (<ronda>): <the reason that sustained it>` — the sixth sanctioned edit, so a question that changes nothing stops pressing the Discovery gate.
+The row **stays** — it is audit. It stops counting as open, never appears in the meeting agenda and is **not** a closure: nothing was answered. A marker with no reason is **not** a parking: the row stays open and the motor says so. Any writer may park, always with the reason (the lens that wrote it, the round arbiter, the chairman); bringing a parked question back is a transition — a new row `was U-nnn`. Withdrawal for scope (P-21, below) stays the owner's alone.
 
-Both go on one `council-log.md` line. The descent is a **consequence** of step 1, never a judgement of its own: no arbiter, no motor and no persona lowers a `criticidade` for any other reason, a row already `cosmético` before this pass is left alone, and it moves **never upwards**. The arbiter never deletes a row and never rewrites a question.
+**Whom it binds.** Every writer of an `Unknown` or a `Conflicted`, in every phase: the six Discovery lenses (`R-` rounds), `chairman-synthesis` (`F-` and `O-` rounds), the verification obligation `aisa-answer` opens, and the `PM-U` rows `aisa-capture` prices. The meaning lives **here**; lens files, agents and skills point to this section and do not restate it.
+
+**The round arbiter** (`aisa-round` step 5f). It checks that the fields are **present** and readable — never whether the question is material, never whether the impact is true. Deterministic support: `dashboard.py` → `arbiter`. On a row whose `impacto` names no readable aspect it **parks** the row with that reason; on a row missing any other field it hands the row back to its writer, in the same pass, naming the fields. It never fills a field, never rewrites a question and never deletes a row. Rows written before these columns existed are read as written and **never reclassified**.
+
+**The organisation's ignorance is not the project's work.** What the lens owes is the **technical fact** it established. That the organisation has no written policy, no inventory, no demonstrated maturity and nobody who knows who does what describes the organisation, not the target. It becomes a row only through the admission above — and where the target must define what the organisation never defined, that is a **requirement** of the to-be (`Assumed` with its basis, or a `decisão` for the owner), never a question waiting on the organisation. The verification is the same either way: which of the five aspects moves.
 
 **Three destinations for an uncertainty.** Not everything uncertain is a question:
 
 | Destination | When | Where it lands |
 |---|---|---|
 | **Design assumption** | the uncertainty changes detail, configuration or a band | `Assumed` with basis, impact and revision condition |
-| **Decisive question** | the answer changes the option or the pattern | `Unknown` with the three declarations above |
-| **Later detail** | it only settles at implementation | no open row at all |
+| **Question** | the answer changes one of the five aspects | `Unknown` with the fields above |
+| **Later detail** | it only settles at implementation and cannot invalidate feasibility | no open row at all — when it can, it is a `proof_obligation` |
 
-**The role rule** (P-21). An `Unknown` never asks for a person's identity, a signature, an approval, or a document proving a third party's position. Where authority matters the question asks for the **role**, the operation it must perform, and the plane that enforces it. A question whose only possible answer is a name or a piece of paper fails admission by construction — it moves none of the eight axes, so it changes no requirement, no data shape and no effort — and is therefore not written. The round arbiter enforces this one class of materiality (`aisa-round` step 5f).
+**The role rule** (P-21). An `Unknown` never asks for a person's identity, a signature, an approval, or a document proving a third party's position. Where authority matters the question asks for the **role**, the operation it must perform, and the plane that enforces it. A question whose only possible answer is a name or a piece of paper fails admission by construction — it moves none of the five aspects, so it changes no requirement, no data shape and no effort — and is therefore not written; one already written is parked with that reason. The round arbiter enforces this one class of materiality (`aisa-round` step 5f).
 
 **A third-party report closes; it does not open** (P-23). A statement about a third party's position, relayed by someone who does not hold it, resolves the row as `Assumed` with the relay declared in the basis — and **opens nothing**. The missing artefact does not become a new `Unknown`: the gap already lives in that row's basis, where every downstream reader meets it. Chasing the email, the minutes or the written acceptance is an engagement courtesy, never a decision input, and it never blocks a decision (`library/packs/<pack>/decision-tree.md` §6.1 for what does).
 
 **Cost questions.** The as-is cost, the cost of doing nothing and the cost of delay are the financial lens's **baseline**, written as `Assumed` with the basis declared (volume × cycle time × rate, every input visible) — not asked as `Unknown`. A cost `Unknown` is `decisivo` only when it names the branch its magnitude would eliminate or keep alive (typically `do nothing`), `dimensionante` when it changes the effort or data shape of the to-be, and otherwise `cosmético` — including when the decision to build is already taken.
 
-Compatibility: absent columns (pre-v2.3 SUs) ⇒ `custo = email`, `swing = dimensionante` — applied on read, never migrated.
+Compatibility: absent columns (pre-v2.3 SUs) ⇒ `custo = email`, `swing = dimensionante` — applied on read, never migrated. Absent admission columns (SUs written before handoff-v1: no `tipo`) ⇒ the row is read as written, the motor counts it apart and nothing is reclassified.
 
 ### Compatibility (SUs created before v2.2)
 

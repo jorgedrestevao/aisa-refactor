@@ -5,10 +5,11 @@ Patterns seen often enough across engagements to flag automatically when they sh
 ## How to read this file — binding
 
 Nothing here opens a question by itself. Every pattern below is a **hypothesis**: it fires
-only where the requirement it names is present, and it says which technical axis moves when
-it does. Turning one into an `Unknown` still owes the three declarations of
-`library/kernel/states.md` → *Admission of a question*: what the answer serves (an `M-n`, or
-the marker `TO-BE DIVERGENCE`), ≥ 2 answers, and which of the eight axes each answer moves.
+only where the requirement it names is present, and it says what it moves when
+it does. Turning one into an `Unknown` still owes the admission of
+`library/kernel/states.md` → *Admission of a question*: an answer that moves one of the five
+aspects, and the fields the row carries (`tipo`, `impacto`, `âmbito`, `quem responde`, `fecho`,
+`bloqueio`, `referências`).
 Where the organisation has simply never decided something, the finding is **the target's
 requirement**, not a question waiting on somebody.
 

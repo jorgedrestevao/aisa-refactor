@@ -1,7 +1,7 @@
 # aisa — Discovery orientado a uma decisão técnica
 
-<!-- SCOPE-STATEMENT v1 -->
-> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada: que tecnologia e que padrão, com que alternativas e a que custo. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão.
+<!-- SCOPE-STATEMENT v2 -->
+> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, com que alternativas e a que custo, e que comportamento, aceitação e operação. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão, o comportamento funcional, a aceitação, a operação ou o esforço.
 
 **Architecture & Concept Specification**
 
@@ -174,7 +174,7 @@ Documento inicial baseado em 10 decisões da sessão de brainstorm.
 
 `aisa` é uma plataforma de **discovery e sensemaking organizacional** que antecede qualquer escolha tecnológica em projectos de digitalização (Power Platform, OutSystems, Mendix, custom). Resolve o problema de raiz: a maioria dos projectos falha em **discovery**, não em implementação — desalinhamento entre stakeholders, entendimento incompleto do problema, contexto fragmentado, e selecção tecnológica prematura.
 >
-> **Errata (2026-09-11)**: esta frase é de 2026-05-28 e mantém-se como registo. O âmbito em vigor é o do cabeçalho — discovery orientado a uma decisão técnica (`SCOPE-STATEMENT v1`); o refoco foi confirmado pelo dono em 2026-09-09.
+> **Errata (2026-09-11)**: esta frase é de 2026-05-28 e mantém-se como registo. O âmbito em vigor é o do cabeçalho — discovery orientado a uma decisão técnica (`SCOPE-STATEMENT v1`); o refoco foi confirmado pelo dono em 2026-09-09. Desde handoff-v1 F1 (2026-09-23) o cabeçalho é a v2: decisão técnica e desenho construível.
 
 O aisa v2 substitui o **SPEA v2 (aisa v1)**. O sistema anterior é estruturalmente over-engineered: força reasoning determinístico em cima de um LLM probabilístico através de um kernel com dezenas de invariantes (Ledger, claims tipadas, coherence-cells, event-order gates, YAML frontmatter mandatório). Dois runs com input idêntico produziram outputs divergentes e ambos não-conformes — o que prova que o problema é estrutural, não implementacional.
 

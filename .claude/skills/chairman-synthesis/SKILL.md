@@ -148,7 +148,7 @@ Walk the working table and assign state per row:
 | Overlap with ≥2 anchors AND each anchor is a document/sponsor citation | **Confirmed** | evidência = "anchored by `<persona>`, `<persona>` (sources: `<SU id, file:locator>`)" |
 | Overlap with ≥2 personas but anchors are inferential | **Assumed** | base = the personas' bases |
 | Single persona, anchored by document/SU id | **Assumed** | base = "proposed by `<persona>` (source: `<…>`); no second anchor this round" |
-| Single persona, no anchor | **Unknown** | quem responde = the persona's suggested **role** (`role: <role>`) or the source to consult (`fonte: <artefacto/sistema>`), prefixed per part and never a person; empty where neither is known; criticidade = persona's flag; the row carries the three declarations of Step 4b |
+| Single persona, no anchor | **Unknown** | quem responde = the persona's suggested **role** (`role: <role>`) or the source to consult (`fonte: <artefacto/sistema>`), prefixed per part and never a person; empty where neither is known; criticidade = persona's flag; the row carries the admission fields of Step 4b |
 | Contradiction | **Conflicted** | partes = `<persona∧persona>` or `<lens∧lens>` |
 | Persona-flagged risk | **Risky** | impacto + mitigação from the persona; if two personas raised the same risk with different mitigations, merge mitigações |
 
@@ -158,31 +158,30 @@ A synopsis line (`_capture/process-model.md` §4) is evidence a persona may anch
 
 Scan the current SU per section, find the highest existing id, and allocate the next n contiguously. Rows you write follow the kernel's epistemic columns: Confirmed/Assumed carry `verificado_em` (today) + `validade` (decay class); Unknown carry `custo` + `swing` (*Question economics*). Use the prefixes from `library/kernel/states.md`: `C-`, `A-`, `U-`, `X-`, `R-`. For cross-lens synthesis rows that do not cleanly belong to one lens, use `chair` as the lens value; otherwise use the dominant lens.
 
-### Step 4b — Admission of the questions this round writes (P-26)
+### Step 4b — Admission of the questions this round writes
 
 Before a single `Unknown` reaches the file. The rule is the kernel's and it binds **every** writer, this
 one included: `library/kernel/states.md` → *Admission of a question*. `aisa-round` step 5f arbitrates the
-`R-` rounds; **the `F-` and `O-` rounds are arbitrated here, by you, on the rows you are about to write** —
-they never pass through 5f, and before P-26 nothing checked them at all.
+`R-` rounds; **the `F-` and `O-` rounds are checked here, by you, on the rows you are about to write** —
+they never pass through 5f.
 
-Per candidate `Unknown`, three declarations, **all three**:
+Per candidate `Unknown`: does its answer move at least one of the five aspects (`solucao` · `funcional` ·
+`aceitacao` · `operacao` · `viabilidade`)? Then fill `tipo`, `impacto`, `âmbito`, `quem responde`, `fecho`,
+`bloqueio` and `referências` from the persona returns and the rows they cite. A field the returns do not
+support stays **empty** and is named in your log — never filled by invention. Then:
 
-1. **serve** — cites an existing `M-n`, **or** carries the marker `TO-BE DIVERGENCE` with what the target must decide (either form, framing declared or not);
-2. **respostas** — `swing` names ≥ 2;
-3. **eixo** — `swing` names which of the eight moves with each: `tecnologia` · `padrão arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` · `esforço de alto nível` · `custo` · `risco técnico`.
-
-An `M-n` **does not waive** 3. Then apply, in order:
-
-| Missing | Do |
+| Case | Do |
 |---|---|
-| 3 only | write the row `cosmético`, `criticidade: Low` |
-| 2 | **do not write the row** — the content stays in the persona's return and in your log |
+| no aspect moves | **do not write the row** — the content stays in the persona's return and in your log |
+| `fact_gap` | write it, with no invented second answer |
+| `design_choice` with fewer than 2 real alternatives | write it as `fact_gap` when what is missing is a fact; otherwise do not write it |
 | referent, on a `decisivo` | write it `dimensionante` |
-| — (only answer is an identity, a signature, an approval or a third party's paper) | **do not write it** (P-21) — reformulate by role, operation and enforcement plane, or drop |
+| only answer is an identity, a signature, an approval or a third party's paper | **do not write it** (P-21) — reformulate by role, operation and enforcement plane, or drop |
 
-Record every decision in `lens-outputs/chairman-synthesis-<round>.md` under **Admissão de perguntas (P-26)**:
-one line per candidate — the id (or the persona's question text where no row was written), the declaration
-missing, the class it went in as. Silence here is the defect this step exists to prevent.
+Record every decision in `lens-outputs/chairman-synthesis-<round>.md` under **Admissão de perguntas**:
+one line per candidate — the id (or the persona's question text where no row was written), the `tipo`, the
+aspects it moves, the fields left empty, and why it was or was not written. Silence here is the defect this
+step exists to prevent.
 
 ### Step 5 — Write the SU rows
 
@@ -409,10 +408,10 @@ Write `<engagement>/lens-outputs/chairman-synthesis-<round>.md` (e.g., `chairman
 ## Contradictions → Conflicted
 - "<conflict>" — <persona∧persona> → <X-NNN>
 
-## Admissão de perguntas (P-26)
-<One line per candidate `Unknown` this round — written, downgraded or not written (Step 4b). Empty only
-when no persona raised an open question at all; "none missing" is written as such, never by omission.>
-- <U-NNN | "<persona question text>"> — <admitida | `cosmético`: sem eixo técnico declarado | não escrita: sem 2ª resposta | não escrita: pergunta de pessoa ou de papel (P-21)> — eixo: <o eixo técnico, ou —>
+## Admissão de perguntas
+<One line per candidate `Unknown` this round — written or not written (Step 4b). Empty only when no persona
+raised an open question at all; "none missing" is written as such, never by omission.>
+- <U-NNN | "<persona question text>"> — <admitida | não escrita: sem impacto demonstrável | não escrita: pergunta de pessoa ou de papel (P-21)> — tipo: <tipo> — impacto: <aspectos> — por preencher: <campos, ou —>
 
 ## Risks captured
 - <R-NNN> — <one-line>

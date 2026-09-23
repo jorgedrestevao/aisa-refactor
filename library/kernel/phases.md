@@ -81,7 +81,7 @@ of the data is the criterion, and the generation is never inferred from a date o
 
 **Exit criteria** (soft, advisory):
 - `## Confirmed` has ≥10 rows.
-- `## Unknown` Critical = 0. A question the round arbiter lowered to `cosmético` for want of a declared technical consequence carries its `criticidade` down with it (`states.md` → *Admission of a question*), so it stops pressing this gate: what remains `Critical` here moves one of the eight technical axes.
+- `## Unknown` Critical = 0. A question parked for lack of demonstrable impact is not open and stops pressing this gate (`states.md` → *Admission of a question*): what remains `Critical` here moves one of the five aspects.
 - `## Conflicted` Critical = 0.
 - All 6 lenses have written to `lens-outputs/`.
 - The last round converged: `Unknown` created in that round ≤ `Unknown` closed in it (any origin). A round with `criadas > fechadas` is labelled `sem convergência` by `/round` and `/status` — visible, not blocking, no new state. Counts come from the motor (`dashboard.py --json`), never by hand. The label is per **closed** round, not per calendar span: a round filled lens by lens over days, with `/answer` in between, is balanced only when it closes.
