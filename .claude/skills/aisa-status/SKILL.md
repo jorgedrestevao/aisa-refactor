@@ -24,7 +24,7 @@ description: Answer "what is missing for the next step?" for the current engagem
 - the **priority within "A revalidar"** by material dependency;
 - the **prose** of the next action.
 
-Nothing here resolves a row, executes a proof, changes a phase or approves anything. The only write is the SU health header (step 3).
+Nothing here resolves a row, executes a proof, changes a phase or approves anything, and nothing is written: `/status`, `/resume` and `aisa-orient` are reads (handoff-v1 F1, F0 D02).
 
 ## Execution steps (no argument)
 
@@ -50,7 +50,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    **Motor failed or JSON unreadable → stop and say so**: `verificação incompleta — motor falhou: <first stderr line>`. Do not recompute by hand; do not present partial counts as the view.
    Every `model.diagnostics` entry of level `warn`/`error` is surfaced verbatim in the **Shared Understanding** block.
 
-3. **Write the SU health header** (the one sanctioned write). From `model.health`: update `> Saúde epistémica: NN% (X expiradas) — <today>` in `shared-understanding.md` (create the line if the SU predates it). Half-lives and the compatibility rule for pre-v2.2 SUs are applied by the motor per `library/kernel/states.md` → *Epistemic half-lives*; never migrate the SU.
+3. **Read the epistemic health** from `model.health` — `NN% (X expiradas)`, computed by the motor on every read and reported in block 6; **never written into the SU** (F0 D02: a read that writes changes what it reads, and an engagement of the historical version must stay readable here without a write). Half-lives and the compatibility rule for pre-v2.2 SUs are applied by the motor per `library/kernel/states.md` → *Epistemic half-lives*; never migrate the SU.
 
 4. **Tripwire verdicts** (`status.tripwires`). The motor read them from the **solution decision** (`source_decision`, kind `solution`), never from a later blueprint approval, and gives per tripwire `cited_ids`, `resolvable_ids`, `unresolvable_ids`, `evidence` and `status ∈ {watch, no-evidence}`. Neither value is a verdict — `verdict_owner: "skill"`. For each tripwire decide **one** of:
    - **Disparou** — only when a row in `evidence` *satisfies the condition as written*, not merely touches its subject. State the row and the clause it satisfies. → alert first in the output + `/revisit TW-n`.
@@ -194,7 +194,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
 6. **Discovery/Framing name no technology.**
 7. **Absence is incomplete, never zero.**
 8. **Structure, coverage, approval and end-to-end are four questions** (`coverage-contract.md` §1). Report four answers; never let one stand for another, and never print *ainda não foi conferido* as a pass or as a failure.
-9. **Reading the state writes nothing.** This skill's only write stays the SU health header (step 3). The coverage dimension is derived from the records and the sources on every read — it finalizes no review, sets no flag and records no approval, so consulting the status can never change what the status says.
+9. **Reading the state writes nothing.** This skill writes nothing — not even the health line (step 3). The coverage dimension is derived from the records and the sources on every read — it finalizes no review, sets no flag and records no approval, so consulting the status can never change what the status says.
 
 ## Execution steps (--check)
 

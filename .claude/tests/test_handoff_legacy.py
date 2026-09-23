@@ -296,6 +296,27 @@ class I07_EstadoSemPerdas(Base):
         self.assertTrue(negou(p))
 
 
+class D02_EstadoSoLe(unittest.TestCase):
+    """`/status`, `/resume` e `aisa-orient` sao leituras (decisao Q6). O guarda ja recusa a
+    escrita num legado; isto fixa que a skill deixou de a pedir."""
+
+    STATUS = ROOT / ".claude" / "skills" / "aisa-status" / "SKILL.md"
+    START = ROOT / ".claude" / "skills" / "aisa-start" / "SKILL.md"
+
+    def test_the_status_skill_asks_for_no_write(self):
+        texto = self.STATUS.read_text(encoding="utf-8")
+        self.assertNotIn("Write the SU health header", texto)
+        self.assertNotIn("update `> Saúde epistémica", texto)
+        self.assertIn("never written into the SU", texto)
+        self.assertIn("This skill writes nothing", texto)
+
+    def test_the_start_skeleton_has_no_health_line_to_fill(self):
+        texto = self.START.read_text(encoding="utf-8")
+        esqueleto = texto[texto.index("8. **Write the `shared-understanding.md` skeleton**"):
+                          texto.index("9. Write `council-log.md`")]
+        self.assertNotIn("> Saúde epistémica", esqueleto)
+
+
 class T36_LeitorAntigo(Base):
     """O codigo da versao historica, tal como esta no commit `ba0c27b`, contra um engagement
     criado por esta versao. Nao se assume que respeita um campo que nunca conheceu (07)."""
