@@ -1088,8 +1088,10 @@ class Guards(unittest.TestCase):
     def test_no_new_phase_agent_router_ledger(self):
         self.assertEqual(len(re.findall(r"^## Phase \d", PHASES, re.M)), 4)
         agents = sorted(a for a in os.listdir(os.path.join(ROOT, ".claude", "agents")) if a.endswith(".md"))
+        # handoff-v1 F3 Q3: the one agent added is the independent coverage reviewer (T19).
         self.assertEqual(agents, ["business-analyst.md", "cfo-lens.md", "chairman.md", "compliance-officer.md",
-                                  "data-steward.md", "operations-lead.md", "solution-architect.md", "user-advocate.md"])
+                                  "data-steward.md", "lens-coverage-reviewer.md", "operations-lead.md",
+                                  "solution-architect.md", "user-advocate.md"])
         for text, name in ((ORCH, "orchestration"), (ROUND, "aisa-round"), (STATUS, "aisa-status"), (FRAME, "aisa-frame")):
             self.assertNotIn("dependency graph:", text.lower(), name)
             self.assertNotIn("compression matrix", text.lower().replace("no compression matrix", "").replace("compression matrix warranted", ""), name)

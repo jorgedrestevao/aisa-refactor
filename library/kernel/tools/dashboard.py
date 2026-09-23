@@ -42,7 +42,7 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-TOOL_VERSION = "1.15.0"
+TOOL_VERSION = "1.16.0"
 ARTEFACT_ID = "aisa.dashboard"
 # Schema 2 unchanged up to 1.14.0: every bump only ADDED keys. 1.15.0 removed some -> 3.
 #   1.2.0  `round_delta` (P-2) · `confirmed_locator` (P-12) · `enquadramento` (P-0) ·
@@ -89,6 +89,11 @@ ARTEFACT_ID = "aisa.dashboard"
 #          `sem_coluna_swing`, `conjuncao`, `enquadramento_declarado`, `calibracao`;
 #          added: `sem_colunas_handoff`, `sem_impacto`, `regra`, `aspectos`. A removal,
 #          so the model schema moves to 3.
+#  1.16.0  handoff-v1 F3.3: for a profile engagement `engagement.lentes_ronda_aberta` reads
+#          the `lens` coverage record of the open passagem (coverage-contract.md §4.8),
+#          not the `lens-outputs/` headers: `corridas` is the six or nothing, and four
+#          keys are ADDED -- `fonte`, `fecha`, `revista`, `motivos`. The historical
+#          version keeps the header reading and the old shape. Additive: schema stays 3.
 SCHEMA_VERSION = 3
 DEFAULT_RELOAD_SECS = 5
 
@@ -183,8 +188,7 @@ def engagements_root() -> Path:
 
 
 def _activity_mtime(eng: Path) -> float:
-    """Most recent touch across the engagement's live files (same idiom as
-    .claude/hooks/pre-lens-order-check.py)."""
+    """Most recent touch across the engagement's live files."""
     stamps = [0.0]
     for rel in ("_state.json", "shared-understanding.md", "decisions.md", "council-log.md"):
         f = eng / rel
@@ -5871,9 +5875,10 @@ def build_model(eng: Path, today: date) -> dict:
             # finished. Empty string = no round open. Stale values (not ahead of `round`) are
             # dropped here so no consumer has to re-derive the rule.
             "round_in_progress": _open_round(state),
-            # Which perspectives already stamped the open passagem (header match, 1.8.0).
-            # Empty lists when no passagem is open.
-            "lentes_ronda_aberta": lenses_for_round(eng, _open_round(state)),
+            # Which perspectives already covered the open passagem (1.8.0; the `lens`
+            # record for a profile engagement since handoff-v1 F3.3). Empty lists when no
+            # passagem is open.
+            "lentes_ronda_aberta": lenses_for_round(eng, _open_round(state), state),
             "created": state.get("created", ""),
             "aisa_version": state.get("aisa_version", ""),
             "capture_run": capture_run(eng, state),
@@ -8025,9 +8030,9 @@ def lens_wrote_round(path: Path, round_id: str) -> bool:
 
     A lens appends `## R-NN — <lens>` (legacy files: `## R-NN (date)`,
     `## R-NN — date`). The match is on the heading line, never a substring of
-    the body: prose that says "vs R-02" is not R-02's output. One rule, read
-    by the guard (`pre-lens-order-check.py`), the round close test
-    (`aisa-round` 5a) and the model below."""
+    the body: prose that says "vs R-02" is not R-02's output. Since handoff-v1
+    F3.3 this is the reading of the historical version only (`lenses_for_round`);
+    a profile engagement closes its passagem by the `lens` coverage record."""
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -8036,25 +8041,57 @@ def lens_wrote_round(path: Path, round_id: str) -> bool:
     return bool(pat.search(text))
 
 
-def lenses_for_round(eng: Path, round_id: str) -> dict:
-    """Discovery lenses that stamped `round_id` vs the ones still missing.
+def lenses_for_round(eng: Path, round_id: str, state: dict | None = None) -> dict:
+    """Discovery perspectives that covered `round_id` vs the ones still missing.
 
     `{"ronda": "R-02", "corridas": [...], "em_falta": [...]}`; empty lists and
     `ronda == ""` when no round is given. Order is the habitual one of
-    `phases.md`, purely for display -- `/round <lens>` may run any lens alone."""
+    `phases.md`, purely for display.
+
+    A profile engagement (`_state.json.workflow`, handoff-v1 F3.3) reads the `lens`
+    coverage record of the passagem (coverage-contract.md §4.8): one integrated analysis
+    covers the six or none, so `corridas` is the six or nothing. Four more keys say what
+    the record proves: `fonte`, `fecha` (valid and current for this passagem), `revista`
+    (and the independent reading is complete, with no untreated perspective) and
+    `motivos`. The historical version keeps the section headers of `lens-outputs/`."""
     if not round_id:
         return {"ronda": "", "corridas": [], "em_falta": []}
+    if (state or {}).get("workflow"):
+        return _lenses_from_record(eng, round_id)
     ran = [l for l in DISCOVERY_LENSES
            if lens_wrote_round(eng / "lens-outputs" / f"{l}.md", round_id)]
     return {"ronda": round_id, "corridas": ran,
             "em_falta": [l for l in DISCOVERY_LENSES if l not in ran]}
 
 
+def _lenses_from_record(eng: Path, round_id: str) -> dict:
+    """The profile half of `lenses_for_round`: the `lens` record, never the headers."""
+    out = {"ronda": round_id, "corridas": [], "em_falta": list(DISCOVERY_LENSES),
+           "fonte": "registo lens", "fecha": False, "revista": False, "motivos": []}
+    if not any((eng / "_coverage").glob("coverage_v*.json")):
+        out["motivos"] = ["sem registo de cobertura das perspectivas"]
+        return out
+    C = coverage_module()
+    if C is None:
+        out["motivos"] = ["motor de cobertura indisponível: " + _COVERAGE_ERR]
+        return out
+    try:
+        st = C["lens_round_state"](eng, round_id, C["ReaderAdapter"](module=globals()))
+    except Exception as exc:                                            # noqa: BLE001
+        out["motivos"] = ["{}: {}".format(type(exc).__name__, exc)]
+        return out
+    if ((st.get("state") or {}).get("lens") or {}).get("round") == round_id:
+        out["corridas"] = [l for l in DISCOVERY_LENSES if l in (st.get("dimensions") or {})]
+        out["em_falta"] = [l for l in DISCOVERY_LENSES if l not in out["corridas"]]
+    out.update(fecha=bool(st.get("closes")), revista=bool(st.get("reviewed")),
+               motivos=list(st.get("reasons") or []))
+    return out
+
+
 def _open_round(state: dict) -> str:
     """The round an open `/round` is filling, "" when none is.
 
-    Mirrors `.claude/hooks/pre-lens-order-check.py::in_progress_round`: a
-    `round_in_progress` equal to or behind `round` is a leftover from a closed
+    A `round_in_progress` equal to or behind `round` is a leftover from a closed
     round (phase transition, hand edit) and is not an open round."""
     open_round = (state.get("round_in_progress") or "").strip()
     if not open_round:

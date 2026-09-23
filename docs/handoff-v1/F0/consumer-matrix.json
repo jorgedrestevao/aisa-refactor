@@ -307,16 +307,6 @@
      "source": "inventory"
     },
     {
-     "file": ".claude/hooks/pre-lens-order-check.py",
-     "kind": "hook",
-     "role": "reader",
-     "mechanism": "SU mtime (plus _state.json, lens-outputs) to resolve the active discovery engagement.",
-     "via": "",
-     "evidence": "pre-lens-order-check.py:115-130 (_activity_mtime, SU at 123)",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/hooks/render-validate.py",
      "kind": "hook",
      "role": "reader",
@@ -963,6 +953,16 @@
      "role": "appender",
      "mechanism": "Single owner of the six Discovery perspectives (replaces the six lens skills, handoff-v1 F3.2). Instructs the integrated analyst of /round to append atomic SU rows into the draft copy, append-only, with the Confirmed locator rule (answers.md#<secção>); aisa-round publishes through resolve.py publish.",
      "evidence": "lens-checklists.md:13 output SU rows in the draft; 36 locator rule (answers.md); 38 append-only rule"
+    },
+    {
+     "file": ".claude/agents/lens-coverage-reviewer.md",
+     "kind": "agent",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.3",
+     "role": "reader",
+     "mechanism": "Independent reviewer of the lens coverage record (T19): reads the published SU rows the record cites and returns one verdict per perspective. Tools Read/Grep/Glob; writes nothing — aisa-round puts the returned semantic_review in the draft and finalizes it.",
+     "evidence": ".claude/agents/lens-coverage-reviewer.md: Inputs (shared-understanding.md published); tools line"
     }
    ],
    "mention_only": [
@@ -3766,6 +3766,16 @@
      "role": "declares-contract",
      "mechanism": "Declares the evidence of coverage per perspective and the assessed/gap/not_applicable rules the lens coverage record carries (coverage-contract.md §4.8).",
      "evidence": "library/kernel/lens-checklists.md:5, 55"
+    },
+    {
+     "file": ".claude/agents/lens-coverage-reviewer.md",
+     "kind": "agent",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.3",
+     "role": "reader",
+     "mechanism": "Reads the draft lens coverage record (lens_coverage.dimensions, conflict_scan) and returns its semantic_review block (coverage-contract.md §4.8).",
+     "evidence": ".claude/agents/lens-coverage-reviewer.md: Inputs, Output"
     }
    ],
    "mention_only": [
@@ -5733,16 +5743,6 @@
      "mechanism": "PreToolUse Write|Edit. Target counts as authority if its basename is shared-understanding.md, decisions.md, answers.md or _state.json at the engagement root, or its path is under _graph/ or _ops/. Folder without _state.json -> allowed (/start). Otherwise runs bootstrap: ready -> ALLOWED (including hand edits of _ops/ and _graph/); not ready or unevaluable -> deny (exit 2) unless AISA_GUARD_MODE=log. _migration/ is not covered, _state.json.tmp (the skills' atomic-write path) is not covered, Bash (mv) is never seen.",
      "via": "",
      "evidence": "pre-authority-guard.py:56 (AUTORIDADES); :69 (DIRECTORIOS_AUTORIDADE=('_graph/','_ops/')); :92-133 (engagement_of); :136-157 (avalia: no _state.json -> pass; ready -> pass); :184-199 (main). Experiment on a healthy scratch engagement: Write to _ops/receipts/fake.json, _ops/pending.json, _migration/manifest.json, _graph/graph.jsonl, _state.json, _state.json.tmp -> all rc=0; with a pending marker present: _state.json and _ops/pending.json denied (rc=2), _state.json.tmp and _migration/manifest.json allowed (rc=0).",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/hooks/pre-lens-order-check.py",
-     "kind": "hook",
-     "role": "guard",
-     "mechanism": "PreToolUse Skill lens-*. Reads _state.json fields phase (polices only 'discovery'), round (last completed), round_in_progress (open round when numerically ahead of round), round_lenses {ronda, modo, lentes} (single-lens authorisation scoped to round + lens). Engagement = 'engagement root `<path>`' from the invocation, else most-recently-touched discovery engagement (mtime of _state.json, SU, lens-outputs). Base path is Path(AISA_ENGAGEMENTS_ROOT or 'projects') relative to the CWD (other hooks anchor to the repo root); no engagement or unreadable _state.json -> allow (fail-open). Does not consult bootstrap or _ops.",
-     "via": "",
-     "evidence": "pre-lens-order-check.py:80-95 (single_by_state/round_lenses); :116-133 (_activity_mtime); :136-163 (find_discovery_engagement, phase :157); :166-187 (engagement_from_invocation); :190-206 (in_progress_round: round :197, round_in_progress :201); :238-257 (base, state read, phase gate, single check).",
      "confidence": "verified",
      "source": "inventory"
     },

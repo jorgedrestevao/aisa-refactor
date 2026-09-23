@@ -51,7 +51,7 @@ The evidence contract is `library/kernel/orchestration.md` → *Evidence contrac
 Two surfaces, cleanly separated:
 
 - **`shared-understanding.md`** — the **atomic** engagement knowledge/evidence state: one claim, question, conflict or risk per row, tagged `lens=<name>`, append-only.
-- **`lens-outputs/<lens>.md`** — a **short perspective interpretation**, appended once per round under a `## <round> — <lens>` header (the round id in the file is a hard dependency of `pre-lens-order-check.py`). It communicates: **what matters** · **tensions / risks** · **open evidence**.
+- **`lens-outputs/<lens>.md`** — a **short perspective interpretation**, appended once per round under a `## <round> — <lens>` header (the round id in the file was a hard dependency of `pre-lens-order-check.py`, retired in handoff-v1 F3.3). It communicates: **what matters** · **tensions / risks** · **open evidence**.
 
 Keep the lens output lightweight. It is an interpretation, not a report: no long narrative, no restatement of the rows above it.
 

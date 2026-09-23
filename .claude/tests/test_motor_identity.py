@@ -88,8 +88,10 @@ class DuplicateIds(unittest.TestCase):
         self.assertFalse(any(r["duplicate_id"] for r in rows))
 
     def test_round_recomputes_ids_before_each_lens(self):
+        # handoff-v1 F3.3: one analysis, but still two drafts per passagem (analysis,
+        # arbiter) — the scan is per draft, never once per passagem.
         text = ROUND_SKILL.read_text(encoding="utf-8")
-        self.assertIn("before EACH lens", text)
+        self.assertIn("before EACH draft", text)
 
 
 class LinkSchemes(unittest.TestCase):
