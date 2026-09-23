@@ -943,6 +943,16 @@
      "source": "handoff-v1 F5.1–F5.2",
      "mechanism": "Resolves candidate premise_refs to SU rows; the SU is in the candidates draft read-set (STALE_INPUT). Never writes the SU. F5.2: `route` reads live SU rows (lens + terms) as selection signals; `mandate` pins the SU sha256 in input_refs and the operation read-set.",
      "evidence": "review.py candidate_integrity, _reads, _workflow, route, mandate"
+    },
+    {
+     "file": "library/kernel/tools/inventory.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.1",
+     "mechanism": "Resolves scope `includes` and WP `realizes` SU ids (dashboard.parse_su); the SU is in the draft read-set (STALE_INPUT). Never writes the SU.",
+     "evidence": "inventory.py integrity, _reads"
     }
    ],
    "mention_only": [
@@ -2031,6 +2041,26 @@
      "source": "handoff-v1 F5.1–F5.2",
      "mechanism": "decisions.md is in the candidates draft read-set; imposition_ref compared with the route authority. Never writes decisions.md. F5.2: `mandate` pins decisions.md sha256 in input_refs and the read-set.",
      "evidence": "review.py candidate_integrity, _reads, _workflow, mandate"
+    },
+    {
+     "file": "library/kernel/tools/inventory.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.1",
+     "mechanism": "Exclusion `authorization_ref`, scope `authorized_by` and WP `realizes` D-ids must exist (workflow._decision_ids); decisions.md in the draft read-set. Never writes decisions.md.",
+     "evidence": "inventory.py integrity, _reads"
+    },
+    {
+     "file": "library/kernel/schemas/handoff-scope.schema.json",
+     "kind": "schema",
+     "role": "declares-contract",
+     "mechanism": "JSON Schema of _design/scope.json: exclusions carry an authorization_ref to a D-NNN block and the scope an authorized_by.",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.1",
+     "via": "",
+     "evidence": "handoff-scope.schema.json excludes[].authorization_ref"
     }
    ],
    "mention_only": [
@@ -3816,6 +3846,16 @@
      "source": "handoff-v1 F3.4",
      "mechanism": "Step 2 soft gate reads the lens coverage record of the last completed Discovery round (coverage.py round-state); the gate log carries the same criterion from dashboard.gate_state.",
      "evidence": ".claude/skills/aisa-frame/SKILL.md step 2 (perspectives_covered)"
+    },
+    {
+     "file": "library/kernel/tools/inventory.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.1",
+     "mechanism": "Reuses coverage.resolve_unit (the §5.1 selector grammar) to resolve WP blueprint node references to exactly one node. Reads no coverage record, writes none.",
+     "evidence": "inventory.py integrity (_C resolve_unit)"
     }
    ],
    "mention_only": [
@@ -4523,6 +4563,16 @@
      "evidence": "handoff-contract.md:21,22,23,28,57",
      "confidence": "verified",
      "source": "F1.6"
+    },
+    {
+     "file": "library/kernel/schemas/handoff-work-packages.schema.json",
+     "kind": "schema",
+     "role": "declares-contract",
+     "mechanism": "JSON Schema of _design/work-packages.json, the inventory the implementation-spec owns and projects (DESENHO F6 Q1).",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.1",
+     "via": "",
+     "evidence": "handoff-work-packages.schema.json description"
     }
    ],
    "mention_only": [

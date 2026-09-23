@@ -89,3 +89,4 @@ library/kernel/tools/tests/test_fields_draft.py
 .claude/tests/test_review_dispositions.py
 .claude/tests/test_options_by_route.py
 .claude/tests/test_hv1_vertical.py
+.claude/tests/test_inventory.py
