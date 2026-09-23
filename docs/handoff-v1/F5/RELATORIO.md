@@ -1,6 +1,6 @@
 # F5 — Relatório da fase (candidatos comuns, especialistas e primeiro percurso vertical)
 
-Estado: **gate avaliado — aguarda aceitação do mantenedor** (2026-09-23). Desenho e decisões Q1–Q9: [DESENHO.md](DESENHO.md). Gate: T25–T30 e o primeiro ensaio T43; revisões na versão certa; zero confirmação por maioria; handoff incompleto rotulado.
+Estado: **concluída — gate aceite pelo mantenedor** (2026-09-23), com os limites declarados (T28 por termos da SU; T43 simulado) e os desvios registados (Q9; `ARCHITECTURE.md`/`ONBOARDING.md`). Desenho e decisões Q1–Q9: [DESENHO.md](DESENHO.md). Gate: T25–T30 e o primeiro ensaio T43; revisões na versão certa; zero confirmação por maioria; handoff incompleto rotulado.
 
 ## 1. Incrementos
 
