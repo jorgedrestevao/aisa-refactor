@@ -983,6 +983,16 @@
      "role": "reader",
      "mechanism": "Reads the SU to resolve FC requirement_refs and the open blocking questions (open_refs); declares it in the draft read-set so a changed SU is STALE_INPUT. Never writes the SU.",
      "evidence": "functional.py _su_rows, _reads, integrity, completeness"
+    },
+    {
+     "file": ".claude/agents/fc-reviewer.md",
+     "kind": "agent",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F4.4",
+     "mechanism": "Independent reviewer of a published functional-contracts revision: reads the SU rows the contracts cite (epistemics of assumed premises). Read/Grep/Glob; writes nothing.",
+     "evidence": ".claude/agents/fc-reviewer.md Inputs"
     }
    ],
    "mention_only": [
@@ -2051,6 +2061,16 @@
      "role": "reader",
      "mechanism": "Resolves FC authorization_ref to existing D- blocks (workflow._decision_ids); in the draft read-set. Never writes decisions.md.",
      "evidence": "functional.py integrity, _reads"
+    },
+    {
+     "file": ".claude/agents/fc-reviewer.md",
+     "kind": "agent",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F4.4",
+     "mechanism": "Reads the decisions the contracts cite. Never authorises; writes nothing.",
+     "evidence": ".claude/agents/fc-reviewer.md Inputs"
     }
    ],
    "mention_only": [
