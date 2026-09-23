@@ -328,6 +328,77 @@ def authorization_block(eng, fc_ids, validated_by: str, scope: str,
                 int(cur["revision"]), scope, validated_by, ts)
 
 
+# ------------------------------------------------------------------ render (F4.5)
+
+FC_CITE_RE = re.compile(r"\bFC-\d{4}\b")
+
+
+def approved_blueprint(eng) -> str:
+    """O desenho aprovado mais recente (`D-NNN — Blueprint bp-vNN aprovado`), "" sem nenhum."""
+    try:
+        md = (Path(eng) / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    D = _D()
+    ver = ""
+    for b in D["classify_decisions"](md):
+        if b.get("kind") != "blueprint-approval":
+            continue
+        m = D["BP_APPROVAL_RE"].search(b.get("title", ""))
+        if not m:
+            chunk = md.split("## " + b["id"], 1)[-1].split("\n## ", 1)[0]
+            m = D["BP_APPROVAL_RE"].search(chunk)
+        if m:
+            ver = m.group(1).zfill(2)
+    return "_blueprint/ux-blueprint_v{}.yaml".format(ver) if ver else ""
+
+
+def render_gate(eng, fc_ids=None, text: str = "") -> dict:
+    """O que um deliverable pode publicar em versão final (DESENHO §5).
+
+    Para cada FC que o deliverable cita: existe, está autorizado sobre o item de agora, não
+    tem lacuna nem conflito, e assenta no desenho aprovado. Uma lacuna é devolvida ao autor
+    funcional (`owner: functional`, render-contract.md classe 3) — o renderer nunca escreve o
+    valor. Qualquer bloqueio impede a versão final; a pré-visualização continua permitida."""
+    eng = Path(eng)
+    ids = list(fc_ids or []) or sorted(set(FC_CITE_RE.findall(text or "")))
+    cur = read_current(eng)["data"]
+    por_id = {it["id"]: it for it in cur.get("items") or []}
+    gaps_all = completeness(eng, cur) + conflicts(eng, cur)
+    blocks = authorization_blocks(eng)
+    aprovado = approved_blueprint(eng)
+    base = _blueprint_of(cur)
+    blocked, gaps = [], []
+    if ids and base and aprovado and base != aprovado:
+        blocked.append({"code": "STALE_REFERENCE", "fc": "",
+                        "detail": "os contratos assentam em {}; o desenho aprovado é {}".format(
+                            base, aprovado)})
+    if ids and not aprovado:
+        blocked.append({"code": "NO_APPROVED_BLUEPRINT", "fc": "",
+                        "detail": "nenhuma versão do desenho aprovada"})
+    for fc in ids:
+        it = por_id.get(fc)
+        if it is None:
+            blocked.append({"code": "DEAD_REF", "fc": fc,
+                            "detail": "{} não existe na revisão corrente".format(fc)})
+            gaps.append({"owner": "functional", "fc": fc, "code": "MISSING_CONTRACT",
+                         "detail": "o deliverable cita {} e o contrato não existe".format(fc)})
+            continue
+        for g in (g for g in gaps_all if g["fc"] == fc):
+            gaps.append({"owner": "functional", "fc": fc, "code": g["code"],
+                         "detail": g["detail"]})
+        auth = authorization_state(eng, it, blocks)
+        if auth["state"] != "current":
+            blocked.append({"code": "AUTHORIZATION_" + auth["state"].upper(), "fc": fc,
+                            "detail": auth.get("reason") or "{} sem autorização do dono"
+                            .format(fc)})
+    if gaps:
+        blocked.append({"code": "FUNCTIONAL_GAP", "fc": "",
+                        "detail": "{} lacuna(s) funcionais devolvidas ao autor".format(len(gaps))})
+    return {"final_allowed": not blocked, "cited": ids, "approved_blueprint": aprovado,
+            "blocked": blocked, "gaps": gaps}
+
+
 # ------------------------------------------------------------------ verificação
 
 def _problem(code: str, fc: str, detail: str) -> dict:
@@ -598,7 +669,9 @@ def main(argv=None) -> int:
         pass
     ap = argparse.ArgumentParser(description="contratos funcionais (publica pelo coordenador)")
     ap.add_argument("command", choices=["draft", "check", "publish", "show",
-                                        "authorization-block", "conflicts"])
+                                        "authorization-block", "conflicts", "render-gate"])
+    ap.add_argument("--file", default="", help="render-gate: o deliverable (relativo ao "
+                    "engagement) cujas citações FC-NNNN se verificam")
     ap.add_argument("--blueprint", default="", help="conflicts: a versão do desenho a "
                     "comparar (por omissão, a de based_on)")
     ap.add_argument("--fc", action="append", default=[])
@@ -623,6 +696,10 @@ def main(argv=None) -> int:
             out = publish(eng, a.draft)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
+        elif a.command == "render-gate":
+            texto = (eng / a.file).read_text(encoding="utf-8") if a.file else ""
+            out = render_gate(eng, a.fc, texto)
+            rc = 0 if out["final_allowed"] else 4
         elif a.command == "conflicts":
             out = {"conflicts": conflicts(eng, blueprint=a.blueprint)}
             rc = 4 if out["conflicts"] else 0

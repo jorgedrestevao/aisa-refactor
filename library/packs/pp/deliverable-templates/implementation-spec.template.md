@@ -31,6 +31,9 @@ authority_sources:
   - architecture-templates/architecture-core.md  # the FIXED shape — A5–A10 projection targets
   - the resolved fragments                       # 0..1 experience · N+M boundary
   - decisions.md# D-NNN                          # conditions · preconditions · proof obligations
+  - "_design/functional-contracts.json — behaviour (handoff-v1 F4): ONLY the items `functional.py
+     render-gate` reports authorised and current; a missing or gapped one is an open work item with
+     owner `functional`, never a value written here"
 
 conditional_sources:
   - _blueprint/ux-blueprint_v<approved>.yaml     # screens / entities / entities[].state_machine ·
@@ -513,7 +516,7 @@ slot_sources:
 
 ## 17. Itens de trabalho em aberto
 > Uma linha por item: o item · **dono** (`architecture` · `implementation` · `design` · `estimate` ·
-> `evidence`) · o que o resolveria · o `U-NNN` / `X-NNN` / `A-NNN` que o ancora.
+> `evidence` · `functional`) · o que o resolveria · o `U-NNN` / `X-NNN` / `A-NNN` que o ancora.
 >
 > Onde uma escolha arquitectural continua em aberto, **nada de implementação é inventado** para ela.
 > Um `Conflicted` não recebe valor escolhido: recebe uma obrigação de prova.

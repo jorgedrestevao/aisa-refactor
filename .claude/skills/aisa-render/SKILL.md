@@ -248,7 +248,8 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    e. Recursively resolve each fragment's slots from the engagement.
 6. **Headless (`experience.mode: none`)** — for the Implementation Specification: emit **no** required screens, **no** persona section, **no** navigation, **no** UX placeholder. Still project automation, integration, identity and enforcement, environments and release, monitoring, recovery, proof work and operator obligations **in full**. For the Claude Design Brief: the deliverable is **not applicable** — do not emit a persona, screen, navigation or UX-state slot, and do not emit a gap.
 7. **Estimate — execute the bounded calculation** (see below), where and only where `owns_calculation: true`.
-8. Compute the next version `<NN>`. Write `<engagement>/_render/<slug>_<deliverable>_v<NN>.md` unless `--dry-run`.
+7b. **Functional gate — before a real version** (handoff-v1 F4; `render-contract.md` → *Functional contracts and the final version*). When the composed document cites `FC-NNNN` (it reads behaviour from `_design/functional-contracts.json`, never from synthesis prose), write it to a temporary file and run `python library/kernel/tools/functional.py render-gate --engagement <slug> --file <that file>`. Exit 4 → **no real version**: log the `blocked` reasons in `render-log.md` (a stale authorisation, a contract that rests on a blueprint version that is not the approved one, a missing contract), put each `gaps` entry in `render-gaps.md` with `owner: functional`, and leave the document as a preview. Never write the missing value to make the gate pass.
+8. Compute the next version `<NN>`. Write `<engagement>/_render/<slug>_<deliverable>_v<NN>.md` unless `--dry-run` or step 7b blocked it.
 9. Append gaps to `render-gaps.md` with deliverable + slot + attempted source + **owner**. Then **read the
    `## Validação …` block `render-validate.py` appended for the file just written** (P-7 — the hook checks the
    template's `sufficiency:` rules by content: §4 dictionary and `authority` per entity, §6 `(none)` while an entity
@@ -380,10 +381,10 @@ Four classes, per `library/kernel/render-contract.md`. **Not every missing slot 
 **Class 3 carries an owner:**
 
 ```text
-owner ∈ { architecture | implementation | design | estimate | evidence }
+owner ∈ { architecture | implementation | design | estimate | evidence | functional }
 ```
 
-This generalizes the former *architecture work item* label; semantics, trigger and behaviour are unchanged. **No fifth class. No parallel taxonomy.**
+This generalizes the former *architecture work item* label; semantics, trigger and behaviour are unchanged. **No fifth class. No parallel taxonomy.** `functional` is the functional author (handoff-v1 F4): a behaviour the deliverable needs that no authorised functional contract carries goes back to that author, never filled here.
 
 A decision-blocked outcome belongs to the decision layer: this skill may **repeat** it and never derive it. Where no architecture was authorized, state the actual reason — outcome unreachable **or** selected solution outside the active pack's architecture authority — and keep the two distinct.
 

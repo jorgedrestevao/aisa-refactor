@@ -1356,7 +1356,8 @@ class TestTD16Manifest(Base):
 # ══════════════════════════════════════════════════════════════════════════════════════
 
 GAP_CLASSES = ["not applicable", "optional", "open work item", "decision-blocking"]
-GAP_OWNERS = ["architecture", "implementation", "design", "estimate", "evidence"]
+# handoff-v1 F4 (Q4): `functional` joins the class-3 owners — the functional author.
+GAP_OWNERS = ["architecture", "implementation", "design", "estimate", "evidence", "functional"]
 
 
 class TestTD17GapClasses(Base):
