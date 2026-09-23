@@ -136,6 +136,46 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/commands/blueprint.md",
+     "kind": "command",
+     "role": "appender",
+     "mechanism": "Entry point to aisa-blueprint (U-/X-/approval rows).",
+     "via": "writes SU through aisa-blueprint",
+     "evidence": "blueprint.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/decide.md",
+     "kind": "command",
+     "role": "appender",
+     "mechanism": "Entry point to aisa-decide (header, D-NNN row, R-NNN rows).",
+     "via": "writes SU through aisa-decide",
+     "evidence": "decide.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/frame.md",
+     "kind": "command",
+     "role": "writer",
+     "mechanism": "Entry point to aisa-frame (header edit), which chains to chairman-synthesis rows.",
+     "via": "writes SU through aisa-frame/chairman-synthesis",
+     "evidence": "frame.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/options.md",
+     "kind": "command",
+     "role": "writer",
+     "mechanism": "Entry point to aisa-options (header edit), which chains to chairman-synthesis rows.",
+     "via": "writes SU through aisa-options/chairman-synthesis",
+     "evidence": "options.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/commands/resume.md",
      "kind": "command",
      "role": "writer",
@@ -145,6 +185,36 @@
      "confidence": "verified",
      "source": "inventory",
      "adjudication": "Adjudicado F0: escrita indirecta confirmada. Contradiz a retoma como leitura (T09)."
+    },
+    {
+     "file": ".claude/commands/round.md",
+     "kind": "command",
+     "role": "writer",
+     "mechanism": "Entry point to aisa-round, which covers lens appends, the header, collision renames, arbiter edits and transitions.",
+     "via": "writes SU through aisa-round and lens-*",
+     "evidence": "round.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/simulate.md",
+     "kind": "command",
+     "role": "writer",
+     "mechanism": "Entry point to aisa-simulate (swing corrections in place).",
+     "via": "writes SU through aisa-simulate",
+     "evidence": "simulate.md:6",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/start.md",
+     "kind": "command",
+     "role": "creator",
+     "mechanism": "Entry point to aisa-start, which scaffolds the SU and answers.md.",
+     "via": "writes SU through aisa-start",
+     "evidence": "start.md:6",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/commands/status.md",
@@ -245,6 +315,16 @@
      "evidence": "pre-lens-order-check.py:115-130 (_activity_mtime, SU at 123)",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/hooks/render-validate.py",
+     "kind": "hook",
+     "role": "reader",
+     "mechanism": "PostToolUse on a _render write. It calls coverage.coverage_state(stage='render'), which runs build_inventory and so reads answers.md sections and SU rows (plus su_fingerprint in the basis). It never edits the SU.",
+     "via": "does not read the SU itself; reads it through coverage.coverage_state -> build_inventory",
+     "evidence": "render-validate.py:74-84 _load_coverage, 96-102 C.coverage_state; coverage.py:3142 build_inventory call inside coverage_state (3120); coverage.py:683 def build_inventory, 738 answers.md read, 751 SU read; 1125 su_fingerprint; settings.json:73-76 wiring",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/hooks/su-confirmed-guard.py",
@@ -400,6 +480,17 @@
     {
      "file": ".claude/skills/aisa-simulate/SKILL.md",
      "kind": "skill",
+     "role": "appender",
+     "mechanism": "Step 1 runs aisa-blueprint --option (draft mode). Draft mode exempts only steps 1c-1d and step 1b coverage. Steps 11 (append a new U-NNN) and 12 (append a Conflicted row per cap violation) are not exempted, so /simulate can append SU rows indirectly, beyond its swing correction.",
+     "via": "passo 1 corre aisa-blueprint --option (modo draft), que só salta os passos 1c–1d; os passos 11–12 acrescentam linhas U-/Conflicted à SU",
+     "evidence": ".claude/skills/aisa-simulate/SKILL.md (passo 1); .claude/skills/aisa-blueprint/SKILL.md:13,35,84",
+     "confidence": "verified",
+     "source": "critic",
+     "adjudication": "Adjudicado F0: escrita indirecta confirmada por leitura; uma simulação pré-decisão acrescenta conhecimento à SU."
+    },
+    {
+     "file": ".claude/skills/aisa-simulate/SKILL.md",
+     "kind": "skill",
      "role": "writer",
      "mechanism": "Reads SU Risky/Unknown rows; CORRECTS a row's swing in place (sanctioned metadata edit, direct Edit).",
      "via": "",
@@ -416,6 +507,16 @@
      "evidence": "aisa-start/SKILL.md:63, 67 layout; 82 step 7; 95-127 step 8 skeleton; 131 step 9 answers.md header; 132 step 9b M-n rows; 133-139 step 9c init. Scratch reproduction of both refusals.",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-status/SKILL.md",
+     "kind": "skill",
+     "role": "validator",
+     "mechanism": "`/status --check` (install validation) checks only 5 tools (dashboard, xlsx_extract, text_extract, fields_draft, coverage) and 2 hooks (pre-write-guard, on-su-change). It verifies none of the six mandatory memory engines (graph/operation/bootstrap/resolve/migrate/projection), nor on-su-mirror, pre-authority-guard or su-confirmed-guard. The SU/graph write path can therefore be missing while --check reports green.",
+     "via": "",
+     "evidence": "aisa-status/SKILL.md:201 (tools list), 205 (hooks), 207-213 (output); CLAUDE.md:28 ('Nenhum é opcional')",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/skills/aisa-status/SKILL.md",
@@ -549,6 +650,17 @@
      "source": "inventory"
     },
     {
+     "file": "docs/FRAMEWORK-NEGOCIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Business-facing restatement: the SU is always the truth and wins on disagreement. Not in the scan because it says 'Shared Understanding' and never the file name.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Business-facing restatement: the SU is always the truth and wins on disagreement. Not in the scan because it says 'Shared Understanding' and never the file name.",
+     "evidence": "FRAMEWORK-NEGOCIO.md:61, 89",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
      "file": "docs/ONBOARDING.md",
      "kind": "doc",
      "role": "declares-contract",
@@ -557,6 +669,28 @@
      "evidence": "ONBOARDING.md:43, 47, 62, 190, 219",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/PHILOSOPHY.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Philosophy table: a living SU plus deliverables at transition.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Philosophy table: a living SU plus deliverables at transition.",
+     "evidence": "PHILOSOPHY.md:205",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
+     "file": "library/kernel/blueprint-contract.md",
+     "kind": "kernel-contract",
+     "role": "declares-contract",
+     "mechanism": "Normative source for two SU writes by aisa-blueprint: a blueprint approval adds 'the matching SU row' next to the D-NNN block, and every cap violation adds a Conflicted SU row. It also defines BP-DEAD-ID, a check of blueprint ids against SU rows. Not in the scan because it says 'SU' and never the file name.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Normative source for two SU writes by aisa-blueprint: a blueprint approval adds 'the matching SU row' next to the D-NNN block, and every cap violation adds a Conflicted SU row. It also defines BP-DEAD-ID, a check of blueprint ids against SU rows. Not in the scan because it says 'SU' and never the file name.",
+     "evidence": "blueprint-contract.md:9, 50, 135; schema sources 17-23",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
     },
     {
      "file": "library/kernel/coverage-contract.md",
@@ -867,6 +1001,28 @@
      "evidence": "solution-blueprint.template.md:39, 164",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Estimation reads the SU: components are counted from the SU + Options, risks come from SU Risky rows, and Unknown/Assumed rows are handled in a sizing table. Consumed by aisa-simulate and the estimate render.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Estimation reads the SU: components are counted from the SU + Options, risks come from SU Risky rows, and Unknown/Assumed rows are handled in a sizing table. Consumed by aisa-simulate and the estimate render.",
+     "evidence": "estimation-model.md:204, 217, 259, 323-329",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
+     "file": "library/packs/pp/domain-knowledge/craft/screen-consolidation-rules.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Pack rule: a cap violation is a Conflicted SU row (the source of aisa-blueprint step 12). Screen fields come from Confirmed/Assumed data-lens SU rows.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Pack rule: a cap violation is a Conflicted SU row (the source of aisa-blueprint step 12). Screen fields come from Confirmed/Assumed data-lens SU rows.",
+     "evidence": "screen-consolidation-rules.md:29, 83",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
     }
    ],
    "mention_only": [
@@ -924,12 +1080,85 @@
     "Engine-written rows put '(was <id>)' in the evidence cell (resolve.py:287-289) while parse_su extracts 'was' only from the claim cell (dashboard.py:698); the row-level 'was' shown by the dashboard (dashboard.py:6781-6782) is therefore empty for engine rows; the graph carries the edge.",
     "on-su-mirror resolves the engagement only for <AISA_ENGAGEMENTS_ROOT or projects>/<slug>/shared-understanding.md (on-su-mirror.py:51), while su-confirmed-guard walks up to any _state.json (su-confirmed-guard.py:52-60); an SU outside the engagements root is audited but never mirrored.",
     "Harness parallelism of PostToolUse hooks is external knowledge, not verified in this repo; treat the ordering item as candidate.",
-    "Previous-plan items (P7.5/P8 references in code comments and docs/evolution) were used only as leads; no conclusion here depends on their status."
+    "Previous-plan items (P7.5/P8 references in code comments and docs/evolution) were used only as leads; no conclusion here depends on their status.",
+    "Step 0: the fnmatch check against scratchpad/scan/su.json (188 files) found 0 uncovered scan files and no runtime path covered only by a glob. Python fnmatch '*' matches '/', so '.claude/tests/*' also covers .claude/tests/fixtures/**. Script: scratchpad/agents/critic-su/check.py.",
+    "HEAD is now 8b27dd0. The two commits after fca2fe4 add tracked .claude/tests/fixtures/handoff-v1/** (no SU/answers/_graph refs; grep checked) and docs/handoff-v1/F0/*. Untracked .claude/tests/test_handoff_f0.py and docs/handoff-v1/F0/{consumer,disposition}-matrix.json appeared during this run; they were not created by me and are out of scope.",
+    "Scratch experiments ran only under scratchpad/agents/critic-su/{t1,t2}. Repo engines were executed against absolute scratch engagement paths or a scratch cwd; no repo file was touched. Copying library/kernel/tools into scratch was blocked by a permission rule, so engines were run in place.",
+    "Engine writes through Bash (resolve.py for /answer, migrate.py init) fire no PostToolUse hook. C- rows created by resolve.apply are never audited by su-confirmed-guard, and dashboard.html is not regenerated by on-su-change. projection.py:53-55 admits this for projection freshness. This is a concrete instance of the inventory's Write|Edit-only blind spot.",
+    "Sanctioned in-place edits disagree between sources. states.md:58 defines exactly six. aisa-answer/SKILL.md:111 and :149 say 'only two'. The withdrawal marker ('— retirada P-21', states.md:62-66) has no skill performer; only the unwired `resolve.py --op withdraw` writes it (resolve.py:461, 853-873). Terminology normalisation (P-20) and locator completion also have no named performer.",
+    "ARCHITECTURE.md §4.5 (lines 443-446) shows D-001 'Frame validado pelo sponsor' as an SU row. aisa-frame writes the frame approval only to decisions.md (aisa-frame/SKILL.md:42, 245-252). Only aisa-decide 4b and aisa-blueprint approval (plus blueprint-contract.md:9) add D-rows to the SU. This is a doc/skill divergence relevant to plan 02 §2 (decisions.md as decision authority).",
+    "pre-authority-guard.py docstring (lines 21-28) says 'none of the 24 skills invokes bootstrap.py' and that subprocess motors 'already go through the coordinator'. It does not note that migrate never consults bootstrap.",
+    "Persona memory (.claude/agent-memory/_universal/business-analyst/universal-constraints.md:6, data-steward/anti-patterns.md:26, cfo-lens/anti-patterns.md:20) tells personas to land items 'as an SU row'. Personas are read-only, so this is mention-only guidance that reaches the SU through chairman-synthesis.",
+    "dashboard.py --serve binds the whole engagement folder (SU, answers.md, _graph, _ops) to http://127.0.0.1:8787 (commands/dashboard.md:10-13). It is a localhost read-exposure surface, not a writer.",
+    "aisa-status step 2 (SKILL.md:45-48) runs dashboard.py --force, which writes <engagement>/dashboard.html. So /resume and aisa-orient re-orientation write a projection file as well as the step-3 SU header candidate already listed.",
+    "Inventory items spot-checked and confirmed against code/prose: resolve.py plan/apply/mark_resolved/sync_mirror/mirror_write_set; operation.py run/_publish/_atomic_write/acquire; migrate.py init/apply/_nodes_from/restore; graph.py GATE_FIELDS/authority_from_rows/drift/CLI read-only; bootstrap.py AUTHORITIES/snapshot/LEGACY_MODE/AUTHORITY_DRIFT/UNMIRRORED; pre-authority-guard.py AUTORIDADES/DIRECTORIOS_AUTORIDADE/avalia; on-su-mirror.py; su-confirmed-guard.py; on-su-change.py TRIGGER_FILES; phase-completeness.py su_has_round/Framing header; projection.py; dashboard.py writes limited to lock/html/json; aisa-start steps 7/8/9/9b/9c; aisa-answer engine call, header, revalidation and rule 4; aisa-round 3.6c/4c/5b/5f arbiter edits and transitions; aisa-decide 81/129-137; aisa-status 27/53; aisa-orient 49 vs 73; aisa-blueprint 212/220/275; aisa-simulate 41; aisa-frame 105; aisa-options 112; chairman-synthesis 113/187-189; lens-technology gate and no invoker; agents' tools (only chairman has Write/Edit); settings.json matchers and AISA_GUARD_MODE=enforce."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": "(inventory authority field)",
+      "claimed": "bootstrap readiness gates every coordinator writer and the Write/Edit guard",
+      "corrected": "Bootstrap gates resolve.apply, resolve._apply_plan and (partly) resolve.sync_mirror, plus the guard. migrate.init/apply/restore and operation.py recover never consult bootstrap. They rely only on operation.run's pending/lock/BASE_CHANGED checks, by design, since they are the recovery for LEGACY_MODE.",
+      "evidence": "resolve.py:331-334 (apply), 968-971 (_apply_plan), 778-790 (sync_mirror); migrate.py:40-44 imports dashboard/graph/operation only (no bootstrap), grep '_B[' in migrate.py = none; operation.py:465-539 run (pending 490-495, BASE 498-508)"
+     },
+     {
+      "file": "(inventory authority field)",
+      "claimed": "normative kernel contracts (states.md, phases.md, orchestration.md, glossary.md) never mention the graph, mirror, coordinator or bootstrap (grep returned no hits)",
+      "corrected": "orchestration.md:90 does mention a dependency graph, and forbids one: targeted revalidation goes 'never through a dependency graph or a new field'. This sits in normative conflict with resolve.impact_of's graph successors. The mirror/coordinator/bootstrap protocol itself is still absent from the kernel.",
+      "evidence": "orchestration.md:90; resolve.py:1052, 1060-1079"
+     },
+     {
+      "file": "CLAUDE.md",
+      "claimed": "Overstatements limited to line 30 (all knowledge writes via coordinator) and line 41 (guard refuses _graph/_ops, only when not ready)",
+      "corrected": "Two more false claims about `_migration/`. (a) CLAUDE.md:41 and :96 say the guard refuses Write/Edit on `_migration/`. The guard never covers it, ready or not: DIRECTORIOS_AUTORIDADE is only _graph/ and _ops/. (b) CLAUDE.md:41 says operation.py writes there. In fact migrate.py writes _migration/backup with shutil.copy2 and manifest.json with _atomic_write, both outside operation.run and without a receipt. migrate.restore then trusts those unguarded bytes and republishes them as SU/answers/decisions/_state.",
+      "evidence": "CLAUDE.md:41, 96; pre-authority-guard.py:69; migrate.py:271-284, 312-313, 407-429"
+     },
+     {
+      "file": ".claude/hooks/phase-gate-check.py",
+      "claimed": "reader only through dashboard.gate_state (does not name the SU)",
+      "corrected": "It also runs bootstrap.bootstrap directly twice, in _kernel_limitations and _kernel_codes. That covers pending operations, graph usability/integrity and AUTHORITY_DRIFT/UNMIRRORED. On PENDING_*/UNREADABLE/INVALID_FORMAT/UNSUPPORTED_SCHEMA/INCOHERENT_PAIR/GRAPH_INTEGRITY it emits 'nao avaliavel' without calling gate_state, and it records that in gate-log.md. So it is also a consumer of the graph mirror and _ops state.",
+      "evidence": "phase-gate-check.py:95-124, 127-139, 158-176"
+     },
+     {
+      "file": ".claude/hooks/blueprint-validate.py",
+      "claimed": "reads SU only via dashboard.parse_su for valid ids",
+      "corrected": "It also calls coverage.coverage_state(stage='blueprint'). That runs build_inventory, which reads answers.md and SU rows, and computes su_fingerprint. So it is a second SU and answers.md read path.",
+      "evidence": "blueprint-validate.py:71-73, 108-112; coverage.py:3142, 738, 751, 1125"
+     },
+     {
+      "file": "library/kernel/tools/migrate.py",
+      "claimed": "restore() republishes backed-up SU/answers/graph via operation.run",
+      "corrected": "restore republishes every file that was backed up, including decisions.md and _state.json (TOUCHED_ALL). The CLI `--force` bypasses the WORK_AFTER refusal, and `expected` is set to the current digests, so post-migration SU/answers/decisions work is overwritten under a committed restore-<h16> receipt with no BASE_CHANGED. That receipt name is also missing from path_patterns.",
+      "evidence": "migrate.py:55-64, 396-405 (drifted/force), 407-429 (op_restore, expected=now), 509 (--force), 522"
+     },
+     {
+      "file": ".claude/agents/chairman.md",
+      "claimed": "Council writer agent with Write/Edit tools: appends SU rows",
+      "corrected": "No skill or command spawns a `chairman` subagent. chairman-synthesis executes the role inline ('You are executing the chairman role described in .claude/agents/chairman.md'). The agent file is effectively a role spec (declares-contract), and it writes the SU only through chairman-synthesis, unless a user spawns it ad hoc.",
+      "evidence": "chairman-synthesis/SKILL.md:10; grep 'subagent_type.*chairman' over .claude/skills, .claude/commands = no hits"
+     },
+     {
+      "file": ".claude/skills/lens-business/SKILL.md",
+      "claimed": "evidence 40 append-only rule",
+      "corrected": "The append-only rule is at line 37 (rule 4). Line 40 is rule 7, the admission rule. The same layout holds in lens-data/financial/governance/operations/user.",
+      "evidence": "lens-business/SKILL.md:37, 40"
+     },
+     {
+      "file": "library/kernel/tools/coverage.py",
+      "claimed": "SU units (skip 757-759)",
+      "corrected": "The blueprint-approval mirror exclusion is at coverage.py:761-763. Lines 757-759 are the rid/empty guard.",
+      "evidence": "coverage.py:756-763"
+     }
+    ],
+    "unconfirmed": [
+     "Whether the harness runs the two PostToolUse Write|Edit groups sequentially (on-su-mirror before on-su-change and su-confirmed-guard) or in parallel. Only JSON order (settings.json:43-63) and test_lens_mirror.py:274-281 support the ordering.",
+     "aisa-simulate as an indirect SU appender through aisa-blueprint draft mode (steps 11/12 not exempted). Draft mode's exemptions were read, but runtime behaviour was not exercised.",
+     "aisa-frame:97 writing an Unknown row itself during the survival gate. The prose names no writer.",
+     "lens-technology inline invocation. No skill invokes it (aisa-round:96 forbids it in Discovery; aisa-options uses the solution-architect agent). As a listed skill it can still be invoked directly by name in Options.",
+     "Consequence of the AISA_ENGAGEMENTS_ROOT split for resolve.py/projection.py at runtime: the code path was read (resolve.py:401-403, projection.py:243-245), but only migrate init was executed in scratch. The expected effect is that /answer refuses with a misleading NOT_READY/LEGACY_MODE against cwd/projects/<slug>, and /status 1b reports 'engagement nao encontrado'.",
+     "chairman-synthesis transitions leave the original row open: rule 1 asks for a `was X-NNN` successor but gives no instruction to add a `resolved →` marker (chairman-synthesis/SKILL.md:113, 187-189), unlike states.md:58. Not exercised."
+    ]
    }
   },
   "decisions": {
@@ -1113,6 +1342,16 @@
      "evidence": ".claude/hooks/on-su-change.py:29-34; :76-80 (should_trigger)",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/hooks/on-su-mirror.py",
+     "kind": "hook",
+     "role": "mirror",
+     "mechanism": "PostToolUse(Write|Edit) on <engagement>/shared-understanding.md only: calls resolve.sync_mirror, which publishes the graph mirror of every SU row through the coordinator, including the SU D-NNN mirror row appended by aisa-decide 4b and aisa-blueprint 15. If the mirror is refused, bootstrap stays not-ready and the NEXT Write/Edit to decisions.md is denied by pre-authority-guard. The inventory names this path inside the graph.py entry but never lists the hook itself.",
+     "via": "resolve.sync_mirror -> operation.run (graph write); gate effect via bootstrap -> pre-authority-guard",
+     "evidence": ".claude/hooks/on-su-mirror.py:2-9 (purpose), :45-53 (only projects/<slug>/shared-understanding.md), :67-74 (Write/Edit only; runpy resolve.py, R['sync_mirror'](eng)); wiring .claude/settings.json:49",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/hooks/phase-completeness.py",
@@ -1395,6 +1634,17 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/skills/lens-technology/SKILL.md",
+     "kind": "skill",
+     "role": "reader",
+     "mechanism": "The Options-phase technology lens reads frame.md, the approved decision input, alongside the full SU",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: The Options-phase technology lens reads frame.md, the approved decision input, alongside the full SU",
+     "evidence": ".claude/skills/lens-technology/SKILL.md:29-31 ('## Inputs … plus `frame.md` and the prior lens outputs')",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
      "file": "CLAUDE.md",
      "kind": "claude-md",
      "role": "declares-contract",
@@ -1637,6 +1887,16 @@
     {
      "file": "library/kernel/tools/resolve.py",
      "kind": "engine",
+     "role": "mirror",
+     "mechanism": "sync_mirror/mirror_write_set is the actual writer of the _graph mirror of the SU D-NNN row (graph.py only prepares bytes). It publishes via operation.py with the SU in the write set as a precondition. The inventory lists resolve.py only as a reader (DERIVED_GLOBS).",
+     "via": "operation.py run",
+     "evidence": "library/kernel/tools/resolve.py:759-799 (sync_mirror: bootstrap check, read_base SU, mirror_write_set, publish); caller .claude/hooks/on-su-mirror.py:73-74",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": "library/kernel/tools/resolve.py",
+     "kind": "engine",
      "role": "reader",
      "mechanism": "DERIVED_GLOBS includes frame.md, options.md, decisions.md for cited_by/impact_of (derived files citing SU rows); no runtime caller found (only .claude/tests/test_dependents.py); aisa-answer step 7 greps manually",
      "via": "",
@@ -1653,6 +1913,17 @@
      "evidence": "library/packs/pp/architecture-templates/architecture-core.md:104-110",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/packs/pp/decision-model/alternatives-register.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Declares what options.md, a decision input read by /decide, must name: the class in plain language and the form of every platform. It also lists what may never appear as a conclusion in options.md.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Declares what options.md, a decision input read by /decide, must name: the class in plain language and the form of every platform. It also lists what may never appear as a conclusion in options.md.",
+     "evidence": "library/packs/pp/decision-model/alternatives-register.md:8; :64; :208",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
     },
     {
      "file": "library/packs/pp/decision-model/outcome-classes.md",
@@ -1745,6 +2016,17 @@
      "source": "inventory"
     },
     {
+     "file": "library/packs/pp/domain-knowledge/application/application-surfaces.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Says one-way surface choices 'belong on the decision record as irreversibility statements'. The aisa-decide D-NNN template has no irreversibility field, so the contract points at a field that does not exist.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Says one-way surface choices 'belong on the decision record as irreversibility statements'. The aisa-decide D-NNN template has no irreversibility field, so the contract points at a field that does not exist.",
+     "evidence": "library/packs/pp/domain-knowledge/application/application-surfaces.md:211-214; template fields .claude/skills/aisa-decide/SKILL.md:85-113",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
      "file": "library/packs/pp/domain-knowledge/craft/delivery-conventions.md",
      "kind": "pack-knowledge",
      "role": "declares-contract",
@@ -1753,6 +2035,17 @@
      "evidence": "library/packs/pp/domain-knowledge/craft/delivery-conventions.md:40-47",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Says the dated commitments (TW-V3 / TW-V1) 'belong in an option's revision conditions', which feeds decision revision conditions; same role as volatility-register.md",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Says the dated commitments (TW-V3 / TW-V1) 'belong in an option's revision conditions', which feeds decision revision conditions; same role as volatility-register.md",
+     "evidence": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md:227-236",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
     }
    ],
    "mention_only": [
@@ -1850,12 +2143,87 @@
     "Counterfactual immutability and 'never overwrite' are prose (aisa-decide/SKILL.md:141; aisa-revisit/SKILL.md:62); phase-completeness only checks presence of _simulation/counterfactuals/O-*.md (phase-completeness.py:264-275)",
     "Decision inputs: options.md single writer is chairman-synthesis (overwritten per round, chairman-synthesis/SKILL.md:254) and dashboard explicitly refuses it as a history source (dashboard.py:3570); frame.md is written by chairman-synthesis (:195) and by aisa-frame 8/8b (sentence edit) and, by reference to the same procedure, aisa-options pre-flight 2; the long form lens-outputs/chairman-synthesis-O-NN.md is read by aisa-decide (:45-47) and aisa-simulate",
     "Deterministic scan: all 216 files accounted for (57 runtime/doc files as consumers — some with multiple role entries — plus 11 individual mention-only files and 5 bulk globs). Additional consumers not matched by the regex were added with 'via': aisa-simulate, aisa-orient, commands decide/frame/options/blueprint/render/synthesize/dashboard, blueprint-validate.py, settings.json, rules/render-on-decision-only.md, graph.py, operation.py",
-    "No tests were executed (research-only); test relevance listed in mention_only for the separate test inventory"
+    "No tests were executed (research-only); test relevance listed in mention_only for the separate test inventory",
+    "Step 0: all 216 scan files are covered by consumers, mention_only files or fnmatch globs. No runtime path (library/, .claude/hooks|skills|commands|agents) is covered only by a glob. 14 consumers are outside the scan (the added 'via' entries). Note: '.claude/tests/*' under fnmatch also matches .claude/tests/fixtures/**, since '*' crosses '/'.",
+    "Verified defect: the aisa-decide 4b SU row template has 5 cells (| D-NNN | lens | title | decisions.md#D-NNN | round |, aisa-decide/SKILL.md:131-135; same shape in docs/ARCHITECTURE.md:442-443), but the aisa-start SU skeleton's Confirmed table has 7 columns (aisa-start/SKILL.md:106-107). Running parse_su in the scratchpad gave: verificado_em='D-01', ronda='', plus a warn diagnostic. compute_expiry then falls back to the engagement start date (Iniciado) with the organizacional half-life of 6 months (dashboard.py:801, 930-943). The decision mirror row showed expired=True six months after the start, regardless of the decision date. Consequences: it counts in epistemic health as an expired Confirmed, and is eligible for risks-and-assumptions as 'expired Confirmed' (aisa-synthesize/SKILL.md:40). aisa-blueprint 'matching SU row' (:275) has no template, so the same risk applies.",
+    "Writers of the decision-input and companion files inside the scope: chairman-synthesis (frame.md, options.md, chairman-synthesis-O-NN.md); aisa-frame 8/8b (frame.md sentence); aisa-decide 4c (counterfactuals); aisa-revisit (revisit_*.md); aisa-premortem (premortem.md); phase-gate-check (gate-log.md); coverage.finalize (_coverage basis.decision_ref); aisa-blueprint (blueprint yaml decision_ref|concretizes_decision — implied by blueprint-contract.md:15, not named in aisa-blueprint/SKILL.md).",
+    "Write-path coverage: (a) Edit/Write by skills: aisa-frame, aisa-options pre-flight 2, aisa-decide 4/4b/4c, aisa-blueprint 15 — gated only by pre-authority-guard bootstrap readiness; (b) scaffold: aisa-start step 9 — blocked as ordered, see wrong[]; (c) via operation.py: migrate.restore (migrate.py:427-429) and operation.recover roll-forward (operation.py:582-645); migrate.apply copies decisions.md to _migration/backup/ with shutil.copy2 outside the coordinator (migrate.py:275-284); (d) via subprocess: all engine writes (restore, recover, coverage finalize, graph mirror) are invisible to hooks; on-su-change does not regenerate the dashboard after them.",
+    "migrate.restore --force skips the WORK_AFTER refusal (migrate.py:400) and publishes the backup with expected = current digests (migrate.py:427-429). This silently erases any D-NNN blocks appended after migration, breaking the append-only contract. The only callers are the administrative CLI (migrate.py:507-523) and tests; no skill invokes restore.",
+    "pre-authority-guard AUTORIDADES covers only SU, decisions.md, answers.md and _state.json (pre-authority-guard.py:56). frame.md (the fingerprinted approval input), options.md, premortem.md and _simulation/counterfactuals/ can be written with a pending operation or an unreconstructed state; frozen counterfactuals have no mechanical immutability.",
+    "blueprint_state takes the LAST blueprint-approval block (dashboard.py:3671-3679) without checking that it concretizes the live solution decision. bp_validate only checks that the decision_ref/concretizes_decision key is present (dashboard.py:3309-3311), not that it resolves to a block or to the live solution decision. After a reopen with a new solution decision, the previous blueprint approval still reads as 'approved'.",
+    "phase-completeness check_decision counts blueprint approvals as a 'bloco D-NNN final' (it only excludes 'Frame agreed' blocks, phase-completeness.py:259-260), and 'row D-NNN no SU' is satisfied by any D row (:270). aisa-frame writes no SU D row for frame approvals, while docs/ARCHITECTURE.md:442 shows one.",
+    "Additional fixed-D-001 occurrence not in the inventory's list: dashboard.py:2456 (comment 'header-only file: /frame writes decisions.md's D-001 on validation').",
+    "su-confirmed-guard audits only C- rows (su-confirmed-guard.py:37), so D-NNN mirror rows in ## Confirmed never get a locator/evidence check. The graph mirror (graph.authority_from_rows, graph.py:184-206) carries only the D row's title claim into bootstrap context.",
+    "Mention-only docs not in the scan: docs/COMO-USAR.md:52 (user one-pager: /decide registers reasons, rejected alternatives and revision conditions), docs/PHILOSOPHY.md:152, docs/FRAMEWORK-NEGOCIO.md:80, README.md:16. Tracked header-only registers from intake runs: docs/runtime-hardening/intake-scenarios/_runs/{manutencao-preventiva,onboarding-colaboradores,pricing-marinha-cenario}/decisions.md (1 line each, '# Decisions — <slug>'). They show aisa-start creator output but have no _graph, and are covered by the docs/runtime-hardening/** glob.",
+    "Tests touching the register that the inventory's notable list omits: test_options_artefact.py (pins that aisa-decide reads chairman-synthesis-O-<NN>.md, :460), test_pp_pack_integrity.py (options.md forbidden as authority, :867-872), test_coverage_graph.py (decision_fingerprint change detection, :184-187), test_audit_findings.py / test_audit_round2.py (migrate restore), test_lens_mirror.py (on-su-mirror). No test exercises the aisa-start ordering against pre-authority-guard: test_authority_guard.py:141-148 covers only writing _state.json into a directory with no state.",
+    "docs/ARCHITECTURE.md:431 still says the chairman writes chairman-synthesis-D-<NN>.md in lens-outputs, which contradicts aisa-decide/SKILL.md:190 and chairman-synthesis/SKILL.md:18 (no council synthesis in Decision)."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": ".claude/skills/aisa-revisit/SKILL.md",
+      "claimed": "role: reader",
+      "corrected": "Also creator/writer of _simulation/revisit_<data>_<alvo>.md with the fixed header (Decision / Target / Counterfactual / Fired / Recomendação / Timestamp), which is an artifact inside this inventory's scope; dashboard.revisit_state and aisa-options read it. Separately, line 12 says the TW-n comes 'from the latest decision block', which contradicts tripwire_facts/solution_decision: those read the live SOLUTION decision, and after a blueprint approval the latest block carries no tripwires.",
+      "evidence": ".claude/skills/aisa-revisit/SKILL.md:27-41 (step 3 Write + header); :12; library/kernel/tools/dashboard.py:2980-2991, 3602-3626"
+     },
+     {
+      "file": ".claude/skills/aisa-premortem/SKILL.md",
+      "claimed": "role: reader",
+      "corrected": "Also writer of premortem.md, overwritten on each run. That file is in scope (TRIPWIRE candidates that /decide turns into TW-n). Because it is overwritten, earlier candidates do not survive a rerun.",
+      "evidence": ".claude/skills/aisa-premortem/SKILL.md:31 (TRIPWIRE candidato), :33 ('Escrever `<engagement>/premortem.md` (overwrite; audit no council-log)')"
+     },
+     {
+      "file": ".claude/skills/aisa-start/SKILL.md",
+      "claimed": "creator: scaffold step writes decisions.md with header only (verified)",
+      "corrected": "As ordered, the creator write cannot pass the guard. Step 7 writes _state.json, step 9 writes decisions.md via Write, and step 9c creates the graph. Between 7 and 9c, pre-authority-guard evaluates bootstrap, gets LEGACY_MODE (no graph) and denies with exit 2. Step 9b also writes R-00 Confirmed rows to the SU before 9c, so `migrate.py init` then refuses with NOT_EMPTY. Both were reproduced in the scratchpad.",
+      "evidence": ".claude/skills/aisa-start/SKILL.md:82 (step 7 _state.json), :131 (step 9 decisions.md header), :132 (9b R-00 rows), :133-139 (9c init after); .claude/hooks/pre-authority-guard.py:136-144 (no _state.json = start exception only); library/kernel/tools/bootstrap.py:304-316 (LEGACY_MODE blocking); library/kernel/tools/migrate.py:347-358 (NOT_EMPTY); scratch run: hook returned permissionDecision deny exit=2 for decisions.md; migrate.init raised MigrationError NOT_EMPTY"
+     },
+     {
+      "file": ".claude/agents/chairman.md",
+      "claimed": "agent reader: Chairman reads decisions.md; writes frame.md/options.md in the shape chairman-synthesis specifies (verified)",
+      "corrected": "This consumer is dormant. The agent declares tools [Read, Write, Edit, Grep, Glob], so it would be a writer of frame.md/options.md, but no skill launches it. aisa-frame and aisa-options invoke the chairman-synthesis SKILL, and their subagent_type lists name only personas (plus solution-architect in aisa-decide --consult). Its runtime role is therefore not demonstrated.",
+      "evidence": ".claude/agents/chairman.md:4 (tools incl. Write, Edit), :31-32, :64; .claude/skills/aisa-frame/SKILL.md:149, :183-191; .claude/skills/aisa-options/SKILL.md:134, :179; .claude/skills/aisa-decide/SKILL.md:76; grep 'subagent_type.*chairman' over tracked runtime: no hit"
+     },
+     {
+      "file": ".claude/settings.json",
+      "claimed": "wires pre-authority-guard, phase-gate-check, on-su-change/synthesis-validate/render-validate/blueprint-validate, phase-completeness",
+      "corrected": "Also wires PostToolUse on-su-mirror.py (the SU D-NNN row → graph mirror, which decides whether the next decisions.md write is allowed), su-confirmed-guard.py and PreToolUse pre-write-guard.py. The hook matchers are 'Write|Edit', and pre-authority-guard, on-su-change and on-su-mirror all return 0 for any other tool_name (MultiEdit included).",
+      "evidence": ".claude/settings.json:16, :20, :49, :58, :62; .claude/hooks/pre-authority-guard.py:177; .claude/hooks/on-su-change.py:128; .claude/hooks/on-su-mirror.py:67"
+     },
+     {
+      "file": ".claude/hooks/HOOKS.md",
+      "claimed": "evidence :11 (mentions 'D-001')",
+      "corrected": "'D-001' appears on line 10 (the phase-completeness row). Line 11 is the phase-gate-check row.",
+      "evidence": ".claude/hooks/HOOKS.md:10 ('…the validation closure: `D-001` and the story episode'), :11"
+     },
+     {
+      "file": "library/kernel/tools/coverage.py",
+      "claimed": "roles: reader + validator only",
+      "corrected": "Also writer (finalize) of _coverage/coverage_vNN.json, which carries basis.decision_ref and basis.decision_fingerprint. That path pattern is in this artifact's scope. compute_basis sets decision_ref = the live solution decision id.",
+      "evidence": "library/kernel/tools/coverage.py:1120-1128 (compute_basis returns decision_fingerprint + decision_ref); CLAUDE.md:36 (finalize writes only <engagement>/_coverage/)"
+     },
+     {
+      "file": "library/kernel/tools/migrate.py",
+      "claimed": "dry_run reports active_decision (classify_decisions, superseded filtered)",
+      "corrected": "active_decision takes the last non-superseded block of ANY kind (frame, solution, blueprint-approval, other). After a later blueprint or frame approval, it reports that approval as the 'active decision'. This diverges from dashboard.live_solution_decision, which is solution-kind only.",
+      "evidence": "library/kernel/tools/migrate.py:141-151 (live = not superseded; active = live[-1]); library/kernel/tools/dashboard.py:4883-4893"
+     },
+     {
+      "file": "library/kernel/tools/graph.py",
+      "claimed": "role mirror: SU D-NNN mirror row enters _graph",
+      "corrected": "graph.py is pure: it prepares and validates bytes and never publishes. The writer of the graph mirror is resolve.sync_mirror via operation.py, triggered by on-su-mirror.py. graph.py is better classified as the shared contract/reader (authority_from_rows, drift).",
+      "evidence": "library/kernel/tools/graph.py:540 ('A publicação é de `operation.py` (contrato B2.4)'); library/kernel/tools/migrate.py:328-329; library/kernel/tools/resolve.py:759-799"
+     }
+    ],
+    "unconfirmed": [
+     "MultiEdit writes to decisions.md: code-verified that pre-authority-guard returns 0 for tool_name != Write/Edit (pre-authority-guard.py:177), and su-confirmed-guard handles MultiEdit explicitly (su-confirmed-guard.py:80, :125), so the authors know the tool exists. Not determined: whether the 'Write|Edit' matcher fires on MultiEdit, and whether MultiEdit is available in this runtime.",
+     "Agent writes through Bash (e.g. appending to decisions.md, or writing counterfactuals via shell) bypass every PreToolUse/PostToolUse hook. No skill was found instructing a Bash write to decisions.md; the only Bash-mediated authority write found is the _state.json tmp→mv rename. Actual practice not observable (projects/ is empty).",
+     "aisa-options:94 and aisa-options:13 / aisa-frame:13 / phases.md:243 say a --override reason is 'logged in decisions.md', but no field shape exists outside the frame approval's 'Override used at /frame'. aisa-options pre-flight 2 sends its own override to council-log.md instead. If free text is appended after the last block, decision_block_span (dashboard.py:4873-4880) makes it part of that block: its coverage unit digest changes (coverage.py:766-777), and so does decision_fingerprint when that block is the live solution decision. Not observed in real data.",
+     "Whether resolve.plan_withdraw / plan_revalidate refuse a D-NNN SU mirror row was not verified. PREFIX_FOR (resolve.py:47) covers only C/A/U/X/R, but the plans call find_row by id (resolve.py:823-873).",
+     "Blueprint approval block shape: neither aisa-blueprint/SKILL.md:275 nor blueprint-contract.md:9 gives a field template (title only). Classification depends only on the title/body regex BP_APPROVAL_RE (dashboard.py:2883) plus a Timestamp for ordering, so field content cannot be verified mechanically.",
+     "The /decide command argument-hint omits --consult (commands/decide.md:3), although CLAUDE.md:62 and aisa-decide/SKILL.md:10 list it. Whether the command still passes it through via $ARGUMENTS was not tested."
+    ]
    }
   },
   "blueprint": {
@@ -2128,6 +2496,16 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/skills/aisa-revisit/SKILL.md",
+     "kind": "skill",
+     "role": "reader",
+     "mechanism": "Resolves 'TW-n' as 'a tripwire from the latest decision block' in decisions.md. Blueprint approvals share the D-NNN counter and carry no tripwires. After an approval, the 'latest decision block' is a blueprint approval, which is exactly the failure dashboard.py documents for parse_tripwires. The skill contains no blueprint token.",
+     "via": "shared D-NNN counter in decisions.md",
+     "evidence": ".claude/skills/aisa-revisit/SKILL.md:10, :12, :17; library/kernel/tools/dashboard.py:2878-2881; library/kernel/phases.md:139-141",
+     "confidence": "candidate",
+     "source": "critic"
+    },
+    {
      "file": ".claude/skills/aisa-simulate/SKILL.md",
      "kind": "skill",
      "role": "reader",
@@ -2136,6 +2514,16 @@
      "evidence": ".claude/skills/aisa-simulate/SKILL.md:15, :31, :55, :57",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-start/SKILL.md",
+     "kind": "skill",
+     "role": "creator",
+     "mechanism": "Scaffolds decisions.md (empty header) and shared-understanding.md, which will later hold the blueprint approval block and its SU row. It does NOT scaffold `_blueprint/`; the directory first appears when aisa-blueprint's Write tool creates the first version. It also creates `_capture/`, where fields_draft.py later writes.",
+     "via": "scaffold of the approval-record container files",
+     "evidence": ".claude/skills/aisa-start/SKILL.md:57-69",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/skills/aisa-status/SKILL.md",
@@ -2176,6 +2564,16 @@
      "evidence": ".github/run_tests.py:33-34",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".github/workflows/tests.yml",
+     "kind": "ci",
+     "role": "validator",
+     "mechanism": "CI runs .github/run_tests.py with deliberately no pip install (stdlib only), while requirements-dev.txt says PyYAML is needed to parse pack.yaml and ux-blueprint files in the tests. The frontmatter-based blueprint/template tests therefore skip in CI: test_a5_dictionary_contract setUp calls skipTest('PyYAML not installed'), and test_pp_deliverable_templates.requireYaml skips. These cover the A5 dictionary slot_sources and deliverable frontmatter such as blueprint_version_read.",
+     "via": "runs .github/run_tests.py (listed consumer)",
+     "evidence": ".github/workflows/tests.yml:25-28; requirements-dev.txt:17; .claude/tests/test_a5_dictionary_contract.py:37-40, :113-116; .claude/tests/test_pp_deliverable_templates.py:253-256",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": "CLAUDE.md",
@@ -2326,6 +2724,36 @@
      "evidence": "library/kernel/tools/fields_draft.py:2-35, :384-387, :399-434, :466-483",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/migrate.py",
+     "kind": "engine",
+     "role": "reader",
+     "mechanism": "active_decision() calls dashboard.classify_decisions and returns the last non-superseded block as 'active' without filtering by kind. When a 'Blueprint bp-vNN aprovado' block is last, the dry-run reports the blueprint approval as the active decision (probe: active='D-003', kind blueprint-approval). The result appears only in the dry-run plan; the manifest does not store it.",
+     "via": "dashboard.classify_decisions (BP_APPROVAL_RE)",
+     "evidence": "library/kernel/tools/migrate.py:141-151, :187-198, :306-311; probe via runpy on a synthetic decisions.md (D-001 frame, D-002 solution, D-003 'Blueprint bp-v02 aprovado') -> {'active': 'D-003'}",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": "library/kernel/tools/migrate.py",
+     "kind": "engine",
+     "role": "writer",
+     "mechanism": "restore() republishes decisions.md (one of TOUCHED) from its pre-migration backup through operation.py (_O['run']). With force=True it overwrites decisions.md even when work happened after migration. This can drop 'Blueprint bp-vNN aprovado' approval blocks written since the migration. It is the only coordinator-mediated write path that touches the approval record.",
+     "via": "operation.py coordinator (subprocess/Python, invisible to PreToolUse/PostToolUse hooks)",
+     "evidence": "library/kernel/tools/migrate.py:52, :56, :386-429",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": "library/kernel/tools/projection.py",
+     "kind": "engine",
+     "role": "projector",
+     "mechanism": "Calls dashboard.build_model and republishes status.milestone as out['milestone'] and out['next_action']. That milestone is the blueprint milestone: 'primeira versão do blueprint' -> /blueprint; 'aprovar blueprint vNN' / 'registar aprovação de vNN'; structural choices -> '/answer … → /blueprint --refresh'; and 'no blueprint by contract', read by regex from architecture-story.md. aisa-status runs it before answering. The inventory lists it as a non-consumer only because it contains no blueprint token.",
+     "via": "dashboard.build_model -> status.milestone (built from blueprint_state)",
+     "evidence": "library/kernel/tools/projection.py:9-11, :137-145, :190-191; library/kernel/tools/dashboard.py:4558-4614; .claude/skills/aisa-status/SKILL.md:36; CLAUDE.md:34",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": "library/kernel/tools/resolve.py",
@@ -2498,6 +2926,16 @@
      "source": "inventory"
     },
     {
+     "file": "library/packs/pp/domain-knowledge/application/application-surfaces.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Owns the value vocabulary of architecture.experience.primary_surface: aisa-blueprint step 2 requires 'a surface named in application/application-surfaces.md §3'. All three experience fragments pull it for the A4 surface. bp_validate emits BP-SURFACE but checks only presence and form, not membership in §3.",
+     "via": "no scanned token; named by aisa-blueprint step 2 and by the fragments",
+     "evidence": ".claude/skills/aisa-blueprint/SKILL.md:96; library/packs/pp/domain-knowledge/application/application-surfaces.md:57; library/packs/pp/architecture-templates/fragment-experience-internal.md:29; fragment-experience-external.md:29; fragment-experience-inherited.md:28; library/kernel/tools/dashboard.py:3391-3394",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": "library/packs/pp/domain-knowledge/architecture/patterns.md",
      "kind": "pack-knowledge",
      "role": "declares-contract",
@@ -2536,6 +2974,16 @@
      "evidence": "library/packs/pp/domain-knowledge/craft/screen-patterns.md:110-123; .claude/skills/aisa-blueprint/SKILL.md:26",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/packs/pp/domain-knowledge/craft/security-craft.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Named by the kernel contract as one of the three pp craft units that shape the blueprint (screen catalogue/naming/caps come from craft units). aisa-blueprint reads it for the form of RBAC groups and the visibility matrix, and maps personas to access groups through it. Its Matrix 1 (Role x Screen) and Matrix 2 (Role x Entity x CRUD) are the forms for blueprint screens[].rbac_visibility and personas[].rbac_group.",
+     "via": "has no 'blueprint' token; named in blueprint-contract.md:3 and in aisa-blueprint's input list",
+     "evidence": "library/kernel/blueprint-contract.md:3; .claude/skills/aisa-blueprint/SKILL.md:27, :177; library/packs/pp/domain-knowledge/craft/security-craft.md:82-87, :98, :105",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": "library/packs/pp/domain-knowledge/data/query-and-delegation.md",
@@ -2683,12 +3131,63 @@
     "Milestone decides 'no blueprint by contract' by regex on the text of `_synthesis/architecture-story.md` (`not-authorized|n[ãa]o autorizad`, dashboard.py:4562-4568).",
     "render-validate content rules only apply to implementation-spec, the only template with a `sufficiency:` block (implementation-spec.template.md:275; render-validate.py:292-297, :421-424).",
     "Non-consumers checked by grep: bootstrap.py (AUTHORITIES :76-77), operation.py, graph.py, projection.py, migrate.py have no `_blueprint`/blueprint reference; no file under .claude/agents/ references the blueprint or architecture templates; among .claude/rules/ only render-on-decision-only.md mentions the Blueprint deliverable.",
-    "Prior map leads: docs/evolution/authority-map.md:24 (aisa-blueprint 'lê e não escreve' the SU) is stale; docs/evolution/writer-reader-map.md:41 ('blueprint-validate.py' writes 'não detectado') matches the code (the hook writes nothing, blueprint-validate.py:11-13)."
+    "Prior map leads: docs/evolution/authority-map.md:24 (aisa-blueprint 'lê e não escreve' the SU) is stale; docs/evolution/writer-reader-map.md:41 ('blueprint-validate.py' writes 'não detectado') matches the code (the hook writes nothing, blueprint-validate.py:11-13).",
+    "Step 0: all 149 scan files (pattern ux-blueprint|blueprint-contract|architecture-core|architecture-templates|fields_draft|blueprint-validate) are covered. Exact runtime files are listed as consumers or exact mention_only entries. Glob-only matches are all non-runtime (docs/evolution, docs/pp-pack-authoring, docs/runtime-hardening, .claude/tests, library/kernel/tools/tests). Script: /tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/bp_critic/cov.py.",
+    "Step 1 broad grep over 179 runtime tracked files (excluding docs/ and tests). Tokens: _blueprint, blueprint_state, bp_validate, bp_read, blueprint-log, fields-draft, solution-blueprint, architecture-story, authority-stamp, open_architecture_choices, record_authority, bp-v, blueprint_version_read, BP_FILE_RE, blueprint-check, 'blueprint'. It found 61 files, all already in the inventory. Architecture-record terms (architecture block/record, SEE_V, proof_obligations, experience.mode, authorization_basis, architectability, A1-A12, latest authorized) found nothing new. New consumers therefore come only from conceptual or transitive links (security-craft.md, application-surfaces.md, projection.py, migrate.py, aisa-revisit, aisa-start, tests.yml).",
+    "Doc mentions missing from mention_only_files (docs; the scan pattern misses them): docs/COMO-USAR.md:19, :26, :53, :62 ('desenho dos ecrãs', /blueprint, the four questions). This one-page user guide is read by .claude/tests/test_user_language.py:279, :343. Also docs/FRAMEWORK-NEGOCIO.md:30, :78, :95.",
+    "Step 2 spot-check (read at cited lines). Confirmed as stated: aisa-blueprint creator (:222) and appender (:212, :220, :222, :275); fields_draft.py creator (atomic tmp+os.replace :384-387; --log append :425-432); coverage.py finalize writes only `_coverage/` (:3621-3640); blueprint-validate.py writes nothing (:11-13, :101-133); phase-completeness reader (:194-252); on-su-change TRIGGER_DIRS incl. `_blueprint/` (:34-35); resolve.py DERIVED_GLOBS `_blueprint/*.yaml` with no runtime caller of cited_by/impact_of (:999-1079; only test_dependents.py calls them); settings.json wiring (:43-87); render-validate selects approved via blueprint_state (:427-436); synthesis-validate writes only `_synthesis/_synthesis-checks.md` (:20-27, :70-80); dashboard.py writes only dashboard.html, lock and --json-out (:125-135, :7808-7857); aisa-decide never emits architecture.* (:171-184) and shares the D-NNN counter (:123-125); status.md (:14-16) and resume.md (:20, :26); glossary (:87, :97); phases.md (:139-141, :223-225, :240-248). Role errors found: aisa-simulate and aisa-synthesize (see wrong).",
+    "Step 3 write-path matrix for `_blueprint/` and the approval record. (a) Agent Write tool: aisa-blueprint only; also reached transitively from /simulate via --option. It writes versions, blueprint-log.md, SU U-/Conflicted/D- rows, the decisions.md approval block, council-log.md and story.md. (b) Agent Edit on the same version: step 13 writes block issues into this version's validation.violations; blueprint-validate re-fires on it. (c) Subprocess, invisible to hooks: fields_draft.py -> `_capture/*.xlsx.fields-draft.json` + `_capture/_capture-log.md`; coverage.py finalize -> `_coverage/`; dashboard.py -> dashboard.html. (d) Via operation.py: no path writes `_blueprint/`; migrate.restore rewrites decisions.md (approval blocks) through the coordinator; resolve.py never writes decisions.md (only reads it in DERIVED_GLOBS :1003). (e) Scaffold: aisa-start creates decisions.md and the SU but no `_blueprint/`. (f) on-su-mirror mirrors SU rows into `_graph/` via resolve.sync_mirror after the agent's SU append.",
+    "No hook enforces /blueprint's phase precondition: phase-gate-check.py (PreToolUse Skill) gates only aisa-frame, aisa-options and aisa-decide (GATE_TRANSITIONS dashboard.py:5157-5161). 'phase == decision + final D-NNN' (aisa-blueprint SKILL.md:12, :39) and 'draft mode pre-decision only' (:13, :35) are prose-only.",
+    "Three divergent draft detectors, probed via dashboard yl_parse/yl_scalar_at. bp_read uses bool(yl_scalar_at('draft')) (dashboard.py:3094): `draft: \"true\"` counts as draft. bp_validate uses tree.get('draft') is True (:3305-3307): a quoted \"true\" is NOT draft, raises no BP-DRAFT and demands decision_ref. phase-completeness uses the case-sensitive regex `^\\s*draft\\s*:\\s*(true|yes)\\s*$` (phase-completeness.py:199): `draft: True` and quoted values count as non-draft, and an indented nested `draft: true` counts as draft.",
+    "`.yml` edge extends beyond the inventory's note. coverage.render_precheck builds the expected target as `_blueprint/ux-blueprint_{v}.yaml` (coverage.py:2974), while BP_FILE_RE, _bp_file and target_identity accept `.yml` (dashboard.py:3043; coverage.py:1461). An approved `.yml` version would be precheck-resolved to a non-existent path.",
+    "The SEE_Vnn inconsistency extends to render-validate. My probe (scratchpad agents/bp_critic/probe/eng, v01 with one record_authority domain, v02 with `architecture: SEE_V01` + `entities: SEE_V01`): render-validate.read_record(v02) -> domains [] but entities [('Request','requests')]. _follow is applied to top-level keys and to record_authority under architecture, but never to an `architecture:` scalar back-reference (render-validate.py:195-243). I also re-ran the inventory's probe read-only: blueprint_state -> current v02, authorization '', structural_open_count 0, latest_authorized v01.",
+    "Coverage approval eligibility ignores open structural choices. approve_blueprint eligibility checks semantic_review, coverage and bp_validate block issues only (coverage.py:3416-3437). bp_validate does not block an unresolved `structural: true` choice that has would_be_settled_by: only STRUCT-MISSING/TYPE/NO-SETTLE and RESOLVED-* codes exist (dashboard.py:3465-3486). coverage.expected_version returns 'available' for an approved version regardless of structural_open (coverage.py:2879-2882). 'Structural choice blocks approval' is enforced only in aisa-blueprint step 15(i) prose and in dashboard milestone/status.",
+    "Kernel/pack vocabulary leak. blueprint-contract.md:16 says experience modes, surface names and composition names belong to the active pack, never the kernel. Yet dashboard.py BP_ENUMS hardcodes experience.mode, access_mode, boundary and proof level (dashboard.py:3121-3127), and BP_TOP_REQUIRED requires a `version` key (:3128-3129), which the contract schema table (blueprint-contract.md:13-24) does not list.",
+    "Version-declaration nuance for the inventory's handoff_v1_impact item. Both templates carry an explicit §8.3 rationale for `blueprint_version_read: none`: executive-report.template.md:7 ('inventários de ecrãs não são conteúdo de decisão') and estimate.template.md:7 ('lê o inventário da Implementation Specification, não o desenho'). executive-report forbids `_blueprint/ux-blueprint_v<NN>.yaml` (:37) while conditionally reading 'the architecture block A1/A2/A9' (:24) from that same file. The gap (no version declared for the architecture-block slot) stands, but the `none` is intentional for screen inventories.",
+    "aisa-orient maps 'estimativa' to needing 'o desenho dos ecrãs aprovado' (aisa-orient SKILL.md:53). estimate.template.md has a mode B with no approved architecture or spec (conditional_sources: 'the architecture block — MODE B component authority', :135-137; mode A available_when at :78). The orient prerequisite is stricter than the template contract.",
+    "fields-draft file naming: the actual name keeps the workbook extension, `_capture/<name>.xlsx.fields-draft.json` (fields_draft.py:462-466, replacing '.extraction.json'; fixture registo-de-lotes.xlsx.fields-draft.json). `<workbook>` in the inventory's path pattern must be read as including `.xlsx`/`.xlsm`. `fields_draft.py --engagement` without --file drafts every xlsx extraction (:458-466)."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": ".claude/skills/aisa-simulate/SKILL.md",
+      "claimed": "role: reader",
+      "corrected": "creator (transitive, of draft versions) + reader. Step 1 runs aisa-blueprint --option O-NNN, which writes `_blueprint/ux-blueprint_vNN.yaml` with draft:true and option:O-NNN in the same directory and version counter as real versions. It also reuses an existing draft. /simulate is therefore a write path into `_blueprint/`, and drafts shift which file is 'current' when no non-draft version exists (dashboard.py:3670).",
+      "evidence": ".claude/skills/aisa-simulate/SKILL.md:31, :55; .claude/skills/aisa-blueprint/SKILL.md:13, :222; library/kernel/tools/dashboard.py:3668-3670"
+     },
+     {
+      "file": ".claude/skills/aisa-synthesize/SKILL.md",
+      "claimed": "role: projector only",
+      "corrected": "Also the writer of `_synthesis/architecture-story.md`, a path_pattern of this artifact. In the not-authorized case it writes the only durable carrier of the entry-gate result: the `<!-- authority: none — outcome-forbade|outside-pack-authority -->` stamp and §Authorized scope and outcome basis. aisa-blueprint never writes architecture-story.md; its not-authorized branch only reports. aisa-decide auto-chains aisa-synthesize before any /blueprint runs. So the carrier of the 'entry gate rule' result is authored by the synthesizer, which the contract says must never evaluate architectability. dashboard.py then decides 'no blueprint by contract' by regex on that text.",
+      "evidence": ".claude/skills/aisa-synthesize/SKILL.md:69-73, :104, :119-125; .claude/skills/aisa-blueprint/SKILL.md:59, :258 (no architecture-story write anywhere in the file); .claude/skills/aisa-decide/SKILL.md:34; library/kernel/blueprint-contract.md:34-41; library/kernel/tools/dashboard.py:4562-4568"
+     },
+     {
+      "file": "library/kernel/tools/projection.py",
+      "claimed": "notes: 'Non-consumers checked by grep: bootstrap.py, operation.py, graph.py, projection.py, migrate.py have no `_blueprint`/blueprint reference'",
+      "corrected": "projection.py and migrate.py are consumers without a textual token. projection.py republishes the blueprint milestone and next action from dashboard.build_model and is invoked by aisa-status. migrate.py reads the approval blocks through classify_decisions (active_decision) and can rewrite decisions.md through restore(). Only bootstrap.py, operation.py and graph.py remain non-consumers: grep finds only bootstrap.py:76 listing decisions.md in AUTHORITIES.",
+      "evidence": "library/kernel/tools/projection.py:137-145, :190; .claude/skills/aisa-status/SKILL.md:36; library/kernel/tools/migrate.py:141-151, :386-429; library/kernel/tools/bootstrap.py:76-77"
+     },
+     {
+      "file": ".claude/hooks/pre-authority-guard.py",
+      "claimed": "`_blueprint/` is deliberately NOT guarded (classified as derived)",
+      "corrected": "`_blueprint/` is simply absent from AUTORIDADES and DIRECTORIOS_AUTORIDADE. The derived-list comment names only `_capture/`, `_render/`, `_simulation/` 'e companhia'. No line classifies `_blueprint/` as derived or states the exclusion is deliberate. The factual part holds: no immutability or append-only guard exists on version files.",
+      "evidence": ".claude/hooks/pre-authority-guard.py:53-56, :69, :103-105"
+     },
+     {
+      "file": "(inventory notes — repo state)",
+      "claimed": "Repo state: HEAD 8b7987e = fca2fe4 + 8b7987e",
+      "corrected": "HEAD is now e870f0f. Two further commits: 8b27dd0 adds docs/handoff-v1/F0/{fixture-registry.json,test-baseline.json} and docs/handoff-v1/README.md; e870f0f adds .claude/tests/test_handoff_f0.py, F0 consumer/disposition matrices and a one-line change to .claude/tests/fixtures/handoff-v1/README.md. test_handoff_f0.py is in scope: it mentions 'blueprint' as an authority key (REQUIRED set) and is covered by the .claude/tests/* glob.",
+      "evidence": "git log --oneline (e870f0f, 8b27dd0, 8b7987e); git show --stat HEAD~1 HEAD; .claude/tests/test_handoff_f0.py:4-5, :28"
+     }
+    ],
+    "unconfirmed": [
+     "Reconciliation goes stale inside one /blueprint run (first version). Step 1e finalizes the reconciliation review before step 4 runs fields_draft.py, which writes `_capture/<wb>.xlsx.fields-draft.json`, a coverage source not excluded in DERIVED_FILES. Verified: the denominator changes once the draft exists. On a copy of fx-coverage-f06, units went from 64 to 79, and 4 xlsx-sheet units of registo-de-lotes were replaced by 18 xlsx-column units plus 1 dictionary entry. Not reproduced: that `coverage.py check --stage reconciliation` then reports COV-STALE, which would need a finalized record. Evidence: aisa-blueprint SKILL.md:63-77 vs :172-176; coverage.py:92-96, :811-844.",
+     "docs/pp-pack-authoring/pilot/step-9a-onda-0-desenho-a5.md is 'read at runtime'. Verified only that runtime files cite it as the normative full form (architecture-core.md:164-165; aisa-blueprint SKILL.md:172; fields_draft.py:10 docstring). No procedure step instructs reading it, so 'read at runtime' is not established. It is a normative dependency of a library/ template on a docs/ file.",
+     "Behaviour of render-validate sufficiency rules on an approved version whose `architecture:` is SEE_Vnn. Verified: read_record follows `entities: SEE_V01` but not `architecture: SEE_V01`. Probe: v02 domains=[] while its entities carry authority 'requests'. Not verified: which sufficiency gaps this produces (likely a spurious entity-authority/§4 gap).",
+     "aisa-revisit picking tripwires off a trailing blueprint approval (SKILL.md:12 says 'latest decision block'). Whether the LLM executor actually misreads it is not testable here.",
+     "Whether non-pp packs (generic, mendix, outsystems) can run /blueprint at all. They ship only pack.yaml, with no architecture-templates/README.md, craft units or deliverable-templates; generic declares `deliverables: []` and cites missing question-bank.md, glossary.md and decision-tree.md. The aisa-blueprint entry gate reads `library/packs/<pack>/architecture-templates/README.md` (SKILL.md:23). Runtime behaviour not exercised."
+    ]
    }
   },
   "coverage": {
@@ -2839,6 +3338,16 @@
     {
      "file": ".claude/skills/aisa-blueprint/SKILL.md",
      "kind": "skill",
+     "role": "mirror",
+     "mechanism": "Step 13b copies the record's coverage gaps into _blueprint/blueprint-log.md for that version, with the record's required_action and responsible_role. That is a second textual copy of coverage findings in a derived file, and nothing checks it against the record. Step 14's user-output line 'O que foi pedido está todo no desenho' projects the review verdict. The inventory gives this skill only the writer and validator roles, plus the approval note at line 275.",
+     "via": "",
+     "evidence": "aisa-blueprint SKILL.md:236 ('Record the gaps in `blueprint-log.md` for this version, beside the structural violations, with the same `required_action` / `responsible_role` the record carries'); :250 (output line); blueprint-log.md is DERIVED (coverage.py:91-95)",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/skills/aisa-blueprint/SKILL.md",
+     "kind": "skill",
      "role": "validator",
      "mechanism": "Reads coverage through the engine and gates on it: exit-code handling at 1e, and at step 15(ii) the check --stage blueprint that a new approval requires. Approval is refused on not_evaluated or ineligible, and the business is then asked via AskUserQuestion.",
      "via": "",
@@ -2855,6 +3364,17 @@
      "evidence": "aisa-blueprint SKILL.md:63-84 (step 1e; 66 check, 73 inventory, 76 finalize, 80 reconcile upstream first, 84 not in draft mode); 224-236 (step 13b; 232 finalize, 233 check --stage blueprint --target); 275 (approval note cites _coverage/coverage_vNN.json)",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-capture/SKILL.md",
+     "kind": "skill",
+     "role": "feeds",
+     "mechanism": "INDIRECT INVALIDATOR. Step 5c increments capture_run in _state.json and stamps it into the process-model header. _state.json falls to the manifest default `use: freshness`, so every /capture run, including a no-op re-capture, makes every coverage review (reconciliation, blueprint, render) stale. Step 7b then reports that staleness, which the skill itself caused.",
+     "via": "coverage.py build_manifest default freshness",
+     "evidence": "aisa-capture SKILL.md:69 ('Increment `capture_run` in `_state.json` ... and stamp it in the model header'); coverage.py:983-997 _manifest_use default 'freshness' (_state.json not in DERIVED_FILES/INFORMATIVE); scratch replay: capture_run+1 -> stale [source-changed _state.json]",
+     "confidence": "verified",
+     "source": "critic",
+     "adjudication": "Adjudicado F0 (crítico): invalidador indirecto — escreve uma entrada da base de freshness (use: source); não escreve _coverage/."
     },
     {
      "file": ".claude/skills/aisa-capture/SKILL.md",
@@ -2879,6 +3399,16 @@
     {
      "file": ".claude/skills/aisa-render/SKILL.md",
      "kind": "skill",
+     "role": "mirror",
+     "mechanism": "Step 9b tells the executor to write lost obligations (partial/missing with owner) into _render/render-gaps.md as well as into the record. That duplicates coverage findings in a derived file. The render-validate hook deliberately does not write them, so the skill is the only writer. The inventory lists only the record write.",
+     "via": "",
+     "evidence": "aisa-render SKILL.md:276-279 ('Write the entry as `partial` / `missing` with `required_action` + `responsible_role`, log it to `render-gaps.md`'); render-contract.md:102 ('the entry goes to `render-gaps.md` with its owner'); render-validate.py:32-37 (hook never writes coverage findings to render-gaps.md)",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/skills/aisa-render/SKILL.md",
+     "kind": "skill",
      "role": "validator",
      "mechanism": "Step 2b runs the pre-render check per deliverable (check --stage render --deliverable <id>, no target) and reads expected.version/state, upstream and diagnostics. The skip-vs-gap decision stays with the template's activation.",
      "via": "",
@@ -2895,6 +3425,28 @@
      "evidence": "aisa-render SKILL.md:260-289 (9b; 284 finalize, 285 check --stage render --target; 288-289 no record for not_applicable/blocked)",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-retro/SKILL.md",
+     "kind": "skill",
+     "role": "feeds",
+     "mechanism": "INDIRECT INVALIDATOR. The close-of-engagement retro stages diaries in _retro/, which is a use: freshness source. After /retro, every render-stage record (and the upstream records) reads stale.",
+     "via": "coverage.py build_manifest default freshness",
+     "evidence": "aisa-retro SKILL.md:26 ('Stage each return in `<engagement>/_retro/diary-<persona>.md`'); coverage.py:983-997; the original inventory's own scratch replay listed _retro/note.md as a freshness source",
+     "confidence": "verified",
+     "source": "critic",
+     "adjudication": "Adjudicado F0 (crítico): invalidador indirecto — escreve uma entrada da base de freshness (use: source); não escreve _coverage/."
+    },
+    {
+     "file": ".claude/skills/aisa-revisit/SKILL.md",
+     "kind": "skill",
+     "role": "feeds",
+     "mechanism": "INDIRECT INVALIDATOR. /revisit runs in the Decision phase, after reviews exist, and writes a new file under _simulation/. _simulation/** defaults to use: freshness, so an advisory command that 'never changes the decision' makes every coverage review stale.",
+     "via": "coverage.py build_manifest default freshness",
+     "evidence": "aisa-revisit SKILL.md:27 ('Write `_simulation/revisit_<data>_<alvo>.md`'); coverage.py:983-997 (no exclusion for _simulation/); scratch replay: new _simulation/revisit_*.md -> stale [source-added]",
+     "confidence": "verified",
+     "source": "critic",
+     "adjudication": "Adjudicado F0 (crítico): invalidador indirecto — escreve uma entrada da base de freshness (use: source); não escreve _coverage/."
     },
     {
      "file": ".claude/skills/aisa-round/SKILL.md",
@@ -3175,6 +3727,16 @@
      "evidence": "solution-blueprint.template.md:2 (template_id: solution-blueprint), 27 (blueprint_version_read: v<latest authorized>); coverage.py:2774-2825 (template_path_for, template_authority), 2896-2962 (render_precheck), 2558-2676 (_check_deliverable)",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/packs/pp/pack.yaml",
+     "kind": "pack-config",
+     "role": "declares-contract",
+     "mechanism": "The `blueprint:` block (required_keys) goes through dashboard.bp_pack_cfg into bp_validate, which coverage.structural_check calls. That result feeds approve_blueprint eligibility (a structural block makes the version ineligible). pack.yaml is outside the readable-authority allowlist, so it can never be declared in basis.authorities. A change to this block changes the eligibility verdict on the next read without making any record stale. The inventory lists pack.yaml only as a homonym (lines 128, 188-194).",
+     "via": "coverage.py ReaderAdapter.bp_pack_cfg -> dashboard.py bp_pack_cfg (runpy)",
+     "evidence": "pack.yaml:291-295 (blueprint: required_keys: []); dashboard.py:3494-3506 bp_pack_cfg reads library/packs/<pack>/pack.yaml block 'blueprint'; coverage.py:2748-2772 structural_check -> readers.bp_validate(..., readers.bp_pack_cfg(active_pack(eng)), ...); coverage.py:277-278 ReaderAdapter.bp_pack_cfg; coverage.py:142 PACK_AUTHORITIES = ('deliverable-templates','architecture-templates') excludes pack.yaml",
+     "confidence": "verified",
+     "source": "critic"
     }
    ],
    "mention_only": [
@@ -3238,12 +3800,68 @@
     "Engine paths supported but never produced by the runtime. deliverable.applicability not_applicable/blocked in render records (coverage.py:2508-2556) is never written, because aisa-render 9b writes no record for such deliverables (SKILL.md:288-289). basis.graph_consumed (coverage.py:365-404) is never written, is not in contract §4.2, and is not flagged as unknown by _check_basis (1840-1907).",
     "Cost: coverage_status runs a full inventory on every dashboard build once any record exists; it is free with no records (dashboard.py:4064-4066, 4193-4206). finalize rebuilds the inventory twice and evaluates upstream records recursively (coverage.py:3653, 3709, 3061-3112). run_tests.py:8 attributes 61% of 221 s sequential CI time to 7 coverage test files.",
     "Frozen upstream producers read by the inventory (out of scope, no change): xlsx_extract.py outputs (_capture/*.extraction.json sheets, *.replay.md; coverage.py:840-860, 878-885) and text_extract.py outputs (_capture/*.text.md passages `[HH:MM:SS]`/`## `, evidence-index.md; coverage.py:872-903, 1302-1314). The readable-authority allowlist also admits library/kernel/synthesis-templates, library/kernel/capture-templates and the active pack's architecture-templates (coverage.py:133-142, 437-443). These are hashed only if a record declares them in basis.authorities, so they are not listed as consumers.",
-    "Plan cross-refs: 01_BASELINE.md:17 ('Estender rastreabilidade e readiness sem duplicar comparador'); 04_CONTINUIDADE.md:11 ('coverage.py continua a decidir freshness semântica'); 03_AGENTES_E_PACK.md:37 ('Guardar coverage no mecanismo existente'); 07_MIGRACAO.md:29 and :37. The previous plan's P8 state plays no role here; only current code behaviour was assessed."
+    "Plan cross-refs: 01_BASELINE.md:17 ('Estender rastreabilidade e readiness sem duplicar comparador'); 04_CONTINUIDADE.md:11 ('coverage.py continua a decidir freshness semântica'); 03_AGENTES_E_PACK.md:37 ('Guardar coverage no mecanismo existente'); 07_MIGRACAO.md:29 and :37. The previous plan's P8 state plays no role here; only current code behaviour was assessed.",
+    "Step 0: all 70 scan files are covered, by exact consumer paths or by fnmatch globs in mention_only_files (docs/evolution/*, docs/runtime-hardening/**, .claude/tests/* and .claude/tests/fixtures/coverage/**; fnmatch '*' also matches '/'). None of the covering globs is a runtime path.",
+    "Baseline note: HEAD is e870f0fee69ff9280a99f63b8c600a05f7f34491, and `git diff 85baf10.. HEAD` fails with 'bad object 85baf10...'. Byte-identity with the named baseline commit could not be checked from this clone. git status is clean.",
+    "Broader grep (coverage_v, coverage_state|coverage_module|record_files|select_record, COV-*, coverage-draft, graph_consumed|as_coverage_source|dependency_fingerprint, status.coverage|approve_eligible, conferência) found no new runtime consumer beyond the list. Two new hits are false positives or homonyms: test_synthesis_checks.py:568 ('dependency_fingerprint' = synthesis deps) and migrate.py:282/414 ('confere' = backup check). README.md:55 is an unlisted mention-only doc ('contracts ... coverage'). docs/pp-pack-authoring/.../step-4b-canonical-coverage-accounting.md is a homonym.",
+    "Write paths. (a) The record JSON and .md are written only by coverage.finalize, called via Bash subprocess in aisa-blueprint 1e/13b and aisa-render 9b. That is invisible to PostToolUse hooks, so on-su-change does not fire; the dashboard picks it up only through the _needs_rebuild mtime scan (dashboard.py:7663-7687) or --force. (b) operation.py: no coverage writes (grep). (c) Edit/Write tool: no skill instructs a write into _coverage/, and no guard blocks one (pre-authority-guard.py:56, 69 cover only the SU, decisions, answers, _state.json, _graph/ and _ops/). The draft coverage-draft.json is written with the agent's Write tool to <tmp> outside the engagement. finalize does not enforce that location (read_draft(Path(draft_path)), coverage.py:3641). A draft left inside the engagement would itself become a use: freshness source-added. (d) aisa-start scaffold: no _coverage/ (aisa-start SKILL.md:69 lists _capture/ only). (e) Test and repro builders write records only into fixtures or temp copies (repro-coverage-real-engagement-2026-09-16.py:134-141 copytree).",
+    "Spot-checked and confirmed as listed: coverage.py creator (3622-3756), validator and projector roles; dashboard.py reader (4068-4262, 5649, 5751); blueprint-validate.py reader, writes nothing (50-98); render-validate.py reader, writes sufficiency gaps only (86-115, 502-517); phase-completeness.py glob+json.loads presence check (207-252); on-su-change.py Write/Edit-only trigger with an inaccurate os.replace comment (38, 128); aisa-blueprint writer and validator (63-84, 224-236, 264-275); aisa-render writer and validator (186-215, 260-289); aisa-answer 7b reader (119-130); aisa-capture 7b reader (81-89); aisa-status reader via dashboard --json (45-51, 81, 156-162, 184, 201); aisa-synthesize prose-only (93-100); commands blueprint/render/status/answer/capture; the 6 pp deliverable templates' template_id/blueprint_version_read; the stale 'passo 1b' in CLAUDE.md:35, coverage-contract.md:6, ARCHITECTURE.md:867/889, aisa-answer:130 and aisa-capture:87, pinned by test_coverage_phase4.py:563; coverage.py:39-40 'continua por ligar', pinned by test_coverage_phase4.py:584; coverage.py:791 treats .srt/.txt/.md/.csv as unsupported against text_extract.py:40.",
+    "Reader gap not in the inventory. dashboard.milestone() (dashboard.py:4499-4604) and su_items() never receive status.coverage: build_model computes cov at 5649 and calls milestone at 5652 without it. In Decision with an unapproved current version and no open structural choice, the next-step line reads 'Sem escolhas estruturais abertas — falta a aprovação do negócio' -> 'registar aprovação de <cur>' (dashboard.py:4588-4589). That holds even when there is no blueprint-stage review, or the review is stale or ineligible, which contradicts blueprint-contract.md:72-81 rule 7 and aisa-blueprint step 15(ii). The 'entregas -> /render --all' milestone (4600-4604) also ignores coverage. /resume (commands/resume.md:14-20) and aisa-orient (SKILL.md:49) show only milestone-derived blocks and omit 5b, so a resumed session is never told that coverage blocks the approval.",
+    "Contract-engine drift in manifest scope. coverage-contract.md §6.3 (644-670) declares 'A lista é explícita' and tabulates inputs/_capture/context/enquadramento/answers/frame/options/premortem/lens-outputs/SU/decisions/_blueprint/_synthesis/_render. The engine also excludes _ops/, _migration/ and _graph/ (coverage.py:105-116; the contract has no mention of _ops, _migration or _graph at all). It defaults every other file (_state.json, _simulation/**, _retro/**, calc-chain files) to use: freshness (coverage.py:997), a case the contract table does not cover. graph.py:484-487 quotes a 'Contrato C4' that requires the graph dependency to be added to the contract; coverage-contract.md has no graph dependency at all.",
+    "Scratch replays (copy of fx-coverage-f06 under scratchpad/agents/cov_critic, now deleted; repo untouched, git status clean), all against a record carrying the pre-change reconciliation basis. Baseline: current. SU Conflicted row appended: stale [inventory_sha256, su_fingerprint]. _state.json capture_run+1: stale [source-changed _state.json]. New _simulation/revisit_*.md: stale [source-added]. /status SU health header line: still current (headers are outside su_fingerprint and outside the units). Empty coverage_v04.json: select_record puts it in 'unreadable' ('não se lê'), which blocks every stage (coverage.py:3196-3237). _coverage/ with v01+v03: next_version -> v02.",
+    "Publication window, not in the inventory's handoff notes. finalize reserves coverage_vNN.json with os.open(O_CREAT|O_EXCL) (3688). From then until fh.write (3702) the file exists EMPTY. The full record is then visible for the whole post-write recheck (second build_inventory + compute_basis + coverage_state, 3709-3736) and may still be unlinked on 'changed-during' (3722, 3740). Concurrent readers (a detached dashboard rebuild from on-su-change, a parallel /status) can see an empty record (every stage reads invalid) or a record that is later retracted. The unlink then leaves a version gap that next_version refills with a lower number.",
+    "No pending-operation awareness. coverage.py has no reference to bootstrap, operation.py, _ops/pending.json or 'pending' ops (grep; its only 'pending' hits concern semantic_review.status at 2411-2445). aisa-blueprint and aisa-render do not run bootstrap before finalize; only aisa-status does (SKILL.md:39). CLAUDE.md:31 says bootstrap is what any reader or writer consults before concluding. finalize can therefore stamp the state of a half-applied operation (e.g. SU published, answers.md not yet) as a reviewed basis. Relevant to handoff-v1 read-set / T12.",
+    "Hook timing. blueprint-validate fires on the Write of ux-blueprint_vNN.yaml at step 13, before 13b creates the review. render-validate fires on the Write of the deliverable at step 9, before 9b. finalize runs via Bash, so neither hook fires after the review exists. In the normal flow, the only hook output for a new version or deliverable is 'não avaliada / sem revisão', and the hooks never show the review verdict unless the target is edited again.",
+    "Divergent record-set definitions. phase-completeness enumerates records with glob('coverage_v*.json') (phase-completeness.py:218) and blueprint versions with a lexicographically sorted glob (199). coverage.py deliberately never globs, reading only the boundary-validated list and `^coverage_v(\\d{2,4})\\.json$` (coverage.py:1464-1470, 1460; its A7 finding). dashboard.blueprint_state falls back to a draft version as 'current' when no non-draft exists (dashboard.py:3669-3670), while phase-completeness excludes drafts (199-202).",
+    "Plan cross-ref: 01_BASELINE.md:17 describes coverage.py as 'Reconciliação, consumo declarado e fingerprints semânticos'. 'Consumo declarado' (basis.graph_consumed) has no runtime writer, and 'semantic fingerprints' cover only the SU and the live decision; everything else is compared by bytes. The baseline line overstates current behaviour."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": "library/kernel/tools/coverage.py",
+      "claimed": "path_patterns: 'next version formatted v{:02d} (coverage.py:3606-3612); one counter shared by all three stages'",
+      "corrected": "next_version is not a monotonic counter. It takes the LOWEST unused number (n=1; while n in taken: n+=1). Once any record is removed, whether by finalize's own changed-during unlink or by hand-deleting a torn record (the only recovery), the next finalize fills the gap. The newer review then gets a lower version than an older one. load_records and select_record order by version number and pick the highest as 'latest', so the newer review is silently treated as superseded.",
+      "evidence": "coverage.py:3606-3612 (n=1 loop); coverage.py:3722, 3740 unlink on changed-during; coverage.py:1493 sort by _version_num; coverage.py:1591-1592 typed.sort(...); selected = typed[-1]. Scratch replay: _coverage/ with coverage_v01.json + coverage_v03.json -> next_version = 'v02'"
+     },
+     {
+      "file": ".claude/commands/dashboard.md",
+      "claimed": "evidence 'dashboard.md:9'",
+      "corrected": "The dashboard.py invocation is on line 8. Line 9 is blank.",
+      "evidence": "dashboard.md:8 '`python library/kernel/tools/dashboard.py [--engagement <slug>] [--serve] [--open]`'"
+     },
+     {
+      "file": ".claude/tests/fixtures/coverage/**",
+      "claimed": "'22 record fixtures'",
+      "corrected": "git ls-files lists 20 files in .claude/tests/fixtures/coverage/records/ (rec-neg-* 14, rec-pos-* 1, rec-v01..v05 5). The whole fixture tree has 53 tracked files.",
+      "evidence": "git ls-files .claude/tests/fixtures/coverage/records | wc -l -> 20"
+     },
+     {
+      "file": ".github/run_tests.py",
+      "claimed": "'the 7 coverage files take 61% of 221 s sequential'",
+      "corrected": "The 61%/7-files figure is the docstring's stale measurement. The repo now has 8 test_coverage_*.py files (contract, fixtures, freshness, graph, integration, inventory, phase4, phase5), and the inventory's own mention_only entry counts all 8.",
+      "evidence": "run_tests.py:8; git ls-files '.claude/tests/test_coverage_*.py' -> 8 files"
+     },
+     {
+      "file": "library/kernel/glossary.md",
+      "claimed": "evidence 'glossary.md:93' (the term Coverage review only)",
+      "corrected": "The glossary defines four coverage terms with user-facing phrases, all used by test_user_language: Coverage review (93), Reconciliation (94), Stale (95) and not_evaluated (96, 'ainda não foi conferido').",
+      "evidence": "glossary.md:93-96"
+     },
+     {
+      "file": ".claude/hooks/on-su-change.py",
+      "claimed": "projector via 'spawns dashboard.py, which computes status.coverage' (rationale accepted as the reason for the _coverage/ trigger)",
+      "corrected": "The hook's rationale ('status.coverage is part of the model the page projects') is false for the HTML. render_html never reads model.status.coverage. The only coverage-related HTML content is the _coverage/ file list in the Ficheiros tab. A rebuild triggered by _coverage pays for a full inventory (coverage_status runs whenever a record exists), and the HTML then throws the result away. Only `--json` consumers (aisa-status) use it.",
+      "evidence": "on-su-change.py:36-37; dashboard.py:2271-2276 (same rationale); dashboard.py:7199-7206 payload has no coverage; 'coverage' key appears in dashboard.py only at 4092, 4116, 4151, 4228, 4232, 5751 (model assembly, no HTML use)"
+     }
+    ],
+    "unconfirmed": [
+     "The fields_draft ordering replay (first-time draft makes reconciliation stale; xlsx-sheet 2->0, xlsx-column 18->25) was not re-run. Only the static code path was confirmed (coverage.py:813-844; fields_draft.py:317; aisa-blueprint SKILL.md:63 vs 172-176).",
+     "Cost figures (dashboard.py:4064-4066 '~0.3-1 s'; run_tests.py:8 '61% of 221 s') are docstring or comment claims and were not measured.",
+     "classify_decisions (dashboard.py:2934) also matches BP_APPROVAL_RE = 'blueprint\\s+bp-v(\\d{1,3})\\s+aprovad' (dashboard.py:2883) in the block BODY. A non-approval D-block whose body quotes 'Blueprint bp-vNN aprovado' would be tagged blueprint-approval. It would then drop out of the coverage inventory, su_fingerprint and live_solution_decision (coverage.py:638-651, 1031-1062), which is a possible false 'current'. Whether real decisions.md blocks contain that phrase cannot be determined (projects/ is empty).",
+     "aisa-decide -> aisa-synthesize carrying coverage findings is prose-only (aisa-synthesize SKILL.md:93-100). No mechanism was found, and the listed 'candidate' role could not be confirmed beyond prose.",
+     "Whether private engagements hold _coverage files whose names fall outside `coverage_v\\d{2,4}.json` cannot be determined. phase-completeness would count such files (glob `coverage_v*.json`, phase-completeness.py:218), while coverage.py ignores them (coverage.py:1460)."
+    ]
    }
   },
   "implementation_spec": {
@@ -3262,6 +3880,26 @@
    "pattern": "implementation-spec",
    "consumers": [
     {
+     "file": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md",
+     "kind": "other",
+     "role": "declares-contract",
+     "mechanism": "Persona memory loaded at runtime by the cfo-lens agent. It states that implementation effort is calculated once, by the Estimate, 'from the Implementation Specification's inventory'. This is prose that reasserts the spec->estimate edge to a council persona. The literal pattern misses it because it spells 'Implementation Specification'.",
+     "via": "agent persona context load (cfo-lens.md:29)",
+     "evidence": ".claude/agent-memory/_universal/cfo-lens/universal-constraints.md:24-27; read by .claude/agents/cfo-lens.md:29 ('.claude/agent-memory/_universal/cfo-lens/*.md (if present)')",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md",
+     "kind": "other",
+     "role": "declares-contract",
+     "mechanism": "Persona memory loaded at runtime by the solution-architect agent (Options/Decision). It states that effort is calculated by the Estimate 'against the Implementation Specification's inventory'. This is the same edge restated to a persona. The regex misses it.",
+     "via": "agent persona context load (solution-architect.md:35)",
+     "evidence": ".claude/agent-memory/_universal/solution-architect/universal-constraints.md:17; read by .claude/agents/solution-architect.md:35",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/commands/render.md",
      "kind": "command",
      "role": "creator",
@@ -3270,6 +3908,16 @@
      "evidence": ".claude/commands/render.md:6 'Invoke the `aisa-render` skill', :8-12 pre/post coverage checks",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/hooks/HOOKS.md",
+     "kind": "doc",
+     "role": "mirror",
+     "mechanism": "Hook documentation that restates render-validate.py (sufficiency rules, append of '## Validação' to render-gaps.md, coverage line) and on-su-change.py (the _render/ trigger). It says the hook fires 'On a Write', but the code fires on Write and Edit. Not read at runtime; only docs/runtime-hardening/accept_phase1.py:370 and accept_phase3.py:153 read it.",
+     "via": "_render/ and render-gaps.md; no 'implementation-spec' token",
+     "evidence": ".claude/hooks/HOOKS.md:13, :17; render-validate.py:537 (`{\"Write\", \"Edit\"}`)",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/hooks/on-su-change.py",
@@ -3333,6 +3981,16 @@
      "via_source": "mechanism"
     },
     {
+     "file": ".claude/rules/shared-understanding-as-source-of-truth.md",
+     "kind": "rule",
+     "role": "declares-contract",
+     "mechanism": "Session-loaded rule that makes two claims about the spec's side-files. First, 'All deliverables render from SU + decisions.md + _synthesis/ topic packs', which contradicts the spec's declared authority: the architecture block plus the approved blueprint. The spec forbids raw SU rows as a migration source (implementation-spec.template.md:28-33, :48). Second, 'Render gaps in _render/render-gaps.md mean SU is incomplete'. But render-validate gaps are owned by architecture or implementation and point at the approved blueprint record, not the SU (render-validate.py:303-406, gap owner default 'architecture' :301).",
+     "via": "_render/render-gaps.md path + 'All deliverables'",
+     "evidence": ".claude/rules/shared-understanding-as-source-of-truth.md:6, :9",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/settings.json",
      "kind": "settings",
      "role": "guard",
@@ -3376,15 +4034,25 @@
      "adjudication": "Adjudicado F0: escreve D-NNN (âmbito, condições, obrigações) que o spec projecta."
     },
     {
+     "file": ".claude/skills/aisa-orient/SKILL.md",
+     "kind": "skill",
+     "role": "declares-contract",
+     "mechanism": "The reorientation table maps a user request for 'estimativa, custo, prazo' to `/render estimate`. Its prerequisites are /decide, an approved /blueprint and /synthesize. It omits the Implementation Specification, which Estimate mode A requires ('available_when: an approved architecture exists AND an Implementation Specification exists'). Nothing in aisa-render orders a single-deliverable run to render the spec first.",
+     "via": "routes to the Estimate, whose mode-A authority is the spec",
+     "evidence": ".claude/skills/aisa-orient/SKILL.md:50-53; library/packs/pp/deliverable-templates/estimate.template.md:78; aisa-render/SKILL.md:12-13 (no ordering rule for a single deliverable)",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/skills/aisa-premortem/SKILL.md",
      "kind": "skill",
-     "role": "feeds",
+     "role": "declares-contract",
      "mechanism": "Classifies mitigations as REQUISITO '(entra no implementation-spec)'. No declared edge premortem.md -> spec exists: the template sources do not name premortem.md and the D-NNN template has no Requirements field; the route can only be aisa-decide reading premortem.md into D-NNN.",
      "via": "premortem.md -> aisa-decide D-NNN -> spec build_gates/open_work_items (implicit)",
      "evidence": "aisa-premortem/SKILL.md:30-33; aisa-decide/SKILL.md:27, :44, :108; implementation-spec.template.md:28-45 (no premortem.md)",
      "confidence": "candidate",
      "source": "inventory",
-     "adjudication": "Adjudicado F0: classifica mitigações como requisito que 'entra no implementation-spec', sem aresta declarada no template."
+     "adjudication": "Adjudicado F0 (crítico): premortem.md não é fonte declarada do spec (ausente de authority/conditional/slot_sources); a promessa 'entra no implementation-spec' não tem aresta."
     },
     {
      "file": ".claude/skills/aisa-render/SKILL.md",
@@ -3447,6 +4115,16 @@
      "evidence": "test_coverage_phase5.py:1-20, :56, :127-144, :182-200, :256-277, :333-343, :596, :706",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/tests/test_handoff_f0.py",
+     "kind": "test",
+     "role": "validator",
+     "mechanism": "Post-baseline F0 test, tracked since commit e870f0f. It names implementation-spec (docstring :5) and requires the artifact key implementation_spec in docs/handoff-v1/F0/consumer-matrix.json (REQUIRED :28). unlisted() (:66-74) fails when a file matching the artifact's literal pattern is not covered. The matrix's implementation_spec entry is built from this inventory: 48 consumers, 21 mention_only, pattern 'implementation-spec'. The test covers itself only through the '.claude/tests/*' mention glob. Because the scan pattern is the literal 'implementation-spec', it cannot detect regex-missed consumers such as the two agent-memory files above.",
+     "via": "",
+     "evidence": ".claude/tests/test_handoff_f0.py:5, :28, :55-74; docs/handoff-v1/F0/consumer-matrix.json artifacts.implementation_spec.pattern == 'implementation-spec' (read via python)",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/tests/test_pp_architecture_templates.py",
@@ -3549,6 +4227,16 @@
      "source": "inventory"
     },
     {
+     "file": "library/kernel/orchestration.md",
+     "kind": "kernel-contract",
+     "role": "declares-contract",
+     "mechanism": "The Comprehension-survival table declares that the spec is the final projection target for four semantic classes: material scope/output family, material user task, material transformation obligation and material exception (frame -> options -> blueprint -> spec). The spec is spelled 'spec', so the regex misses it.",
+     "via": "'spec' spelling",
+     "evidence": "library/kernel/orchestration.md:70 (boundary list '… Decision → Architecture → deliverables'), :77 ('frame → options → blueprint → spec')",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": "library/kernel/render-contract.md",
      "kind": "kernel-contract",
      "role": "declares-contract",
@@ -3576,7 +4264,8 @@
      "via": "convention path library/packs/<pack>/deliverable-templates/<id>.template.md",
      "evidence": "coverage.py:95 DERIVED_FILES render-log/render-gaps, :102 TARGET_DIRS _render/, :142 PACK_AUTHORITIES, :148-154 VERSION_TOKENS, :1497-1512 target_identity, :2461-2678 _check_deliverable (2559-2577 template sha, 2605-2626 template_id), :2774-2780 template_path_for, :2788-2825 template_authority, :2861-2893 expected_version, :2896-3003 render_precheck, :3622 finalize",
      "confidence": "verified",
-     "source": "inventory"
+     "source": "inventory",
+     "adjudication": "Adjudicado F0 (crítico): além de validar, finalize escreve o registo de revisão stage-render do spec em _coverage/ (subprocesso invisível aos hooks); não escreve o spec."
     },
     {
      "file": "library/kernel/tools/dashboard.py",
@@ -3862,12 +4551,58 @@
     "render-validate.py runs on every Write and Edit to a versioned _render file (:537), including manual user edits of an old version, and appends a new '## Validação' block each time (:502-517). It is fail-open (:557-559).",
     "The tests were executed read-only (PYTHONDONTWRITEBYTECODE=1) and git status stayed clean afterwards. test_pp_pack_integrity.py imports yaml unconditionally (:26) while CI does no pip install (tests.yml:25-27). Whether the CI runner has PyYAML could not be determined here, so the CI verdict for that file is unverified.",
     "Prior maps checked as leads: docs/evolution/writer-reader-map.md:40 (render-validate writes render-gaps with mkdir at L514) agrees with render-validate.py:514-516. authority-map.md:73 says _render/ is owned by aisa-render, which agrees with aisa-render/SKILL.md:136-140.",
-    "Cannot be determined from tracked files: real engagement renders, render-gaps.md or render-log.md content (projects/ is empty), and whether any live engagement still depends on the classic render path."
+    "Cannot be determined from tracked files: real engagement renders, render-gaps.md or render-log.md content (projects/ is empty), and whether any live engagement still depends on the classic render path.",
+    "Step 0: every one of the 58 scan files is covered. Each is either an exact consumer or mention_only entry, or matched by a docs/ glob (docs/pp-pack-authoring/**, docs/runtime-hardening/*). No runtime path (.claude/, library/, CLAUDE.md) is covered only by a glob. 30 of the 48 listed consumers are not scan hits; they were added as regex-missed consumers.",
+    "Scope drift: the working tree is no longer the bare baseline. HEAD e870f0f (branch claude/clone-repo-awui-7mmi37) adds tracked F0 files: .claude/tests/test_handoff_f0.py, .claude/tests/fixtures/handoff-v1/** and docs/handoff-v1/F0/*.json. At the start of this run test_handoff_f0.py and two matrices showed as untracked, and they were committed during the run. None of the handoff-v1 fixtures mention implementation-spec, _render or work packages (grep).",
+    "Write-path audit for the artifact. (a) The rendered spec, render-log.md and aisa-render's render-gaps entries are written by the LLM via Write/Edit (aisa-render/SKILL.md:251-252, :293). PreToolUse pre-write-guard only guards library/; pre-authority-guard excludes _render/ (:53-56, :126-128). PostToolUse fires render-validate and on-su-change. (b) render-validate.py appends render-gaps.md with Python open('a') (:502-517), in hook mode or CLI mode, invisible to other hooks, with no lock and no atomic write. (c) coverage.py finalize writes _coverage in a subprocess (see wrong[0]). (d) operation.py, bootstrap.py, graph.py, migrate.py and projection.py have 0 occurrences of 'render' (grep -c). (e) The aisa-start scaffold does not create _render/ (aisa-start/SKILL.md:57-70). (f) No other skill writes _render/: grep finds only aisa-render, aisa-simulate (':38 mirrors _render/', prose) and aisa-status.",
+    "projection.py is the /status source named in CLAUDE.md and aisa-status/SKILL.md:36. It has no render or handoff state (0 matches), so render gaps and blocked or skipped deliverables reach /status only through dashboard.py --json status.render.",
+    "dashboard.render_state has two blind spots. It counts gaps cumulatively: parse_render_gaps turns every table row ever appended to the append-only render-gaps.md into a gap (dashboard.py:2494-2503, :4047-4048). No resolved marker exists anywhere. The HTML table takes its headers from the first gap row (dashboard.py:7603-7611), but render-validate's 6-column table (render-validate.py:507-509) and aisa-render's unspecified gap format (SKILL.md:139, :252) differ. Second, renders_blueprint_version is simply the approved version (dashboard.py:4043-4053): behind_current_blueprint compares approval with the current blueprint and never inspects which version a rendered spec actually read.",
+    "--all ordering: '(4) before (6) before (2)' exists only in render-contract.md:126. aisa-render/SKILL.md:13 renders 'every deliverable declared in pack.yaml' and states no order; its only 'order' hits are slot resolution (:142-144). pack.yaml lists executive-report (2nd) before estimate (last) (pack.yaml:90-121). Spec-before-estimate holds by manifest order; estimate-before-executive does not.",
+    "render-validate CLI picks the 'newest' render by lexicographic sort of '*_<deliverable>_v*.md' (render-validate.py:582-586). DELIVERABLE_RE accepts 2-3 digits (:57), so v100 sorts before v99.",
+    "Phase-gate inconsistency: aisa-render/SKILL.md:43 says earlier /render attempts 'are allowed' while :45 says 'stop'. render-on-decision-only.md:6 says a pre-decide render 'will fail with explicit render-gaps.md warnings' (soft), and its transition (:7) omits blueprint approval, which the spec's activation requires (template :18-19).",
+    "coverage.py upstream chain: UPSTREAM_STAGE['render'] = ('blueprint', 'reconciliation') (coverage.py:3057-3058), and _check_schema requires a based_on of blueprint or reconciliation for stage render (:1815-1834). A render review can never cite another render review, which confirms that coverage has no spec->estimate edge. Any template edit to implementation-spec.template.md marks existing stage-render records COV-STALE (:2559-2577). This is a coupling any F1/F4 template change will trigger.",
+    "blueprint-contract.md:207 says only screens_to_build comes from the approved blueprint. The spec template also reads approved-blueprint entities, entities[].state_machine and entities[].approval (implementation-spec.template.md:35-36, :313-318), so the downstream-consumer declaration under-states what the spec reads.",
+    "test_pp_pack_integrity.py AUTHORITY_EDGES (:829) hard-codes implementation-specification -> [architecture, decision, synthesis] and omits ux-blueprint, although render-contract.md:113 names 'the approved UX blueprint' as primary authority. The hand-kept graph drifts from the contract.",
+    "on-su-change.py:36-40 says finalize writes 'with open() + os.replace()'. coverage.py:3638-3639 says there is no os.replace, and the code uses os.open(O_EXCL) + write_text. The comment is inaccurate; the behaviour is unaffected.",
+    "resolve.py:997 claims DERIVED_GLOBS (incl. '_render/**/*.md', :1008) are 'the derivatives aisa-answer step 7 walks'. aisa-answer/SKILL.md:118 lists no _render/, which confirms the inventory's point that cited_by has no runtime caller over rendered specs.",
+    ".claude/tests/fixtures/blueprints/snapshot-b81d39c.json:416, :1105 (fixture text mentioning the spec's 'Migração e cutover' section; read by test_blueprint_yaml.py:474) is covered only by the '.claude/tests/*' fnmatch glob, which matches across '/'. It is mention-only data.",
+    "Spot-checked and confirmed as stated: aisa-render/SKILL.md (:12, :41-45, :110-123, :136-140, :184-185, :192, :249, :251-252, :284-285, :293-299, :329, :392); render-validate.py (:55-63, :411-482, :502-517, :537, :557-559, :566, :414 default pack 'pp'); implementation-spec.template.md frontmatter (:2-3, :11, :18-24, :28-58, :221-248, :250-286, :310-332); dashboard.py (:2471, :4037-4055, :4558-4614, :4666-4679); aisa-blueprint (:222 write, :275 approval D-NNN); aisa-decide (:83-99, no 'gates'/'status' fields); aisa-synthesize (:30-31); fields_draft.py (:383-386 tmp + os.replace); on-su-change.py (:34-35); settings.json (:4-5, :58, :66, :70); phase-gate-check.py (:234); pre-authority-guard.py (:53-56, :126-128); test_status_model.py (:905-917); test_render_validate.py (:336-344 skip); tests.yml; pack.yaml (:107-111); estimate/executive/discovery/brief negative and positive edges."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": "library/kernel/tools/coverage.py",
+      "claimed": "role: validator (mechanism text mentions finalize only in passing)",
+      "corrected": "Validator AND creator. finalize() is the only writer of the stage-render coverage records that the artifact's own path_patterns name (_coverage/coverage_v<NN>.json + .md, deliverable.id == implementation-spec). It reserves the version with os.open(O_CREAT|O_EXCL), writes the JSON, then writes the .md projection with write_text. It does not use operation.py. aisa-render step 9b invokes it as a Bash subprocess, so no PostToolUse hook sees the write.",
+      "evidence": "coverage.py:3622-3627 (docstring: 'A ÚNICA operação de escrita deste módulo … apenas dentro de _coverage/'), :3677-3690 (O_CREAT|O_EXCL reservation), :3693-3697 (payload write), :3745 (md_path.write_text); aisa-render/SKILL.md:284; on-su-change.py:36-40 (finalize runs in a subprocess, 'not a tool call, so PostToolUse never fires on it')"
+     },
+     {
+      "file": ".claude/tests/test_pp_deliverable_templates.py",
+      "claimed": "114 requireYaml()-gated assertions skip without PyYAML; ran locally: 247 tests OK",
+      "corrected": "Without PyYAML the file does not skip cleanly: 'Ran 247 tests … FAILED (failures=55, skipped=114)'. 55 phrase/source assertions are not gated and fail, e.g. test_impl_spec_forbids_reading_the_estimate and test_the_executive_estimate_read_is_not_expanded. The '247 OK' result depends on the system PyYAML (/usr/lib/python3/dist-packages/yaml). Also without PyYAML: test_pp_pack_integrity.py dies at import (:26, ModuleNotFoundError) and test_a5_dictionary_contract.py skips 12. CI declares stdlib-only.",
+      "evidence": "Read-only run with a stdlib-only venv (scratchpad venv_stdlib, PYTHONDONTWRITEBYTECODE=1; git status clean afterwards); .github/workflows/tests.yml:24-27 ('Sem pip install: ADR-001 diz stdlib apenas'); test_pp_pack_integrity.py:26"
+     },
+     {
+      "file": ".claude/skills/aisa-premortem/SKILL.md",
+      "claimed": "role: writer (of the spec's inputs)",
+      "corrected": "declares-contract (candidate). It writes premortem.md, and premortem.md is not a source of the spec: it is absent from authority_sources, conditional_sources and slot_sources. The only content that touches the spec is the prose classification 'REQUISITO (entra no implementation-spec)'. aisa-decide lists premortem.md as input for 'requirements for the D-NNN block', but the D-NNN template has no Requirements field.",
+      "evidence": "aisa-premortem/SKILL.md:30-33; implementation-spec.template.md:28-58; aisa-decide/SKILL.md:27, :83-108"
+     },
+     {
+      "file": "library/kernel/render-contract.md",
+      "claimed": "The implementation-spec -> estimate edge carries inventory only (components · obligations · proof work · migration steps · open work items), and the inventory lists this as the declared payload without flagging drift",
+      "corrected": "The Estimate template reads more of the spec than render-contract's payload row declares: build gates (estimate_preconditions), sequencing (phases_table, profile_load), the §4 counts used as drivers ('spec §4 …'), and the §16 operating-path change (operational_impact). The spec template also names the Estimate as the consumer of its operating_path_change section. The edge payload is therefore under-declared at kernel level, and no test compares the two lists.",
+      "evidence": "render-contract.md:123; estimate.template.md:335-341, :359, :361, :368, :372, :373; implementation-spec.template.md:164 ('consumer: the Estimate's operational_impact reads THIS section (mode A)')"
+     }
+    ],
+    "unconfirmed": [
+     "Whether the GitHub Actions setup-python 3.12 interpreter provides PyYAML. If it does not, test_pp_pack_integrity.py fails at import and test_pp_deliverable_templates.py fails 55 assertions in CI (tests.yml does no pip install).",
+     "Whether the PostToolUse hooks in one matcher group (on-su-change.py, then render-validate.py; settings.json:53-73) run concurrently. If they do, the detached, 2 s-debounced dashboard build may or may not include render-validate's Python append to render-gaps.md, and that append is not a tool call, so it never re-triggers on-su-change. Only the --serve mtime watcher (_needs_rebuild scanning INDEX_DIRS incl. _render, dashboard.py:7663-7687) would catch it.",
+     "Whether any Estimate stage-render coverage review in practice lists the rendered spec in basis.authorities. compute_basis would sha-track such an in-engagement path (coverage.py:1105-1112; safe_path :446-466), so pinning is technically possible. Neither estimate.template.md (the authority is named in prose, :131) nor aisa-render step 9b instructs it.",
+     "Whether live engagements (projects/ is empty here) carry render-log.md in the aisa-render step-10 plain-line format or in the '## <TS> — label' heading form that dashboard.render_state parses.",
+     "Whether aisa-render in practice runs the render-validate CLI after the hook already fired. The CLI without --dry-run appends a second '## Validação' block (render-validate.py:587-589), and dashboard counts every table row cumulatively."
+    ]
    }
   },
   "estimate": {
@@ -3920,7 +4655,18 @@
      "evidence": ".claude/agents/cfo-lens.md:24,27-31",
      "confidence": "verified",
      "source": "inventory",
-     "adjudication": "Adjudicado F0: fonte de esforço fora do Estimate — envelope de custo por candidato antes da decisão. Relevante para T32/F6 (um único dono do esforço)."
+     "adjudication": "Adjudicado F0 (crítico): só tem ferramentas de leitura; devolve o envelope de custo por candidato ao chairman, que o escreve. Fonte concorrente, não escritor."
+    },
+    {
+     "file": ".claude/agents/chairman.md",
+     "kind": "agent",
+     "role": "competes",
+     "mechanism": "The only council agent with Write/Edit. Writes options.md, including the mandatory 'Order of magnitude' column (the competing pre-decision effort band), in the shape chairman-synthesis specifies. chairman-synthesis says it executes this agent's role.",
+     "via": "chairman-synthesis/SKILL.md:10 binds the skill to this agent's role",
+     "evidence": ".claude/agents/chairman.md:4,32,46,64; .claude/skills/chairman-synthesis/SKILL.md:10,266-268,327-343",
+     "confidence": "verified",
+     "source": "critic",
+     "adjudication": "Adjudicado F0 (crítico): escreve options.md com a coluna obrigatória de ordem de grandeza — esforço pré-decisão fora do Estimate."
     },
     {
      "file": ".claude/agents/solution-architect.md",
@@ -3931,7 +4677,7 @@
      "evidence": ".claude/agents/solution-architect.md:25,30,33-37",
      "confidence": "verified",
      "source": "inventory",
-     "adjudication": "Adjudicado F0: fonte de esforço fora do Estimate — ordem de grandeza por opção (decision-tree §14.1). Relevante para T32/F6 (um único dono do esforço)."
+     "adjudication": "Adjudicado F0 (crítico): só tem ferramentas de leitura; devolve a ordem de grandeza ao chairman. Fonte concorrente, não escritor."
     },
     {
      "file": ".claude/commands/render.md",
@@ -4177,6 +4923,28 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/tests/test_coverage_phase5.py",
+     "kind": "test",
+     "role": "validator",
+     "mechanism": "Executable test (not a string assertion). It runs coverage render_precheck for `estimate` and asserts declared == 'none' and expected.state == 'no-blueprint-read'. It pins the current `blueprint_version_read: none`, which hides the Estimate's read of the blueprint architecture block. Any F2 change to the Estimate's version/read-set declaration must adapt this test.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Executable test (not a string assertion). It runs coverage render_precheck for `estimate` and asserts declared == 'none' and expected.state == 'no-blueprint-read'. It pins the current `blueprint_version_read: none`, which hides the Estimate's read of the blueprint architecture block. Any F2 change to the Estimate's version/read-set declaration must adapt this test.",
+     "evidence": ".claude/tests/test_coverage_phase5.py:202-206; library/packs/pp/deliverable-templates/estimate.template.md:8",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
+     "file": ".claude/tests/test_status_model.py",
+     "kind": "test",
+     "role": "validator",
+     "mechanism": "Executable test of dashboard render_state. Its render-log fixture has an estimate entry in a `## <TS> — ...` heading format with the literal word 'skip'. That format is not the one aisa-render prescribes, so the test protects a reader format that the writer spec does not produce.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Executable test of dashboard render_state. Its render-log fixture has an estimate entry in a `## <TS> — ...` heading format with the literal word 'skip'. That format is not the one aisa-render prescribes, so the test protects a reader format that the writer spec does not produce.",
+     "evidence": ".claude/tests/test_status_model.py:904-919; .claude/skills/aisa-render/SKILL.md:293-298; library/kernel/tools/dashboard.py:4039-4040,4050",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
+    },
+    {
      "file": ".github/run_tests.py",
      "kind": "ci",
      "role": "validator",
@@ -4325,6 +5093,16 @@
      "source": "inventory"
     },
     {
+     "file": "library/kernel/synthesis-templates/financial-story.template.md",
+     "kind": "kernel-contract",
+     "role": "reader",
+     "mechanism": "Body section '## Investment reference' reads the Estimate render: 'cite the Estimate's headline and its file (`_render/<slug>_estimate_v<NN>.md`)', else writes 'Estimativa ainda não produzida'. This read is NOT in the template's own `sources:` (37-41), NOT in aisa-synthesize's input table for financial-story, and NOT in dashboard's fallback sources, so a new Estimate version never stales financial-story. It is a render->synthesis edge outside render-contract's 'exactly two' edges. It also cites a 'headline' the Estimate does not declare. The auto-run at /decide happens before /render, so it only resolves on a manual /synthesize after render.",
+     "via": "",
+     "evidence": "library/kernel/synthesis-templates/financial-story.template.md:37-41,92-93; .claude/skills/aisa-synthesize/SKILL.md:41; library/kernel/tools/dashboard.py:3775-3778; library/kernel/render-contract.md:119-126; library/packs/pp/deliverable-templates/estimate.template.md:379-587 (no headline section)",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": "library/kernel/synthesis-templates/risks-and-assumptions.template.md",
      "kind": "kernel-contract",
      "role": "guard",
@@ -4384,6 +5162,17 @@
      "evidence": "library/packs/pp/architecture-templates/architecture-core.md:188-195,218,233,253-256; estimate.template.md:138-145,368,374",
      "confidence": "verified",
      "source": "inventory",
+     "via_source": "mechanism"
+    },
+    {
+     "file": "library/packs/pp/decision-model/alternatives-register.md",
+     "kind": "pack-knowledge",
+     "role": "declares-contract",
+     "mechanism": "Pre-decision per-form effort vocabulary: two forms are two candidates with 'two effort profiles'. This is another pre-decision effort statement per option, besides the decision-tree.md:483 'effort profile'.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Pre-decision per-form effort vocabulary: two forms are two candidates with 'two effort profiles'. This is another pre-decision effort statement per option, besides the decision-tree.md:483 'effort profile'.",
+     "evidence": "library/packs/pp/decision-model/alternatives-register.md:70-72; library/packs/pp/decision-tree.md:482-484",
+     "confidence": "verified",
+     "source": "critic",
      "via_source": "mechanism"
     },
     {
@@ -4596,12 +5385,77 @@
     "Ordering nuance: financial-story may 'reference an already-produced Estimate' (financial-story.template.md:33-36) but synthesis runs before render (render-contract.md:3-12; aisa-decide/SKILL.md:143-145), so such a reference can only point at a previous Estimate version; render-contract.md:126 claims the read graph is acyclic.",
     "aisa-orient's route for estimativa omits the Implementation Specification prerequisite (aisa-orient/SKILL.md:53); correctness depends on `--all` ordering (render-contract.md:126). A standalone `/render estimate` without a spec falls to blocked or mode B.",
     "Previous-plan items (docs/CONSOLIDATED_PLAN.md P-E1/P-E2/P-R9, docs/evolution P0..P8) were treated as provenance only, per plan v1.2 rule 2; prior maps in docs/evolution (writer-reader-map.md, authority-map.md) contain no Estimate-specific rows.",
-    "estimation-model.md header 'Not an Options D3 pull target' (line 6) and domain-knowledge/README.md:66 coexist with the PACK MODEL use at Options (estimation-model.md:31-38). They are consistent only if PACK MODEL is not a D3 pull, which matters for plan 03 (pack access by mandate)."
+    "estimation-model.md header 'Not an Options D3 pull target' (line 6) and domain-knowledge/README.md:66 coexist with the PACK MODEL use at Options (estimation-model.md:31-38). They are consistent only if PACK MODEL is not a D3 pull, which matters for plan 03 (pack access by mandate).",
+    "Step 0: all 44 scan files in scan/estimate.json are covered by consumers or mention_only globs (fnmatch). uncovered_scan_files = [].",
+    "Step 1, broader search: a case-insensitive grep over tracked files (excl. projects/, docs/handoff-v1/, docs/pp-pack-authoring/, .claude/tests/) for estimat|owns_calculation|input_modes|semantic_owner|calculation_executor|person-day|pessoa-dia|esforço|effort, plus a separate grep for _render. New hits beyond the inventory are only the entries under missed/wrong. Everything else was generic: the eight-axis 'esforço de alto nível' lines in lens-business/data/governance/user SKILL.md:43-44 and aisa-round/SKILL.md:69; data-steward/universal-constraints.md:10 and user-advocate/anti-patterns.md:14; generic 'order of magnitude' in pack domain knowledge (sharepoint.md:320, store-boundaries.md:80, integration-mechanisms.md:133, performance-and-scale.md:407, blocking-set.md:77, azure-sql.md:434); pp glossary.md:108 ('Effort vs elapsed duration'); automation-mechanisms.md:421; docs/PHILOSOPHY.md:169; docs/evolution oracles/P1/METHOD (previous-plan provenance, rule 2); docs/runtime-hardening repro scripts that list 'estimate' among deliverables (coverage-phase-5-report.md:87,288 documents the `none` token). None of these writes or reads the Estimate.",
+    "No Python engine or hook computes effort. grep for estimat|esforç in library/kernel/tools/*.py and .claude/hooks/*.py hits only dashboard ARB_AXIS_RE (1404), docstrings at 1771/1780, and render-validate DELIVERABLE_RE (57). operation.py, migrate.py, bootstrap.py, graph.py and projection.py never mention `_render` (bootstrap AUTHORITIES tuple at 76-77 omits it by enumeration).",
+    "Write paths of `<engagement>/_render/<slug>_estimate_v<NN>.md`: (a) the Write tool from the aisa-render skill (SKILL.md:251; append-only 392); (b) a user hand-edit with Write/Edit, which is legitimate per SKILL.md:392, triggers render-validate and on-su-change, and is not gated by pre-authority-guard. Not via operation.py (no `_render` handling). Not scaffolded by aisa-start (SKILL.md:57-69 creates no `_render/`). Not handled by migrate.py. No subprocess writes the estimate file itself. Related subprocess writes invisible to hooks: coverage.py finalize -> `_coverage/`; the render-validate CLI/hook append to `_render/render-gaps.md` (render-validate.py:502-517, 588-589), which never fires for the estimate because the estimate template has no `sufficiency:` block and validate() returns early (421-424); dashboard.py -> dashboard.html.",
+    "Extra dashboard reader evidence not cited by the inventory: INDEX_DIRS includes `_render`, so estimate renders appear in the Ficheiros tab and in the _needs_rebuild mtime scan (dashboard.py:2269-2270,2284). The deliverables block lists estimate versions (7595-7602). The 'deliverables' read-to-resume set names neither the spec render nor the estimate (4666-4670).",
+    "No post-decision effort consumer uses the Estimate. aisa-status classifies build-effort tripwires as 'não avaliável' (aisa-status/SKILL.md:58) instead of reading the Estimate. aisa-revisit's switching cost reads only the frozen counterfactual bands (aisa-revisit/SKILL.md:17,25). aisa-answer step 7 omits `_render/` (SKILL.md:118).",
+    "estimate.template.md has `solution_name` as a required slot (285) with no `slot_sources` entry (356-377). All six deliverable templates share this generic defect; it matters to aisa-render's source-contract check (SKILL.md:131-133).",
+    "The inventory's spot-checked claims hold on re-read for: aisa-render (writer; the Inputs list at 110-121 lacks the spec render), aisa-simulate (writer of the competing band, 32,38-39), aisa-decide (counterfactual freeze of the effort band, 141), chairman-synthesis (4 markers, 327-343), aisa-revisit (25,54), pre-authority-guard (53-56; test 91-99), render-validate (early return 421-424; CLI glob 582), on-su-change (TRIGGER_DIRS 34-35), resolve.py (DERIVED_GLOBS 1000-1009; only test callers), coverage render_precheck (token none -> reconciliation-only upstream, 2861-2865, 2963-2978), executive-report headline payload (86-111) with no Estimate headline section, cfo-lens memory S/M/L as weeks (19-24), aisa-orient route (53), and pack.yaml mandatory:false (119)."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": ".claude/agents/cfo-lens.md",
+      "claimed": "role writer — per-candidate build-cost envelope written pre-decision",
+      "corrected": "The agent cannot write files: its tools are [Read, Grep, Glob]. It returns text to chairman-synthesis, the only writer of options.md in council mode. Role: declares-contract / text producer, not writer.",
+      "evidence": ".claude/agents/cfo-lens.md:4,24; .claude/agents/chairman.md:3-4"
+     },
+     {
+      "file": ".claude/agents/solution-architect.md",
+      "claimed": "role writer — returns §14.1 field set incl. order of magnitude",
+      "corrected": "The agent cannot write files: its tools are [Read, Grep, Glob]. It returns the field set to the chairman, which writes options.md. Line 23 also says the persona does NOT read lens-technology SKILL.md. Role: declares-contract / text producer.",
+      "evidence": ".claude/agents/solution-architect.md:4,23,30"
+     },
+     {
+      "file": "library/kernel/synthesis-templates/financial-story.template.md",
+      "claimed": "role guard only (computes_implementation_effort false; may only reference an already-produced Estimate)",
+      "corrected": "It is also a READER/projector of `_render/<slug>_estimate_v<NN>.md` through its '## Investment reference' section. The read is undeclared in `sources:` and cites a 'headline' the Estimate does not have (see missed entry).",
+      "evidence": "library/kernel/synthesis-templates/financial-story.template.md:37-41,92-93"
+     },
+     {
+      "file": "library/kernel/tools/coverage.py",
+      "claimed": "role validator only",
+      "corrected": "Also a writer: `finalize` publishes the stage-render review record of the estimate into `_coverage/`, as a subprocess invisible to hooks. A second, contract-level point the inventory missed: the coverage manifest excludes `_render/**` as a SOURCE by contract (TARGET_DIRS). So the spec render the Estimate reads in mode A can never enter a render review's freshness basis. Declaring a spec version is not enough; F2 has to change the manifest rule.",
+      "evidence": "library/kernel/tools/coverage.py:29,42,102,989,3622,3752-3753; library/kernel/coverage-contract.md:655,661-664"
+     },
+     {
+      "file": "library/kernel/tools/dashboard.py",
+      "claimed": "render_state parses render-log.md/render-gaps.md and computes stale_vs_approval by comparing last render run time with blueprint approval time; RENDER_RE at dashboard.py:2470",
+      "corrected": "RENDER_RE is at line 2471. render_state only recognises runs written as `^##\\s+<TS> — ...` headings, and skip_mentions counts only the whole word 'skip'. aisa-render's prescribed run summary is a bare `<ISO timestamp> — rendered ...` line with 'skipped:'/'blocked:' keys. Written as prescribed, it gives runs=[], last_run='', stale_vs_approval=None and skip_mentions=0, and a BLOCKED estimate is never counted. Only the test fixture's format parses. RENDER_RE also takes only 2-digit versions, while render-validate DELIVERABLE_RE takes 2-3.",
+      "evidence": "library/kernel/tools/dashboard.py:2471,4037-4054; .claude/skills/aisa-render/SKILL.md:293-298; .claude/hooks/render-validate.py:55-57; .claude/tests/test_status_model.py:911-913"
+     },
+     {
+      "file": "library/kernel/render-contract.md",
+      "claimed": "`--all` renders spec (4) before estimate (6) before executive (2) (stated as runtime behaviour)",
+      "corrected": "The order is stated ONLY in render-contract.md:126. aisa-render, the sole executor, never states it: `--all` enumerates the deliverables declared in pack.yaml, where executive-report (86-89) comes before estimate (117-123). No test asserts the order. Followed literally, the Executive is rendered before this run's Estimate exists, so it omits the investment paragraph or reads an older estimate version.",
+      "evidence": "library/kernel/render-contract.md:126; .claude/skills/aisa-render/SKILL.md:13,142-154; library/packs/pp/pack.yaml:86-89,117-123"
+     },
+     {
+      "file": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+      "claimed": "weeks presentation (298) contradicts the template; contradictions limited to Gantt/duration/weeks/FTE, SU+Options counting, placeholder, SME buffer, round UP, risk-register consumer",
+      "corrected": "Partly wrong, and incomplete. The template ALLOWS per-profile 'minimum weeks' (person-days / dedication). It forbids only a weekly grid, a Gantt, calendar dates and derived overlap, so line 298 conflicts only because it gives a whole-project duration derived from staffing. Two contradictions were missed. (1) The UNCERTAINTY HANDLING table's 'SU surface' column tells the method user to open `Unknown`/`Risky` SU rows (e.g. 'criticidade=Critical'). That is an SU-write instruction inside the Estimate method, while aisa-render may not create upstream facts or edit the SU. (2) The COMPLEXITY MULTIPLIER is keyed on source-workbook sheet counts (94-97), and line 330 uses a 'formula-count signal'. Both are capture-derived drivers, and the template forbids `_capture/*`/`inputs/*` and says 'the Estimate never reads the capture' for drivers.",
+      "evidence": "library/packs/pp/domain-knowledge/craft/estimation-model.md:94-97,296-299,323-331; library/packs/pp/deliverable-templates/estimate.template.md:163,178-179,199-202,328-333,359,372; .claude/skills/aisa-render/SKILL.md:37,276"
+     },
+     {
+      "file": ".claude/rules/render-on-decision-only.md",
+      "claimed": "role guard — forbids rendering the Estimate before /decide",
+      "corrected": "Prose only; no code enforces it. phase-gate-check.py evaluates only aisa-frame/aisa-options/aisa-decide, and pre-authority-guard deliberately excludes `_render/`. The only enforcement is aisa-render's own instruction to stop when phase != decision.",
+      "evidence": ".claude/hooks/phase-gate-check.py:234-236; .claude/hooks/pre-authority-guard.py:53-56; .claude/skills/aisa-render/SKILL.md:43-45"
+     }
+    ],
+    "unconfirmed": [
+     "What 'an approved architecture exists' means in mode A (estimate.template.md:78): blueprint approval (`Blueprint bp-v<NN> aprovado` D-NNN) or architecture authorization. aisa-render SKILL.md:96 treats them as distinct facts; the template does not say which.",
+     "Which D-NNN the Estimate reads for scope, accepted risks, conditions and preconditions. Solution decisions and blueprint approvals share one counter (aisa-decide/SKILL.md:124-125), and the template gives no selection rule.",
+     "Which estimate version executive-report (template :204) and financial-story (template :93) read. Both write `_v<NN>` with no rule (latest / same run / same revision).",
+     "Whether the harness runs PostToolUse hooks in parallel. If it does, render-validate appending to render-gaps.md could race with the on-su-change dashboard regeneration. This is harness behaviour and cannot be read from the repo.",
+     "Whether solution-architect actually reads craft/estimation-model.md at Options to fill PACK MODEL. It is pull-based (solution-architect.md:25), but pack.yaml:228-229 and estimation-model.md:6 say CRAFT units are never an Options D3 pull target.",
+     "Real runtime behaviour of the Estimate on an engagement: projects/ is empty; the only rendered instance is the historical docs/pp-pack-authoring/pilot/step-9d-evidence/render/pricing-marinha_estimate_v03.md (not read).",
+     "Byte-identity with baseline 85baf10: `git cat-file -t` fails locally. HEAD is now 8b27dd0 (one commit after the inventory's 8b7987e); that commit touches only docs/handoff-v1/F0/* and docs/handoff-v1/README.md (out of scope)."
+    ]
    }
   },
   "state": {
@@ -4640,6 +5494,16 @@
      "evidence": "commands/answer.md:6.",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/commands/blueprint.md",
+     "kind": "command",
+     "role": "reader",
+     "mechanism": "Thin wrapper around aisa-blueprint, whose pre-flight reads _state.json.phase (options|decision) and pack.",
+     "via": "aisa-blueprint",
+     "evidence": "commands/blueprint.md:6; aisa-blueprint/SKILL.md:20-22, :33-39.",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/commands/capture.md",
@@ -4692,6 +5556,26 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/commands/premortem.md",
+     "kind": "command",
+     "role": "reader",
+     "mechanism": "Thin wrapper around aisa-premortem (phase gate Options|Decision read from _state.json).",
+     "via": "aisa-premortem",
+     "evidence": "commands/premortem.md:6; aisa-premortem/SKILL.md:14, :18.",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": ".claude/commands/render.md",
+     "kind": "command",
+     "role": "reader",
+     "mechanism": "Thin wrapper around aisa-render (reads _state.json.pack).",
+     "via": "aisa-render",
+     "evidence": "commands/render.md:6; aisa-render/SKILL.md:112, :123.",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/commands/resume.md",
      "kind": "command",
      "role": "reader",
@@ -4712,6 +5596,16 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/commands/simulate.md",
+     "kind": "command",
+     "role": "reader",
+     "mechanism": "Thin wrapper around aisa-simulate (requires phase in {options, decision}).",
+     "via": "aisa-simulate",
+     "evidence": "commands/simulate.md:6; aisa-simulate/SKILL.md:15, :19.",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/commands/start.md",
      "kind": "command",
      "role": "creator",
@@ -4730,6 +5624,16 @@
      "evidence": "commands/status.md:6; :8-9.",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/commands/synthesize.md",
+     "kind": "command",
+     "role": "reader",
+     "mechanism": "Thin wrapper around aisa-synthesize (full set only when _state.json.phase == decision).",
+     "via": "aisa-synthesize",
+     "evidence": "commands/synthesize.md:6; aisa-synthesize/SKILL.md:22.",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": ".claude/hooks/HOOKS.md",
@@ -5022,6 +5926,16 @@
      "source": "inventory"
     },
     {
+     "file": ".claude/skills/lens-business/SKILL.md",
+     "kind": "skill",
+     "role": "appender",
+     "mechanism": "Indirect _ops writer: appends SU rows with the Edit tool, and PostToolUse on-su-mirror then calls resolve.sync_mirror, which publishes graph + SU through operation.run (pending marker, receipt 'mirror-<sha16>') whenever the mirror changes. The same applies to lens-operations, lens-user, lens-data, lens-governance, lens-financial and lens-technology (each SKILL.md: 'shared-understanding.md — atomic material findings'), and to the SU row writers chairman-synthesis, aisa-decide (R-NNN rows, SKILL.md:127) and aisa-answer step 6 (header). A header-only SU edit (aisa-status step 3, aisa-round 5b, aisa-frame/aisa-options 3.3) produces no receipt because mirror_write_set returns {}.",
+     "via": "Edit on shared-understanding.md -> on-su-mirror.py -> resolve.sync_mirror -> operation.run",
+     "evidence": "lens-business/SKILL.md:29 (identical line in lens-operations/user/data/governance/financial :29, lens-technology :39); settings.json:44-52; on-su-mirror.py:69-74; resolve.py:745-749 (no-op when unchanged), :792-803 (operation.run).",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
      "file": ".claude/skills/lens-technology/SKILL.md",
      "kind": "skill",
      "role": "reader",
@@ -5060,6 +5974,17 @@
      "evidence": "CLAUDE.md:20; :21; :28-34; :41; :63; :77; :96.",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/AISA_Evolution_Plan.zip",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Tracked binary from the previous evolution plan. Its members contracts/AUTHORITY_AND_KNOWLEDGE.md:19 ('Fase e pacote ativo | _state.json | Projeção') and IMPLEMENTATION_PLAN.md:30 ('fase em _state.json') declare _state.json authority. The regex scan misses it because the file is a zip. Previous-plan material: not runtime and not a dependency.",
+     "via": "sem referência textual ao padrão; alcança a autoridade por: Tracked binary from the previous evolution plan. Its members contracts/AUTHORITY_AND_KNOWLEDGE.md:19 ('Fase e pacote ativo | _state.json | Projeção') and IMPLEMENTATION_PLAN.md:30 ('fase em _state.json') declare _state.json authority. The regex scan misses it because the file is a zip. Previous-plan material: not runtime and not a dependency.",
+     "evidence": "git ls-files docs/AISA_Evolution_Plan.zip; zipfile read of the two members at the cited lines.",
+     "confidence": "verified",
+     "source": "critic",
+     "via_source": "mechanism"
     },
     {
      "file": "docs/ARCHITECTURE.md",
@@ -5204,6 +6129,16 @@
     {
      "file": "library/kernel/tools/migrate.py",
      "kind": "engine",
+     "role": "validator",
+     "mechanism": "RECEIPT_STALE refusal tells the operator to delete the receipt by hand ('apagar o recibo desta operacao antes de re-migrar'). That is a hand edit of _ops/, which CLAUDE.md declares forbidden. pre-authority-guard allows the edit when bootstrap is ready, and Bash rm is never hooked.",
+     "via": "",
+     "evidence": "migrate.py:296-304; CLAUDE.md:41, :96; pre-authority-guard.py:147-148.",
+     "confidence": "verified",
+     "source": "critic"
+    },
+    {
+     "file": "library/kernel/tools/migrate.py",
+     "kind": "engine",
      "role": "writer",
      "mechanism": "Writes _state.json only in restore(): every file in manifest.backed_up (includes _state.json whenever it existed at apply time) is re-published from _migration/backup through operation.run (op 'restore-<plan_hash[:16]>', expected = digests read just before). Otherwise reads _state.json only as a byte digest: dry_run 'before' map, apply PLAN_STALE check, no-op detection, and restore WORK_AFTER refusal - any post-migration _state.json change (e.g. a round close) blocks a non-forced restore; --force overwrites it from the backup.",
      "via": "",
@@ -5230,6 +6165,16 @@
      "evidence": "operation.py:353 (INTENT_REQUIRED=('operation_id','after')); :365-406 (read_pending); :409-437 (status); :440-442 (gate_open); :455-460 (request_hash); :477-489 (receipt replay, effects_present); :493-498 (PENDING_EXISTS); :501-508 (BASE_CHANGED); :556-561 (VERIFY_FAILED); :582-649 (recover); :669-693 (CLI status|recover; slug resolved as Path('projects')/slug relative to cwd at :678-681). gate_open callers: only .claude/tests/test_audit_findings.py:76 (grep).",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/operation.py",
+     "kind": "engine",
+     "role": "writer",
+     "mechanism": "The 'recover' CLI is a writer. When the agent runs it through Bash (invisible to hooks), it rolls a pending operation forward: it publishes the staged bytes to the target files (SU, answers.md, _graph/*, or _state.json after a restore), writes _ops/receipts/<op>.json with result 'rolled_forward', unlinks pending.json and removes staging. Every recovery hint names this command (status(), resolve.sync_mirror, bootstrap passes op.recovery through). PENDING_UNREADABLE is a dead end: its advertised recovery ('operation.py recover') raises PendingUnreadable on the same marker, and no code path clears an unreadable marker. The only way out is a hand deletion inside _ops/, which CLAUDE.md forbids.",
+     "via": "",
+     "evidence": "operation.py:582-649 (recover publishes + _finish), :669-693 (CLI), :411-418 (PENDING_UNREADABLE with recovery 'operation.py recover'), :428-431; resolve.py:790; bootstrap.py:292-298. Scratch experiment: _ops/pending.json = '{ trunc' -> 'operation.py recover' rc=1 'marcador de pendência ilegível', 'status' still pending_unreadable naming the same recovery.",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": "library/kernel/tools/projection.py",
@@ -5260,6 +6205,16 @@
      "evidence": "resolve.py:328-348 (bootstrap + read_receipt); :756 (MIRROR_RECOVERABLE); :777-790 (sync_mirror refusal); :955-972 (_apply_plan bootstrap).",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/resolve.py",
+     "kind": "engine",
+     "role": "validator",
+     "mechanism": "apply() decides idempotency from the mere existence of _ops/receipts/resolve-<row>-<sha16>.json and returns 'nada — esta resolucao ja tinha corrido' without checking effects_present, although operation.run itself computes that flag. Sequence: an /answer committed, then 'migrate.py restore --force' (which reverts the SU but deletes only the migration receipt), then re-migration. A re-run of the same /answer then reports success while the transition is absent from the SU. aisa-answer step 5 treats the receipt as the proof.",
+     "via": "",
+     "evidence": "resolve.py:340-348; operation.py:477-489 (effects_present exists but is bypassed); migrate.py:435-440 (only the migration receipt is deleted); aisa-answer/SKILL.md:107-112. Scratch experiment: apply -> answer U-001 (C-001 created) -> restore(force) -> re-apply -> answer again: replayed=True, summary 'nada — esta resolucao ja tinha corrido', C-001 absent from SU.",
+     "confidence": "verified",
+     "source": "critic"
     },
     {
      "file": "library/kernel/tools/resolve.py",
@@ -5349,12 +6304,64 @@
     "Dead or unwired code: _common.read_state (no caller); dashboard.next_action (superseded, no caller, dashboard.py:1936-1960); bootstrap.gate_open/switched and operation.gate_open (called only by tests); projection next_action (always the default when ready); bootstrap context and snapshot revision (computed, never consumed at runtime).",
     "Doc/contract drift: CLAUDE.md:41 and :96 (guard said to cover _migration/ and to refuse unconditionally); CLAUDE.md:30 and README.md:33 ('every knowledge write goes through operation.py', which is not true for _state.json); HOOKS.md:11 (phase-gate verdict said to be always computed); ARCHITECTURE.md:294, :879, :1043-1053, :1075; PACK_AUTHORING.md:170; ONBOARDING.md:191-200; prior maps docs/evolution/writer-reader-map.md:69-79 and authority-map.md:39-52 (list 6 writers).",
     "The mechanical Discovery gate (dashboard._gate_discovery, dashboard.py:5217-5245) has no 'round_in_progress empty' criterion. Only aisa-frame §2 (SKILL.md:69) judges it, although gate_fingerprint includes round_in_progress (dashboard.py:5446).",
-    "phase-gate-check runs bootstrap twice per invocation (_kernel_limitations and _kernel_codes, phase-gate-check.py:165-166)."
+    "phase-gate-check runs bootstrap twice per invocation (_kernel_limitations and _kernel_codes, phase-gate-check.py:165-166).",
+    "Step 0: all 143 scan files are covered, either by the 58 named consumers, by the 3 exact mention-only files, or by the globs .claude/tests/** (56), docs/pp-pack-authoring/** (15), docs/evolution/** (13) and docs/runtime-hardening/** (11). No runtime path (library/, .claude/hooks|skills|commands|agents, .github, CLAUDE.md) is covered only by a glob. Check script: /tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/critic_state_check.py.",
+    "Step 1: the broader regex over the 593 tracked non-scanned files (state.json, STATE_FILE, round_lenses, round_in_progress, capture_run, aisa_version, pending.json, receipts, aisa-op-, read_receipt, receipt_path, _ops/_migration literals, operation.status, consistent_read, bootstrap(, READ_TO_RESUME, kernel_state, operational_state) found only noise in pack docs and extractor code (xlsx_extract sheet_state, lens-governance 'operation'). Nothing new in runtime apart from the tracked zip docs/AISA_Evolution_Plan.zip.",
+    "Step 2 spot-checks confirmed at the cited lines: operation.py (:82-86, :158-179, :440-577, :582-693), bootstrap.py (:69-112, :213-378, :431-456), migrate.py (:40-93, :240-313, :320-480, :503-535), resolve.py (:328-351, :745-820, :955-973), projection.py (:50-70, :104-191, :236-251), dashboard.py (:109-135, :177-221, :4498-4512, :4628-4691, :5438-5492, :5595-5606, :5700-5722, :7663-7688, :7890-7910, :8030-8055), coverage.py (:92-120, :296-340, :405-434, :980-1000, :1506-1509, :1750-1759), pre-authority-guard.py (full), pre-write-guard.py, settings.json, pre-lens-order-check.py, phase-gate-check.py (:95-182), phase-completeness.py (:25-33, :84-97, :285-310), _common.py (:45-112), on-su-mirror.py, on-su-change.py, su-confirmed-guard, synthesis-validate, blueprint-validate, render-validate, and the skills aisa-start/round/frame/options/decide/capture/chairman-synthesis/answer/status plus agents/chairman.md. Roles held (writer vs reader) except the corrections listed under 'wrong'.",
+    "Step 3 write-path audit. (a) Through operation.py: migrate init/apply/restore, resolve (answer + 4 lifecycle ops + sync_mirror), and operation.py recover (CLI), which was missing as a writer. (b) Through a subprocess invisible to hooks: 'migrate.py init' (aisa-start 9c), 'resolve.py' (aisa-answer), recovery commands printed by the guard/bootstrap/on-su-mirror ('operation.py recover', 'migrate.py apply'), and 'mv _state.json.tmp _state.json' in 7 skills. (c) Edit tool: SU row writers (6+1 lenses, chairman-synthesis, aisa-decide, aisa-answer header) reach _ops via on-su-mirror, which was missing as an indirect path. (d) Scaffold: aisa-start creates _state.json. Only the experiment in 'missed' shows that the scaffold conflicts with the guard.",
+    "projection.operational_state reads build_model (dashboard.py) and a second _G['read'] (projection.py:137, :179) AFTER bootstrap returns, outside the consistent_read window (bootstrap.py:226-257). Its phase/criticals/drift can come from a different revision than the one bootstrap validated.",
+    "pre-authority-guard.py:172-175 returns 0 on unparsable hook stdin, and :177-178 returns 0 for any tool other than Write/Edit. Both are fail-open inside a hook that is declared fail-closed (docstring :30-35), which covers only bootstrap evaluation errors.",
+    "operation.py:93 defines CONFLICT = 'conflict', which nothing in library/kernel/tools or .claude/hooks returns or consumes (grep). Dead constant.",
+    "operation._atomic_write (operation.py:170-179) and dashboard._write_text leave '<name>.<pid>.tmp' files next to targets on a crash, including inside _ops/ and at the engagement root. These are extra transient paths the inventory's path_patterns omit. coverage excludes them through DERIVED_SUFFIXES ('.tmp', coverage.py:98), bootstrap ignores them.",
+    "dashboard --serve's mtime watcher (_needs_rebuild -> _activity_mtime, dashboard.py:177-195, :7663-7688, :7924-7936) does pick up _state.json renames done with Bash mv. The 'phase/round flips do not trigger regeneration' remark is true only of on-su-change.py, not of a running --serve.",
+    "Experiments ran only under /tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/critic_exp/ (TMPDIR and AISA_ENGAGEMENTS_ROOT pointed there, PYTHONDONTWRITEBYTECODE=1). Scripts: mig_hazard.py, replay.py. 'git status --short' on the repo was empty afterwards."
    ],
    "critic": {
-    "ran": false,
-    "wrong": [],
-    "unconfirmed": []
+    "ran": true,
+    "wrong": [
+     {
+      "file": ".claude/skills/aisa-round/SKILL.md",
+      "claimed": "The lens-order hook's isolation signal exists only in _state.json.",
+      "corrected": "pre-lens-order-check also accepts a free-text 'round mode: single' marker in the Skill invocation (SINGLE_MODE_RE) as a secondary signal, independent of _state.json.round_lenses. aisa-round step 4 always echoes 'round mode: <full|single>' in the lens context line, so a typed 'single' bypasses order policing even when round_lenses says full or is missing.",
+      "evidence": "pre-lens-order-check.py:16-20 (docstring), :54 (SINGLE_MODE_RE), :98-101 (single_by_marker), :250 ('single_by_state(...) or single_by_marker(tool_input)'); aisa-round/SKILL.md:45."
+     },
+     {
+      "file": ".claude/skills/aisa-start/SKILL.md",
+      "claimed": "Creates _state.json ... Then runs 'migrate.py init' (empty graph + _ops/receipts/graph-init.json) before any other command; failure stops.",
+      "corrected": "init runs only at step 9c. Steps 8, 9 and 9b come between _state.json creation (step 7) and init, and they Write SU/decisions/answers and add the M-n Confirmed rows. In enforce mode the guard denies those Writes (LEGACY_MODE), and init refuses NOT_EMPTY once any M-n row exists. With AISA_ENGAGEMENTS_ROOT set, init targets <cwd>/projects/<slug> instead of the real engagement.",
+      "evidence": "aisa-start/SKILL.md:82-139; pre-authority-guard.py:136-157; migrate.py:343-360, :512-514; scratch experiments (see missed entries)."
+     },
+     {
+      "file": "library/kernel/tools/operation.py",
+      "claimed": "gate_open callers: only .claude/tests/test_audit_findings.py:76 (grep).",
+      "corrected": "No runtime caller, but many tests call operation.gate_open: test_resolve_operation.py:203, test_migration.py:354/356, test_coverage_graph.py:239/266, test_operation_recovery.py:60/102/116/197/204/297, test_operation_concurrency.py:333/337, plus test_audit_findings.py:76.",
+      "evidence": "grep 'gate_open' over .claude/tests (lines listed)."
+     },
+     {
+      "file": ".claude/tests/test_handoff_f0.py",
+      "claimed": "Baseline check: HEAD 8b7987e. The post-baseline commits add docs/handoff-v1/ and .claude/tests/fixtures/handoff-v1/ only.",
+      "corrected": "HEAD is e870f0f. Post-baseline commits 8b7987e, 8b27dd0 and e870f0f also add .claude/tests/test_handoff_f0.py, a new test run by .github/run_tests.py whose synthetic fixtures mention _state.json, plus docs/handoff-v1/F0/*.json.",
+      "evidence": "git log --oneline --stat -3 (e870f0f adds .claude/tests/test_handoff_f0.py | 235 ++); test_handoff_f0.py:5, :156, :166, :170."
+     },
+     {
+      "file": "library/kernel/tools/dashboard.py",
+      "claimed": "READ_TO_RESUME is a static phase -> file list with _state.json first in every phase.",
+      "corrected": "True for every key read_to_resume can reach (discovery, framing, options, decision-pre-blueprint, decision-architecture). The 'deliverables' key has no _state.json and is unreachable: read_to_resume only maps phase, or decision-* when phase == decision, and an unknown phase falls back to the discovery list.",
+      "evidence": "dashboard.py:4628-4671 (deliverables entry :4665-4670), :4674-4679."
+     },
+     {
+      "file": "docs/ARCHITECTURE.md",
+      "claimed": "§7 hard-enforced invariant 3 describes the guard as covering _state.json, _graph/, _ops/ (conditional on bootstrap in code) [listed as drift].",
+      "corrected": "The invariant is in §9.1 (ARCHITECTURE.md:924-932), not §7, and it already states the condition ('Não se escreve numa autoridade sobre estado por reconstruir ... consulta bootstrap.py e recusa'), which matches the code. The real drift is ARCHITECTURE.md:32-33 vs CLAUDE.md:41, which disagree on whether _migration/ is coordinated state. ARCHITECTURE.md lists only _graph/ and _ops/.",
+      "evidence": "docs/ARCHITECTURE.md:32-33, :924, :930; CLAUDE.md:41."
+     }
+    ],
+    "unconfirmed": [
+     "Whether Claude Code's PreToolUse matcher 'Write|Edit' also fires for MultiEdit/NotebookEdit tool names in the current harness. If it does, pre-authority-guard.py:177-178 and pre-write-guard.py return 0 for any tool_name other than Write/Edit, which is a further bypass. Not tested.",
+     "Whether PreToolUse/PostToolUse hooks fire for tool calls made inside Task subagents (council personas, chairman agent with tools [Read, Write, Edit, Grep, Glob] at agents/chairman.md:4). This decides whether the guard and on-su-mirror cover council writes. Not verifiable from the repo.",
+     "Whether aisa-start is in practice run with AISA_GUARD_MODE=log or in a different step order. The prose order was verified; agent behaviour was not.",
+     "Real consumers of legacy _state.json shapes in the private engagements repo (e.g. projects/pricing-marinha-pilot-3 cited at aisa-start/SKILL.md:132) cannot be checked here because projects/ is empty."
+    ]
    }
   }
  }

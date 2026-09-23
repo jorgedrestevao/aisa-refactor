@@ -1,0 +1,533 @@
+{
+ "schema_version": "handoff-f0-mechanisms-metrics/1",
+ "plan_version": "1.2",
+ "policy": "Mecanismos de validação existentes reutilizados quando servem os cenários deste programa. Estados de aprovação/bloqueio de planos anteriores (P0–P8) não se herdam (plano README, 06, 09).",
+ "reusable_mechanisms": [
+  {
+   "path": "library/kernel/tools/operation.py (run L465-539, _publish L542-551, _finish L554-577, recover L582-649, status L409-437, read_pending L365-406, acquire/flock L192-304, request_hash L455-460, replay+effects_present L477-489)",
+   "validates": "Observable atomicity of a multi-file write set: intent marker before publish, temp+rename per file, verify digests, receipt, then remove marker. Refuses BASE_CHANGED (expected digests), PENDING_EXISTS, RECEIPT_MISMATCH (same op id, different payload), THIRD_STATE (file changed outside during pending), STAGING_INCOMPLETE/STAGING_CORRUPT (all checked before any target moves), PENDING_UNREADABLE (distinct from absent), LOCK_ACTIVE/LOCK_UNDETERMINED. Idempotent replay returns the prior receipt plus effects_present.",
+   "scenarios": [
+    "T11 STALE_INPUT (for files in the write set): BASE_CHANGED L500-508",
+    "T12 crash at each publish boundary: pending marker + recover roll-forward L582-649",
+    "T13 repeated op after success: receipt replay L477-489",
+    "T14 two sessions, same base: flock exclusion + BASE_CHANGED",
+    "T17 partial: THIRD_STATE keeps the direct edit, never overwrites it",
+    "T39 pattern: sha256 byte digests L182-187",
+    "F2 item 3: carrier for checkpoint publication (plan 01 says reuse it as the only publisher)"
+   ],
+   "limitations": "write_set values are text only, encoded utf-8 (L516-519), so no binary artefacts. No delete operation: migrate.py L418-425 states the limit. The lock lives in $TMP on the local FS; NFS or no fcntl falls back to create-exclusive (L49-51, L79). 'expected' covers only files being written, not read-only inputs, so a real read-set (T10) must be layered on top. No draft/received/integrated result states (T15). recover only rolls forward.",
+   "verdict": "KEEP as the single publication mechanism; EXTEND for checkpoint and read-set preconditions (F2). Verified by reading."
+  },
+  {
+   "path": ".claude/tests/test_operation_recovery.py (new_eng L23-30; W02 real kill via O['run'].__globals__['_publish'] patch L67-92; W01-W08 L38-357) + .claude/tests/test_operation_concurrency.py (W09-W13 L115-330; _eng/_corrida L36-99)",
+   "validates": "Real process death mid-publish (os._exit in a subprocess), recovery completeness, receipt idempotence, stale-base refusal, live-lock not stolen, dead-lock recovery recorded, damaged staging refused, third-state bytes preserved. Multi-process races over a stale lock (only one owner) and confirmed-write-never-lost.",
+   "scenarios": [
+    "T12",
+    "T13",
+    "T14",
+    "F8 deterministic crash/conflict/idempotency quality gate (06_VALIDACAO: 100% of these must pass)"
+   ],
+   "limitations": "Only exercises operation.py itself. Checkpoint, FC and handoff-index publication will need the same fault-injection pattern at their own boundaries. Helpers are local to each file.",
+   "verdict": "KEEP. Reuse the fault-injection pattern (patch __globals__ in a subprocess, then os._exit) for the new publishers. Verified."
+  },
+  {
+   "path": "library/kernel/tools/bootstrap.py (AUTHORITIES L75-77, DEFAULT_BUDGET L79, snapshot L84-112, authority_check L115-129, build_context L134-174, items_from_graph L181-212, consistent_read L231-260, bootstrap L265-378, gate_open L381-403, switched L406-411)",
+   "validates": "A read-only reconstruction in contract order. Pending, snapshot and graph must come from one revision (optimistic double read; CONCURRENT_WRITE after 3 tries). Blocks on LEGACY_MODE, corrupt graph, GRAPH_INTEGRITY, AUTHORITY_DRIFT and AUTHORITY_UNMIRRORED, each with a named recovery action. Context has a budget: critical items first, truncation declared (omitted, omitted_critical, complete=false, CONTEXT_TRUNCATED) and premise_broken/premise_omitted flagged. The gate closes only when a critical item is omitted.",
+   "scenarios": [
+    "T09 cold-resume base (revision, digests, limitations)",
+    "T16 context over budget: explicit partial state, criticals first",
+    "T17 drift/unmirrored rows block",
+    "T03 pattern: absent graph is legacy and blocks with a recovery action",
+    "T10/T11 partial: the snapshot revision changes when any of the 6 authorities changes"
+   ],
+   "limitations": "The read-set is fixed to 6 files (L76-77). Blueprint, spec, estimate, FC, pack units and _capture are outside the snapshot (plan B6). The budget counts items (graph nodes = SU rows), not tokens or characters (L79, L150). There is no expansion or task-splitting path when criticals exceed the budget: the gate just closes. Context is built only from graph nodes, so decisions and authorizations are absent. Criticality is binary and mapped from the SU 'criticidade' column (L177-205).",
+   "verdict": "EXTEND: declared additional read-set, hashes and consumed revision (F2 item 2). Keep the truncation and partial-state semantics. Verified."
+  },
+  {
+   "path": "library/kernel/tools/graph.py (validate L146-171, GATE_FIELDS/INFO_FIELDS L177-181, authority_from_rows L184-206, drift L222-264, read status taxonomy L269-335, _ordered keeps unknown keys L110-116, traverse/components/provenance L360-443, dependency_fingerprint/as_coverage_source L481-510, write_set L524-536)",
+   "validates": "An additive graph with deterministic serialization and a revision hash. Drift of mirrored fields against the SU: state/criticidade/resolved block, text only informs, source-missing blocks. Absent, unreadable, invalid, unsupported_schema and incoherent_pair are distinct states. Unknown record keys are never dropped. A fingerprint covers only the consumed subgraph, so a navigation-only edge causes no stale and a consumed edge does.",
+   "scenarios": [
+    "T17 (drift detection, SU wins)",
+    "T36 (UNSUPPORTED_SCHEMA without truncation; unknown fields preserved, K06)",
+    "T41 (traverse/dependents substrate)",
+    "T42 (consumed-subset fingerprint; test_coverage_graph C04/C05)"
+   ],
+   "limitations": "schema_version is a hard equality check (L303-307). Real engagements carry almost only 'was' edges: dashboard.py L5536-5537 measured 9 and 25 edges, all 'was'. So typed dependencies (supports/constrains/implements/verifies/estimates/derived_from, plan 04) do not exist yet.",
+   "verdict": "KEEP identity and drift; EXTEND relation types (F7). Verified."
+  },
+  {
+   "path": "library/kernel/tools/resolve.py (decide_state L174-189, force_state L147-171, structural_verdict L194-208, plan/apply L262-353 in-file, revalidate/withdraw/resolve_conflict/accept_risk L464-529, finding/dispose_finding L532-560, dependents_of L563-582, decision_rewritten_by L585-593, mirror_write_set L688-749, sync_mirror L759-803, _expected_for L806-820, cited_by/impact_of L1021-1079)",
+   "validates": "Confirmed requires a locator AND a match with the authority the row declares. Otherwise the row resolves to Assumed with a written reason. A requested upgrade is refused (SILENT_UPGRADE). fact != fit: a connectivity answer leaves the structural choice open. Lifecycle operations require a basis (NO_BASIS). Conflict resolution keeps both sides and never picks by recency. Every authority writer also writes the mirror. The precondition covers the whole write set. Impact lists are candidates only.",
+   "scenarios": [
+    "T08 partial (/answer path cannot promote without locator+authority)",
+    "T07 (withdraw / accept_risk require a reason)",
+    "T13 (operation_id derived from row+answer)",
+    "T17 (sync_mirror for Edit-path writes)",
+    "T22 partial (fact != fit)",
+    "T41 (dependents_of + cited_by: targeted, unrelated rows untouched)"
+   ],
+   "limitations": "The T08 guarantee applies only to writes made through resolve (/answer). chairman-synthesis writes SU rows directly under its own rule (see old_failures). cited_by is a regex text search over DERIVED_GLOBS (L1000-1009). impact_of is explicitly candidates, not a verdict.",
+   "verdict": "KEEP; ADAPT the promotion rule to also gate chairman/FC writers. Verified."
+  },
+  {
+   "path": "library/kernel/tools/migrate.py (classify L98-138, dry_run L156-202, apply L239-317, init L320-373, restore L386-483)",
+   "validates": "dry-run writes nothing and returns the source-to-destination map with 5 classes. Ambiguous rows never become confirmed. The backup is verified before publishing. PLAN_STALE is raised if input moved after dry-run. RECEIPT_STALE is raised after restore. restore refuses when work happened afterwards (WORK_AFTER) and verifies hashes. init refuses a non-empty engagement (NOT_EMPTY).",
+   "scenarios": [
+    "T35 (preserve ids/states/decisions; ambiguous stays unconfirmed)",
+    "T03 pattern (legacy identified, never silently reinterpreted)",
+    "T36 (dry-run report of unmapped items)",
+    "Programme's own-data rollback safety (plan 07 procedure steps 2-9)"
+   ],
+   "limitations": "Only legacy-to-graph migration exists. TOUCHED is a fixed list (L56-64). Removal of created files happens outside the coordinator (L418-425, L442-459). There is no profile/schema-field migration. Plan 09 says build migrators only for demonstrated consumers, and F0 has not established one yet.",
+   "verdict": "ADAPT or ISOLATE, depending on F0 consumer evidence. Reuse the dry-run / backup / stale-plan / work-after pattern. Verified."
+  },
+  {
+   "path": "library/kernel/tools/coverage.py (build_inventory L683-947, build_manifest L1008-1028, su_fingerprint/decision_fingerprint L1031-1062, norm_text/canonical_json L176-214, compute_basis L1082-1133, check_freshness L1148-1232, _check_source_review L1910-2009, _check_coverage L2073+, _check_not_hollow L2300-2320, _check_inheritance L2323-2403, _check_semantic L2406-2458, coverage_state L3120+, finalize L3622-3756, codes L75-87)",
+   "validates": "The denominator is derived from files, never from the reviewer's record. There is a per-stage basis (reconciliation / blueprint / render) with byte digests plus semantic fingerprints (NFC, collapsed whitespace). Freshness is current or stale with reasons (source added/removed/changed, authority changed, target changed or missing). An unsupported contract_version is not read as stale. Every source-review entry needs a rationale; 'unverifiable' needs reason/impact/action. Obligations cannot vanish between stages (COV-UNREVIEWED); not_selected needs a reason. A semantic review needs performed_by (agent|human), method, both passes, limitations and findings. not_evaluated is never a pass. finalize publishes a new version only on a current basis and re-checks at the end.",
+   "scenarios": [
+    "T02 pattern (inventory derived from code/files, not a declared list)",
+    "T07 (rationale mandatory; unverifiable needs limitation)",
+    "T10 pattern (declared authorities recomputed, never copied — A3)",
+    "T11 (stale with reasons; finalize refuses stale/changed-during)",
+    "T19 structural half (semantic_review shape; hollow record detected)",
+    "T20 (gaps reported per obligation)",
+    "T23 (render stage, template_authority/render_precheck)",
+    "T24 partial (target-changed, approval not invalidating own review)",
+    "T37 (not_applicable/blocked applicability, test_coverage_phase5 L527)",
+    "T39 (target sha mismatch)",
+    "T42 (semantic fingerprint vs byte digest; graph consumed subset)"
+   ],
+   "limitations": "The coverage unit is source units, SU/decision refs and targets. There are no six-lens dimensions (assessed/gap/not_applicable) and no FC/WP ids. Only 3 stages. finalize writes _coverage/ by O_EXCL reservation outside operation.py (no receipt or coordinator lock). The file is 4036 lines, and coverage tests take ~61% of suite time (.github/run_tests.py L7-9). The docstring L39-40 is stale.",
+   "verdict": "EXTEND (plan 01: extend traceability/readiness without duplicating the comparator). Reuse check_freshness as the single 'basis changed' definition. Verified."
+  },
+  {
+   "path": "library/kernel/tools/projection.py (_blocker L44-47, projection_freshness L50-70, drift_blocker L78-101, operational_state L104-192, explain L195-218)",
+   "validates": "Operational view built on bootstrap. Blockers carry 4 fields (what / why / evidence / action). Non-blocking uncertainty stays visible. The gate consults phase criteria, pending operation and graph mirror. A stale dashboard is not gate truth. explain() produces business language with ids only in parentheses.",
+   "scenarios": [
+    "T09 (next action from repository state)",
+    "T15 pattern (non-integrated items visible, not counted)",
+    "T20 (actionable blocker shape)",
+    "02_CONTRATOS §8 display of separate predicates"
+   ],
+   "limitations": "The blocker 'why' is hard-coded to the old materiality: 'e material: muda um eixo tecnico da decisao' (L152). Staleness is mtime-based (L61-66). Blockers come only from critical SU rows and bootstrap limitations; there are no scope-level blockers.",
+   "verdict": "EXTEND with scope/readiness views; ADAPT the materiality wording. Verified."
+  },
+  {
+   "path": "library/kernel/tools/dashboard.py build_model L5609-5780 (+ read_to_resume L4674-4691, critical_open L1026-1035, audit_confirmed_locators L1275+, arbiter_declarations L1558+, round_delta L1770+, render_versions L2474-2491, parse_render_gaps L2494-2503, options_round_history L3562-3590, frame_identity L3518-3559, blueprint_state L3629+, kernel_state L5498-5530, memory_state L5533-5606, gates L5217-5457)",
+   "validates": "Deterministic read model of an engagement. read_to_resume is derived and never persisted. frame approval is bound to the sentence sha256 (verdicts match / mismatch / legacy). The Confirmed-locator presence audit is shared with su-confirmed-guard. Gate criteria carry a mode (codigo/juizo/n/a). kernel_state fails closed. memory_state reports was-chains and mirror health.",
+   "scenarios": [
+    "T09 (read_to_resume, next action)",
+    "T08 partial (Confirmed without locator)",
+    "T24 pattern (frame approval bound to content hash)",
+    "Metrics source: rework, inconsistencies, material questions (see metrics)"
+   ],
+   "limitations": "Monolith of 8174 lines. The CLI writes dashboard.html (use runpy build_model, or --out to scratch, for read-only capture). Blueprint approval is bound to a version label, not a hash (L2967, L3671-3678). The Discovery gate encodes classic '6 lentes escreveram' (L5163, L5235) and 'Confirmed >= 10' (L5229).",
+   "verdict": "KEEP as the read model; ADAPT gates to be profile-aware. Generalize the frame sha-approval pattern. Verified."
+  },
+  {
+   "path": "docs/evolution/p8/compare.py (truth L90-152, check L171-299, leak L302-314, oracle L319-392, _veredicto L397-401, summary L407-433)",
+   "validates": "Freezes the truth from the engagement before a session closes, then compares a fresh-session structured report by id. Findings: INVENTED/INVENTED_DECISION, FALSE_CONFIRMED, LOST_CRITICAL/LOST_DECISION, UNDUE_ADVANCE, PHASE_MISMATCH, REPORT_INCOMPLETE, FIELD_MISMATCH, provenance of recovery (LEGACY_PATH/KERNEL_BLOCKED/PROVENANCE_*), cross-engagement LEAK. The oracle measures critical_recall, critical_false_confirmed and improper_gate_advances against thresholds declared in the oracle. summary never concludes from an empty directory, and a superseded failed run counts unless it has an active rerun.",
+   "scenarios": [
+    "T09 cold resume (truth freeze + report compare)",
+    "T43 receiver-review pattern (package-only report vs frozen index)",
+    "T44 (quality numbers vs frozen expected outcomes)",
+    "F8 item 6 (keep failed runs; superseded rule)",
+    "Metric: material questions preserved / false confirmations / undue advances"
+   ],
+   "limitations": "Bug: context_items reads a nonexistent key (L126 'items'; build_context returns 'included'), verified to be always 0. The model is bound to the 5 SU states and classic commands (L63-64, L293-294). There are no checkpoint/FC/WP/authorization fields. _eng resolves ROOT/projects (L442-449). The candidate-declared mapping is manual. It lives in docs/, not tools/.",
+   "verdict": "REUSE the MECHANISM: port/adapt into programme tooling, fix L126. Do not inherit P8 runs or verdicts. Verified."
+  },
+  {
+   "path": ".claude/tests/test_p8_comparator.py (verdade/relatorio builders L23-63; classes L70-461) + .claude/tests/test_p8_report_schema.py (S1-S5 L57-236)",
+   "validates": "The comparator itself under test: each finding has one provoking case and one non-provoking case, and the oracle uses __globals__ injection (L212-222). A form/judge agreement test parses the JSON block from PROTOCOLO.md §2.3 and checks every state has a field (L152-184). Superseded-run accounting is also covered.",
+   "scenarios": [
+    "Test pattern for the handoff receiver/resume comparator (T09/T43/T44)",
+    "Pattern for keeping a report template and its judge in sync (receiver report schema)"
+   ],
+   "limitations": "GuardaContraOProprioRelatorio (L419-457) asserts the previous plan's P8-report.md/runs state. The real-engagement classes (L332-360, L406-416) depend on projects/dpt-galp-jp-pilot-4 and skip in clean clones. Neither is a requirement of this programme.",
+   "verdict": "ADAPT the mechanism tests. ELIMINATE or ISOLATE the prior-plan-state and real-pilot assertions from the applicable suite (plan 09). Verified."
+  },
+  {
+   "path": "docs/evolution/p8/PROTOCOLO.md (§2.1 freeze L100-110, §2.2 real close L112-115, §2.3 literal prompt + report schema L117-149, recovered_via L165-181, notes with commit/model L185-188, §2.5 repeat without editing report L212-227, §3 restart after error/source change L231-238)",
+   "validates": "Operator protocol for real cold-resume sessions: judge is code; truth is frozen before reopening; the report is never edited from the reference; failed runs are kept.",
+   "scenarios": [
+    "T09",
+    "T43",
+    "T44",
+    "F8 pilot protocol (06_VALIDACAO 'Protocolo de piloto' steps 2,4,5)"
+   ],
+   "limitations": "Checkpoints cp1..cp7 and slugs belong to the previous plan (L25-27, L51-54, L88-96). The rest is manual.",
+   "verdict": "REUSE the protocol pattern only; do not inherit runs or GO/NO-GO state. Verified."
+  },
+  {
+   "path": "docs/evolution/oracles/*.oracle.json (keys: schema_version, items{id, proposition_or_relation, epistemic_state, criticality, source_locator, source_sha256, gate_expectation, expected_resolution, validation}, forbidden_claims, extraction_limits, acceptance{critical_recall:1.0, critical_false_confirmed:0, improper_gate_advances:0}, reviewed_by, owner_validation)",
+   "validates": "An independent reference frozen before any candidate exists, with thresholds declared inside it.",
+   "scenarios": [
+    "T44",
+    "Expected-outcome schema for the programme fixtures (06_VALIDACAO 'expected outcomes de conhecimento/decisão/rastreabilidade')"
+   ],
+   "limitations": "Content is derived from real pilots (dpt-galp-jp, pricing-bunkers), so it is client material. Reuse the schema only.",
+   "verdict": "REUSE SCHEMA PATTERN; EXCLUDE content. Verified (keys read via json load)."
+  },
+  {
+   "path": ".claude/tests/test_user_language.py (glossary_terms L57-73, visible L84-98, violations L101-113, user_output_blocks L116-118, forbidden_paraphrases/paraphrase_violations L121-148, dashboard_labels L150+)",
+   "validates": "Kernel term or id outside parentheses in user-facing text (```user-output blocks, dashboard labels, COMO-USAR). Also checks that every command skill closes with 'A seguir:' and flags product-name paraphrases.",
+   "scenarios": [
+    "CLAUDE.md P-13 compliance of new outputs (handoff index cover, readiness explanations, resume output)",
+    "T43 support (package readable by the receiver) — lint only"
+   ],
+   "limitations": "ID_RE (L47) covers only C|A|U|X|R|D|O|F|M|TW|PM-U, not FC-/J-/WP-. COMMAND_SKILLS is a fixed list (L35-39). It checks presence and not comprehension.",
+   "verdict": "KEEP; ADAPT the id namespaces and skill list. Verified."
+  },
+  {
+   "path": ".github/run_tests.py (L27-80) + .claude/tests/test_suite_integrity.py (L26-45)",
+   "validates": "One process per file, parallel or --sequential, verdict parsed per file, JSON totals and wall time. Integrity checks: no test after the __main__ block, and every file runnable as a script.",
+   "scenarios": [
+    "T01 (reproducible suite run)"
+   ],
+   "limitations": "An import-time crash is reported only as 'sem veredicto' (L60-63). No environment or dependency capture, and skip reasons are not attributed. CI runs it with no dependencies installed (see old_failures).",
+   "verdict": "KEEP; ADAPT to report not-run/skip reasons and environment. Verified (ran it: 76 files, 2538 tests, 62.5s wall)."
+  },
+  {
+   "path": ".claude/hooks/pre-authority-guard.py (BOOTSTRAP L51, readiness L137-157) + .claude/tests/test_authority_guard.py (engagement() L38-59, corre() L62-72, escrita() L75, negou() L79-87; W2a-W2f)",
+   "validates": "Write/Edit refusal on engagement authorities and _graph/_ops when bootstrap is not ready. Fails closed. Path-spelling bypass is refused. The tests run the real hook process with the harness payload.",
+   "scenarios": [
+    "T03 (refuse writes to unsupported/legacy engagement — pattern)",
+    "T17",
+    "T36 (old reader must not write new schema — plan 07 'hooks must apply the same policy')"
+   ],
+   "limitations": "Covers only a fixed authority list and decides only by bootstrap ready. Not profile/schema aware.",
+   "verdict": "ADAPT to be profile-aware. Reuse the corre/negou harness for every profile-aware hook test. Verified."
+  },
+  {
+   "path": ".claude/hooks/on-su-mirror.py + resolve.sync_mirror (resolve.py L759-803) + .claude/tests/test_lens_mirror.py (eng_migrado L47, lente_acrescenta L55, hook L65, guarda_decide L73; L1-L4)",
+   "validates": "A direct Edit to the SU is preserved and mirrored through the coordinator, or refused with a recovery when not mirror-fixable.",
+   "scenarios": [
+    "T17 (direct edit preserved, reconciled explicitly)"
+   ],
+   "limitations": "Post-write, so SU plus graph is not atomic. Between the Edit and the mirror, bootstrap blocks with AUTHORITY_UNMIRRORED/DRIFT, which is detection rather than a transaction (plan 04 says the same).",
+   "verdict": "KEEP for the Edit path; do not treat it as a transaction. Verified."
+  },
+  {
+   "path": ".claude/hooks/su-confirmed-guard.py + dashboard.audit_confirmed_locators (L1275-1300+, LOCATOR_PATTERNS L1054+)",
+   "validates": "Every new or changed Confirmed carries a locator of the accepted classes and its target exists. Warns and logs to council-log.",
+   "scenarios": [
+    "T08 partial (Confirmed without machine-resolvable evidence detected)"
+   ],
+   "limitations": "Warn-only and post-write. Presence check only. Does not detect evidence that is only agreement ('anchored by persona, persona').",
+   "verdict": "KEEP; EXTEND to flag agreement-only evidence. Verified (HOOKS.md L14 + dashboard code)."
+  },
+  {
+   "path": ".claude/hooks/render-validate.py (coverage beside sufficiency L32-37, _load_coverage L74-80) + .claude/tests/test_render_validate.py (CompleteRecordPasses L183, TheOldShapeFails L205, NoApprovedBlueprint L286, HookMode L302)",
+   "validates": "Sufficiency rules declared by the deliverable template are run against the approved blueprint record. Failures go to render-gaps.md with an owner, and the write is never blocked. Coverage is reported separately.",
+   "scenarios": [
+    "T23 (render does not invent; gap returned upstream)",
+    "T20 (gap with owner)"
+   ],
+   "limitations": "Rules exist only for existing template sections, and the check is bound to the approved blueprint. RealPilot1 tests skip in a clean clone.",
+   "verdict": "KEEP; EXTEND for FC-referenced semantics. Verified."
+  },
+  {
+   "path": ".claude/hooks/blueprint-validate.py + dashboard bp_validate + .claude/tests/test_blueprint_yaml.py (Codes L249, ApprovedInvalid L554)",
+   "validates": "25-code structural check. An approval recorded over a structurally invalid version is not consumable.",
+   "scenarios": [
+    "T24 partial (approval not consumable when the version is invalid)",
+    "T21 structural substrate"
+   ],
+   "limitations": "Structure only. Approval is keyed to the version label. The Snapshot test depends on real blueprints (skips).",
+   "verdict": "KEEP; EXTEND with a blueprint/FC cross-check (F4). Verified via class list and HOOKS.md L16."
+  },
+  {
+   "path": ".claude/hooks/phase-gate-check.py (gate-log with state fingerprint, override refers) + .claude/tests/test_hooks_gates.py (Coverage L107, Identity L203, LifeCycle L251, EngagementResolution L311)",
+   "validates": "Soft methodological gate: criteria with a mode, append-only gate-log with an id fingerprinting the judged state, and overrides linked by 'refers'. Writes nothing when the engagement is ambiguous.",
+   "scenarios": [
+    "Soft-gate override auditability (CLAUDE.md principle 5)",
+    "T33 pattern (gate on scope with justification)"
+   ],
+   "limitations": "Covers classic transitions only (frame/options/decide).",
+   "verdict": "ADAPT to the profile. Verified from HOOKS.md L11 and test class list."
+  },
+  {
+   "path": ".claude/hooks/phase-completeness.py (COUNCIL_6/7 L28-30, prep checks L119-131, L161-182)",
+   "validates": "Stop-time presence of the promised outputs per phase, including 6/6 or 7/7 _council-prep excerpts.",
+   "scenarios": [
+    "Metric proxy for persona dispatch count",
+    "Conflicts with T18 in the new profile"
+   ],
+   "limitations": "Encodes a fixed agent count. Report-only.",
+   "verdict": "ADAPT or REPLACE with coverage-by-perspective in the new profile. Verified."
+  },
+  {
+   "path": ".claude/tests/fixtures/coverage/ (fx-coverage-f06 synthetic engagement; records/rec-*.json chain; build_fixtures.py; build_workbooks.py; README.md) + Harness in .claude/tests/test_coverage_contract.py L46-110 (load/hydrate/copytree per test/install/state/assertCode)",
+   "validates": "A full synthetic engagement: SU, decisions (no blueprint approval), blueprint v01-v03 separating structure / coverage / approval, capture made by the real engines, render outputs, and a positive/negative record chain.",
+   "scenarios": [
+    "T20",
+    "T23",
+    "T24",
+    "T19 (structure)",
+    "T02 (inventory expectation)",
+    "T39/T42 (freshness)",
+    "Base for PP-constrained/headless fixture variants"
+   ],
+   "limitations": "build_workbooks.py imports openpyxl at module level (line 19), so test_coverage_fixtures has 1 error without it. Classic flow only. Shape mirrors a real case (README maps it to docs/review-evidence/...), but the content is synthetic.",
+   "verdict": "REUSE (fixture + copytree Harness). Verified."
+  },
+  {
+   "path": "Engagement scaffold helpers embedded per test file: test_bootstrap.py new_eng L38-48/tree_hash L27-35; test_operation_recovery.py new_eng L23-30; test_resolve_operation.py SU L22-51/_nascer_migrado L54-66/new_eng L69-81/fresh_session L84-94; test_projection_ux.py L58-73; test_knowledge_lifecycle.py fresh L20/eng_ciclo L241; test_migration.py make L87; test_graph_store.py eng_with L20; test_dependents.py eng_com L61; test_authority_guard.py engagement L38",
+   "validates": "Builds a born-migrated engagement (init or apply) from an SU template. fresh_session is a new-process reader with zero memory (cold resume). tree_hash proves read-only behaviour.",
+   "scenarios": [
+    "T09 (fresh_session)",
+    "All automated fixtures T03-T17, T35-T42",
+    "F0 item 4 fixture registry"
+   ],
+   "limitations": "Duplicated with no shared module: an SU table is embedded in 11 test files (grep '^## Confirmed'). SU templates vary between files.",
+   "verdict": "CONSOLIDATE into one shared helper module for the programme's fixtures. Verified."
+  },
+  {
+   "path": ".claude/tests/test_coverage_graph.py (C01-C08 L44-229)",
+   "validates": "A restart keeps freshness. Reordering does not stale. A consumed premise change stales, with an explanation. A navigation-only edge does not stale. Approval does not invalidate its own review. A source change stales. Partial state during pending or SU drift is refused.",
+   "scenarios": [
+    "T11",
+    "T42",
+    "T12 (readers during pending)",
+    "T41 partial"
+   ],
+   "limitations": "Only the coverage basis.",
+   "verdict": "KEEP. Verified (class list)."
+  },
+  {
+   "path": ".claude/tests/test_knowledge_lifecycle.py (L06-L14 L30-415) + .claude/tests/test_dependents.py (W6a/W6b L74-208)",
+   "validates": "Findings dispose/reopen with history. A contradiction keeps both sides. Withdraw and accept-risk need a basis. Expiry and revalidation. Targeted dependents: an unrelated premise leaves rows untouched. cited_by index.",
+   "scenarios": [
+    "T41",
+    "T07",
+    "T30 partial (no acceptance by exhaustion) — not covered"
+   ],
+   "limitations": "Dependency data is sparse ('was' edges plus text citations). W6c depends on a real pilot (skips).",
+   "verdict": "KEEP. Verified (class list)."
+  },
+  {
+   "path": ".claude/tests/test_step8c_semantic_continuity.py evaluators (survival_block/survival_defects L164-213, dispositions/undisposed L108-133, decisive_unknowns L239, closure_verdict L318, RH_Rehydration L938)",
+   "validates": "Test-instrument evaluators: material items survive the frame projection (id-anchored), critical PM-U never disappears silently, fact != fit closure, rehydration without transcript.",
+   "scenarios": [
+    "Metric: material questions preserved across phases",
+    "T09 partial",
+    "T22 partial",
+    "T41 partial"
+   ],
+   "limitations": "The fixtures in .claude/tests/fixtures/step8c/ are 'a static re-capture of the Pilot-1 evidence' (step8c/README.md): client-derived. Evaluators use regex over prose. Top-level 'import yaml' (L34).",
+   "verdict": "REUSE evaluator logic selectively; EXCLUDE pricing-marinha fixtures. Verified."
+  },
+  {
+   "path": ".claude/tests/test_admission_rule.py (L98-324) + test_technical_decision_refocus.py (L101-343) + test_arbiter_declarations.py (L86-356)",
+   "validates": "Current P-26 admission: an Unknown needs M-n or TO-BE, >=2 answers and one of the eight technical axes. Otherwise it is reclassified cosmetic with criticidade lowered. The harness runs synthetic SU, then the parser, then the arbiter.",
+   "scenarios": [
+    "Harness shape reusable for T05/T06/T07 (synthetic SU -> motor)",
+    "Classic regression only if F0 proves a classic consumer"
+   ],
+   "limitations": "The asserted behaviour contradicts T05/T06 (functional material rule without a tech axis; fact_gap without fabricated alternatives).",
+   "verdict": "ADAPT for the handoff profile; ISOLATE the classic assertions only with a demonstrated consumer. Verified (class list + states.md L133-156)."
+  },
+  {
+   "path": ".claude/tests/test_pp_deliverable_templates.py (e.g. L689-707, L924-985, L1058, L1101, L1524-1543, L1737-1809) + test_pp_architecture_templates.py (TestHeadless L362-416, TestFixtureRepresentability L780-930)",
+   "validates": "Template contracts, mostly phrase assertions. Single estimate authority. The spec->estimate edge is inventory-only. Proof obligations translate to work packages. Mode A/B inventory. Migration derives from A9. Headless means no fabricated surface.",
+   "scenarios": [
+    "T31",
+    "T32",
+    "T34 (contract level)",
+    "T37",
+    "T38"
+   ],
+   "limitations": "Snapshot-like phrase checks (247 + 116 tests). There is no runtime comparator of backlog/estimate/inventory revisions. Requires PyYAML.",
+   "verdict": "CONSOLIDATE: keep the guards of current contracts, drop exact-phrase snapshots that no consumer depends on (plan 09). Verified (grep of test names)."
+  },
+  {
+   "path": "library/kernel/tools/coverage.py contract_version handling (L1196-1208) + graph.py UNSUPPORTED_SCHEMA (L303-307) + operation.py INTENT_VERSION (L588-590) + bootstrap LEGACY_MODE (L306-317)",
+   "validates": "Four existing implementations of 'unknown or unsupported version = explicit refusal, never approximate reading'.",
+   "scenarios": [
+    "T03",
+    "T36",
+    "T04 pattern (UNSUPPORTED_PROFILE shape)"
+   ],
+   "limitations": "There is no profile field and no pack capability declaration yet. Error codes differ per engine (no common code set such as 02_CONTRATOS §9).",
+   "verdict": "REUSE the pattern; unify the codes in F1. Verified."
+  }
+ ],
+ "baseline_metrics": [
+  {
+   "metric": "Agent/subagent call counts",
+   "observable": "partial",
+   "source": "Repo proxies: _council-prep/<round>-<persona>.md written per dispatched persona (.claude/skills/aisa-frame/SKILL.md:120,145-149; aisa-options/SKILL.md:130-134; checked by .claude/hooks/phase-completeness.py:28-30,119-131,161-182); lens-outputs/chairman-synthesis-<round>.md (library/kernel/orchestration.md:173; dashboard.py:3574-3578); council-log.md lines (chairman-synthesis/SKILL.md:479; aisa-round/SKILL.md:64); Discovery inline lens runs = '## R-NN' headers per lens-outputs/<lens>.md (dashboard.py:7880 lenses_for_round; pre-lens-order-check.py:53). The declared envelope is normative, not measured (orchestration.md:191-199: Framing 6+1+0-6, Options 7+1+0-6, total ~40-50 passes). Exact counts exist outside the repo in Claude Code transcripts: ~/.claude/projects/<cwd-slug>/<session>.jsonl assistant tool_use records and subagents/**/agent-*.jsonl (structure observed in this environment).",
+   "capture_method": "Post-hoc and read-only. Per round, count prep files, chairman files and council-log entries. Separately, parse session transcripts for Task/Agent tool_use and subagent files. Antithesis calls (<=6/round, orchestration.md:181) leave no prep file, so the repo proxy undercounts. Prep files are an instruction, not enforced. Transcripts are machine-local and subject to retention."
+  },
+  {
+   "metric": "Context units / tokens (bootstrap budget, truncation)",
+   "observable": "partial",
+   "source": "library/kernel/tools/bootstrap.py:79 (DEFAULT_BUDGET=40 items), build_context L134-174 (included / omitted / omitted_critical / complete / budget), CONTEXT_TRUNCATED L366-370, gate_open L381-403; CLI --json --budget L431-456 (read-only by contract L8-11). Units are graph nodes (SU rows), not tokens. Tokens appear only in transcripts: message.usage.{input_tokens, cache_read_input_tokens, cache_creation_input_tokens, output_tokens} (observed). compare.py truth kernel.context_items is broken (docs/evolution/p8/compare.py:126 reads a nonexistent 'items' key; verified always 0).",
+   "capture_method": "Run 'python library/kernel/tools/bootstrap.py --engagement <path> --json' (no writes) and record len(included), len(omitted), omitted_critical, and the char sum of included[].text as a size proxy. Record byte sizes of _council-prep excerpts per persona. Take token totals from transcripts. Do not use compare.py context_items until L126 is fixed."
+  },
+  {
+   "metric": "Rework",
+   "observable": "partial",
+   "source": "Version counters: _blueprint/ux-blueprint_vNN.yaml (dashboard.blueprint_state L3629+, coverage.blueprint_versions L2828); _render versions (dashboard.render_versions L2474-2491); _coverage/coverage_vNN.json (coverage.next_version L3606-3612); Options rounds (dashboard.options_round_history L3562-3590). Transition history: SU 'was' chains (dashboard.memory_state L5569-5585), superseded decisions (dashboard.classify_decisions L2922+, migrate.active_decision L141-151), revalidation lines in council-log (aisa-answer/SKILL.md:118,159), revisit verdicts (dashboard.revisit_state L3602). round_delta criadas/fechadas (dashboard.py:1770-1800). Receipts count (_ops/receipts; memory_state L5598-5602). There is no explicit rework definition anywhere.",
+   "capture_method": "Read-only scan of the engagement tree, plus runpy of dashboard.build_model (or dashboard.py --out/--json into scratch so dashboard.html is not written). F0 must define rework before observing, e.g. re-executed tasks after STALE/refusal, versions superseded before approval, reopened options rounds."
+  },
+  {
+   "metric": "Material questions preserved",
+   "observable": "partial",
+   "source": "compare.check LOST_CRITICAL / LOST / FALSE_CONFIRMED after compare.truth freeze (docs/evolution/p8/compare.py:90-152, 231-245). Materiality there is swing 'dimensionante' or criticidade critical (L237-238). dashboard.critical_open (L1026-1035); read_to_resume.material_rows (L4680-4681); bootstrap omitted_critical (bootstrap.py:169-170); coverage inheritance COV-UNREVIEWED, meaning an obligation lost between stages (coverage.py:2380-2388); frame survival evaluator (test_step8c_semantic_continuity.py:164-213).",
+   "capture_method": "At each checkpoint, freeze truth (ids + state + criticality) before interruption. Diff material-id sets across checkpoints and resumes, and compare against the fixture's expected material list. No behaviour change. Limitation: the current 'material' definition is the old technical-axis one, so functional-rule questions (e.g. rounding) are not counted as material by existing code."
+  },
+  {
+   "metric": "Inconsistencies",
+   "observable": "partial",
+   "source": "graph.drift MIRROR_DRIFT / MIRROR_DRIFT_INFO / MIRROR_SOURCE_MISSING (graph.py:222-264); bootstrap AUTHORITY_DRIFT / AUTHORITY_UNMIRRORED (bootstrap.py:336-362); memory_state.health (dashboard.py:5587-5596); coverage diagnostics COV-* (coverage.py:75-87); synthesis checks SYN-DEAD-ID etc. (dashboard.py:4742-4745); render-gaps.md (dashboard.parse_render_gaps L2494-2503); bp_validate issues (blueprint-validate); simulation_coherence (dashboard.py:4265); build_model diagnostics (L5655-5690).",
+   "capture_method": "Run the read-only functions via runpy over a copy of the engagement and count codes per class. Cross-view contradictions (blueprint vs FC, spec vs backlog vs estimate) have no detector today (new work in F4/F6)."
+  },
+  {
+   "metric": "Receiver questions",
+   "observable": "no",
+   "source": "No artefact or mechanism in the tracked tree records questions from a receiver of a package. The closest pattern is the P8 fresh-session structured report plus a deterministic judge (docs/evolution/p8/PROTOCOLO.md:117-149; compare.py check/leak).",
+   "capture_method": "Not capturable without new work. Define a receiver report schema (blocks_all / blocks_scope / delegated_choice / implementation_proof per 08_HANDOFF) and a judge modelled on compare.py plus test_p8_report_schema form/judge agreement (F5/F8, T43). Human judgement is required (06_VALIDACAO: T43 is not reducible to text asserts)."
+  },
+  {
+   "metric": "(extra) False confirmations",
+   "observable": "partial",
+   "source": "dashboard.audit_confirmed_locators (L1275+) / su-confirmed-guard (presence of locator only); compare.check FALSE_CONFIRMED (compare.py:213-218); compare.oracle critical_false_confirmed (L357-361, L374-376).",
+   "capture_method": "Run the locator audit read-only per checkpoint. Compare frozen truth or oracle against the session report. Agreement-only evidence ('anchored by persona, persona', chairman-synthesis/SKILL.md:148) is NOT detected."
+  },
+  {
+   "metric": "(extra) Improper gate advances",
+   "observable": "partial",
+   "source": "compare.check UNDUE_ADVANCE (compare.py:291-297); compare.oracle improper_gate_advances (L367-378); gate-log.md from phase-gate-check (HOOKS.md:11) with state-fingerprint ids and override 'refers'.",
+   "capture_method": "Parse gate-log.md (append-only) and council-log. Apply the compare.py rules to session outputs. The command list in compare.py is classic-only (L293-294)."
+  },
+  {
+   "metric": "(extra) Suite cost/runtime",
+   "observable": "yes",
+   "source": ".github/run_tests.py:75-77 prints JSON totals including wall time; L7-9 records 221s sequential with 61% in coverage tests.",
+   "capture_method": "Run in a scratch copy with PYTHONDONTWRITEBYTECODE=1. Measured here: 76 files, 2538 tests, 62.5s parallel on 4 CPUs (Python 3.11.15)."
+  }
+ ],
+ "old_failures_by_current_relevance": [
+  {
+   "defect": "CI runs the suite without installing any dependency while 19 test files need PyYAML, openpyxl, python-docx or pypdf. The workflow comment frames this as proving ADR-001 (stdlib-only), but ADR-001 is about runtime, and the extractors themselves need third-party libs.",
+   "evidence": ".github/workflows/tests.yml:25-28 (no pip install; 'ADR-001 diz stdlib apenas'); requirements-dev.txt:17-18 (PyYAML, openpyxl only); docs/evolution/integration-adr.md:17 ('stdlib-only, sem excepção'); library/kernel/tools/xlsx_extract.py:30-37 (sys.exit(2) without openpyxl); text_extract.py:5 (python-docx, pypdf). Local run in a scratch copy (PyYAML present; openpyxl/docx/pypdf absent) gave 13 failing files. Blocking yaml via sys.modules made 7 more fail (test_orchestrator_wiring, test_pp_deliverable_templates [55 failures], test_pp_discovery_runtime, test_pp_domain_knowledge, test_pp_options_decision_model, test_pp_pack_integrity, test_step8c_semantic_continuity). That is 19 files in a no-deps environment, not counting the environment-artefact test_state_scaffold.",
+   "current_relevance": "PRESENT. Not a kernel code defect: an environment-definition inconsistency. It prevents a reproducible baseline and a green CI. The PyYAML group protects pack.yaml and pack contracts, which F1 needs for pack capabilities. The openpyxl/docx/pypdf groups are extractor tests (frozen, out of scope).",
+   "blocks_criterion": "T01 (reproducible baseline and environment) — yes, until the test environment is declared per group. The F1 pack-capability gate (T04) depends on PyYAML tests running. Extractor groups: no programme criterion. Classify out of scope, isolate with an explicit env."
+  },
+  {
+   "defect": "requirements-dev.txt omits python-docx and pypdf. test_text_extract does not skip without them: it asserts 'failed'/'ok' and gets 'skipped' (3 failures), plus 5 ModuleNotFoundError 'docx' errors. Several openpyxl tests call xlsx_extract at import before their own HAVE_OPENPYXL guard, so they exit with no verdict.",
+   "evidence": "requirements-dev.txt:17-18; library/kernel/tools/text_extract.py:5,144-146,209-211; run output: TestPdf.test_page_aware_extraction, TestPdf.test_image_only_pdf_fails_visibly, TestFailure.test_corrupt_source_fails_visibly_and_keeps_raw ('skipped' != ...), TestDocx x3 and TestEvidenceIndex x2 (No module named 'docx'); .claude/tests/test_calc_budget.py:22 (runpy xlsx_extract) before the guard at L26-29. 10 files reported 'sem veredicto' by run_tests.py.",
+   "current_relevance": "PRESENT, extractor scope only (frozen by this programme).",
+   "blocks_criterion": "None of this programme's criteria. Record as out-of-scope debt and exclude or isolate from the applicable suite with a declared env (plan 09 'Gates e dívida antiga')."
+  },
+  {
+   "defect": "About 27 tests depend on private engagements under projects/ (gitignored) and silently skip in a clean clone. They include real-pilot integration checks tied to the previous plan.",
+   "evidence": "Skip reasons collected over the full suite: 'engagement do piloto ausente' (4), 'engagement ausente' (4), 'pilot-1 v02 not mounted' (2), 'engagements não montados' (3), 'dpt-galp-jp not mounted', 'pricing-marinha not present' (2), etc. Examples: test_p8_comparator.py:340-360,406-416; test_migration.py:359 EngagementReal; test_render_validate.py:338 RealPilot1; test_fields_draft RealDptGalpJp/RealPilot1. Also 15 'openpyxl not installed' skips.",
+   "current_relevance": "PRESENT. Not a defect of the kernel. These guarantees are unverifiable in this programme's environment and tied to the previous plan's pilots.",
+   "blocks_criterion": "No blocker. For T01 they must be reported as not-run, never as pass. ISOLATE or ELIMINATE from the applicable suite; replace with synthetic fixtures only where the guarantee is still a current requirement."
+  },
+  {
+   "defect": "P8 comparator reports kernel.context_items from a key bootstrap never returns, so it is always 0.",
+   "evidence": "docs/evolution/p8/compare.py:126 ('(boot.get(\"context\") or {}).get(\"items\")') vs bootstrap.py:166-174 (keys: included, omitted, omitted_critical, complete, budget, note). Verified by running truth() on a temp engagement with 2 graph nodes: bootstrap included=2, truth kernel.context_items=0, mode 'graph'.",
+   "current_relevance": "PRESENT. Matters only if compare.py is reused for F8 context metrics or for resume provenance.",
+   "blocks_criterion": "No criterion today. Must be fixed before compare.py-derived tooling measures 'unidades de contexto' (F0 item 7 / 06_VALIDACAO cost metric)."
+  },
+  {
+   "defect": "Consensus-to-Confirmed rule in the chairman: an overlap of ≥2 personas with document/sponsor anchors becomes Confirmed, with evidence 'anchored by <persona>, <persona>' (plan B5).",
+   "evidence": ".claude/skills/chairman-synthesis/SKILL.md:131,146-148. Mitigations are partial: states.md:25-32 (locator threshold); su-confirmed-guard is warn-only and presence-only (HOOKS.md:14); resolve.decide_state (resolve.py:174-189) covers only /answer.",
+   "current_relevance": "PRESENT in the council-independent path (Framing/Options).",
+   "blocks_criterion": "T08 (agents agree without evidence -> state not promoted) and the 06_VALIDACAO gate 'zero confirmações sem evidência'. To be fixed in F1/F5 for the new profile."
+  },
+  {
+   "defect": "Materiality restricted to the eight technical axes (P-26). An Unknown without an axis is reclassified cosmetic and its criticidade is lowered. ≥2 answers are mandatory, so a fact gap needs fabricated alternatives. Downstream text hard-codes the same assumption.",
+   "evidence": "library/kernel/states.md:133-145,156; .claude/skills/chairman-synthesis/SKILL.md:168-174; library/kernel/tools/dashboard.py:1558-1597 (arbiter_declarations, ARB_AXIS_RE); library/kernel/tools/projection.py:152 ('e material: muda um eixo tecnico da decisao'); compare.py:237-238 (material = dimensionante/critical). The tests asserting it: test_admission_rule.py, test_technical_decision_refocus.py, test_arbiter_declarations.py.",
+   "current_relevance": "PRESENT (plan B1).",
+   "blocks_criterion": "T05, T06, T07 (and the F3 gate 'fixture com arredondamento e ausência de valor factual permanece visível'). Must change in F1/F3 for the handoff profile."
+  },
+  {
+   "defect": "Options launches the solution-architect (author) and the 6 reviewers in the same parallel message. Reviewers never see the candidates they evaluate (plan B2).",
+   "evidence": ".claude/skills/aisa-options/SKILL.md:130-134 (one message with 7 Task calls), :227 (they run isolated and never see the solution-architect's output in-flight).",
+   "current_relevance": "PRESENT.",
+   "blocks_criterion": "T25 (review before candidates published) and T26 (opinion on a stale candidate). F5."
+  },
+  {
+   "defect": "Pack domain knowledge access is exclusive to solution-architect (plan B3).",
+   "evidence": "library/kernel/orchestration.md:177 ('Only solution-architect reads pack domain knowledge, pull-based and Options-only').",
+   "current_relevance": "PRESENT.",
+   "blocks_criterion": "T29 (reviewer needs research/craft, with access recorded). F5."
+  },
+  {
+   "defect": "The bootstrap snapshot/read-set is fixed to 6 authorities. Blueprint, spec, estimate, FC, pack units and _capture inputs actually read by a task are not in the revision (plan B6).",
+   "evidence": "library/kernel/tools/bootstrap.py:75-77 (AUTHORITIES), 84-112 (snapshot), 218-228 (state marker uses only op status + snapshot + graph revision).",
+   "current_relevance": "PRESENT (by design of the current contract).",
+   "blocks_criterion": "T10 (INCOMPLETE_READ_SET) and T11 (STALE_INPUT for non-authority inputs). F2."
+  },
+  {
+   "defect": "SU+graph consistency on the Edit path is post-write (hook), not a transaction. The window between the SU Edit and the mirror is detectable but not atomic.",
+   "evidence": ".claude/hooks/on-su-mirror.py (PostToolUse, HOOKS.md:12); resolve.sync_mirror resolve.py:759-803; bootstrap blocks with AUTHORITY_UNMIRRORED/DRIFT in that window (bootstrap.py:336-362).",
+   "current_relevance": "PRESENT. Behaviour is fail-closed (readers get a blocking limitation, never a mixed 'ready'), which matches 04_CONTINUIDADE's 'atomicidade observável'. The plan explicitly says the hook does not prove SU+graph atomicity (01_BASELINE B6).",
+   "blocks_criterion": "Not a blocker of T12/T17 as long as 'blocked with recovery' counts as RECOVERY_REQUIRED. Relevant to F2 design of canonical mutations through the coordinator."
+  },
+  {
+   "defect": "Classic fixed-agent/fixed-lens gates: 6 lens files as a Discovery exit criterion, a fixed lens order hook, and 6/7 council-prep presence checks.",
+   "evidence": "library/kernel/tools/dashboard.py:5163,5189-5197,5235-5236; .claude/hooks/pre-lens-order-check.py:53; .claude/hooks/phase-completeness.py:28-30,119-131,161-182.",
+   "current_relevance": "PRESENT. Valid for classic; conflicts with the new profile.",
+   "blocks_criterion": "T18 in the handoff profile (F1 item 6 requires profile-aware guards). Blocks nothing for classic, whose support depends on F0 consumer evidence."
+  },
+  {
+   "defect": "Blueprint approval is bound to a version label (filename), not a content hash. Frame approval, by contrast, carries sha256.",
+   "evidence": "library/kernel/tools/dashboard.py:2967 (blueprint_version from the approval text), 3671-3678 (match by version); frame sha: dashboard.py:2956-2961, 3518-3557. Mitigation: coverage target sha256 (coverage.py:1210-1220) and the never-overwrite convention (aisa-blueprint/SKILL.md step 13).",
+   "current_relevance": "PRESENT.",
+   "blocks_criterion": "T24 (approval of an old revision must not authorize a new one), and 02_CONTRATOS §3 'aprovação é propriedade de uma revisão... nunca apenas de um filename'. F4."
+  },
+  {
+   "defect": "More than one publication mechanism. coverage.finalize publishes _coverage records by O_EXCL reservation outside operation.py (no coordinator lock or receipt). migrate.restore deletes created files outside the barrier. dashboard writes via os.replace.",
+   "evidence": "library/kernel/tools/coverage.py:3622-3756 (finalize); migrate.py:418-425,442-459 (declared limit); HOOKS.md:84 (dashboard os.replace).",
+   "current_relevance": "PRESENT. Not a bug under the current contract, which declares these limits. The plan wants canonical mutations to go through the coordinator (01_BASELINE operation.py row; 04 'Escritas e hooks').",
+   "blocks_criterion": "Relevant to T12/T13 if coverage records become readiness authority in handoff-v1. Decide in F1/F2."
+  },
+  {
+   "defect": "No secret/credential detection anywhere in engines or hooks.",
+   "evidence": "grep for secret/password/credential over library/kernel/tools/*.py and .claude/hooks/*.py: only coverage 'token' identifiers (unrelated). render-validate checks only that 'secret custody' is named in §7 (HOOKS.md:17).",
+   "current_relevance": "PRESENT (absence).",
+   "blocks_criterion": "T40 (secret in draft/output) — new work in F6."
+  },
+  {
+   "defect": "Stale or contradictory documentation of mechanisms.",
+   "evidence": "coverage.py:39-40 says the render stage 'continua por ligar', but it is wired (render-validate.py:32-37,74-80; aisa-render/SKILL.md:192,284-285). HOOKS.md:3 says 'the other 3 are log-only stubs' while the table (L7-17) marks all active. HOOKS.md:76 says phase-gate-check keeps a PostToolUse slot, but settings.json:10,38 and HOOKS.md:11 have PreToolUse on Skill. HOOKS.md:112 says 'Python 3.6+' vs coverage.py:5 '3.11+'. requirements-dev.txt:11 suite loop omits library/kernel/tools/tests (run_tests.py:33-34 includes it).",
+   "current_relevance": "PRESENT. Low severity.",
+   "blocks_criterion": "T02 (accurate consumer/writer inventory) only as a documentation-accuracy risk. No functional blocker."
+  },
+  {
+   "defect": "Prior evolution maps and inventories are stale relative to the current tree.",
+   "evidence": "docs/evolution/baseline-test-inventory.json: commit b5491ab, 48 files, vs 75 tracked test files now (git ls-files). docs/evolution/integration-adr.md:61 ('48 ficheiros de teste, 2009 testes').",
+   "current_relevance": "PRESENT. They are leads only.",
+   "blocks_criterion": "No criterion. Do not use as F0 evidence without re-verification (T02)."
+  },
+  {
+   "defect": "Test fixtures and docs containing client-derived material: step8c fixtures (re-capture of Pilot-1), oracles (real pilots), and P8 MOTOR-inventario (real workbook formulas).",
+   "evidence": ".claude/tests/fixtures/step8c/README.md (pricing-marinha-* are 'a static re-capture of the Pilot-1 evidence'); docs/evolution/oracles/*.oracle.json (pilot_id, source_files); docs/evolution/p8/MOTOR-inventario.md:29-104 (workbook cells/formulas).",
+   "current_relevance": "PRESENT.",
+   "blocks_criterion": "The F0 item 4 / 06_VALIDACAO rule 'sem dados de cliente' for this programme's fixtures. Exclude this content from the programme's fixture registry; reuse evaluators and schemas only."
+  },
+  {
+   "defect": "The user-language checker does not know the new id namespaces planned for handoff-v1.",
+   "evidence": ".claude/tests/test_user_language.py:47 (ID_RE = C|A|U|X|R|D|O|F|M|TW|PM-U).",
+   "current_relevance": "Latent. FC-/J-/WP- ids do not exist yet.",
+   "blocks_criterion": "CLAUDE.md P-13 compliance for new user outputs, once F4/F6 introduce FC/J/WP ids (adapt with them)."
+  }
+ ],
+ "notes": [
+  "Repo state moved during research. HEAD was 8b27dd0 at start and e870f0f at the end: parent commits added docs/handoff-v1/F0/*, .claude/tests/test_handoff_f0.py and .claude/tests/fixtures/handoff-v1/*. Those are this programme's own work, outside 'pre-existing' scope, and were not assessed as reusable legacy.",
+  "The baseline SHA 85baf1018ca2b238c41745f7f13dbb539589867f is not present in the local object store ('git cat-file: bad object'), so byte-identity with the baseline could not be verified locally.",
+  "All test executions ran in a scratch copy (/tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/mechs/repo, tracked files only) with PYTHONDONTWRITEBYTECODE=1. The repo was not written. Environment: Python 3.11.15, PyYAML 6.0.1 present, openpyxl, python-docx and pypdf absent, 4 CPUs.",
+  "Full-suite result in that environment: 76 files, 63 OK, 13 failing, 2538 tests, 3 failures, 7 errors, 42 skips, 62.5s wall. Raw output is in scratchpad/agents/mechs/run_all.txt and skip list in skips.txt.",
+  "One of the 13 failures (test_state_scaffold, os.listdir(projects) at L144) was an artefact of my copy lacking projects/.gitkeep. It passes (15 OK) once projects/.gitkeep exists. It is not a real defect in a clean clone.",
+  "No existing reusable mechanism was found for: T04 (pack capability / UNSUPPORTED_PROFILE), T05/T06 (current code enforces the opposite), T15 (draft/received/integrated states), T25/T26/T28 (candidate-first review, specialist mandate), T30 (the dialectic cap exists only as text in orchestration.md:181 and no test covers it; grep found no test mentioning Concedo/antithesis/dialect), T40 (secrets), T43/T45/T46 (receiver, sandbox, human acceptance).",
+  "Partial coverage only: T10 (declared-authority recompute pattern in coverage), T16 (truncation declared, but no expand/split), T21 (structural/duplicate-id detection, no cross-artefact rule comparison), T22 (fact != fit), T29 (stage-local pack loading tests in test_pp_options_decision_model TestStageLocalLoading L424, no access logging).",
+  "Metrics: no current mechanism counts tokens or agent calls inside the repo. Claude Code transcripts (outside the repo) carry both. Their structure was observed in this session's own transcript files and not documented in the repo, so availability on pilot machines must be confirmed.",
+  "Scenario-to-mechanism claims come from reading the code and the test class docstrings/names. Individual test bodies were read only for test_operation_recovery, test_bootstrap (helpers and classes), test_resolve_operation (helpers), test_p8_comparator, test_p8_report_schema, test_authority_guard (helpers) and test_coverage_contract (Harness)."
+ ]
+}
