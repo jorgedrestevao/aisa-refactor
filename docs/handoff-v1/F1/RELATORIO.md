@@ -1,6 +1,6 @@
 # Relatório de fase — F1
 
-Estado: **in_progress — gate cumprido com uma excepção por aceitar pelo mantenedor** (T07, metade de cobertura por lente → F3; §5). Todo o trabalho do F1 (itens 1–7 de 05_FASES) está integrado e verde no CI.
+Estado: **completed** (2026-09-23). Gate cumprido; a excepção do T07 (metade de cobertura por lente) foi aceite pelo mantenedor e passa para o gate de F3 (§5). F2 autorizado.
 
 - Data e responsável: 2026-09-23 · Claude Code, sessão `session_0156MuyJemPPrVqRKiDrAsct`, por autorização do mantenedor (F0 §13: «Sim, avançar para F1», começando pelo nascimento do `/start` e pelo ambiente de CI).
 - Repositório, branch e SHA: `jorgedrestevao/aisa-refactor`, branch `claude/clone-repo-awui-7mmi37`. Início de F1: `d7afc5d` (fecho de F0). Último commit: ver `git log` da branch.
@@ -141,7 +141,7 @@ Gate de F1 (05_FASES): T03–T08, T35/T36; requisitos funcionais materiais já n
 | Pack incompatível falha claramente | cumprido | §4 T04 |
 | Testes classic adaptados ou eliminados no mesmo incremento | cumprido (09) | §2 F1.5 |
 
-Excepção por aceitar: o T07 na metade de cobertura por lente. Quem aceita é o mantenedor. Sem essa aceitação, F1 não fica `completed`.
+Excepção: o T07 na metade de cobertura por lente. **Aceite pelo mantenedor em 2026-09-23** («Aceitar, fecha em F3»): entra no gate de F3, onde nasce a etapa de cobertura por lente.
 
 ## 6. Blockers e riscos
 
@@ -166,8 +166,8 @@ Revertem com `git revert`:
 - Última operação integrada: `90d77a0` (F1.6; todo o trabalho de F1).
 - Inputs/revisões necessários: plano v1.2; F0/RELATORIO.md §11 (decisões D-F1-02..17) e §17 (proposta de F1).
 - Drafts/resultados recebidos ainda não integrados: nenhum. O workflow de desenho foi parado sem resultados (§3); o desenho dos contratos F1 corre na sessão.
-- Próxima ação segura: decisão do mantenedor sobre a excepção do T07 e a autorização de F2 (§9).
-- Autorização necessária antes de continuar: aceitação da excepção T07 (ou pedido de a fechar em F1) e autorização de F2.
+- Próxima ação segura: F2, a partir da proposta de §9, com o desenho feito na sessão (regra de execução do README).
+- Autorização necessária antes de continuar: nenhuma para começar F2 (autorizado em 2026-09-23). Decisões materiais de F2 voltam ao mantenedor.
 
 ## 9. Proposta para F2 — continuidade transacional mínima
 
