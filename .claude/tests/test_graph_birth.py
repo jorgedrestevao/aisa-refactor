@@ -17,7 +17,11 @@ degenerado do que `migrate` já faz, migrar um engagement sem nada para migrar.
 
 Mutantes escritos antes destes testes, como no W5, W6 e W7."""
 import json
+import os
+import re
 import runpy
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -236,6 +240,117 @@ class W8c_OQueOStartTemDeFazer(unittest.TestCase):
         """A garantia que não depende de texto nenhum."""
         with tempfile.TemporaryDirectory() as tmp:
             self.assertFalse(B["gate_open"](B["bootstrap"](novo_eng(tmp))))
+
+
+
+def hooks_de_escrita(evento):
+    """Os hooks que o `settings.json` liga a Write/Edit, pela ordem em que correm."""
+    cfg = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    nomes = []
+    for bloco in cfg["hooks"][evento]:
+        if "Write" not in bloco.get("matcher", ""):
+            continue
+        for h in bloco["hooks"]:
+            nomes.append(re.search(r"\.claude/hooks/([\w-]+\.py)", h["command"]).group(1))
+    return nomes
+
+
+class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
+    """D01 (handoff-v1 F0): o `/start` pela ordem que a skill prescrevia não nascia.
+
+    O grafo só nascia no passo 9c. Com `_state.json` escrito no passo 7, o guarda de
+    autoridade recusava a SU (passo 8) em `AISA_GUARD_MODE=enforce`, que é o default; e,
+    depois das linhas `M-n` do passo 9b, `init` recusava com `NOT_EMPTY`. Nenhuma ordem
+    depois do passo 7 funcionava. Aqui o nascimento corre com os hooks reais que o
+    `settings.json` liga a Write/Edit — um hook novo entra sozinho no teste."""
+
+    SKILL = ROOT / ".claude" / "skills" / "aisa-start" / "SKILL.md"
+    PRE = hooks_de_escrita("PreToolUse")
+    POST = hooks_de_escrita("PostToolUse")
+    ESTADO = json.dumps({"engagement": "eng-x", "pack": "pp", "phase": "discovery",
+                         "round": "R-00", "round_in_progress": "", "aisa_version": "0.1.0",
+                         "created": "2026-09-23T00:00:00Z"}) + "\n"
+    LINHA_M1 = ("| M-1 | enquadramento | O preço segue a tabela | declaração do dono do "
+                "processo, 2026-09-23 — enquadramento.md#M-1 | 2026-09-23 | organizacional "
+                "| R-00 |\n")
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.raiz = Path(self.tmp.name)
+        self.eng = self.raiz / "eng-x"
+        self.env = dict(os.environ, AISA_ENGAGEMENTS_ROOT=str(self.raiz),
+                        AISA_GUARD_MODE="enforce", CLAUDE_PROJECT_DIR=str(ROOT))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def hook(self, nome, payload):
+        return subprocess.run([sys.executable, str(ROOT / ".claude" / "hooks" / nome)],
+                              input=json.dumps(payload), capture_output=True, text=True,
+                              encoding="utf-8", env=self.env, cwd=str(ROOT))
+
+    def escreve(self, nome, conteudo):
+        """Uma escrita do agente: PreToolUse, a escrita, PostToolUse. Devolve a recusa."""
+        alvo = self.eng / nome
+        payload = {"tool_name": "Write",
+                   "tool_input": {"file_path": str(alvo), "content": conteudo}}
+        for h in self.PRE:
+            p = self.hook(h, payload)
+            if p.returncode != 0:
+                return "{} recusou `{}`: {}".format(h, nome, (p.stderr + p.stdout)[:400])
+        alvo.write_text(conteudo, encoding="utf-8", newline="\n")
+        payload["tool_response"] = {"filePath": str(alvo), "success": True}
+        for h in self.POST:
+            self.hook(h, payload)
+        return None
+
+    def init(self):
+        return subprocess.run([sys.executable, str(TOOLS / "migrate.py"), "init",
+                               "--engagement", str(self.eng)], capture_output=True,
+                              text=True, encoding="utf-8", env=self.env, cwd=str(ROOT))
+
+    def test_the_skill_creates_the_graph_before_the_first_authority(self):
+        texto = self.SKILL.read_text(encoding="utf-8")
+        init = texto.index("migrate.py init")
+        for passo in ("7. **Write `_state.json`", "8. **Write the `shared-understanding.md`",
+                      "9. Write `council-log.md`", "9b. **Write `enquadramento.md`"):
+            self.assertLess(init, texto.index(passo),
+                            "o grafo nasce depois de `{}` — D01 volta".format(passo))
+        self.assertGreater(init, texto.index("5. **Create the folder structure**"))
+
+    def test_the_birth_in_the_skill_order_is_never_refused(self):
+        self.eng.mkdir()
+        p = self.init()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        passos = [("context.json", '{"engagement": "eng-x"}\n'),
+                  ("_state.json", self.ESTADO),
+                  ("shared-understanding.md", SU),
+                  ("council-log.md", "# Council Log — eng-x\n"),
+                  ("decisions.md", "# Decisions — eng-x\n"),
+                  ("answers.md", "# Answers — eng-x\n"),
+                  ("story.md", "# Story — eng-x\n"),
+                  ("enquadramento.md", "# Enquadramento — eng-x\n"),
+                  ("shared-understanding.md", SU.replace(
+                      "|---|---|---|---|---|---|---|\n\n## Assumed",
+                      "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1))]
+        for nome, conteudo in passos:
+            self.assertIsNone(self.escreve(nome, conteudo))
+        boot = B["bootstrap"](self.eng)
+        self.assertTrue(boot["ready"], boot.get("limitations"))
+        g = G["read"](self.eng)
+        self.assertEqual(g["status"], G["OK"])
+        m1 = [n for n in g["nodes"] if n["id"] == "M-1"]
+        self.assertEqual(len(m1), 1, "a linha M-1 não chegou ao grafo pelo espelho")
+        self.assertEqual(m1[0]["provenance"]["mirror_of"], "SU:M-1")
+
+    def test_the_old_order_is_refused_so_this_test_can_see_d01(self):
+        """Mutante: a ordem antiga (estado antes do grafo) tem de continuar a ser recusada,
+        senão o teste acima passava por o guarda estar desligado e não pela ordem."""
+        self.eng.mkdir()
+        self.assertIsNone(self.escreve("_state.json", self.ESTADO))
+        recusa = self.escreve("shared-understanding.md", SU)
+        self.assertIsNotNone(recusa)
+        self.assertIn("pre-authority-guard.py", recusa)
 
 
 if __name__ == "__main__":
