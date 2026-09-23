@@ -68,10 +68,6 @@
           },
           {
             "type": "command",
-            "command": "python \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/su-confirmed-guard.py\""
-          },
-          {
-            "type": "command",
             "command": "python \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/synthesis-validate.py\""
           },
           {

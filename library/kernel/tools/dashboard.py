@@ -286,7 +286,7 @@ def fit_row(cells: list[str], n_cols: int, payload_idx: int = 2) -> tuple[list[s
     """Reconcile a row to the header width. Surplus cells are re-joined into
     payload_idx with ' | '; deficit is right-padded. Returns (cells, malformed).
 
-    Real case: cae-automation/shared-understanding.md U-035 carries unescaped pipes
+    Real case: a pilot's shared-understanding.md U-035 carries unescaped pipes
     BETWEEN code spans -> 8 cells against a 6-column header. A naive split shifts every
     column right and `criticidade` ends up reading a swing phrase."""
     if len(cells) == n_cols:
@@ -546,9 +546,9 @@ def norm_criticidade(raw: str) -> tuple[str, str]:
 
 def detect_resolution(cells: list[str]) -> tuple[bool, list[str]]:
     """Three conventions coexist across live engagements:
-      kernel marker  '... - resolved -> C-072 + U-059'  (pricing-marinha)
-      strikethrough  '~~RESOLVIDO - ver C-036~~' / '~~Alta~~ Resolvido'  (dpt-galp-jp)
-      none at all    (kam-onboarding, cae-automation)"""
+      kernel marker  '... - resolved -> C-072 + U-059'  (a pilot)
+      strikethrough  '~~RESOLVIDO - ver C-036~~' / '~~Alta~~ Resolvido'  (another pilot)
+      none at all    (two other pilots)"""
     last = cells[-1] if cells else ""
     m = RESOLVED_RE.search(last)
     if m:
@@ -1141,9 +1141,10 @@ def critical_open(rows: list[dict]) -> list[dict]:
 
 
 # ------------------------------------------------ Confirmed locator (P-12)
-# One implementation, two consumers: the `sem locator` facet below and the
-# .claude/hooks/su-confirmed-guard.py hook, which imports this module. The regex
-# lives here and nowhere else.
+# One implementation, several consumers: the `sem locator` facet below, and — before a
+# write — `workflow.su_problems`, used by the pre-authority-guard hook (tool writes) and by
+# `resolve.py publish` (coordinator writes). The regex lives here and nowhere else.
+# (`su-confirmed-guard.py`, the old post-write warner, was retired in handoff-v1 F2, Q4.)
 #
 # The five classes are `library/kernel/states.md` -> *Confirmed threshold* rule 1
 # (the fifth -- a persisted direct extraction -- was added after the R-05 validation).
@@ -1512,7 +1513,10 @@ ENQ_LENS = "enquadramento"
 # contra estes três -- dois vivos sob a regra e um anterior a ela -- e nunca só contra o
 # template. Foi a ausência desta disciplina que produziu os quatro defeitos que a
 # validação de R-05 apanhou (step-9c §5.2.1).
-CALIBRACAO = ("pricing-marinha-pilot-3", "dpt-galp-jp", "cae-automation")
+# Os três pilotos privados em que estes padrões foram calibrados. Os nomes dos engagements
+# ficam no repositório privado (handoff-v1 F2, higiene H2); aqui só o papel de cada um.
+CALIBRACAO = ("piloto de pricing (3.ª iteração)", "piloto de triagem de pedidos",
+              "piloto de automação")
 
 # P-1, terceira declaração: um `decisivo` nomeia o referente que a resposta elimina ou
 # mantém vivo. Vivia no script de comparação -- duas casas para a mesma regra divergem.
@@ -1562,7 +1566,7 @@ ARB_ALT_RE = re.compile(
     r"|\bvs\.?\b|\bversus\b"                    # "A vs B"
     # "se ..., se ...": a janela era `[^|;]{2,80}` -- um ponto-e-virgula entre os dois
     # ramos, ou um ramo com mais de 80 caracteres, dava FALSO POSITIVO. Aconteceu 7 vezes
-    # em pricing-bunkers R-01 (council-log) e voltou em pilot-3 R-05 com P-26, onde a
+    # num piloto, R-01 (council-log), e voltou noutro, R-05, com P-26, onde a
     # conjuncao o torna consequente: sob a regra antiga a linha passava por citar `M-n`.
     # A janela larga alinha com a do "(a) ... (b)" e troca falsos positivos por falsos
     # negativos -- a troca que este ficheiro aceita.
@@ -1581,7 +1585,7 @@ ARB_ALT_RE = re.compile(
 # assinaladas como nao nomeando duas. A regra universal `tem ; => duas alternativas`
 # nao serve: o mesmo ponto-e-virgula separa, noutras linhas, duas consequencias da
 # MESMA resposta ("acrescenta relogio, alerta e medicao; move `modelo de dados`"), e
-# ja tinha dado 7 falsos positivos em pricing-bunkers R-01.
+# ja tinha dado 7 falsos positivos num piloto (R-01).
 #
 # O que se reconhece e a ESTRUTURA, nao o sentido: dois ramos, cada um com o seu
 # antecedente. Um ramo vale quando abre por uma condicao (`sem ...`, `se ...`, `com
@@ -2507,14 +2511,14 @@ def frame_sentence(md: str) -> str:
     approval is an approval OF.
 
     It lives under '## Single problem sentence', written either as a blockquote or in
-    bold: `pricing-marinha-pilot-1`, `kam-onboarding` and `cae-automation` all use bold,
+    bold: three pilot engagements all use bold,
     and the blockquote-only reader returned "" for all three -- no sentence on the page,
     and nothing to approve. Normalisation is deliberate and narrow, because this output
     is hashed (P-18/F05): quote markers, bold wrappers, horizontal rules and whitespace
     are presentation and must not change the identity; the words are the identity.
     """
     # Three real headings across the engagements: `## Single problem sentence`
-    # (kernel template), `### Frame sentence` (dpt-galp-jp). Reading only the first
+    # (kernel template), `### Frame sentence` (another pilot). Reading only the first
     # would call a framed engagement "no frame" and make its approval unverifiable.
     m = re.search(r"^#{2,4}\s+(?:Single problem sentence|Frame sentence)\s*$"
                   r"(.*?)(?=^#{1,4}\s|\Z)", md, re.M | re.S)
@@ -2644,7 +2648,7 @@ def parse_render_gaps(eng: Path) -> list[dict]:
 
 # ---------------------------------------------------- tolerant YAML extraction
 # A blueprint is authored by an LLM and is not guaranteed to be well-formed:
-# `pricing-marinha` v05 (an APPROVED version) fails yaml.safe_load at
+# a pilot's v05 (an APPROVED version) fails yaml.safe_load at
 # irreversible_choices. A strict parse would therefore lose the whole record for
 # the sections that ARE well-formed. So: no PyYAML, stdlib only, and a targeted
 # indentation walk that reads the keys the status view needs and skips the rest.
@@ -3019,7 +3023,7 @@ def _tw_bullets(body: str) -> tuple[list[dict], list[str]]:
     """(declared tripwires, unlabelled notes under the same heading).
 
     A bullet is a tripwire ONLY where it declares `TW-<n>:`. Auto-numbering the
-    rest fabricates tripwires: `pricing-marinha` D-002 carries a note saying the
+    rest fabricates tripwires: a pilot's D-002 carries a note saying the
     other premortem candidates were considered and deliberately NOT adopted, and
     numbering it TW-2 made the view announce a tripwire the decision declined.
     Notes are returned, never dropped -- they are just not tripwires."""
@@ -3946,7 +3950,7 @@ def _synth_cited_version(text: str) -> str:
 def synthesis_entries(log: str) -> list[dict]:
     """Every run recorded in _synthesis-log.md. Two shapes exist in real engagements:
     one line per topic (`<ts> — <topic> — ...`, the kernel's) and a `## Run N — <ts>`
-    heading followed by a `| topic | ... |` table (dpt-galp-jp). Both are read; a
+    heading followed by a `| topic | ... |` table (another pilot). Both are read; a
     topic token tolerates a suffix (`architecture-story (re-síntese, manual)`)."""
     entries: list[dict] = []
     run_ts = ""

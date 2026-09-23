@@ -141,7 +141,7 @@ F-01 approval waved through an F-02 sentence nobody had approved).
   block IS (`kind`) from its content.
 - The fingerprint is always computed from `frame.md` by the motor
   (`dashboard.py --json` → `frame.sha256`), never from the text of the decision block
-  and never by hand: `pricing-marinha-pilot-1` holds an English sentence in `frame.md`
+  and never by hand: a pilot held an English sentence in `frame.md`
   and a Portuguese one in `D-001`, which is exactly the drift this rule closes.
 - **The sentence unchanged in a later round is not a new approval**: no new block, no
   new id — one line in `council-log.md` (`frame unchanged since D-00x (sha256 match)`).

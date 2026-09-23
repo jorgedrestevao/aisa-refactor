@@ -17,7 +17,7 @@ matches nothing and the order is policed as usual. A free-text ``round mode:
 single`` in the invocation is accepted as a secondary signal, for the case where
 the state write landed in a different engagement copy — but the state is the
 authority, because a marker the model must remember to type is exactly what
-failed in operation (2026-09-09, `pricing-bunkers` R-03).
+failed in operation (2026-09-09, a pilot's R-03).
 
 Fail-closed: no recognisable signal → policed as a full round.
 

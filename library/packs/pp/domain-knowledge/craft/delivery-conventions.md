@@ -29,7 +29,7 @@ camada de traceability (stamping).
 | Solution | `<Org>_<Domínio>_<App>` (publisher prefix próprio da org) | `Galp_Procurement_AdvanceApprovals` |
 | Canvas App | `[<Domínio>] <Nome funcional>` | `[Procurement] Advance Approvals` |
 | Cloud flow | `FLW-<Entidade>-<Ação>` | `FLW-AdvanceRequest-NotifyApprover` |
-| Tabela Dataverse | prefixo do publisher + singular PascalCase | `galp_AdvanceRequest` |
+| Tabela Dataverse | prefixo do publisher + singular PascalCase | `pub_AdvanceRequest` |
 | Lista SharePoint | PascalCase singular, sem espaços | `AdvanceRequest` |
 | Environment variables | `env_<Área>_<Nome>` | `env_SAP_BaseUrl` |
 | Screens / controls / variáveis Power FX | ver `screen-consolidation-rules.md` (screens) e `powerfx.md` (var/gbl/col/err) | `AdvanceRequestListScreen`, `varSelectedRequest` |

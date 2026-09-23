@@ -790,19 +790,23 @@ contrato: sobe `contract_version`.
 - **`stale` não prova que uma conclusão ficou falsa**: obriga a rever os impactos e a produzir
   nova revisão.
 - **Finalização**: rascunho em ficheiro temporário → validação e recheck dos digests →
-  criação **exclusiva** do próximo `vNN`. Nunca sobrescrever, nunca `os.replace` sobre uma
-  versão publicada. Se a concorrência ocupar a versão, falha com informação clara e
-  repete-se a reserva.
+  publicação do próximo `vNN` **pelo coordenador** (`operation.run`, handoff-v1 F2, decisão
+  Q3): `.json` e `.md` numa operação e num recibo, com `expected = ""` (a versão não existia)
+  e as fontes do último veredicto como read-set, verificadas sob o lock. Nunca sobrescrever,
+  nunca `os.replace` sobre uma versão publicada. Se a concorrência ocupar a versão, toma-se
+  a seguinte. **Idempotente**: o mesmo conteúdo já publicado devolve a versão que o tem, sem
+  emitir outra; e o número é o maior já emitido + 1 — contando os recibos, que sobrevivem a
+  um ficheiro apagado —, nunca um número livre reaproveitado (F0 D07).
 - **O último veredicto é o que manda.** Entre qualquer verificação e a linha seguinte há
   uma janela; o que não pode haver é publicar **depois** de a ter visto fechada. O estado
   que a operação vai reportar é o mesmo que decide se ela publica: se esse estado não é
-  `current` e `valid`, a reserva desfaz-se e nada fica publicado. Uma revisão publicada
+  `current` e `valid`, nada fica publicado. Uma revisão publicada
   nunca sai `stale` do sítio onde foi publicada — se ficar `stale` depois, é a leitura
   seguinte que o diz, e é para isso que `stale` existe.
 - O recheck **de saída** é o mesmo de entrada, e cobre o mesmo: a base **e o alvo**. O alvo
   não está no manifesto (é um alvo, §6.3), por isso uma comparação que só olhe para o
   manifesto deixa passar uma versão publicada já `stale`. Uma revisão publicada está
-  actual — se não estiver, não se publica, e a reserva desfaz-se.
+  actual — se não estiver, não se publica.
 - A revisão publicada é avaliada **por nome**, não por «a mais recente da etapa»: com duas
   finalizações concorrentes, a mais recente é a da outra, e o relatório de uma versão
   passaria a descrever outra.
@@ -1068,7 +1072,7 @@ da ligação; a adequação é revista e escrita pelo agente, e fica assinada po
 | 31 | Se o recheck de saída da finalização cobre o alvo | §6.6: sim, e é o **mesmo** recheck da entrada. O alvo não está no manifesto; uma comparação só do manifesto publica uma revisão já `stale` |
 | 32 | O que se faz a um registo que parseia e não se consegue situar | §6.6: bloqueia todas as etapas. Situar vem antes de filtrar — filtrar por `stage` primeiro fá-lo desaparecer em silêncio |
 | 33 | Se um schema desconhecido impede situar o registo | §6.6: não. Se traz `stage` e a identidade do alvo, é seleccionado e sai `unsupported`; situar não é validar |
-| 34 | O que acontece se a base mudar entre a última verificação e o fim da operação | §6.6: a reserva desfaz-se. O veredicto que ia ser reportado é o mesmo que decide publicar |
+| 34 | O que acontece se a base mudar entre a última verificação e o fim da operação | §6.6: nada se publica — a janela até à publicação fecha-se no read-set do coordenador, sob o lock. O veredicto que ia ser reportado é o mesmo que decide publicar |
 | 35 | Se basta a identidade para escolher a revisão de um alvo | §6.6: não. Identidade **e** ficheiro, e a identidade tem de ser a que o próprio ficheiro dá. Só a identidade deixa passar a troca de uma etiqueta |
 | 36 | O que faz o motor a um campo com o tipo errado | §4.1: `COV-SCHEMA` com o campo e o tipo, `invalid` e saída 2. Nunca `COV-UNEXPECTED` nem saída 5 — um ficheiro mal escrito não é falha do motor |
 | 37 | Se um destino-âncora pode estar noutra versão do desenho | §4.4.2: não. Tem de estar em `target.file`, ou é `COV-AUTHORITY-MISMATCH` e não conta como âncora. Destinos que não são âncora podem viver noutro ficheiro |

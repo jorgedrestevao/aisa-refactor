@@ -239,7 +239,7 @@ Otherwise ask via `AskUserQuestion` (never a prose question): *Aceitar a frase* 
 **Order matters**: the final sentence goes into `frame.md` FIRST, then the motor computes
 its fingerprint, then the block is written. The fingerprint in `decisions.md` is therefore
 always the fingerprint of a sentence that really is on file — never of the text typed into
-the block (`pricing-marinha-pilot-1` holds an English sentence in `frame.md` and a
+the block (a pilot held an English sentence in `frame.md` and a
 Portuguese one in `D-001`: that drift is what this ordering closes).
 
 1. If the user edited the sentence, write it into `frame.md` under `## Single problem sentence`.

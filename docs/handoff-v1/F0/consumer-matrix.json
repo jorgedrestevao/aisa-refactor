@@ -327,16 +327,6 @@
      "source": "critic"
     },
     {
-     "file": ".claude/hooks/su-confirmed-guard.py",
-     "kind": "hook",
-     "role": "validator",
-     "mechanism": "PostToolUse after a write to shared-understanding.md: parses SU with dashboard.parse_su, audits touched C- rows (all open Confirmed on Write) with audit_confirmed_locators (locator present + target exists, incl. answers.md anchors); appends idempotent line to council-log.md; never blocks. Handles MultiEdit in code but settings matcher is Write|Edit only.",
-     "via": "",
-     "evidence": "su-confirmed-guard.py:37 ROW_ID_RE (C- only); 76-85 touched_ids (MultiEdit 80-84); 88-110 log_new append; 129-147 SU read/parse/audit; settings.json:45 matcher Write|Edit",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/hooks/synthesis-validate.py",
      "kind": "hook",
      "role": "reader",
@@ -1095,7 +1085,8 @@
     "Persona memory (.claude/agent-memory/_universal/business-analyst/universal-constraints.md:6, data-steward/anti-patterns.md:26, cfo-lens/anti-patterns.md:20) tells personas to land items 'as an SU row'. Personas are read-only, so this is mention-only guidance that reaches the SU through chairman-synthesis.",
     "dashboard.py --serve binds the whole engagement folder (SU, answers.md, _graph, _ops) to http://127.0.0.1:8787 (commands/dashboard.md:10-13). It is a localhost read-exposure surface, not a writer.",
     "aisa-status step 2 (SKILL.md:45-48) runs dashboard.py --force, which writes <engagement>/dashboard.html. So /resume and aisa-orient re-orientation write a projection file as well as the step-3 SU header candidate already listed.",
-    "Inventory items spot-checked and confirmed against code/prose: resolve.py plan/apply/mark_resolved/sync_mirror/mirror_write_set; operation.py run/_publish/_atomic_write/acquire; migrate.py init/apply/_nodes_from/restore; graph.py GATE_FIELDS/authority_from_rows/drift/CLI read-only; bootstrap.py AUTHORITIES/snapshot/LEGACY_MODE/AUTHORITY_DRIFT/UNMIRRORED; pre-authority-guard.py AUTORIDADES/DIRECTORIOS_AUTORIDADE/avalia; on-su-mirror.py; su-confirmed-guard.py; on-su-change.py TRIGGER_FILES; phase-completeness.py su_has_round/Framing header; projection.py; dashboard.py writes limited to lock/html/json; aisa-start steps 7/8/9/9b/9c; aisa-answer engine call, header, revalidation and rule 4; aisa-round 3.6c/4c/5b/5f arbiter edits and transitions; aisa-decide 81/129-137; aisa-status 27/53; aisa-orient 49 vs 73; aisa-blueprint 212/220/275; aisa-simulate 41; aisa-frame 105; aisa-options 112; chairman-synthesis 113/187-189; lens-technology gate and no invoker; agents' tools (only chairman has Write/Edit); settings.json matchers and AISA_GUARD_MODE=enforce."
+    "Inventory items spot-checked and confirmed against code/prose: resolve.py plan/apply/mark_resolved/sync_mirror/mirror_write_set; operation.py run/_publish/_atomic_write/acquire; migrate.py init/apply/_nodes_from/restore; graph.py GATE_FIELDS/authority_from_rows/drift/CLI read-only; bootstrap.py AUTHORITIES/snapshot/LEGACY_MODE/AUTHORITY_DRIFT/UNMIRRORED; pre-authority-guard.py AUTORIDADES/DIRECTORIOS_AUTORIDADE/avalia; on-su-mirror.py; su-confirmed-guard.py; on-su-change.py TRIGGER_FILES; phase-completeness.py su_has_round/Framing header; projection.py; dashboard.py writes limited to lock/html/json; aisa-start steps 7/8/9/9b/9c; aisa-answer engine call, header, revalidation and rule 4; aisa-round 3.6c/4c/5b/5f arbiter edits and transitions; aisa-decide 81/129-137; aisa-status 27/53; aisa-orient 49 vs 73; aisa-blueprint 212/220/275; aisa-simulate 41; aisa-frame 105; aisa-options 112; chairman-synthesis 113/187-189; lens-technology gate and no invoker; agents' tools (only chairman has Write/Edit); settings.json matchers and AISA_GUARD_MODE=enforce.",
+    "F2 (maintainer decision Q4, 2026-09-23): `.claude/hooks/su-confirmed-guard.py` retired; the Confirmed rule is enforced before the write by pre-authority-guard and resolve.publish through workflow.su_problems."
    ],
    "critic": {
     "ran": true,
@@ -5838,16 +5829,6 @@
      "source": "inventory"
     },
     {
-     "file": ".claude/hooks/su-confirmed-guard.py",
-     "kind": "hook",
-     "role": "reader",
-     "mechanism": "Engagement identity = nearest ancestor holding _state.json; no field read.",
-     "via": "",
-     "evidence": "su-confirmed-guard.py:52-59.",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/hooks/synthesis-validate.py",
      "kind": "hook",
      "role": "reader",
@@ -6446,7 +6427,8 @@
     "operation.py:93 defines CONFLICT = 'conflict', which nothing in library/kernel/tools or .claude/hooks returns or consumes (grep). Dead constant.",
     "operation._atomic_write (operation.py:170-179) and dashboard._write_text leave '<name>.<pid>.tmp' files next to targets on a crash, including inside _ops/ and at the engagement root. These are extra transient paths the inventory's path_patterns omit. coverage excludes them through DERIVED_SUFFIXES ('.tmp', coverage.py:98), bootstrap ignores them.",
     "dashboard --serve's mtime watcher (_needs_rebuild -> _activity_mtime, dashboard.py:177-195, :7663-7688, :7924-7936) does pick up _state.json renames done with Bash mv. The 'phase/round flips do not trigger regeneration' remark is true only of on-su-change.py, not of a running --serve.",
-    "Experiments ran only under /tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/critic_exp/ (TMPDIR and AISA_ENGAGEMENTS_ROOT pointed there, PYTHONDONTWRITEBYTECODE=1). Scripts: mig_hazard.py, replay.py. 'git status --short' on the repo was empty afterwards."
+    "Experiments ran only under /tmp/claude-0/-home-user-aisa-refactor/aa9a6c88-d30b-5b8b-83e1-02a549d2af3c/scratchpad/agents/critic_exp/ (TMPDIR and AISA_ENGAGEMENTS_ROOT pointed there, PYTHONDONTWRITEBYTECODE=1). Scripts: mig_hazard.py, replay.py. 'git status --short' on the repo was empty afterwards.",
+    "F2 (maintainer decision Q4, 2026-09-23): `.claude/hooks/su-confirmed-guard.py` retired; the Confirmed rule is enforced before the write by pre-authority-guard and resolve.publish through workflow.su_problems."
    ],
    "critic": {
     "ran": true,

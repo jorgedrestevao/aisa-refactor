@@ -61,6 +61,7 @@ import os
 import re
 import runpy
 import sys
+import time
 import unicodedata
 from pathlib import Path
 
@@ -107,7 +108,9 @@ SYNTHESIS_DIR = "_synthesis/"
 # nenhuma — é o registo de que uma escrita aconteceu. Entrava como fonte `freshness` pela
 # regra por defeito, e bastava uma operação qualquer para tornar `stale` uma revisão que
 # nada do que ela leu tinha mudado.
-OPERATIONAL_DIRS = ("_ops/", "_migration/")
+# handoff-v1 F2: os rascunhos (`_drafts/`) não são verdade de ninguém, e o checkpoint do
+# trabalho (`_work/`) muda a cada tarefa sem mudar nada do que uma revisão consumiu.
+OPERATIONAL_DIRS = ("_ops/", "_migration/", "_drafts/", "_work/")
 
 # O grafo NÃO entra por bytes. Uma aresta de navegação muda `graph.jsonl` e não muda nada
 # do que a revisão consumiu; comparar os bytes fazia disso um `stale`. O que entra — quando
@@ -357,6 +360,15 @@ def _graph_module(eng: Path):
     if "mod" not in _GRAPH_MODULE:
         _GRAPH_MODULE["mod"] = runpy.run_path(str(caminho))
     return _GRAPH_MODULE["mod"]
+
+
+def _operation_module():
+    """`operation.py` — o coordenador, único mecanismo de publicação (handoff-v1 F2, Q3).
+    Carregado só quando se finaliza: ler e conferir não publica nada."""
+    if "op" not in _GRAPH_MODULE:
+        _GRAPH_MODULE["op"] = runpy.run_path(str(Path(__file__).resolve().parent /
+                                                 "operation.py"))
+    return _GRAPH_MODULE["op"]
 
 
 GRAPH_CONSUMED_PATH = "_graph#consumed"
@@ -3603,13 +3615,36 @@ def read_draft(path: Path) -> tuple[object, str]:
             "ok" if isinstance(data, dict) else "unreadable")
 
 
-def next_version(eng: Path) -> str:
+_ISSUED_RE = re.compile(r"^coverage-v(\d{2,4})-[0-9a-f]+\.json$")
+
+
+def issued_versions(eng: Path) -> set:
+    """As versões já emitidas: as que estão em `_coverage/` E as que têm recibo do
+    coordenador (`_ops/receipts/coverage-vNN-….json`). O recibo sobrevive a um ficheiro
+    apagado à mão — e é isso que impede reutilizar o número (D07)."""
     taken = {_version_num("v" + _RECORD_RE.match(r.rsplit("/", 1)[-1]).group(1))
              for r in record_files(eng)}
-    n = 1
-    while n in taken:
-        n += 1
-    return "v{:02d}".format(n)
+    rec = Path(eng) / "_ops" / "receipts"
+    if rec.is_dir():
+        for p in rec.iterdir():
+            m = _ISSUED_RE.match(p.name)
+            if m:
+                taken.add(int(m.group(1)))
+    return taken
+
+
+def next_version(eng: Path) -> str:
+    """A maior versão já emitida + 1 — NUNCA o primeiro número livre (D07): um número
+    livre pode ser o de uma versão apagada, e reutilizá-lo daria a duas revisões
+    diferentes o mesmo nome."""
+    return "v{:02d}".format(max(issued_versions(eng) | {0}) + 1)
+
+
+def record_content_key(record: dict) -> str:
+    """Identidade do CONTEÚDO de um registo — tudo menos o nome que lhe foi dado."""
+    corpo = {k: v for k, v in (record or {}).items() if k != "version"}
+    return hashlib.sha256(json.dumps(corpo, ensure_ascii=False, sort_keys=True)
+                          .encode("utf-8")).hexdigest()
 
 
 def _coverage_dir(eng: Path) -> Path:
@@ -3632,11 +3667,18 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
     2. **base alterada** — o rascunho declara a base que diz ter lido; se essa base já
        não é a actual, publicar carimbaria como revista uma fonte que mudou sem ser
        relida. Os digests antigos **nunca** são substituídos pelos actuais;
-    3. **base alterada DURANTE a operação** — a reserva é desfeita e nada fica publicado.
+    3. **base alterada DURANTE a operação** — nada fica publicado.
 
-    A reserva da versão é **exclusiva** (`O_CREAT|O_EXCL`): duas finalizações concorrentes
-    ficam com versões diferentes e nenhuma sobrescreve a outra. Não há `os.replace` sobre
-    uma versão publicada em lado nenhum deste ficheiro."""
+    Publica pelo coordenador (handoff-v1 F2, decisão Q3; F0 D07): `operation.run`, os dois
+    ficheiros numa operação e num recibo, com `expected = ""` (a versão não existia — não
+    há maneira de sobrescrever uma publicada) e as fontes do último veredicto como
+    read-set, verificadas sob o lock. Duas finalizações concorrentes ficam com versões
+    diferentes: a segunda vê a versão ocupada (`BASE_CHANGED`) e toma a seguinte.
+
+    **Idempotente** (D07): o mesmo conteúdo já publicado devolve a versão que o tem, sem
+    emitir outra. E o número é o maior já emitido + 1 (`next_version`), nunca um número
+    livre reaproveitado. Não há `os.replace` sobre uma versão publicada em lado nenhum
+    deste ficheiro."""
     readers = readers or ReaderAdapter()
     eng = Path(eng).resolve()
     draft, state = read_draft(Path(draft_path))
@@ -3650,6 +3692,19 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
     stage = draft.get("stage")
     if stage not in STAGES:
         raise CoverageError("rascunho com etapa desconhecida: {!r}".format(stage), 2)
+    chave = record_content_key(draft)
+    for e in load_records(eng):
+        if e.get("record") is not None and record_content_key(e["record"]) == chave:
+            # Já publicado: a mesma revisão não ganha segundo nome. O veredicto dela
+            # continua a ser recalculado em cada leitura — não se decide aqui.
+            return {"published": True, "replayed": True, "version": e["version"],
+                    "json": e["file"],
+                    "md": e["file"][:-len(".json")] + ".md",
+                    "result": coverage_state(eng, stage, draft.get("target"), readers,
+                                             record=e["record"], record_name=e["file"],
+                                             record_filename=e["name"]),
+                    "message": "esta revisão já estava publicada como {} — nada de novo "
+                               "foi emitido".format(e["version"])}
     inventory = build_inventory(eng, readers)
     chain = {e["name"]: e["record"] for e in load_records(eng) if e["record"] is not None}
     ctx = dict(record_context(eng, inventory, readers), chain=chain)
@@ -3678,82 +3733,81 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
                 "message": "a base mudou depois de a revisão ser escrita: {} — publicar "
                            "agora carimbaria como revista uma fonte que mudou sem ser "
                            "relida".format("; ".join(fresh["reasons"]) or "ver `changed`")}
-    cdir = _coverage_dir(eng)
-    cdir.mkdir(parents=True, exist_ok=True)
-    fd = None
+    _coverage_dir(eng)                       # recusa um `_coverage/` fora do engagement
+    O = _operation_module()
+    alvo_rel = _as_dict(draft).get("target") if isinstance(draft.get("target"), str) else None
     for _ in range(max_attempts):
         version = next_version(eng)
-        target = cdir / "coverage_{}.json".format(version)
-        try:
-            fd = os.open(str(target), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            break
-        except FileExistsError:
-            fd = None                    # concorrência ocupou a versão: repete a reserva
-    if fd is None:
-        raise CoverageError(
-            "não foi possível reservar uma versão em {} após {} tentativas"
-            .format(cdir, max_attempts), 5)
-    published = dict(draft)
-    published["version"] = version       # a identidade é o ficheiro (§4.1); só isto muda
-    payload = json.dumps(published, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
-    md_path = cdir / "coverage_{}.md".format(version)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(payload)
-        # A verificação final é EXACTAMENTE a mesma da inicial -- `finalize_recheck`,
-        # sobre a base recalculada E sobre o alvo recalculado. A versão anterior
-        # comparava à mão só os três digests e o manifesto, e o alvo não está no
-        # manifesto (é um alvo, §6.3): mexer no desenho entre a reserva e esta linha
-        # passava, e a revisão era publicada já `stale`. Duas definições de «a base
-        # mudou» divergem sempre; esta é a única.
-        after = compute_basis(eng, build_inventory(eng, readers), stage,
-                              draft.get("target"),
+        published = dict(draft)
+        published["version"] = version   # a identidade é o ficheiro (§4.1); só isto muda
+        payload = json.dumps(published, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
+        json_rel = "{}coverage_{}.json".format(COVERAGE_DIR, version)
+        md_rel = "{}coverage_{}.md".format(COVERAGE_DIR, version)
+        # A verificação final é EXACTAMENTE a mesma da inicial -- `finalize_recheck`, sobre
+        # a base recalculada E sobre o alvo recalculado. Duas definições de «a base mudou»
+        # divergem sempre; esta é a única.
+        after = compute_basis(eng, build_inventory(eng, readers), stage, draft.get("target"),
                               authorities=_as_list(_as_dict(draft.get("basis"))
-                                                .get("authorities")),
+                                                   .get("authorities")),
                               readers=readers, synthesis_authorities=synth,
                               graph_consumed=declared_graph_consumed(draft))
-        moved = finalize_recheck(published, after, current_target(eng,
-                                                                 draft.get("target")))
+        moved = finalize_recheck(published, after, current_target(eng, draft.get("target")))
         if moved["status"] != "current":
-            target.unlink(missing_ok=True)
             return {"published": False, "reason": "changed-during",
                     "freshness": moved, "changed": moved["reasons"],
-                    "message": "a base mudou enquanto a revisão era publicada ({}) — a "
-                               "reserva foi desfeita e nada ficou publicado"
-                               .format("; ".join(moved["reasons"]) or "ver `changed`")}
-        # Avalia-se o registo que ACABOU de ser publicado, por nome, e não «o mais
-        # recente da etapa»: com duas finalizações concorrentes, o mais recente é o da
-        # outra, e o relatório de uma versão falava da outra.
+                    "message": "a base mudou enquanto a revisão era preparada ({}) — nada "
+                               "ficou publicado".format("; ".join(moved["reasons"])
+                                                        or "ver `changed`")}
+        # Avalia-se o registo que VAI ser publicado, por nome, e não «o mais recente da
+        # etapa»: com duas finalizações concorrentes, o mais recente é o da outra.
         result = coverage_state(eng, stage, draft.get("target"), readers,
-                                record=published,
-                                record_name="_coverage/coverage_{}.json".format(version),
+                                record=published, record_name=json_rel,
                                 record_filename="coverage_{}.json".format(version))
-        # O ÚLTIMO veredicto é o que manda, e é o mesmo que vai ser reportado. Há sempre
-        # uma janela entre uma verificação e a linha seguinte; o que não pode haver é
-        # publicar depois de a ter visto fechada. Se o estado que se ia reportar não está
-        # actual, ou não é válido, a reserva desfaz-se aqui -- não se anuncia uma revisão
-        # que a própria operação já sabe desactualizada.
+        # O ÚLTIMO veredicto é o que manda, e é o mesmo que vai ser reportado: se não está
+        # actual, ou não é válido, não se publica.
         if result["freshness"] != "current" or result["contract_validity"] != "valid":
-            target.unlink(missing_ok=True)
             return {"published": False, "reason": "changed-during", "result": result,
                     "changed": result.get("reasons", []),
-                    "message": "no fim da operação a revisão já não estava actual "
-                               "(atualidade: {} · contrato: {}) — a reserva foi desfeita "
-                               "e nada ficou publicado"
-                               .format(result["freshness"],
-                                       result["contract_validity"])}
-        md_path.write_text(render_report(published, result), encoding="utf-8",
-                           newline="\n")
-    except Exception:                                               # noqa: BLE001
-        target.unlink(missing_ok=True)
-        md_path.unlink(missing_ok=True)
-        raise
-    return {"published": True, "version": version,
-            "json": "_coverage/coverage_{}.json".format(version),
-            "md": "_coverage/coverage_{}.md".format(version),
-            "result": result,
-            "message": "revisão publicada como {} — o veredicto continua a ser "
-                       "recalculado em cada leitura".format(version)}
+                    "message": "no fim da preparação a revisão já não estava actual "
+                               "(atualidade: {} · contrato: {}) — nada ficou publicado"
+                               .format(result["freshness"], result["contract_validity"])}
+        md = render_report(published, result)
+        # handoff-v1 F2 (Q3, D07): UM mecanismo de publicação — o coordenador. Os dois
+        # ficheiros saem numa operação, com recibo; `expected = ""` diz «não existia»,
+        # que é o que torna impossível sobrescrever uma versão publicada (T29); e as
+        # fontes que este veredicto leu entram como read-set, verificadas sob o lock: a
+        # janela entre o último veredicto e a publicação fecha-se ali, não por esperança.
+        lidos = {src["path"]: O["digest"](eng / src["path"])
+                 for src in after.get("sources") or []
+                 if isinstance(src, dict) and "#" not in str(src.get("path", ""))
+                 and (eng / str(src.get("path", ""))).is_file()}
+        if alvo_rel and (eng / alvo_rel).is_file():
+            lidos[alvo_rel] = O["digest"](eng / alvo_rel)
+        op_id = "coverage-{}-{}".format(version, hashlib.sha256(
+            payload.encode("utf-8")).hexdigest()[:12])
+        try:
+            O["run"](eng, op_id, {json_rel: payload, md_rel: md},
+                     expected={json_rel: "", md_rel: ""}, read_set=lidos)
+        except O["OperationError"] as exc:
+            if exc.code == "BASE_CHANGED":
+                continue                  # outra finalização ocupou a versão: a seguinte
+            if exc.code in ("LOCK_ACTIVE", "LOCK_CONTENDED"):
+                time.sleep(0.05)
+                continue                  # outro escritor tem o engagement: repetir
+            if exc.code == "STALE_INPUT":
+                return {"published": False, "reason": "changed-during",
+                        "changed": [exc.detail.get("path")],
+                        "message": "a fonte `{}` mudou entre o último veredicto e a "
+                                   "publicação — nada ficou publicado".format(
+                                       exc.detail.get("path"))}
+            raise CoverageError("publicação recusada pelo coordenador ({}): {}".format(
+                exc.code, exc), 5)
+        return {"published": True, "version": version, "json": json_rel, "md": md_rel,
+                "result": result, "operation_id": op_id,
+                "message": "revisão publicada como {} — o veredicto continua a ser "
+                           "recalculado em cada leitura".format(version)}
+    raise CoverageError("não foi possível publicar uma versão em {} após {} tentativas"
+                        .format(_coverage_dir(eng), max_attempts), 5)
 
 
 def finalize_recheck(draft: dict, current: dict, target_now: dict | None) -> dict:

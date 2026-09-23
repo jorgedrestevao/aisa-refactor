@@ -21,7 +21,7 @@ launch the browser. Both resolve the engagement on their own, so no link is ever
 ```
 python library/kernel/tools/dashboard.py --url            # most recent engagement
 python library/kernel/tools/dashboard.py --url --open      # and open it
-python library/kernel/tools/dashboard.py --engagement kam-onboarding --url
+python library/kernel/tools/dashboard.py --engagement <slug> --url
 ```
 
 Flags:

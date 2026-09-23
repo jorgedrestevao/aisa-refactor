@@ -27,7 +27,7 @@ description: >
 #   re-read at S9). decision-tree.md 14.1 makes the form a MANDATORY returned field for a
 #   platform candidate, in products, one option per form. Cause: an Options round can otherwise
 #   render "this platform over the store that already runs" and never name the surface - the
-#   sponsor is asked to approve a decision they were never shown (observed in pricing-bunkers
+#   sponsor is asked to approve a decision they were never shown (observed in a pilot,
 #   O-01, where two distinct forms shared one option row and no option named a surface).
 #   A form becoming unavailable stays an in-platform redirect, never an exclusion outcome.
 #   No stage, concern, option class, outcome class, composed row, blocking entry, knowledge unit,
