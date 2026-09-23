@@ -1,0 +1,54 @@
+{
+  "schema_version": "handoff-f0-fixture/1",
+  "id": "fx-hv1-03-change-impact",
+  "synthetic": true,
+  "title": "Mudança de premissas depois do handoff aprovado da fx-hv1-02",
+  "route": "change-impact",
+  "depends_on": ["fx-hv1-02-pp-constrained"],
+  "fixture_requirements": ["alterar premissa após handoff aprovado", "invalidação selectiva", "trabalho/estimativa actualizados", "preservação da decisão anterior"],
+  "sources": [
+    {"id": "SRC-BASE", "path": "sources/baseline-aprovada.md", "kind": "approved-baseline"},
+    {"id": "SRC-MUD", "path": "sources/mudancas.md", "kind": "change-events"}
+  ],
+  "scope": {"in": ["delta sobre a baseline da fx-hv1-02"], "out": ["repetir o discovery completo"]},
+  "constraints": ["as autorizações da baseline são dados de teste sintéticos"],
+  "expected": [
+    {
+      "id": "E01",
+      "kind": "invalidation",
+      "statement": "Mudar o arredondamento (X1) torna stale o contrato funcional do cálculo, os seus exemplos de aceitação, os testes e o pacote de trabalho do cálculo, e obriga a reavaliar a estimativa desse pacote.",
+      "source_refs": ["sources/mudancas.md#X1", "sources/baseline-aprovada.md#B1"],
+      "classification": {"stale": ["FC do cálculo", "exemplos de aceitação do cálculo", "testes do cálculo", "WP do cálculo", "estimativa do WP do cálculo"], "preserved": ["FC de duplicação", "FC de permissões", "decisão de plataforma"]},
+      "must_not": ["invalidar tudo", "manter verde o que depende da regra por o nome do ficheiro não mudar"],
+      "scenarios": ["T41"]
+    },
+    {
+      "id": "E02",
+      "kind": "authorization",
+      "statement": "A autorização de B1 não autoriza a nova regra; a decisão anterior é preservada com o motivo da substituição.",
+      "source_refs": ["sources/baseline-aprovada.md#B1", "sources/mudancas.md#X1"],
+      "classification": {"requires": "nova autorização do dono da regra"},
+      "must_not": ["transportar a aprovação antiga para a revisão nova", "apagar a decisão anterior"],
+      "scenarios": ["T24"]
+    },
+    {
+      "id": "E03",
+      "kind": "preservation",
+      "statement": "A correcção de gralha (X2) não reabre semântica nem aprovações; a revisão de bytes muda e a release identifica os bytes exactos.",
+      "source_refs": ["sources/mudancas.md#X2"],
+      "classification": {"semantic_change": false, "byte_revision_changes": true},
+      "must_not": ["reabrir revisão semântica", "manter o hash da release anterior como válido para os bytes novos"],
+      "scenarios": ["T42", "T39"]
+    },
+    {
+      "id": "E04",
+      "kind": "invalidation",
+      "statement": "Baixar o limiar (X3) torna stale o contrato funcional do roteamento da aprovação e os seus testes; a arquitectura não é afectada.",
+      "source_refs": ["sources/mudancas.md#X3", "sources/baseline-aprovada.md#B2"],
+      "classification": {"stale": ["FC de roteamento da aprovação", "testes de roteamento"], "preserved": ["blueprint", "FC do cálculo (salvo E01)"]},
+      "must_not": ["reabrir a decisão de arquitectura"],
+      "scenarios": ["T41"]
+    }
+  ],
+  "notes": ["Dados sintéticos; depende da fx-hv1-02 como baseline."]
+}

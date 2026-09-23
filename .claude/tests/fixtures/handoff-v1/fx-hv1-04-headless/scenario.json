@@ -1,0 +1,90 @@
+{
+  "schema_version": "handoff-f0-fixture/1",
+  "id": "fx-hv1-04-headless",
+  "synthetic": true,
+  "title": "Sincronização nocturna de pedidos aprovados para o ERP-X, sem interface",
+  "route": "platform-constrained",
+  "fixture_requirements": ["automação/integração sem interface própria", "N/A justificado", "recuperação", "idempotência"],
+  "sources": [
+    {"id": "SRC-PEDIDO", "path": "sources/pedido.md", "kind": "request"},
+    {"id": "SRC-INT", "path": "sources/nota-integracao.md", "kind": "note"},
+    {"id": "SRC-OPS", "path": "sources/nota-operacao.md", "kind": "note"}
+  ],
+  "scope": {"in": ["envio de pedidos aprovados ao ERP-X", "alerta e reprocessamento"], "out": ["ecrãs", "alteração do processo de aprovação"]},
+  "constraints": ["plataforma imposta (herdada da fx-hv1-02, sintético)", "janela de manutenção do ERP-X 02:00–03:00 (sources/nota-integracao.md#I3)"],
+  "expected": [
+    {
+      "id": "E01",
+      "kind": "not_applicable",
+      "statement": "Superfícies de utilizador e documento de ecrãs são não aplicáveis, com motivo explícito; o handoff não os exige.",
+      "source_refs": ["sources/pedido.md#P1"],
+      "classification": {"not_applicable": ["aplicações/experiência", "documento de ecrãs"], "reason_required": true},
+      "must_not": ["exigir UI num desenho headless", "aceitar N/A sem motivo"],
+      "scenarios": ["T37", "T07"]
+    },
+    {
+      "id": "E02",
+      "kind": "idempotency",
+      "statement": "Reenviar o mesmo pedido não cria segunda encomenda; a identidade do pedido é a chave de correlação.",
+      "source_refs": ["sources/nota-operacao.md#O2", "sources/nota-integracao.md#I2"],
+      "classification": {"impact": ["functional", "acceptance", "operations"]},
+      "must_not": ["assumir que o ERP-X deduplica sem prova"],
+      "scenarios": ["T20"]
+    },
+    {
+      "id": "E03",
+      "kind": "proof_obligation",
+      "statement": "Suporte do ERP-X a chave de idempotência não está confirmado; se não existir, o desenho precisa de consulta prévia/reconciliação, o que pode mudar a abordagem.",
+      "source_refs": ["sources/nota-integracao.md#I2"],
+      "classification": {"question_type": "proof_obligation", "blocking": "implementation_proof", "escalates_to": "blocks_scope se o resultado puder invalidar a viabilidade do desenho escolhido"},
+      "must_not": ["esconder a prova numa checklist de implementação quando pode invalidar o compromisso"],
+      "scenarios": ["T34", "T31"]
+    },
+    {
+      "id": "E04",
+      "kind": "requirement",
+      "statement": "Falhas durante a manutenção do ERP-X são esperadas: reagendamento/repetição sem duplicar, alerta e reprocessamento selectivo.",
+      "source_refs": ["sources/nota-integracao.md#I3", "sources/nota-operacao.md#O1"],
+      "classification": {"impact": ["operations", "functional"]},
+      "must_not": [],
+      "scenarios": []
+    },
+    {
+      "id": "E05",
+      "kind": "fact_gap",
+      "statement": "Limite de pedidos por minuto do ERP-X é desconhecido.",
+      "source_refs": ["sources/nota-integracao.md#I4"],
+      "classification": {"question_type": "fact_gap", "impact": ["feasibility", "operations"]},
+      "must_not": ["inventar um limite"],
+      "scenarios": ["T06"]
+    },
+    {
+      "id": "E06",
+      "kind": "assumption",
+      "statement": "Volume de cerca de 50 pedidos/dia é estimativa, não medida.",
+      "source_refs": ["sources/nota-integracao.md#I5"],
+      "classification": {"epistemic_state": "Assumed"},
+      "must_not": ["tratar como Confirmed"],
+      "scenarios": []
+    },
+    {
+      "id": "E07",
+      "kind": "security",
+      "statement": "A chave de acesso do fornecedor é referenciada como segredo configurado, nunca copiada para drafts, outputs ou pacote.",
+      "source_refs": ["sources/nota-integracao.md#I6"],
+      "classification": {"impact": ["security"], "policy": "referência segura preservada, valor ausente"},
+      "must_not": ["incluir o valor da chave em qualquer artefacto"],
+      "scenarios": ["T40"]
+    },
+    {
+      "id": "E08",
+      "kind": "fact_gap",
+      "statement": "Responsável por alertas fora de horas não está definido; é dependência do cliente para operação.",
+      "source_refs": ["sources/nota-operacao.md#O3"],
+      "classification": {"question_type": "fact_gap", "impact": ["operations"], "owner_role": "responsável de compras / suporte"},
+      "must_not": ["atribuir um responsável por inferência"],
+      "scenarios": []
+    }
+  ],
+  "notes": ["Dados sintéticos; a chave referida em I6 não existe neste repositório nem deve existir."]
+}
