@@ -953,6 +953,16 @@
      "source": "handoff-v1 F6.1",
      "mechanism": "Resolves scope `includes` and WP `realizes` SU ids (dashboard.parse_su); the SU is in the draft read-set (STALE_INPUT). Never writes the SU.",
      "evidence": "inventory.py integrity, _reads"
+    },
+    {
+     "file": "library/kernel/tools/trace.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.2",
+     "mechanism": "Reads SU rows (dashboard.parse_su) to find open Unknowns of tipo proof_obligation (T34 viability blockers). Read-only.",
+     "evidence": "trace.py trace (viability)"
     }
    ],
    "mention_only": [
@@ -3049,6 +3059,16 @@
      "source": "handoff-v1 F5.2",
      "mechanism": "`route` parses the latest non-draft blueprint version (dashboard.yl_parse) for selection signals: outside-platform compositions, record domains not owned, screens/experience mode (human surface or headless). Never writes the blueprint.",
      "evidence": "review.py _latest_blueprint, _blueprint_flags, route"
+    },
+    {
+     "file": "library/kernel/tools/trace.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.2",
+     "mechanism": "Reads the approved blueprint (functional.approved_blueprint; else the latest non-draft, said so) for proof obligations (T31) and headless applicability (T37). Read-only.",
+     "evidence": "trace.py _blueprint, _headless, proofs"
     }
    ],
    "mention_only": [
