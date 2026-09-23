@@ -1,6 +1,6 @@
 # Relatório de fase — F1
 
-Estado: **in_progress** — F1.1 (CI), F1.2 (nascimento do `/start`), F1.3 (desenho e decisões Q1–Q6) e F1.4 (perfil, schemas, legado só-leitura, grafo 2, D02) integrados. Por fazer: materialidade (T05–T07), evidência (T08), textos normativos de prontidão/FC/rotas, tabela leitor/escritor/schema, gate.
+Estado: **in_progress — gate cumprido com uma excepção por aceitar pelo mantenedor** (T07, metade de cobertura por lente → F3; §5). Todo o trabalho do F1 (itens 1–7 de 05_FASES) está integrado e verde no CI.
 
 - Data e responsável: 2026-09-23 · Claude Code, sessão `session_0156MuyJemPPrVqRKiDrAsct`, por autorização do mantenedor (F0 §13: «Sim, avançar para F1», começando pelo nascimento do `/start` e pelo ambiente de CI).
 - Repositório, branch e SHA: `jorgedrestevao/aisa-refactor`, branch `claude/clone-repo-awui-7mmi37`. Início de F1: `d7afc5d` (fecho de F0). Último commit: ver `git log` da branch.
@@ -22,8 +22,11 @@ Passou a ser possível:
 - Um engagement da versão histórica é identificado e fica só leitura em todas as camadas: Skill, Write/Edit, coordenador, migrate, bootstrap. A leitura continua possível (T03, opção A).
 - A versão histórica recusa escrever num engagement novo, pelos seus próprios guardas (T36, provado com o código real de `ba0c27b`; decisão Q1).
 - `/status`, `/resume` e `aisa-orient` não escrevem (D02, Q6).
+- Uma pergunta entra quando a resposta pode mudar um de cinco aspectos, e traz tipo, impacto, âmbito, quem responde, fecho, bloqueio e referências. Uma regra de arredondamento que não muda tecnologia é admitida (T05); um facto em falta não precisa de alternativas (T06); sem impacto demonstrável fica estacionada com motivo (T07, SU); prioridade ≠ bloqueio (Q3/Q4).
+- Concordância entre personas não sobe o estado. O guarda recusa `Confirmed` sem localizador, incluindo promoção no lugar (T08, F0 D03/D19).
+- Contratos congelados para F2–F6 (`library/kernel/handoff-contract.md`, `phases.md`, `orchestration.md`, 6 schemas), com a tabela leitor/escritor/schema e as alterações incompatíveis em [LEITOR-ESCRITOR.md](LEITOR-ESCRITOR.md).
 
-Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; readiness e checkpoint; guardas por perfil; FC/J/WP; tabela leitor/escritor/schema; gate T03–T08 e T35/T36.
+Fora do âmbito de F1 (fases seguintes): publicação do checkpoint pelo coordenador (F2); cobertura por lente e fim das guardas de ordem fixa (F3); especialistas, revisão e Options por rota no gate (F4); FC, WP, dependências tipadas (F5); prontidão e índice de entrega (F6).
 
 ## 2. Alterações
 
@@ -53,6 +56,12 @@ Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; 
 | F1.4c | `.github/workflows/tests.yml` | `fetch-depth: 0` (o T36 extrai o código histórico) | T36 | Só CI |
 | F1.4d `d145f8a` | `aisa-status/SKILL.md`, `aisa-start/SKILL.md` | `/status` não escreve; o esqueleto da SU perde a linha de saúde | Q6, D02 | O `dashboard` lia-a só como nota |
 | `bc60d2c` | `test_operation_concurrency.py` | O dono do lock segura-o até todos tentarem (flake pré-existente, provado na baseline) | 06 (evidência fiável) | Teste mais forte |
+| F1.5 `cf55133` | `dashboard.py` (parser, aditivo) | Colunas da admissão lidas por cabeçalho (aliases por secção: `impacto` de pergunta ≠ `impacto` do Risky); marca `estacionada (<motivo>)`; fixture `su-schemas/handoff-v1-shared-understanding.md` | Q3 | SU antiga lê-se igual |
+| F1.5 `69d0224` | `states.md`, `glossary.md`, `CLAUDE.md`, `phases.md`, 6 lentes, `aisa-round`, `chairman-synthesis`, `aisa-answer`, `aisa-capture`, `aisa-status`, `aisa-start`, memória de 7 agentes, SCOPE v2 em 8 ficheiros | Admissão handoff-v1 substitui P-26; sexta edição sancionada = estacionar; árbitro estaciona/devolve; motor 1.15.0 (modelo schema 3) | Q3, Q4, D-F1-02 | **Incompatível** (LEITOR-ESCRITOR §2, #6–#7, #9); linhas antigas nunca reclassificadas |
+| F1.5 | `test_admission_rule`, `test_arbiter_declarations`, `test_swing_parse`, `test_technical_decision_refocus`, `test_state_scaffold`, `test_blueprint_yaml`, fixture `admission-cases.md` | Adaptados no mesmo commit, segundo as disposições F0 (invariantes do motor mantidos; auto-contagem e marcador TO-BE retirados) | 09 | — |
+| F1.6 `2a3b412` | `chairman.md`, `chairman-synthesis`, `orchestration.md`, `pre-authority-guard.py`, `CLAUDE.md` princípio 5, `glossary.md`, `HOOKS.md` | Sem caminho de contagem para `Confirmed`; síntese resolve recomendações; guarda recusa `Confirmed` sem localizador (`audit_confirmed_locators`) | T08, D03, D19 | **Incompatível** (#8) |
+| F1.6 `90d77a0` | `handoff-contract.md` (novo), `phases.md`, `orchestration.md`, `workflow.py`, `handoff-functional.schema.json`, `aisa-status`, `CLAUDE.md` | Contratos congelados (FC/J/WP, índice, checkpoint, revisão, dependências, Options por rota, prontidão); N/A com motivo no schema | 05 F1 itens 3–5 | Só contrato; implementação F2–F6 |
+| F1.6 | `docs/handoff-v1/F1/LEITOR-ESCRITOR.md` | Tabela leitor/escritor/schema e 13 alterações incompatíveis | 05 F1 item 7 | — |
 
 ## 3. Decisões e evidência
 
@@ -75,6 +84,14 @@ Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; 
   - o coordenador recusa só o legado. `_state.json` ilegível fica a cargo do bootstrap, porque recusar no coordenador impedia a recuperação que o repara (os testes de recuperação provaram-no).
   - O `workflow.py` carrega o dashboard só para ler `pack.yaml`, e reutiliza o do bootstrap/migrate. Latência do guarda: 0,151 s → 0,162 s por escrita.
   - O hook de Skill não adivinha entre vários engagements; nesse caso, as outras camadas recusam a escrita.
+- **Decisões internas de F1.5/F1.6** (revertíveis, com base no plano):
+  - aspectos do impacto escritos com as palavras do próprio plano (02 §4), sem sinónimos inventados;
+  - estacionar é a sexta edição sancionada, e qualquer escritor a pode fazer com motivo (a retirada P-21 continua só do dono);
+  - o árbitro devolve à lente as linhas incompletas e nunca preenche um campo;
+  - o `aisa-capture` preça linhas PM-U (não linhas da SU) e aponta para a regra;
+  - o contrato novo `handoff-contract.md` só guarda o que não tinha dono; as regras com dono ficaram no dono (Options e prontidão no `phases.md`; checkpoint e dependências no `orchestration.md`);
+  - o `resolve.dispose_finding` não muda em F1: o vocabulário de disposições está no contrato e a implementação é de F4.
+- **Defeito apanhado pelos testes**: o commit aditivo do parser (`cf55133`) tratava as linhas Conflicted novas como SU antiga, porque procurava a coluna `tipo`. Corrigido em `69d0224`.
 - **D01**: a ordem nova foi provada com os hooks reais antes de mudar a skill (simulação em diretório temporário: a ordem antiga é recusada por `pre-authority-guard.py` no Write da SU; a ordem nova passa todos os passos, o bootstrap fica `ready` e `M-1` chega ao grafo com `mirror_of = SU:M-1`). `docs/ONBOARDING.md` §3.2 descreve uma sequência sem linhas `M-n` (SU, estado, `init`) que não é recusada. Fica por alinhar com a documentação de F7, não com este incremento.
 
 ## 4. Testes
@@ -96,16 +113,35 @@ Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; 
 | D05 / I-07 | `test_handoff_legacy.py` D05_*, I07_* | `102f017` | 5 directórios coordenados recusados com o engagement pronto; perda de chave, mudança de rota por Write/Edit e JSON inválido recusados; mudança de ronda passa | pass | idem |
 | D02 | `test_handoff_legacy.py` D02_* | `d145f8a` | o texto antigo da skill faz o teste falhar | pass | execução local e mutante |
 | W09 stress | 36 execuções com 4 CPUs ocupadas | `bc60d2c` | 0 falhas (antes 1/12; baseline 1/24) | pass | execução local |
+| T05 | `test_admission_rule` `test_t05_*` (fx-hv1-02 E01) | `69d0224` | regra de arredondamento (funcional, aceitação; `blocks_scope`) admitida sem falta | pass | local e CI #26 |
+| T06 | `test_admission_rule` `test_t06_*`; `test_arbiter_declarations` `test_so_a_design_choice_deve_alternativas` | `69d0224` | `fact_gap` sem alternativas não é assinalado; `design_choice` sem alternativas é | pass | idem |
+| T07 (SU) | `test_handoff_questions` `Estacionada` | `cf55133` | estacionada com motivo: não aberta, não fechada; sem motivo: aberta com diagnóstico | pass | local e CI #25 |
+| T07 (N/A) | `test_handoff_workflow` `test_t07_*` | `90d77a0` | N/A sem motivo recusado pelo schema do FC | pass | local |
+| T07 (cobertura por lente) | — | — | "N/A inválido não fecha cobertura": a etapa de cobertura por lente não existe antes de F3 | not-run | excepção por aceitar (§5) |
+| T08 | `test_handoff_evidence` (11 casos, hook real) | `2a3b412` | consenso → recusado; localizador válido → passa; alvo ausente → recusado; promoção no lugar → recusada; troca de evidência por concordância → recusada | pass | local e CI #27 |
+| T30 (contrato) | `test_handoff_evidence` `test_t30_*` | `2a3b412` | síntese resolve recomendações; escala no limite, nunca aceita por esgotamento | pass (só contrato; F4 implementa) | local |
+| Contratos | `test_handoff_contract` (10 casos) | `90d77a0` | schemas nomeados existem; campos do FC do plano no schema; rotas e predicados no `phases.md`; checkpoint e dependências no `orchestration.md` | pass | local |
+| Regressão final | `run_tests.py` e `--list .github/stdlib-tests.txt` | `90d77a0` | 81/81 ficheiros, 2717 testes, 0 falhas, 3 falhas esperadas, 34 skips; stdlib 62/62, 1919 testes; exit 0 nas duas | pass | local; CI #28 a correr à data |
 
 ## 5. Gate de saída
 
-Cumprido até agora, com evidência em §4:
-- T03 (opção A: identificação e recusa segura sem migração implícita);
-- T04;
-- T36;
-- schemas versionados de perfil, checkpoint, FC, índice e resposta.
+Gate de F1 (05_FASES): T03–T08, T35/T36; requisitos funcionais materiais já não descartados; pack incompatível falha claramente.
 
-Por cumprir (05_FASES F1): contratos e schemas versionados; engagement legado identificado sem migração implícita (T03, opção A: recusa segura de escrita); pack incompatível falha claramente (T04); materialidade e evidência (T05–T08); T35/T36; testes classic adaptados ou eliminados no mesmo incremento.
+| Critério | Estado | Evidência |
+| --- | --- | --- |
+| T03 engagement sem perfil | cumprido (opção A: identificado, só leitura, sem migração implícita) | §4 T03 |
+| T04 pack sem capacidade | cumprido | §4 T04 |
+| T05 regra de arredondamento material | cumprido | §4 T05 |
+| T06 facto em falta sem alternativas | cumprido | §4 T06 |
+| T07 estacionamento justificado; N/A inválido não fecha cobertura | **parcial**: estacionamento na SU e N/A do FC cumpridos; "não fecha cobertura por lente" depende da etapa de cobertura por lente (F3) | §4 T07 |
+| T08 concordância não promove | cumprido | §4 T08 |
+| T35 migração de engagement antigo | não aplicável por decisão (opção A: sem migração; recusa segura provada no T03) | §4 T03 |
+| T36 leitor antigo encontra schema novo | cumprido (código real de `ba0c27b`; schema de estado futuro) | §4 T36 |
+| Requisitos funcionais materiais não descartados | cumprido (admissão pelos cinco aspectos; T05) | §4 T05 |
+| Pack incompatível falha claramente | cumprido | §4 T04 |
+| Testes classic adaptados ou eliminados no mesmo incremento | cumprido (09) | §2 F1.5 |
+
+Excepção por aceitar: o T07 na metade de cobertura por lente. Quem aceita é o mantenedor. Sem essa aceitação, F1 não fica `completed`.
 
 ## 6. Blockers e riscos
 
@@ -114,7 +150,9 @@ Por cumprir (05_FASES F1): contratos e schemas versionados; engagement legado id
 | P3 (F0) | Guardas por perfil | Os hooks do projecto correm na sessão que implementa. Uma guarda nova mal ordenada bloqueia a própria sessão. | Implementação | Guardas testadas em diretório temporário antes de ligar em `settings.json` |
 | SYN-VENDOR por rota | Síntese em `platform-constrained` | A plataforma imposta está na linha `C-001`; o SYN-VENDOR dos topic packs neutros pode assinalá-la | F4/F6 | Critério de vendor por rota |
 | Escritas por `Bash` | Guardas | `mv` de `_state.json.tmp` e escritas por shell não passam por hooks, na versão histórica e na nova | Limitação documentada | Coordenador para todas as escritas canónicas (F2) |
-| `docs/ONBOARDING.md`, `CLAUDE.md` | Documentação | Ainda descrevem o `/start` sem perfil e não listam `workflow.py`/schemas | F1.8 / F7 | Actualizar |
+| `docs/ONBOARDING.md`, `docs/COMO-USAR.md` | Documentação | O walkthrough do `/start` ainda não mostra perfil e rota | F7 | Actualizar (o `CLAUDE.md` já lista `workflow.py`, schemas e contrato) |
+| `su-confirmed-guard.py` | Hooks | Com a recusa no guarda de autoridade, fica redundante em `handoff-v1` (avisa depois de uma escrita que já não acontece) | F2 | Consolidar ou eliminar com a disposição F0 |
+| `CALIBRACAO` no motor | Higiene (F0 H2) | Slugs de engagements reais continuam em `dashboard.py` (`funding_gate_audit`) | F2/F7 | Remover dos ficheiros normativos |
 
 ## 7. Recuperação e rollback
 
@@ -125,8 +163,19 @@ Revertem com `git revert`:
 
 ## 8. Retoma
 
-- Última operação integrada: `bc60d2c` (F1.4 completo).
+- Última operação integrada: `90d77a0` (F1.6; todo o trabalho de F1).
 - Inputs/revisões necessários: plano v1.2; F0/RELATORIO.md §11 (decisões D-F1-02..17) e §17 (proposta de F1).
 - Drafts/resultados recebidos ainda não integrados: nenhum. O workflow de desenho foi parado sem resultados (§3); o desenho dos contratos F1 corre na sessão.
-- Próxima ação segura: materialidade (Q3/Q4) em [DESENHO-CONTRATOS.md](DESENHO-CONTRATOS.md) §2.2. Inclui `states.md`, colunas novas da SU, escritores do P-26 e SCOPE v2, com testes P-26 adaptados no mesmo commit (T05–T07).
-- Autorização necessária antes de continuar: nenhuma nova para F1.4–F1.8 (Q1–Q6 decididas). Uma escolha nova que mude contrato volta ao mantenedor.
+- Próxima ação segura: decisão do mantenedor sobre a excepção do T07 e a autorização de F2 (§9).
+- Autorização necessária antes de continuar: aceitação da excepção T07 (ou pedido de a fechar em F1) e autorização de F2.
+
+## 9. Proposta para F2 — continuidade transacional mínima
+
+Pelo plano (05_FASES F2) e pelos defeitos do F0 ainda abertos:
+
+1. Checkpoint publicado pelo coordenador (`_work/checkpoint.json`, `handoff-work/1`), com eventos de checkpoint e reconciliação de `running` depois de uma falha (04).
+2. Read-set completo no bootstrap: blueprint, spec, estimate, frame, options, pack e `_capture` entram no snapshot. `operation.run` passa a aceitar inputs só de leitura como pré-condição, e um input alterado dá `STALE_INPUT` (F0 P8, D08, D17).
+3. As escritas canónicas das skills passam pelo coordenador; a limitação das escritas por `Bash` (LEITOR-ESCRITOR §3) fica fechada para os caminhos canónicos.
+4. Idempotência do `render-validate` e do `coverage finalize`, e números de versão nunca reutilizados (D06, D07). `migrate restore --force` não apaga D-NNN (D10).
+5. Disposição de `su-confirmed-guard` (redundante) e remoção dos slugs reais do motor (H2).
+6. Gate de F2 (05_FASES): T09–T17; nenhum leitor considera um conjunto misto como revisão válida; a dupla integração é idempotente. Inclui falha injetada nos limites de publicação e concorrência de duas sessões (item 7 do plano).
