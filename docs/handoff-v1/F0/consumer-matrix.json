@@ -2050,6 +2050,16 @@
      "confidence": "verified",
      "source": "critic",
      "via_source": "mechanism"
+    },
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "kind": "contract",
+     "role": "declares-contract",
+     "mechanism": "Names `decisions.md` as the authority for authorised choices that the functional contract and revisit consume; defines no writer of it.",
+     "via": "",
+     "evidence": "handoff-contract.md:20",
+     "confidence": "verified",
+     "source": "F1.6"
     }
    ],
    "mention_only": [
@@ -3008,6 +3018,16 @@
      "evidence": "library/packs/pp/pack.yaml:100-116, :231-234, :291-295; library/kernel/tools/dashboard.py:3297, :3496-3508",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "kind": "contract",
+     "role": "declares-contract",
+     "mechanism": "Declares the ownership split: the approved blueprint owns topology, boundaries and the logical definition of entities/fields; FC references blueprint ids and never duplicates a rule; points to blueprint-contract.md.",
+     "via": "",
+     "evidence": "handoff-contract.md:8,21,28,32,42,51,53,57,71",
+     "confidence": "verified",
+     "source": "F1.6"
     }
    ],
    "mention_only": [
@@ -3745,6 +3765,16 @@
      "evidence": "pack.yaml:291-295 (blueprint: required_keys: []); dashboard.py:3494-3506 bp_pack_cfg reads library/packs/<pack>/pack.yaml block 'blueprint'; coverage.py:2748-2772 structural_check -> readers.bp_validate(..., readers.bp_pack_cfg(active_pack(eng)), ...); coverage.py:277-278 ReaderAdapter.bp_pack_cfg; coverage.py:142 PACK_AUTHORITIES = ('deliverable-templates','architecture-templates') excludes pack.yaml",
      "confidence": "verified",
      "source": "critic"
+    },
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "kind": "contract",
+     "role": "declares-contract",
+     "mechanism": "Points to coverage-contract.md for coverage/freshness and declares the lens-coverage vocabulary (assessed/gap/not_applicable, recorded as a coverage stage in F3).",
+     "via": "",
+     "evidence": "handoff-contract.md:9,73,75,88",
+     "confidence": "verified",
+     "source": "F1.6"
     }
    ],
    "mention_only": [
@@ -4449,6 +4479,16 @@
      "evidence": "pack.yaml:81-89, :107-111; aisa-render/SKILL.md:13, :117",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "kind": "contract",
+     "role": "declares-contract",
+     "mechanism": "Declares that the implementation-spec owns work packages (WP-NNNN), sequence, migration/cutover and acceptance, and never redefines behaviour; defines 'complete for handoff'.",
+     "via": "",
+     "evidence": "handoff-contract.md:21,22,23,28,57",
+     "confidence": "verified",
+     "source": "F1.6"
     }
    ],
    "mention_only": [
@@ -6267,6 +6307,16 @@
      "evidence": "pre-profile-check.py:38 (LEITURA); :41 (escreve); :56 (main: find_engagement, profile_of, block); .claude/settings.json PreToolUse Skill; tested by test_handoff_legacy.py",
      "confidence": "verified",
      "source": "F1.4c"
+    },
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "kind": "contract",
+     "role": "declares-contract",
+     "mechanism": "States that profile and route live in `_state.json.workflow`, checked by workflow.py; an engagement without the block is the historical version, read-only.",
+     "via": "",
+     "evidence": "handoff-contract.md:12",
+     "confidence": "verified",
+     "source": "F1.6"
     }
    ],
    "mention_only": [

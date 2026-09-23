@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "handoff-functional/1",
  "title": "Contratos funcionais (_design/functional-contracts.json)",
- "description": "Semântica de comportamento TO-BE. Referencia ids do blueprint e da SU; não redefine campos. Campos de conteúdo ausentes exigem entrada em not_applicable com motivo (regra do validador de F5). IDs nunca reutilizados: retired_ids.",
+ "description": "Semântica de comportamento TO-BE. Referencia ids do blueprint e da SU; não redefine campos. Campos de conteúdo ausentes exigem entrada em not_applicable com motivo não vazio (o motivo valida-se aqui; a exigência de presença por campo é do validador de F5). IDs nunca reutilizados: retired_ids.",
  "type": "object",
  "required": [
   "schema_version",
@@ -230,7 +230,11 @@
       }
      },
      "not_applicable": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+       "type": "string",
+       "minLength": 1
+      }
      },
      "publication_status": {
       "enum": [

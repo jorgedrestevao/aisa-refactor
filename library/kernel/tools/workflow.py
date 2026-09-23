@@ -119,14 +119,16 @@ def validate(instance, schema: dict, root: dict | None = None, path: str = "$"):
     """`(erros, desconhecidos)` — o subconjunto de JSON Schema que os schemas usam.
 
     Palavras-chave: `type`, `const`, `enum`, `required`, `properties`, `items`,
-    `minItems`, `minLength`, `minimum`, `pattern`, `$ref` local. Qualquer outra num schema
+    `minItems`, `minLength`, `minimum`, `pattern`, `$ref` local e `additionalProperties`
+    como schema (os valores de um mapa: cada chave vale contra ele e nao e desconhecida).
+    Qualquer outra num schema
     e erro de schema, nao silencio. `desconhecidos` lista os campos que o schema nao
     declara: sao reportados e preservados, nunca apagados."""
     root = root or schema
     errors, unknown = [], []
     known = {"$schema", "$id", "title", "description", "$defs", "type", "const", "enum",
              "required", "properties", "items", "minItems", "minLength", "minimum",
-             "pattern", "$ref"}
+             "pattern", "$ref", "additionalProperties"}
     extra = set(schema) - known
     if extra:
         return ["{}: palavra-chave de schema fora do subconjunto: {}".format(
@@ -164,15 +166,20 @@ def validate(instance, schema: dict, root: dict | None = None, path: str = "$"):
             if key not in instance:
                 errors.append("{}: falta `{}`".format(path, key))
         props = schema.get("properties")
-        if props is not None:
+        extra = schema.get("additionalProperties")
+        if extra is not None and not isinstance(extra, dict):
+            return errors + ["{}: additionalProperties so como schema".format(path)], unknown
+        if props is not None or extra is not None:
             for key, value in instance.items():
                 sub = "{}.{}".format(path, key)
-                if key in props:
+                if props is not None and key in props:
                     e, u = validate(value, props[key], root, sub)
-                    errors += e
-                    unknown += u
+                elif extra is not None:
+                    e, u = validate(value, extra, root, sub)
                 else:
-                    unknown.append(sub)
+                    e, u = [], [sub]
+                errors += e
+                unknown += u
     return errors, unknown
 
 

@@ -173,7 +173,18 @@ F-01 approval waved through an F-02 sentence nobody had approved).
   `/options --reopen "<justification>"` (see *Transition rules*).
 
 **Exit criteria** (soft):
-- ≥3 options recorded. **Doing nothing and changing the process are conditional members**:
+- **The option set follows the route** (`_state.json.workflow.route`, `handoff-v1`):
+  `solution-choice` — the candidates that genuinely apply and their trade-offs, normally ≥ 3;
+  fewer only with the reason written, and a single viable candidate is admitted with its reason
+  — the shortlist is never reduced without one; `platform-constrained` — variations of
+  architecture and implementation inside the imposed platform and the check of their
+  feasibility, with no artificial alternative technology, and an incompatibility declared where
+  one exists (an imposed platform does not make any of its products mandatory, nor remove the
+  analysis of architectural alternatives); `change-impact` — the delta, its blast radius, the
+  decisions to reopen and the work and proofs affected, without repeating discovery and without
+  treating as intact what depends on the change. Until F4 the `/options` gate still counts
+  ≥ 3 options on every route: a warning on the other two routes is read against this rule.
+- **Doing nothing and changing the process are conditional members**:
   each enters when discovery showed it plausible, and where one does not, the round's log
   declares why with ids (`DO-NOTHING` / `PROCESS-CHANGE` class coverage). A silent absence is
   the defect; a reasoned one is a finding.
@@ -224,6 +235,24 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 - For engagements with a UI component: `_blueprint/ux-blueprint_v<NN>.yaml` (via `/blueprint`, per `blueprint-contract.md`) — iterated with the business until approved (its approval is itself a D-NNN).
 - `_coverage/coverage_v<NN>.json` (+ its Markdown projection) — the recorded coverage reviews, per `coverage-contract.md`: the reconciliation the design was produced against, and the review of each concrete version. Written by the coverage motor's `finalize`, never by hand, and immutable once published.
 - Render-ready state.
+
+**Readiness inside Decision** (`handoff-v1`; `handoff-contract.md` owns the artefacts). Three
+derived predicates, tracked inside this phase — **not new SU states and not a fifth phase**:
+
+| Predicate | Minimum condition |
+|---|---|
+| `decision_ready` | comparable criteria and candidates; material premises and risks explicit; the choice's blockers resolved, or an admissible authorised risk |
+| `design_ready` | scope and architecture authorised; essential rules and interfaces specified; no blocking design contradiction |
+| `handoff_ready` | design ready + a complete, traceable inventory, acceptance, dependencies, the applicable operation/ALM/migration, estimate mode A, current and consistent outputs, zero build blockers in the delivered scope |
+
+Shown separately, never folded into one green: `integrity_ok`, `required_approvals_present`,
+`receiver_review_complete`, `receiver_accepted`. Each is `true`, `false` or `unverified`, with
+its reasons; a coverage review that was not evaluated reads as `unverified`. The four answers of
+*Transition rules* below (structure, coverage, approval, end to end) feed `design_ready`; none
+answers for another. **An approval is a property of a revision and a scope** — the hash of what
+was approved — never of a file name or a version label. The predicates are computed by
+`library/kernel/tools/workflow.py` (`evaluate_readiness`, F6); a final handoff request with a
+blocker produces an incomplete state and the list of what is missing, never a certification.
 
 ---
 

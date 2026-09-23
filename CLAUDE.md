@@ -24,7 +24,8 @@
 
 ## Key paths
 
-- `library/kernel/` — universal protocols (phases, states, orchestration, render-contract, blueprint-contract, coverage-contract, glossary).
+- `library/kernel/` — universal protocols (phases, states, orchestration, render-contract, blueprint-contract, coverage-contract, handoff-contract, glossary).
+- `library/kernel/schemas/` — the `handoff-v1` schemas (`handoff-state`, `-pack`, `-response`, `-work`, `-functional`, `-index`); `library/kernel/tools/workflow.py` — the single place that answers which profile an engagement has and whether its pack supports it (read-only; a `_state.json` without the `workflow` block is the historical version, read-only here).
 - `library/kernel/tools/` — **a camada de memória persistente** (P2–P8), os seis motores que fazem o estado do engagement sobreviver a uma sessão e a uma falha. Nenhum é opcional desde que o grafo é obrigatório:
   - `graph.py` — o grafo aditivo do engagement (`<engagement>/_graph/`). Espelha a SU (`provenance.mirror_of`) e **nunca prevalece sobre ela**: `drift` compara e reporta; `state`, `criticidade` e `resolved` divergentes bloqueiam, texto divergente informa.
   - `operation.py` — o coordenador. Toda a escrita de conhecimento passa por aqui: intenção → marcador de pendência → publicação temp+rename → verificação → recibo → retirar a pendência. Exclusão por `flock` (do kernel, não pela existência do ficheiro); `status()` publica sob que garantia foi produzido (`exclusion`).

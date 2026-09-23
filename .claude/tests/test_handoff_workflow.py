@@ -222,6 +222,20 @@ class Schemas(unittest.TestCase):
         self.assertEqual(W["load_schema"]("handoff-response")["properties"]["code"]["enum"][:-1],
                          list(W["CODES"]))
 
+    def test_t07_a_not_applicable_field_without_a_reason_is_invalid(self):
+        """T07 (metade N/A): no contrato funcional, N/A sem motivo nao passa."""
+        sch = W["load_schema"]("handoff-functional")
+        base = json.loads((EXAMPLES / "functional-contract.json").read_text(encoding="utf-8"))
+        ok = copy.deepcopy(base)
+        ok["items"][0]["not_applicable"] = {"concurrency": "um so utilizador por pedido"}
+        self.assertEqual(W["validate"](ok, sch)[0], [])
+        vazio = copy.deepcopy(base)
+        vazio["items"][0]["not_applicable"] = {"concurrency": ""}
+        self.assertTrue(W["validate"](vazio, sch)[0])
+        errors, unknown = W["validate"](ok, sch)
+        self.assertNotIn("$.items[0].not_applicable.concurrency", unknown,
+                         "a chave de um mapa nao e campo desconhecido")
+
     def test_ok_never_carries_a_code_and_a_refusal_always_does(self):
         with self.assertRaises(ValueError):
             W["response"](True, "BLOCKING_GAP")

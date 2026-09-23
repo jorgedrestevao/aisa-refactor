@@ -198,14 +198,14 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
 
 ## Execution steps (--check)
 
-1. `library/kernel/`: the 7 protocol files (`phases.md`, `states.md`, `orchestration.md`, `render-contract.md`, `blueprint-contract.md`, `coverage-contract.md`, `glossary.md`) + `synthesis-templates/` with 5 templates + `capture-templates/process-model.template.md` + `tools/` with `dashboard.py`, `xlsx_extract.py`, `text_extract.py`, `fields_draft.py`, `coverage.py`.
+1. `library/kernel/`: the 8 protocol files (`phases.md`, `states.md`, `orchestration.md`, `render-contract.md`, `blueprint-contract.md`, `coverage-contract.md`, `handoff-contract.md`, `glossary.md`) + `synthesis-templates/` with 5 templates + `capture-templates/process-model.template.md` + `schemas/` with the 6 `handoff-*.schema.json` + `tools/` with `dashboard.py`, `xlsx_extract.py`, `text_extract.py`, `fields_draft.py`, `coverage.py`, `workflow.py`.
 2. `python library/kernel/tools/dashboard.py --version` runs and prints a version ≥ 1.1.0 (the status model).
 3. At least one pack under `library/packs/` with a `pack.yaml`.
 4. Engagements root resolvable: `$AISA_ENGAGEMENTS_ROOT` is set, or `projects/` exists and is writable.
 5. `.claude/hooks/pre-write-guard.py` and `.claude/hooks/on-su-change.py` exist; `python`/`python3` on PATH (all hooks are Python 3).
 6. Output green/red per check:
    ```
-   ✓ kernel: 7/7 protocol files · synthesis-templates 5/5 · capture-templates 1/1 · tools 5/5
+   ✓ kernel: 8/8 protocol files · synthesis-templates 5/5 · capture-templates 1/1 · schemas 6/6 · tools 6/6
    ✓ dashboard.py 1.1.0 (status model)
    ✓ packs: pp (+ generic, mendix, outsystems)
    ✓ engagements root: projects/ (or $AISA_ENGAGEMENTS_ROOT)
