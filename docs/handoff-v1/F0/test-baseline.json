@@ -1,0 +1,142 @@
+{
+  "schema_version": "handoff-f0-test-baseline/1",
+  "test_id": "T01",
+  "baseline_commit": "85baf1018ca2b238c41745f7f13dbb539589867f",
+  "tree_under_test": {
+    "repo": "jorgedrestevao/aisa-refactor",
+    "commit": "823bfaf0437214bd153983dfa43fbbec8babf5f5",
+    "tree_identical_to_baseline": true,
+    "evidence": "diff -rq --exclude=.git against a clone of jorgedrestevao/aisa@85baf10: no differences; 571 tracked files on both sides"
+  },
+  "documented_commands": [
+    {"source": ".github/workflows/tests.yml", "command": "python .github/run_tests.py", "install_step": "none (comment cites ADR-001 stdlib only)"},
+    {"source": ".github/run_tests.py docstring", "command": "python .github/run_tests.py --sequential"},
+    {"source": "requirements-dev.txt", "command": "for f in .claude/tests/test_*.py; do python \"$f\" || exit 1; done", "install_step": "python -m pip install -r requirements-dev.txt (PyYAML, openpyxl)"}
+  ],
+  "runs": [
+    {
+      "id": "R1-ci-github",
+      "where": "GitHub Actions, jorgedrestevao/aisa-refactor run 35851556146 (job 107150183105), head 823bfaf",
+      "python": "3.12.14 (actions/setup-python)",
+      "dependencies": "none installed",
+      "command": "python .github/run_tests.py",
+      "exit_code": 1,
+      "summary": {"files": 75, "ok": 56, "fail_files": 19, "tests": 2174, "failures": 58, "errors": 7, "skips": 167, "expected_failures": 0, "wall_s": 94.8, "mode": "parallel"},
+      "also_failed": ["run 35851369697 (push ba0c27b)", "run 35851388397 (pull_request ba0c27b)"]
+    },
+    {
+      "id": "R2-local-stdlib",
+      "where": "cloud container, Linux, 4 CPUs, user root",
+      "python": "3.11.15, fresh venv without packages",
+      "dependencies": "none",
+      "command": "python .github/run_tests.py",
+      "exit_code": 1,
+      "summary": {"files": 75, "ok": 56, "fail_files": 19, "tests": 2174, "failures": 58, "errors": 7, "skips": 168, "expected_failures": 0, "wall_s": 39.1, "mode": "parallel"},
+      "delta_vs_R1": "skips +1: .claude/tests/test_graph_store.py:231 skips when os.geteuid()==0 (container runs as root; the GitHub runner does not)"
+    },
+    {
+      "id": "R3-local-system",
+      "where": "cloud container, system interpreter",
+      "python": "3.11.15",
+      "dependencies": "PyYAML 6.0.1 (system); openpyxl, python-docx, pypdf absent",
+      "command": "python3 .github/run_tests.py",
+      "exit_code": 1,
+      "summary": {"files": 75, "ok": 63, "fail_files": 12, "tests": 2526, "failures": 3, "errors": 6, "skips": 42, "expected_failures": 0, "wall_s": 41.7, "mode": "parallel"}
+    },
+    {
+      "id": "R4-local-devdeps-parallel",
+      "where": "cloud container, venv",
+      "python": "3.11.15",
+      "dependencies": "PyYAML 6.0.3, openpyxl 3.1.5, python-docx 1.2.0, pypdf 6.19.0, lxml 6.1.3, et_xmlfile 2.0.0, typing_extensions 4.16.0",
+      "command": "python .github/run_tests.py",
+      "exit_code": 0,
+      "summary": {"files": 75, "ok": 75, "fail_files": 0, "tests": 2621, "failures": 3, "errors": 0, "skips": 34, "expected_failures": 3, "wall_s": 43.0, "mode": "parallel"},
+      "working_tree_after": "clean (git status --short empty)"
+    },
+    {
+      "id": "R5-local-devdeps-sequential",
+      "where": "cloud container, same venv as R4",
+      "python": "3.11.15",
+      "dependencies": "as R4",
+      "command": "python .github/run_tests.py --sequential",
+      "exit_code": 0,
+      "summary": {"files": 75, "ok": 75, "fail_files": 0, "tests": 2621, "failures": 3, "errors": 0, "skips": 34, "expected_failures": 3, "wall_s": 179.4, "mode": "sequential"},
+      "delta_vs_R4": "none in counts; parallel mode hides nothing"
+    }
+  ],
+  "classification": [
+    {
+      "id": "BL-ENV-1",
+      "class": "pre-existing environment/dependency failure (not a code regression)",
+      "affects": ["R1", "R2", "R3"],
+      "files": [
+        ".claude/tests/test_calc_archetypes.py", ".claude/tests/test_calc_budget.py", ".claude/tests/test_calc_chain.py",
+        ".claude/tests/test_capability_boundary.py", ".claude/tests/test_cf_patterns.py", ".claude/tests/test_coverage_fixtures.py",
+        ".claude/tests/test_replay_clones.py", ".claude/tests/test_replay_scope.py", ".claude/tests/test_replay_severity.py",
+        ".claude/tests/test_scan_limits.py", ".claude/tests/test_to_read_targets.py"
+      ],
+      "cause": "library/kernel/tools/xlsx_extract.py:32-35 imports openpyxl; without it the import path prints 'xlsx_extract.py requires openpyxl (pip install openpyxl)' and exits, so the test file never prints a verdict",
+      "evidence": "python3 .claude/tests/test_calc_archetypes.py -> exit 2 with that message; all 11 pass in R4"
+    },
+    {
+      "id": "BL-ENV-2",
+      "class": "pre-existing environment/dependency failure",
+      "affects": ["R1", "R2", "R3"],
+      "files": ["library/kernel/tools/tests/test_text_extract.py"],
+      "cause": "text_extract.py:144-146 needs python-docx and text_extract.py:209 needs pypdf; neither is listed in requirements-dev.txt",
+      "evidence": "ModuleNotFoundError: No module named 'docx'; PDF cases report 'skipped' where 'ok'/'failed' is asserted; passes in R4"
+    },
+    {
+      "id": "BL-ENV-3",
+      "class": "pre-existing environment/dependency failure",
+      "affects": ["R1", "R2"],
+      "files": [
+        ".claude/tests/test_orchestrator_wiring.py", ".claude/tests/test_pp_deliverable_templates.py", ".claude/tests/test_pp_discovery_runtime.py",
+        ".claude/tests/test_pp_domain_knowledge.py", ".claude/tests/test_pp_options_decision_model.py", ".claude/tests/test_pp_pack_integrity.py",
+        ".claude/tests/test_step8c_semantic_continuity.py"
+      ],
+      "cause": "PyYAML absent (pack.yaml / blueprint YAML parsing); present in R3 system interpreter, so these pass there",
+      "evidence": "R2 vs R3 difference is exactly these 7 files; all pass in R4"
+    },
+    {
+      "id": "BL-DOC-1",
+      "class": "pre-existing contract/documentation defect",
+      "statement": "tests.yml and run_tests.py claim the suite runs in any clean clone without installing anything (ADR-001 stdlib only); the suite actually needs PyYAML, openpyxl, python-docx and pypdf. requirements-dev.txt lists only PyYAML and openpyxl. Consequence: the CI job is red on every push at baseline.",
+      "evidence": [".github/workflows/tests.yml (comment above 'A suite inteira, num clone limpo')", ".github/run_tests.py:4", "requirements-dev.txt:17-18", "R1"],
+      "f0_action": "documented only; no CI or test change in F0. Decision proposed for F1 (see F0/RELATORIO.md, D-F1-01)."
+    },
+    {
+      "id": "BL-REPORT-1",
+      "class": "runner reporting quirk (not a failure)",
+      "statement": "run_tests.py counts 'expected failures=N' also under 'failures' because the regex (?<!un)\\bfailures=(\\d+) matches inside 'expected failures=3'. R4/R5 show failures=3 with 75/75 files OK; the 3 are the expectedFailure tests.",
+      "evidence": ".github/run_tests.py:66-70"
+    },
+    {
+      "id": "BL-XFAIL",
+      "class": "known open defects recorded as expectedFailure (extractor scope, frozen in this programme)",
+      "tests": [
+        ".claude/tests/test_calc_archetypes.py:108 test_conversion_inside_round_is_detected (ITEM-3b-1)",
+        ".claude/tests/test_calc_archetypes.py:144 test_block_declares_the_cycle (ITEM-3b-3)",
+        ".claude/tests/test_calc_archetypes.py:156 test_single_sheet_workbook_yields_blocks (ITEM-3b-2)"
+      ],
+      "f0_action": "none; extractors are out of scope (plan rule 4)"
+    },
+    {
+      "id": "BL-SKIP",
+      "class": "skips (R4: 34), not passes",
+      "groups": [
+        "private engagement / pilot data not mounted (projects/ is gitignored): e.g. test_migration.py:366, test_p8_comparator.py:342/355/410, test_coverage_integration.py:750, test_render_validate.py:346, test_extraction_limits.py:274",
+        "environment: root user (test_graph_store.py:231), Windows-only (test_motor_identity.py:272), symlinks/bash availability (test_graph_store.py:293, test_hook_invocation.py:233/313)",
+        "explicitly INCONCLUSIVO: fx-arch-pq fixture cannot be generated by openpyxl (test_calc_archetypes.py:183, test_capability_boundary.py:103)",
+        "P8 evidence absent: test_p8_comparator.py:431/451 (no report/run verdicts)"
+      ],
+      "note": "a skip is not green; per-test skip list was derived statically from the sources (grep of skipIf/skipUnless/skipTest), not by a verbose re-run"
+    }
+  ],
+  "verdict": {
+    "baseline_reproducible": true,
+    "code_failures_at_baseline_with_dev_dependencies": 0,
+    "ci_as_configured": "red (BL-DOC-1)",
+    "regression_command_for_later_phases": "python .github/run_tests.py (and --sequential before closing a phase) in an environment with PyYAML, openpyxl, python-docx, pypdf; compare against R4/R5 counts"
+  }
+}
