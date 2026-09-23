@@ -450,7 +450,35 @@ COLUMN_ALIASES = {
     "custo": "custo",
     "swing": "swing",
     "ronda": "ronda",
+    # handoff-v1 (states.md -> Admission of a question): the fields a question carries.
+    # `impacto` in Unknown/Conflicted is its own field; in Risky it stays the payload
+    # (`support`) -- see QUESTION_ALIASES, applied per section.
+    "tipo": "tipo",
+    "ambito": "ambito",
+    "fecho": "fecho",
+    "bloqueio": "bloqueio",
+    "referencias": "referencias",
+    "quem decide": "quem_decide",
 }
+QUESTION_SECTIONS = ("Unknown", "Conflicted")
+QUESTION_ALIASES = {"impacto": "impacto"}
+
+# handoff-v1: `impacto` is `aspecto[, aspecto]: frase`, the five aspects of states.md
+# (Admission of a question). The aspect is split off only when the cell OPENS with
+# known aspects; anything else is `nao-lida`, never fabricated (the swing rule).
+# The words each aspect is written with are the plan's own (02 section 4), never synonyms
+# invented here; each maps to the aspect's canonical key.
+IMPACT_ASPECTS = {
+    **dict.fromkeys(("solucao", "arquitectura", "arquitetura", "tecnologia"), "solucao"),
+    **dict.fromkeys(("funcional", "calculo", "transicao", "excepcao", "excecao",
+                     "resultado"), "funcional"),
+    **dict.fromkeys(("aceitacao", "contratual", "evidencia"), "aceitacao"),
+    **dict.fromkeys(("seguranca", "privacidade", "operacao", "suporte", "migracao",
+                     "recuperacao"), "operacao"),
+    **dict.fromkeys(("viabilidade", "dependencia", "custo", "esforco"), "viabilidade"),
+}
+QUESTION_TYPES = ("fact_gap", "design_choice", "conflict", "proof_obligation")
+BLOCKING_CLASSES = ("blocks_all", "blocks_scope", "delegated_choice", "implementation_proof")
 
 CRIT_MAP = {
     "critical": "Critical", "critica": "Critical", "alta": "Critical", "high": "Critical",
@@ -465,6 +493,10 @@ RESOLVED_RE = re.compile(r"resolved\s*(?:\u2192|->)\s*(.+)$", re.I)
 # The reason may itself carry parentheses ("substituida por U-096 (perfis ...)"), so the
 # capture runs greedily to the LAST `)` of the cell -- the marker always closes the cell.
 RETIRED_RE = re.compile(r"\bretirada\b\s*(?:P-\d+)?\s*\((.*)\)\s*$", re.I)
+# handoff-v1: a question with no demonstrable impact is PARKED, with its reason, in the
+# last column -- `— estacionada (<motivo>)`. Not a closure; not open either. Without a
+# reason it is not parked at all (T07): the row stays open and a diagnostic says why.
+PARKED_RE = re.compile(r"\bestacionada\b\s*\((.*)\)\s*$", re.I)
 STRIKE_RES_RE = re.compile(r"~~[^~]*resolvid[oa][^~]*~~|~~[^~]+~~\s*resolvid[oa]", re.I)
 WAS_RE = re.compile(r"\bwas\s+([A-Z]{1,3}-\d{2,4})")
 ID_RE = re.compile(r"\b((?:C|A|U|X|CF|R|RI|D|TW|PM)-\d{2,4})\b")
@@ -529,6 +561,35 @@ def detect_retirement(cells: list[str]) -> tuple[bool, str]:
     last = cells[-1] if cells else ""
     m = RETIRED_RE.search(last)
     return (True, (m.group(1) or "").strip()) if m else (False, "")
+
+
+def detect_parking(cells: list[str]) -> tuple[bool, str]:
+    """handoff-v1 parking: `- estacionada (<motivo>)` in the last column -> (marked, motivo).
+    The caller decides: an empty motivo is not a parking (T07)."""
+    last = cells[-1] if cells else ""
+    m = PARKED_RE.search(last)
+    return (True, (m.group(1) or "").strip()) if m else (False, "")
+
+
+def parse_impacto(raw: str) -> tuple[list[str], str, str]:
+    """`aspecto[, aspecto]: frase` -> (aspectos, frase, forma). `forma` is `canonica`,
+    `nao-lida` (the cell does not open with known aspects: nothing split off, nothing
+    fabricated) or `vazia`."""
+    raw = (raw or "").strip()
+    if not raw:
+        return [], "", "vazia"
+    head, sep, rest = raw.partition(":")
+    if not sep:
+        return [], raw, "nao-lida"
+    tokens = [norm_key(t).strip("*`_ ") for t in re.split(r"[,/;]| e ", head)]
+    tokens = [t for t in tokens if t]
+    if not tokens or any(t not in IMPACT_ASPECTS for t in tokens):
+        return [], raw, "nao-lida"
+    aspectos = []
+    for t in tokens:
+        if IMPACT_ASPECTS[t] not in aspectos:
+            aspectos.append(IMPACT_ASPECTS[t])
+    return aspectos, rest.strip(), "canonica"
 
 
 SWING_CLASSES = ("decisivo", "dimensionante", "cosmetico")
@@ -626,16 +687,19 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 break
         if state is None:
             continue
-        canon = [canon_header(h) for h in tbl.headers]
+        canon = [QUESTION_ALIASES.get(norm_key(h), canon_header(h))
+                 if state in QUESTION_SECTIONS else canon_header(h) for h in tbl.headers]
         seen_columns.update(canon)
         meta = sections.setdefault(
             state,
-            {"open": 0, "resolved": 0, "retirada": 0, "columns": tbl.headers, "prefixes": []},
+            {"open": 0, "resolved": 0, "retirada": 0, "estacionada": 0,
+             "columns": tbl.headers, "prefixes": []},
         )
         for line_no, cells in tbl.rows:
             rec = {k: "" for k in ("id", "lens", "claim", "support", "extra",
                                    "criticidade", "verificado_em", "validade",
-                                   "custo", "swing", "ronda")}
+                                   "custo", "swing", "ronda", "tipo", "impacto", "ambito",
+                                   "fecho", "bloqueio", "referencias", "quem_decide")}
             raw_map: dict[str, str] = {}
             for key, head, cell in zip(canon, tbl.headers, cells):
                 raw_map[head] = cell
@@ -653,6 +717,21 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                     resolved = True
                 else:
                     retired, retired_reason = False, ""
+            parked, parked_reason = detect_parking(cells)
+            if parked and not retired:
+                if state in QUESTION_SECTIONS and parked_reason:
+                    resolved = True
+                else:
+                    if state in QUESTION_SECTIONS:
+                        diagnostics.append({
+                            "level": "warn", "where": "shared-understanding.md",
+                            "line": line_no,
+                            "message": "{}: `estacionada` sem motivo -- nao conta como "
+                                       "estacionada; continua aberta".format(
+                                           rec["id"].strip())})
+                    parked, parked_reason = False, ""
+            else:
+                parked, parked_reason = False, ""
             crit, crit_raw = norm_criticidade(rec["criticidade"])
             swing_class, swing_text, swing_form = parse_swing(rec["swing"])
             if swing_form in ("separador", "nao-lida"):
@@ -663,6 +742,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
             meta["resolved" if resolved else "open"] += 1
             if retired:
                 meta["retirada"] += 1
+            if parked:
+                meta["estacionada"] += 1
             rows.append({
                 "id": row_id,
                 "state": state,
@@ -695,6 +776,20 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 "resolved_to": targets,
                 "retired": retired,
                 "retired_reason": retired_reason,
+                "parked": parked,
+                "parked_reason": parked_reason,
+                # handoff-v1 question fields (empty on a SU without those columns)
+                "handoff_cols": "tipo" in canon,
+                "tipo": norm_key(re.sub(r"[*`]", "", rec["tipo"])).replace(" ", "_"),
+                "impacto_raw": rec["impacto"].strip(),
+                "impacto_aspectos": parse_impacto(rec["impacto"])[0],
+                "impacto_texto": parse_impacto(rec["impacto"])[1],
+                "impacto_forma": parse_impacto(rec["impacto"])[2],
+                "ambito": rec["ambito"].strip(),
+                "fecho": rec["fecho"].strip(),
+                "bloqueio": norm_key(re.sub(r"[*`]", "", rec["bloqueio"])).replace(" ", "_"),
+                "referencias": rec["referencias"].strip(),
+                "quem_decide": rec["quem_decide"].strip(),
                 "was": WAS_RE.findall(rec["claim"] or ""),
                 "expired": False,
                 "expires_on": "",
@@ -740,7 +835,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
 
     for s in SECTIONS:
         sections.setdefault(
-            s, {"open": 0, "resolved": 0, "retirada": 0, "columns": [], "prefixes": []}
+            s, {"open": 0, "resolved": 0, "retirada": 0, "estacionada": 0, "columns": [],
+                "prefixes": []}
         )
 
     # An id is the engagement's unit of reference: a deliverable, a decision, a
@@ -1795,6 +1891,7 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
     fechadas: dict[str, int] = {}
     sem_ronda = 0
     retiradas = 0
+    estacionadas = 0
     fonte = {"destino.ronda": 0, "destino.verificado_em": 0, "indeterminado": 0}
     indet: list[dict] = []
 
@@ -1808,6 +1905,10 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
         if r.get("retired"):
             # Withdrawn for scope: not an answer, so not a closure of any round (P-21).
             retiradas += 1
+            continue
+        if r.get("parked"):
+            # Parked for lack of demonstrable impact: nothing was answered either.
+            estacionadas += 1
             continue
         rnd = src_label = ""
         for tid in r["resolved_to"]:
@@ -1865,6 +1966,7 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
     return {
         "por_ronda": por_ronda,
         "retiradas": retiradas,
+        "estacionadas": estacionadas,
         "abertas": sum(1 for r in unknowns if not r["resolved"]),
         "critical_abertas": sum(1 for r in unknowns
                                 if not r["resolved"] and r["criticidade"] == "Critical"),
