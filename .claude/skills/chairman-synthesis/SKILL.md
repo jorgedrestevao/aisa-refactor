@@ -112,7 +112,7 @@ that applies to this phase and persona, drop the rest.
 
 1. **Append-only to `shared-understanding.md`.** Never delete or rewrite existing rows. State transitions add a new row that references the prior id (`was X-NNN`).
 2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to a persona output that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
-3. **Every Confirmed row must have ≥2 persona anchors OR a direct document/sponsor citation.** A single persona's claim with no document → **Assumed** (declare basis) or **Unknown**.
+3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven personas saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the personas' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
 4. **Surface contradictions as Conflicted rows.** Never silently pick a winner. The user resolves at `/decide` time.
 5. **Atomic writes**. Update `_state.json` via tmp → rename (`Move-Item -Force` on Windows, `mv` on Unix), matching `aisa-start`.
 6. **`costs <Z> today` follows the funding gate** (P-4). Read `context.json.funding_gate` (absent = `true`). With `false`, the engagement's go-ahead does not depend on a third party's budget approval, so the clause is **stated with its basis, not monetized**: name what the situation costs the business in its own terms — rework, exposure, dependency, time of the people named in the SU — anchored to the rows that carry it, and write *«enunciado com base, não monetizado»* in the Anchors table for that clause. Never invent a figure to fill the slot, and never mark the frame incomplete for the absence of one. With `true`, the clause carries the figure the financial lens established, or the clause stays open as an `Unknown`.
@@ -137,7 +137,7 @@ Maintain a working table per category:
 
 ### Step 2b — Dialectic hand-back (when ≥1 material divergence)
 
-Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-frame`/`aisa-options`); it runs the antithesis round (max 3 divergences × 2 Task calls) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: divergences resolved by an accepted synthesis become normal rows; divergences that SURVIVE the antithesis become Conflicted rows (never silently pick a winner). If there are no material divergences — or this is already the second invocation — continue to Step 3.
+Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-frame`/`aisa-options`); it runs the antithesis round (max 3 divergences × 2 Task calls) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: an accepted synthesis settles a **recommendation or a disposition** only — it goes to the phase artefact or to a finding, never to a `Confirmed` row. A **factual** divergence becomes `Confirmed` only if the antithesis produced a locator (*Confirmed threshold*); otherwise it is a `Conflicted` row (never silently pick a winner). Divergences still open when the cap is reached are escalated, never accepted by exhaustion (`library/kernel/orchestration.md` → *Dialectic round*). If there are no material divergences — or this is already the second invocation — continue to Step 3.
 
 ### Step 3 — Assign Shared Understanding states
 
@@ -145,7 +145,7 @@ Walk the working table and assign state per row:
 
 | Working-table category | SU state | Notes |
 |---|---|---|
-| Overlap with ≥2 anchors AND each anchor is a document/sponsor citation | **Confirmed** | evidência = "anchored by `<persona>`, `<persona>` (sources: `<SU id, file:locator>`)" |
+| Any claim whose anchor is a locator of the *Confirmed threshold* classes, at the claim's level (however many personas raised it) | **Confirmed** | evidência = the locator itself (`<file>#<anchor>`, `answers.md#…`, `enquadramento.md#M-n`); persona names may follow, never stand in for it |
 | Overlap with ≥2 personas but anchors are inferential | **Assumed** | base = the personas' bases |
 | Single persona, anchored by document/SU id | **Assumed** | base = "proposed by `<persona>` (source: `<…>`); no second anchor this round" |
 | Single persona, no anchor | **Unknown** | quem responde = the persona's suggested **role** (`role: <role>`) or the source to consult (`fonte: <artefacto/sistema>`), prefixed per part and never a person; empty where neither is known; criticidade = persona's flag; the row carries the admission fields of Step 4b |

@@ -143,13 +143,22 @@ def engagement_of(file_path: str) -> tuple[Path | None, str]:
     return None, ""
 
 
+_CACHE: dict = {}
+
+
+def _boot() -> dict:
+    if "B" not in _CACHE:
+        _CACHE["B"] = runpy.run_path(str(BOOTSTRAP))
+    return _CACHE["B"]
+
+
 def avalia(eng: Path) -> tuple[bool, str]:
     """`(pronto, razão)`. Um bootstrap que não se consegue avaliar NÃO conta como pronto."""
     if not (eng / "_state.json").is_file():
         # Ainda não é um engagement: é `/start` a criá-lo. Não há estado a reconstruir.
         return True, ""
     try:
-        B = runpy.run_path(str(BOOTSTRAP))
+        B = _boot()
         boot = B["bootstrap"](eng)
     except Exception as exc:                                  # noqa: BLE001 — fail closed
         return False, "o bootstrap de `{}` não pôde ser avaliado ({}: {}) — não é o mesmo " \
@@ -209,6 +218,63 @@ def estado_novo(eng: Path, nome: str, tool: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _perfil_handoff(eng: Path) -> bool:
+    """O engagement é handoff-v1? (o resolver único vive em `workflow.py`)."""
+    W = runpy.run_path(str(REPO_ROOT / "library" / "kernel" / "tools" / "workflow.py"))
+    return W["profile_of"](eng)["kind"] == W["HANDOFF"]
+
+
+def texto_novo(eng: Path, nome: str, tool: dict) -> str | None:
+    """O conteúdo que a escrita deixaria no ficheiro, ou None quando não se sabe."""
+    ti = tool.get("tool_input") or {}
+    if tool.get("tool_name") == "Write":
+        return ti.get("content") if "content" in ti else None
+    velho, novo = ti.get("old_string"), ti.get("new_string")
+    if velho is None or novo is None:
+        return None
+    try:
+        base = (eng / nome).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if velho not in base:
+        return None
+    return base.replace(velho, novo) if ti.get("replace_all") else base.replace(velho, novo, 1)
+
+
+def confirmados_sem_prova(eng: Path, tool: dict) -> tuple[bool, str]:
+    """`(passa, razão)` para uma escrita na SU de um engagement handoff-v1 (T08, F0 D19).
+
+    Uma linha `Confirmed` nova, ou uma já existente que a escrita muda — incluindo uma
+    promoção no lugar, com o mesmo id —, tem de trazer um localizador das classes de
+    `states.md` → *Confirmed threshold*, com o alvo presente. Quantas personas concordam
+    não conta. O verificador é o do motor (`audit_confirmed_locators`), o mesmo que o
+    `/status` lê: presença e existência do alvo, nunca a verdade da afirmação."""
+    novo = texto_novo(eng, "shared-understanding.md", tool)
+    if novo is None:
+        return True, ""
+    D = _boot()["_D"]
+    try:
+        antes = (eng / "shared-understanding.md").read_text(encoding="utf-8")
+    except OSError:
+        antes = ""
+    velhas = {r["id"]: (r["state"], r["raw"]) for r in D["parse_su"](antes)[1]}
+    linhas = D["parse_su"](novo)[1]
+    tocadas = {r["id"] for r in linhas
+               if r["state"] == "Confirmed" and not r["resolved"]
+               and velhas.get(r["id"]) != (r["state"], r["raw"])}
+    if not tocadas:
+        return True, ""
+    audit = D["audit_confirmed_locators"](linhas, eng, only_ids=tocadas)
+    falhas = ["{} ({})".format(x["id"], x["motivo"])
+              for x in audit["sem_locator"] + audit["alvo_ausente"]]
+    if not falhas:
+        return True, ""
+    return False, "linha(s) `Confirmed` sem prova localizável: {} — concordância entre " \
+                  "personas não é evidência (`library/kernel/states.md` → *Confirmed " \
+                  "threshold*); escrever como `Assumed` com a base, ou `Unknown`".format(
+                      "; ".join(falhas))
+
+
 def main() -> int:
     if "--engagement" in sys.argv:
         slug = sys.argv[sys.argv.index("--engagement") + 1]
@@ -248,6 +314,17 @@ def main() -> int:
         return 2
 
     pronto, razao = avalia(eng)
+    if pronto and nome == "shared-understanding.md" and \
+            (eng / "_state.json").is_file() and _perfil_handoff(eng):
+        passa, razao2 = confirmados_sem_prova(eng, tool)
+        if not passa:
+            if os.environ.get("AISA_GUARD_MODE") == "log":
+                print("[pre-authority-guard] (log) {} — escrita permitida por override".format(
+                    razao2), file=sys.stderr)
+                return 0
+            block("{}\n\n`AISA_GUARD_MODE=log` é o override administrativo explícito.".format(
+                razao2))
+            return 2
     if pronto and nome in ESTADO:
         # Pronto não chega para o estado: o conteúdo novo também não pode perder chaves nem
         # mudar o perfil. Só depois do bootstrap, para que um legado diga que é legado.

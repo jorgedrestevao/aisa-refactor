@@ -331,7 +331,11 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
                   ("decisions.md", "# Decisions — eng-x\n"),
                   ("answers.md", "# Answers — eng-x\n"),
                   ("story.md", "# Story — eng-x\n"),
-                  ("enquadramento.md", "# Enquadramento — eng-x\n"),
+                  # como o passo 9b: a tabela `M-n` existe antes das linhas da SU, e o
+                  # guarda de `Confirmed` (T08) encontra o alvo do localizador
+                  ("enquadramento.md", "# Enquadramento — eng-x\n\n| id | invariante | o que "
+                                       "orienta | fonte |\n|---|---|---|---|\n| M-1 | O preço "
+                                       "segue a tabela | cálculo | dono |\n"),
                   ("shared-understanding.md", SU.replace(
                       "|---|---|---|---|---|---|---|\n\n## Assumed",
                       "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1))]

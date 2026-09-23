@@ -182,6 +182,8 @@ record; the offer is never *we will use it without recording it*.
 
 Full peer review was rejected for cost. Its surgical replacement: when the chairman detects **material divergences** between persona outputs (claim vs counter-claim that would change the phase artefact), the orchestrator runs an antithesis round for those points ONLY — each side attacks the other's strongest thesis and returns `Concedo / Contesto / Síntese proposta`. Cap: **3 divergences × 2 calls = ≤6 extra passes** per council round. Divergences that survive the antithesis become Conflicted rows; the chairman never silently picks a winner. Thesis → antithesis → synthesis, only where there is real disagreement.
 
+**What a synthesis may settle** (handoff-v1). An accepted synthesis settles a recommendation, a ranking or a disposition — never a fact. A factual divergence becomes a `Confirmed` row only when the antithesis produced a locator of the *Confirmed threshold* classes (`states.md`); otherwise it is `Conflicted`. How many personas agree never changes an epistemic state. The cap is a ceiling, not a verdict: divergences still open when it is reached are **escalated** — to the owner through `AskUserQuestion`, or recorded as a finding with its disposition — and never accepted by exhaustion.
+
 ## Why parallel (not sequential isolated)
 
 Concurrent Task subagents complete the council round in ~1 LLM-pass-time, versus ~6× for sequential isolated. Claude Code supports parallelism natively for the Task tool. There is no race-condition risk because agents do not share writable state.

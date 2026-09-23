@@ -59,7 +59,7 @@ The kernel vocabulary is precise and **stays**: in files, ids, column names and 
 | **Pack** | A domain configuration (pp, outsystems, mendix, generic). | o tipo de solução em vista |
 | **Soft gate** (`gate`) | Advisory warning at a phase transition. Overrideable with logged justification. | aviso antes de avançar |
 | **Override** | Proceeding past a soft gate with a logged reason. | avançar mesmo assim, com a razão registada |
-| **Hard guard** | A hook-enforced rule (only one: `library/` is read-only at runtime). | regra que o sistema não deixa quebrar |
+| **Hard guard** | A hook-enforced integrity rule: `library/` is read-only at runtime; coordinated state is written only by the coordinator; an engagement of the historical version is read-only; a `Confirmed` row needs a locator. | regra que o sistema não deixa quebrar |
 | **Chairman** | The synthesizer in council-independent mode. The only writer to the SU in that mode. | quem junta as conclusões das perspectivas |
 | **Council** | The agents (one per lens) running in parallel via Task subagents. | as perspectivas em paralelo |
 | **Half-life** (validade) | Decay class of a Confirmed/Assumed row; past it, the row is expired and must be revalidated. See [`states.md`](states.md). | até quando um facto vale sem reconfirmar |

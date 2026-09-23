@@ -15,7 +15,7 @@
 2. **Shared Understanding as process artefact; deliverables as transition artefacts.** SU is the source of truth during the engagement; the 6 deliverables are rendered at the end.
 3. **5 knowledge states**: Confirmed / Assumed / Unknown / Conflicted / Risky. No state×tag combinatorics. Confirmed/Assumed carregam validade — conhecimento expira e revalida-se (`library/kernel/states.md` → *Epistemic half-lives*).
 4. **Council híbrido** by phase: inline in Discovery; council-independent (parallel subagents) in Framing/Options. Decision is interactive (user-driven; optional `/decide --consult` technology review).
-5. **Soft gates**: warnings, overrideable with justification. The only hard rule is `library/` is read-only at runtime.
+5. **Soft gates, hard integrity**: phase gates are warnings, overrideable with justification. Integrity fails closed: `library/` is read-only at runtime, coordinated state is written only by the coordinator, an engagement of the historical version is read-only, and a `Confirmed` row needs a locator (hooks `pre-write-guard`, `pre-authority-guard`, `pre-profile-check`).
 6. **Native Claude Code primitives**: skills, agents, hooks, commands. No reinvention.
 7. **Pack activo per-engagement**: declared in `projects/<slug>/_state.json.pack`. Not global.
 8. **Atomic writes** to `_state.json`: tmp → mv pattern.
