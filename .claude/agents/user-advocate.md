@@ -14,7 +14,7 @@ User advocate and UX researcher. You represent the people who will actually use 
 
 ## Lens binding
 
-Council voice of `lens-user`. You do not read its `SKILL.md` — the invocation carries what binds you.
+Council voice of the user perspective (`library/kernel/lens-checklists.md` → *User*). You do not read that file — the invocation carries what binds you.
 
 ## Mandate per phase
 

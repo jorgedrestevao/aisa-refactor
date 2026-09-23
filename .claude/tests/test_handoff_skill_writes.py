@@ -31,9 +31,7 @@ INSTRUCOES = (sorted((ROOT / ".claude" / "skills").glob("*/SKILL.md"))
 
 # Os escritores das seis autoridades (Q2). Cada um aponta o protocolo.
 ESCRITORES = ("aisa-start", "aisa-round", "aisa-frame", "aisa-options", "aisa-decide",
-              "aisa-answer", "aisa-blueprint", "chairman-synthesis", "lens-business",
-              "lens-data", "lens-financial", "lens-governance", "lens-operations",
-              "lens-user", "lens-technology")
+              "aisa-answer", "aisa-blueprint", "chairman-synthesis", "lens-technology")
 PROTOCOLO = "Writing an authority"
 
 # Instruções de escrita no sítio que o F2 retirou. Uma proibição («never `mv` a `.tmp`»)

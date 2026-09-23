@@ -42,6 +42,7 @@
 .claude/tests/test_hook_invocation.py
 .claude/tests/test_hooks_gates.py
 .claude/tests/test_knowledge_lifecycle.py
+.claude/tests/test_lens_checklists.py
 .claude/tests/test_lens_mirror.py
 .claude/tests/test_locator_resolution.py
 .claude/tests/test_migration.py

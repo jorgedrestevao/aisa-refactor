@@ -29,8 +29,6 @@ SKILLS = os.path.join(ROOT, ".claude", "skills")
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures",
                         "technical-decision-refocus")
 
-LENSES = ("business", "operations", "user", "data", "governance", "financial")
-
 # Os oito eixos técnicos (§1.2 regra 3). Conjunto fechado: um eixo fora dele é defeito
 # do emissor, e é por isso que se conta em vez de se procurar por palavras.
 AXES = ("tecnologia", "padrão arquitetural", "componentes", "modelo de dados",
@@ -82,7 +80,9 @@ BLOCKING_SET = read(PP, "decision-model", "blocking-set.md")
 DISQUALIFIERS = read(PP, "decision-model", "composed-disqualifiers.md")
 CORE = read(PP, "architecture-templates", "architecture-core.md")
 F_BND = read(PP, "architecture-templates", "fragment-boundary-and-imports.md")
-LENS_GOV = read(SKILLS, "lens-governance", "SKILL.md")
+# handoff-v1 F3.2: as seis perspectivas vivem num ficheiro do kernel.
+CHECKLISTS = read(KERNEL, "lens-checklists.md")
+LENS_GOV = CHECKLISTS
 LENS_TECH = read(SKILLS, "lens-technology", "SKILL.md")
 CHAIRMAN = read(SKILLS, "chairman-synthesis", "SKILL.md")
 COMPLIANCE_MEM = read(ROOT, ".claude", "agent-memory", "_universal",
@@ -132,11 +132,10 @@ class Scenarios(unittest.TestCase):
         # mesma regra, e cada canal é verificado pelo seu, nunca pelo do outro.
         self.assertIn("the organisation's ignorance is not the project's work", flat(STATES))
         self.assertIn("never a question waiting on the organisation", flat(STATES))
-        for name in LENSES:
-            f = flat(read(SKILLS, "lens-%s" % name, "SKILL.md"))
-            self.assertIn("the organisation's ignorance is not pending work", f,
-                          "lens-%s não carrega a regra" % name)
-            self.assertIn("describes the organisation", f)
+        f = flat(CHECKLISTS)
+        self.assertIn("the organisation's ignorance is not pending work", f,
+                      "as checklists não carregam a regra")
+        self.assertIn("describes the organisation", f)
         # e o motor confirma-o no fixture: a pergunta de localização é `cosmético`.
         # O motor normaliza a classe para ASCII, e é essa a forma que se afirma —
         # afirmar a acentuada testava o encoding deste ficheiro, não a regra.
@@ -310,11 +309,9 @@ class Scenarios(unittest.TestCase):
                              "%s não foi listada sem impacto" % rid)
         # o `M-n` é contexto, nunca substituto do aspecto — no kernel, que é o dono
         self.assertIn("never a substitute for the aspect it moves", flat(STATES))
-        # as 6 lentes apontam para a regra do kernel em vez de a repetir
-        for name in LENSES:
-            self.assertIn("the rule lives in `library/kernel/states.md`",
-                          flat(read(SKILLS, "lens-%s" % name, "SKILL.md")),
-                          "lens-%s não aponta para o kernel" % name)
+        # as 6 perspectivas apontam para a regra do kernel em vez de a repetir
+        self.assertIn("the rule lives in `library/kernel/states.md`", flat(CHECKLISTS),
+                      "as checklists não apontam para o kernel")
         # `chairman-synthesis` cobre `F-` e `O-`, que é a metade que o 5f não via
         f = flat(CHAIRMAN)
         self.assertIn("f-", f)

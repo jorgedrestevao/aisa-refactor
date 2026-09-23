@@ -458,8 +458,8 @@ que as duas passagens da §9 foram feitas.
 ### 4.8 `lens_coverage` — só na etapa `lens` (handoff-v1 F3)
 
 A cobertura das seis perspectivas de uma passagem de Discovery (`business` · `operations` ·
-`user` · `data` · `governance` · `financial`; perguntas centrais nas
-*checklists* das lentes). Uma análise pode cobrir as seis; não se exigem seis
+`user` · `data` · `governance` · `financial`; perguntas centrais em
+`library/kernel/lens-checklists.md`). Uma análise pode cobrir as seis; não se exigem seis
 ficheiros nem seis execuções (T18). `source_review` e `coverage` são listas vazias nesta etapa,
 e `target` é `null`: vale o registo `lens` mais recente.
 

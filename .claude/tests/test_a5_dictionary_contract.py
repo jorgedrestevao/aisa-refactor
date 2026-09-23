@@ -199,8 +199,8 @@ class EstimateReadsOnlyTheSpecification(unittest.TestCase):
             self.assertNotIn(banned, src, banned)
 
 
-LENS_OPS = read(".claude/skills/lens-operations/SKILL.md")
-LENS_DATA = read(".claude/skills/lens-data/SKILL.md")
+# handoff-v1 F3.2: as seis perspectivas vivem num ficheiro do kernel (as skills de lente saíram).
+LENS_OPS = LENS_DATA = read("library/kernel/lens-checklists.md")
 ASIS = read("library/kernel/synthesis-templates/as-is.template.md")
 
 

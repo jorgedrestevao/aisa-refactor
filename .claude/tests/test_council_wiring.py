@@ -114,7 +114,10 @@ class TestNoFrameworkDuplicationInPersonas(unittest.TestCase):
 
     def test_personas_are_not_told_to_read_their_lens_skill(self):
         for name, text in AGENTS.items():
-            self.assertIn("You do not read its `SKILL.md`", text, name)
+            # handoff-v1 F3.2: as perspectivas de Discovery vivem em
+            # `library/kernel/lens-checklists.md`; `lens-technology` continua skill.
+            self.assertTrue("You do not read that file" in text
+                            or "You do not read its `SKILL.md`" in text, name)
             self.assertNotIn("lens-" + PERSONA_LENS[name] + "/SKILL.md", text, name)
 
     def test_council_prompts_do_not_send_personas_to_the_lens_skill(self):

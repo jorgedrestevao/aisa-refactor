@@ -186,7 +186,7 @@ class T03_LegadoSoSeLe(Base):
     def test_a_write_skill_is_refused_before_it_starts(self):
         eng = legado(self.base)
         antes = pegada(eng)
-        for nome in ("aisa-round", "aisa-capture", "lens-data", "chairman-synthesis"):
+        for nome in ("aisa-round", "aisa-capture", "lens-technology", "chairman-synthesis"):
             p = hook("pre-profile-check.py", skill(nome, "--engagement velho"), self.base)
             self.assertTrue(negou(p), nome)
             self.assertIn("aisa@85baf10", p.stderr)

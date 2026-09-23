@@ -93,17 +93,16 @@ class TestPackSignalInjection(unittest.TestCase):
 class TestDiscoveryPackBoundary(unittest.TestCase):
     """The Discovery lens itself still does not resolve pack.yaml."""
 
+    # handoff-v1 F3.2: as seis perspectivas vivem em `library/kernel/lens-checklists.md`.
     def test_no_discovery_lens_reads_the_manifest(self):
-        for lens in DISCOVERY_LENSES:
-            body = read(".claude", "skills", "lens-" + lens, "SKILL.md")
-            self.assertNotIn("pack.yaml", body, "lens-%s resolves the pack manifest" % lens)
-            self.assertNotIn("library/packs/", body, "lens-%s reaches into the pack" % lens)
+        body = read("library", "kernel", "lens-checklists.md")
+        self.assertNotIn("pack.yaml", body, "the checklists resolve the pack manifest")
+        self.assertNotIn("library/packs/", body, "the checklists reach into the pack")
 
     def test_no_discovery_lens_loads_the_question_bank(self):
-        for lens in DISCOVERY_LENSES:
-            body = read(".claude", "skills", "lens-" + lens, "SKILL.md")
-            self.assertNotIn("question-bank", body)
-            self.assertNotIn("question_bank", body)
+        body = read("library", "kernel", "lens-checklists.md")
+        self.assertNotIn("question-bank", body)
+        self.assertNotIn("question_bank", body)
 
 
 class TestQuestionBankConsumer(unittest.TestCase):

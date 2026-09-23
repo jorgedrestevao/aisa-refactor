@@ -323,7 +323,7 @@ O `/answer` actualiza o SU: linhas U-001..U-003 transitam de Unknown → Confirm
 /round
 ```
 
-A segunda ronda explora gaps remanescentes; pode emitir novos Unknowns que dependiam dos primeiros (ex: agora que sabemos da regra €10k, lens-governance pergunta "qual o limite para audit trail mandatório?").
+A segunda ronda explora gaps remanescentes; pode emitir novos Unknowns que dependiam dos primeiros (ex: agora que sabemos da regra €10k, a perspectiva de governação pergunta "qual o limite para audit trail mandatório?").
 
 Iterar /round + /answer até `/status` mostrar:
 
@@ -442,7 +442,7 @@ Se `render-gaps.md` está vazio → tudo OK. Se tem entradas → render-validate
 | Procurar... | Está em... |
 |---|---|
 | Slash commands disponíveis | `.claude/commands/*.md` |
-| O que cada lens faz | `.claude/skills/lens-<name>/SKILL.md` |
+| O que cada lens faz | `library/kernel/lens-checklists.md` (Discovery) · `.claude/skills/lens-technology/SKILL.md` (Options) |
 | Personas dos agentes (council mode) | `.claude/agents/*.md` |
 | As 4 fases + entry/exit | `library/kernel/phases.md` |
 | Os 5 estados + rules | `library/kernel/states.md` |
@@ -473,9 +473,9 @@ Se `render-gaps.md` está vazio → tudo OK. Se tem entradas → render-validate
 
 Verificar que (a) symlink/junction `aisa/projects/` existe; OU (b) `$env:AISA_ENGAGEMENTS_ROOT` está definido. Ver §2.2.
 
-### 5.2 `/round` "lens-business not found"
+### 5.2 `/round` não encontra uma perspectiva
 
-A skill não está no path. Verificar: `ls .claude/skills/lens-business/SKILL.md`. Se não existe, é porque ainda estamos pré-Fase 2 do roadmap — aisa MVP ainda não está completo.
+Desde o handoff-v1 F3.2 as seis perspectivas de Discovery não são skills: vivem em `library/kernel/lens-checklists.md`. Verificar que o ficheiro existe. Uma instalação antiga que ainda tenha `.claude/skills/lens-business/` e afins está desactualizada.
 
 ### 5.3 `/render --all` produz `render-gaps.md` com vários slots vazios
 

@@ -221,12 +221,8 @@ class CCanais(unittest.TestCase):
         "chairman-synthesis": (".claude", "skills", "chairman-synthesis", "SKILL.md"),
         "aisa-answer": (".claude", "skills", "aisa-answer", "SKILL.md"),
         "aisa-capture": (".claude", "skills", "aisa-capture", "SKILL.md"),
-        "lens-business": (".claude", "skills", "lens-business", "SKILL.md"),
-        "lens-operations": (".claude", "skills", "lens-operations", "SKILL.md"),
-        "lens-user": (".claude", "skills", "lens-user", "SKILL.md"),
-        "lens-data": (".claude", "skills", "lens-data", "SKILL.md"),
-        "lens-governance": (".claude", "skills", "lens-governance", "SKILL.md"),
-        "lens-financial": (".claude", "skills", "lens-financial", "SKILL.md"),
+        # handoff-v1 F3.2: as seis skills de lente deram lugar a um ficheiro do kernel.
+        "lens-checklists": ("library", "kernel", "lens-checklists.md"),
     }
 
     def test_no_channel_restates_the_p26_conjunction(self):
@@ -259,16 +255,14 @@ class CCanais(unittest.TestCase):
         self.assertIn("passes the same admission rule", answer)
 
     def test_the_lenses_do_not_turn_the_organisation_gap_into_pending_work(self):
-        for lens in ("business", "operations", "user", "data", "governance", "financial"):
-            flat = " ".join(read(".claude", "skills", "lens-" + lens, "SKILL.md").split())
-            self.assertIn("the organisation's ignorance is not pending work", flat, lens)
-            self.assertIn("that is a **requirement** of the to-be", flat, lens)
+        flat = " ".join(read("library", "kernel", "lens-checklists.md").split())
+        self.assertIn("the organisation's ignorance is not pending work", flat)
+        self.assertIn("that is a **requirement** of the to-be", flat)
 
     def test_the_lenses_stopped_restating_the_admission_rule_in_their_steps(self):
-        for lens in ("business", "operations", "user", "data", "governance", "financial"):
-            flat = " ".join(read(".claude", "skills", "lens-" + lens, "SKILL.md").split())
-            self.assertNotIn("passes admission (Hard rule 7)", flat, lens)
-            self.assertIn("passes admission, whole, as the Hard rules state it", flat, lens)
+        flat = " ".join(read("library", "kernel", "lens-checklists.md").split())
+        self.assertNotIn("passes admission (Hard rule 7)", flat)
+        self.assertIn("passes admission, whole, as the common rules state it", flat)
 
     def test_the_kernel_owns_the_rule_and_the_parking(self):
         states = " ".join(read("library", "kernel", "states.md").split())

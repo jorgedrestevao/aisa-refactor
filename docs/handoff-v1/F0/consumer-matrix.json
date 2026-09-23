@@ -539,56 +539,6 @@
      "source": "inventory"
     },
     {
-     "file": ".claude/skills/lens-business/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Inline Discovery lens: appends atomic rows to SU directly (Edit tool), append-only; reads SU/evidence; Confirmed locator rule includes answers.md#<secção>. Mirrored post-hoc by on-su-mirror.",
-     "via": "",
-     "evidence": "lens-business/SKILL.md:29 output SU; 35 locator rule (answers.md); 40 append-only rule",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/skills/lens-data/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Same inline direct-Edit append contract as lens-business (lens=data).",
-     "via": "",
-     "evidence": "lens-data/SKILL.md:29, 35",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/skills/lens-financial/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Same inline direct-Edit append contract (lens=financial).",
-     "via": "",
-     "evidence": "lens-financial/SKILL.md:29, 35",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/skills/lens-governance/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Same inline direct-Edit append contract (lens=governance).",
-     "via": "",
-     "evidence": "lens-governance/SKILL.md:29, 35",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
-     "file": ".claude/skills/lens-operations/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Same inline direct-Edit append contract (lens=operations).",
-     "via": "",
-     "evidence": "lens-operations/SKILL.md:29, 35",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".claude/skills/lens-technology/SKILL.md",
      "kind": "skill",
      "role": "appender",
@@ -598,16 +548,6 @@
      "confidence": "verified",
      "source": "inventory",
      "adjudication": "Adjudicado F0: escrita declarada (Outputs §1). Em modo council o executor (solution-architect) só tem ferramentas de leitura e o chairman é o único escritor; o contrato declarado e a execução divergem."
-    },
-    {
-     "file": ".claude/skills/lens-user/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Same inline direct-Edit append contract (lens=user).",
-     "via": "",
-     "evidence": "lens-user/SKILL.md:29, 35",
-     "confidence": "verified",
-     "source": "inventory"
     },
     {
      "file": "CLAUDE.md",
@@ -1013,6 +953,16 @@
      "confidence": "verified",
      "source": "critic",
      "via_source": "mechanism"
+    },
+    {
+     "file": "library/kernel/lens-checklists.md",
+     "kind": "kernel-contract",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.2",
+     "role": "appender",
+     "mechanism": "Single owner of the six Discovery perspectives (replaces the six lens skills, handoff-v1 F3.2). Instructs the integrated analyst of /round to append atomic SU rows into the draft copy, append-only, with the Confirmed locator rule (answers.md#<secção>); aisa-round publishes through resolve.py publish.",
+     "evidence": "lens-checklists.md:13 output SU rows in the draft; 36 locator rule (answers.md); 38 append-only rule"
     }
    ],
    "mention_only": [
@@ -2571,16 +2521,6 @@
      "source": "inventory"
     },
     {
-     "file": ".claude/skills/lens-data/SKILL.md",
-     "kind": "skill",
-     "role": "declares-contract",
-     "mechanism": "Declares that fields, types and mandatoriness are not Discovery: they enter in Architecture from the L1 inventory (fields_draft.py, consumed by /blueprint).",
-     "via": "",
-     "evidence": ".claude/skills/lens-data/SKILL.md:58",
-     "confidence": "verified",
-     "source": "inventory"
-    },
-    {
      "file": ".github/run_tests.py",
      "kind": "ci",
      "role": "validator",
@@ -3039,6 +2979,16 @@
      "evidence": "handoff-contract.md:8,21,28,32,42,51,53,57,71",
      "confidence": "verified",
      "source": "F1.6"
+    },
+    {
+     "file": "library/kernel/lens-checklists.md",
+     "kind": "kernel-contract",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.2",
+     "role": "declares-contract",
+     "mechanism": "Declares that fields, types and mandatoriness are not Discovery: they enter in Architecture from the L1 inventory (fields_draft.py, consumed by /blueprint). Carried over from lens-data.",
+     "evidence": "library/kernel/lens-checklists.md:140"
     }
    ],
    "mention_only": [
@@ -3806,6 +3756,16 @@
      "evidence": "resolve.py CITED_DIRS_RE",
      "confidence": "verified",
      "source": "F2.3"
+    },
+    {
+     "file": "library/kernel/lens-checklists.md",
+     "kind": "kernel-contract",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.2",
+     "role": "declares-contract",
+     "mechanism": "Declares the evidence of coverage per perspective and the assessed/gap/not_applicable rules the lens coverage record carries (coverage-contract.md §4.8).",
+     "evidence": "library/kernel/lens-checklists.md:5, 55"
     }
    ],
    "mention_only": [
@@ -3836,6 +3796,10 @@
     {
      "file": "library/kernel/tools/workflow.py",
      "reason": "Docstring names `coverage.py` as the owner of semantic freshness (workflow.py:17); the module never reads coverage records."
+    },
+    {
+     "file": "docs/LENS_AUTHORING.md",
+     "reason": "handoff-v1 F3.2 header note: Discovery perspectives moved to lens-checklists.md and their coverage to the lens record (coverage-contract.md §4.8). Authoring guide, not read at runtime."
     }
    ],
    "handoff_v1_impact": [
@@ -4157,17 +4121,6 @@
      "confidence": "verified",
      "source": "inventory",
      "adjudication": "Adjudicado F0: escreve _synthesis/as-is.md e architecture-story.md, lidos pelo spec."
-    },
-    {
-     "file": ".claude/skills/lens-operations/SKILL.md",
-     "kind": "skill",
-     "role": "feeds",
-     "mechanism": "step_duration SU rows are the contracted source of the as-is 'tempo' column and, through the Implementation Specification, of the operating-path change the Estimate quantifies.",
-     "via": "SU rows -> _synthesis/as-is.md Passos e tempo -> spec §16",
-     "evidence": "lens-operations/SKILL.md:58",
-     "confidence": "verified",
-     "source": "inventory",
-     "adjudication": "Adjudicado F0: linhas step_duration da SU alimentam a tabela de mudança do caminho operacional."
     },
     {
      "file": ".claude/tests/test_a5_dictionary_contract.py",
@@ -4985,17 +4938,6 @@
      "via_source": "mechanism"
     },
     {
-     "file": ".claude/skills/lens-operations/SKILL.md",
-     "kind": "skill",
-     "role": "feeds",
-     "mechanism": "step_duration rows are the contracted source of as-is 'tempo' and, through the Implementation Specification, of the operating-path change the Estimate quantifies (P-10).",
-     "via": "SU step_duration -> _synthesis/as-is.md# Passos e tempo -> spec §16 -> Estimate §17 operational_impact",
-     "evidence": ".claude/skills/lens-operations/SKILL.md:58",
-     "confidence": "verified",
-     "source": "inventory",
-     "adjudication": "Adjudicado F0: step_duration alimenta o spec e, por ele, a estimativa."
-    },
-    {
      "file": ".claude/skills/lens-technology/SKILL.md",
      "kind": "skill",
      "role": "declares-contract",
@@ -5381,10 +5323,6 @@
     {
      "file": "library/kernel/capture-templates/process-model.template.md",
      "reason": "Generic materiality wording ('an estimate or acceptance is material', line 102; swing sizing/effort, line 201); no Estimate read/write."
-    },
-    {
-     "file": ".claude/skills/lens-financial/SKILL.md",
-     "reason": "'estimate' means the as-is cost estimate (lines 10,17,64) and the effort swing axis (43); not implementation effort."
     },
     {
      "file": ".claude/skills/aisa-answer/SKILL.md",
@@ -5997,16 +5935,6 @@
      "evidence": "chairman-synthesis/SKILL.md:13; :23; :27; :117; :193; :478.",
      "confidence": "verified",
      "source": "inventory"
-    },
-    {
-     "file": ".claude/skills/lens-business/SKILL.md",
-     "kind": "skill",
-     "role": "appender",
-     "mechanism": "Indirect _ops writer: appends SU rows with the Edit tool, and PostToolUse on-su-mirror then calls resolve.sync_mirror, which publishes graph + SU through operation.run (pending marker, receipt 'mirror-<sha16>') whenever the mirror changes. The same applies to lens-operations, lens-user, lens-data, lens-governance, lens-financial and lens-technology (each SKILL.md: 'shared-understanding.md — atomic material findings'), and to the SU row writers chairman-synthesis, aisa-decide (R-NNN rows, SKILL.md:127) and aisa-answer step 6 (header). A header-only SU edit (aisa-status step 3, aisa-round 5b, aisa-frame/aisa-options 3.3) produces no receipt because mirror_write_set returns {}.",
-     "via": "Edit on shared-understanding.md -> on-su-mirror.py -> resolve.sync_mirror -> operation.run",
-     "evidence": "lens-business/SKILL.md:29 (identical line in lens-operations/user/data/governance/financial :29, lens-technology :39); settings.json:44-52; on-su-mirror.py:69-74; resolve.py:745-749 (no-op when unchanged), :792-803 (operation.run).",
-     "confidence": "verified",
-     "source": "critic"
     },
     {
      "file": ".claude/skills/lens-technology/SKILL.md",
