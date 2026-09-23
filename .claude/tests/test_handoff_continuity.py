@@ -312,6 +312,48 @@ class D17_ProjeccaoNumaRevisao(unittest.TestCase):
             self.assertEqual(b1["snapshot"]["revision"], b2["snapshot"]["revision"],
                              "`revision` das autoridades mudou por um input")
 
+    def test_every_file_the_model_reads_is_inside_the_window(self):
+        """Mitigação da limitação F2.1: uma leitura nova no dashboard que não se declare em
+        `MODEL_INPUTS` ficava fora da janela. Aqui mede-se: cada ficheiro que
+        `build_model` abre, na fixture mais rica, é autoridade, input declarado (com a
+        semântica real dos globs, a de `Path.glob`) ou a barreira (`_ops/`, que o marcador
+        de estado já lê)."""
+        import builtins
+        import io
+        import shutil
+        from datetime import date
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = Path(tmp) / "fx"
+            shutil.copytree(ROOT / ".claude" / "tests" / "fixtures" / "coverage"
+                            / "fx-coverage-f06", eng)
+            raiz = eng.resolve()
+            lidos = set()
+            real_io, real_b = io.open, builtins.open
+
+            def espia(f, *a, **k):
+                modo = a[0] if a else k.get("mode", "r")
+                try:
+                    p = Path(f).resolve()
+                    if "r" in modo and str(p).startswith(str(raiz)):
+                        lidos.add(p.relative_to(raiz).as_posix())
+                except (TypeError, ValueError, OSError):
+                    pass
+                return real_io(f, *a, **k)
+
+            io.open = builtins.open = espia
+            try:
+                P["_D"]["build_model"](eng, date.today())
+            finally:
+                io.open, builtins.open = real_io, real_b
+            janela = set(B["expand_inputs"](eng, P["MODEL_INPUTS"])) | set(B["AUTHORITIES"])
+            # Só ficheiros que existem: uma tentativa sobre um ausente (`render-gaps.md`
+            # antes do primeiro render) fica coberta pelo glob — se ele aparecer a meio, a
+            # expansão muda e a revisão com ela.
+            fora = sorted(r for r in lidos if r not in janela and not r.startswith("_ops/")
+                          and (eng / r).is_file())
+            self.assertTrue(lidos, "a espia não viu leitura nenhuma — o teste não mede nada")
+            self.assertEqual(fora, [], "o modelo lê ficheiros fora da janela validada")
+
     def test_receipts_logs_and_drafts_never_enter_the_read_set(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = engagement(tmp)

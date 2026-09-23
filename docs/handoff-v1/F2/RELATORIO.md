@@ -1,6 +1,6 @@
 # F2 — Relatório da fase (continuidade transacional mínima)
 
-Estado: **in_progress** (autorizada em 2026-09-23). Desenho e decisões Q1–Q4: [DESENHO.md](DESENHO.md).
+Estado: **gate cumprido — por aceitar pelo mantenedor** (autorizada em 2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md). Avaliação do gate: §5.
 
 ## 1. Incrementos
 
@@ -11,8 +11,8 @@ Estado: **in_progress** (autorizada em 2026-09-23). Desenho e decisões Q1–Q4:
 | F2.3 Checkpoint, tarefas, `INCOMPLETE_READ_SET` | integrado | `630194b` | `workflow.py task plan|start|receive|reconcile|show`. Checkpoint publicado pelo coordenador; `publish` de um rascunho com tarefa integra-a na mesma operação. `/round` regista cada lente como tarefa (4a1). `test_handoff_checkpoint.py` 22 casos (T10, T15, T12, T13, reconciliação, integridade, CLI). Full 85/85, 2784; stdlib 66/66, 1986; ambos exit 0 |
 | F2.4 Retoma a frio | integrado | `a7af14c` | `workflow.py resume` só lê: perfil → bootstrap com o checkpoint no read-set → checkpoint → reconciliação proposta → frescura recalculada → contexto com orçamento (ids de todos os críticos sempre) → próxima acção com razão. `/status` 2b e `/resume` consultam-no. `test_handoff_resume.py` 9 casos (T09 num processo novo, T16, D02, recuperação, legado, objectivo por declarar). Full 86/86, 2793; stdlib 67/67, 1995; ambos exit 0 |
 | F2.5 Skills das 6 autoridades + nascimento | integrado | `e3c0c0f` | protocolo único em `orchestration.md` → *Writing an authority*; 15 escritores convertidos (6+1 lentes, `/round`, chairman, `/frame`, `/options`, `/decide`, `/answer`, `/blueprint`, `/start`); `/capture` deixou de escrever `_state.json`. Nascimento = `init` + 1 publicação (W8d). `test_handoff_skill_writes.py` 12 casos. Full 84/84, 2762; stdlib 65/65, 1964; ambos exit 0 |
-| F2.6 Coverage (D07), su-confirmed-guard, H2 | integrado | (este) | `finalize` pelo coordenador: idempotente, versão = maior emitida + 1 contando os recibos, `.json`+`.md` numa operação com `expected=""` e as fontes como read-set; `su-confirmed-guard` retirado; slugs reais fora dos ficheiros normativos e do motor; `_drafts/`/`_work/` fora do inventário. D09 e `capture_run` já tinham fechado em F2.5. Full 86/86, 2797; stdlib 67/67, 1999; ambos exit 0 |
-| F2.7 Gate | por fazer | | |
+| F2.6 Coverage (D07), su-confirmed-guard, H2 | integrado | `ccb1379` | `finalize` pelo coordenador: idempotente, versão = maior emitida + 1 contando os recibos, `.json`+`.md` numa operação com `expected=""` e as fontes como read-set; `su-confirmed-guard` retirado; slugs reais fora dos ficheiros normativos e do motor; `_drafts/`/`_work/` fora do inventário. D09 e `capture_run` já tinham fechado em F2.5. Full 86/86, 2797; stdlib 67/67, 1999; ambos exit 0 |
+| F2.7 Gate | integrado | (este) | teste de contrato da janela da projecção (`D17_ProjeccaoNumaRevisao.test_every_file_the_model_reads_is_inside_the_window`); `handoff-contract.md` → *Checkpoint* diz como ficou; §5–§8 abaixo |
 
 ## 2. Defeitos do F0 fechados
 
@@ -43,4 +43,61 @@ Estado: **in_progress** (autorizada em 2026-09-23). Desenho e decisões Q1–Q4:
 - **Por decidir (mantenedor):** as linhas `[ÂMBITO AUTORIZADO]` de `states.md` regra 3 dizem «evidence = the decision record». Com ids `C-`, não têm classe de localizador, porque a regra Q5 vale só para ids `D-`. É um desvio anterior (F1), agora visível. Proposta para a F2.7: apresentar as opções.
 - O guarda passou a recusar também a remoção de uma linha da SU (`SU_ROW_REMOVED`). A regra (append-only) já era do kernel; faltava quem a impusesse.
 
-- `MODEL_INPUTS` enumera o que `build_model` lê hoje. Uma leitura nova no dashboard que não se declare aqui fica fora da janela. Mitigação em F2.7: um teste de contrato que compare as leituras do modelo com a lista.
+- ~~`MODEL_INPUTS` enumera o que `build_model` lê hoje; uma leitura nova fora da lista ficava fora da janela.~~ Mitigada em F2.7: o teste de contrato espia as leituras do modelo na fixture mais rica e falha se alguma, de um ficheiro existente, cair fora das autoridades, dos inputs declarados (semântica real de `Path.glob`) ou de `_ops/`.
+
+## 5. Gate (05_FASES F2: T09–T17)
+
+| Teste | Critério (06_VALIDACAO) | Estado | Evidência |
+| --- | --- | --- | --- |
+| T09 | Cold resume sem conversa anterior reconstrói objectivo, autorizações, bloqueios e próximo trabalho | **cumprido** | `test_handoff_resume.T09_RetomaAFrio`: processo novo (CLI) sobre um engagement deixado a meio por uma sessão morta; a próxima acção acompanha o estado depois de cada passo |
+| T10 | Read-set omite input usado → `INCOMPLETE_READ_SET`; não publicável | **cumprido, com limite** | `test_handoff_checkpoint.T10_ReadSetIncompleto` (receive e publish recusam). Limite: vê citações, não leituras (§4) |
+| T11 | Input muda durante a execução → `STALE_INPUT`; rascunho preservado; integração rejeitada | **cumprido** | `test_handoff_continuity.T11_ReadSet` (coordenador); `test_handoff_publish.T11_RascunhoDesactualizado`; `test_handoff_checkpoint.T11_InputDaTarefaMudou` |
+| T12 | Falha em cada limite de publicação → revisão velha/nova ou `RECOVERY_REQUIRED`, nunca mistura válida | **cumprido** | `test_handoff_continuity.T12` (5 limites de uma operação de 3 ficheiros; bootstrap e projecção nunca dão pronto; recuperação completa e idempotente); `test_handoff_checkpoint.T12` (falha com checkpoint); `test_operation_recovery` mantido |
+| T13 | Repetir após sucesso sem resposta → mesmo efeito/recibo, sem duplicar | **cumprido** | `T13` em continuity (coordenador), publish (rascunho), checkpoint (dupla integração) e coverage (`test_the_same_draft_twice_is_the_same_version`) |
+| T14 | Duas sessões da mesma base → conflito explícito; nada se perde | **cumprido** | `test_handoff_continuity.T14` (2 processos reais, 4 corridas: uma publica, a outra recebe `STALE_INPUT`/`CONCURRENT_WRITE`, o ficheiro tem o que o recibo diz); `test_handoff_publish` (rascunho de outra sessão → `STALE_INPUT`, a publicação alheia fica) |
+| T15 | Resultado recebido e não integrado não conta para readiness; aparece na retoma | **cumprido** | `test_handoff_checkpoint.T15_RecebidoNaoIntegrado`; `test_handoff_resume` (`results_pending`, frescura recalculada) |
+| T16 | Contexto excede orçamento → estado parcial explícito e expansão; nenhum crítico omitido | **cumprido** | `test_handoff_resume.T16_OrcamentoExcedido` |
+| T17 | Edit directo na SU, grafo divergente → preservar, bloquear publicação inconsistente, reconciliar explicitamente | **cumprido** | `test_handoff_publish.T17_EdicaoDirecta`; `test_lens_mirror.L1` |
+
+**«Nenhum leitor considera conjunto misto como revisão válida»:** o bootstrap valida a revisão com os inputs declarados (F2.1). A projecção lê o modelo dentro da janela (D17, com o teste de contrato da janela). A retoma põe o checkpoint no read-set. Os leitores de T12 nunca dão pronto sobre uma publicação a meio. **Cumprido.**
+**«Dupla integração é idempotente»:** T13 nas quatro vias de escrita (coordenador, rascunho, tarefa, coverage). **Cumprido.**
+
+Trabalho do plano (05_FASES F2, itens 1–7):
+
+1. checkpoint por referências (F2.3);
+2. read-set com hashes e revisão consumida (F2.1);
+3. checkpoint e autoridades no coordenador, com recibos e conflitos verificáveis (F2.2, F2.3, F2.5);
+4. drafts nunca consumidos; stale e repetição tratados (F2.2, F2.3);
+5. diagnóstico, recuperação e cold resume com orçamento (F2.4);
+6. hooks só como guarda e detecção, edição directa e reconciliação documentadas (F2.2; HOOKS.md; `orchestration.md` → *Writing an authority*);
+7. falha injectada e duas sessões (F2.1, F2.3).
+
+Todos feitos.
+
+Rollback (plano): as revisões novas ficam preservadas (recibos em `_ops/`). Desligar a escrita experimental é voltar a `ba0c27b`/`85baf10` para engagements legados (decisão A). Um engagement handoff-v1 recupera com `operation.py recover`.
+
+## 6. Leitor, escritor e schema — o que F2 acrescenta
+
+Complementa `../F1/LEITOR-ESCRITOR.md`.
+
+| Dado | Schema | Escritor | Leitores | Guarda |
+| --- | --- | --- | --- | --- |
+| `_drafts/<id>/` + `_draft.json` | `aisa-draft/1` | `resolve.draft` (cópias); a skill edita as cópias | `resolve.publish`, `workflow.task_receive` | Não é autoridade: fora de todo o read-set, do inventário do coverage e do dashboard |
+| `_work/checkpoint.json` | `handoff-work/1` (+ `results[].sha256` opcional) | `workflow.task_*` e `resolve.publish` (tarefa), sempre por `operation.run` | `workflow.resume`, `/status` 2b, `/resume`, projecção (input) | Escrita por ferramenta recusada (`_work/` coordenado); ilegível ou schema futuro nunca se sobrescreve |
+| Recibo `_ops/receipts/<op>.json` | + `read_set` | `operation.run` | quem repete a operação; `coverage.issued_versions` | Escrita por ferramenta recusada |
+| `_coverage/coverage_vNN.{json,md}` | coverage schema 1 | `coverage.finalize` por `operation.run` | coverage, `/blueprint`, `/render`, `/status` | `expected=""`; versão = maior emitida + 1 |
+| Autoridades (6) | — | `resolve.publish` (rascunho) e os motores `resolve`/`migrate`; nunca edição no sítio | todos | guarda: integridade (`workflow.su_problems`/`state_problems`) antes da escrita; edição directa preservada e bloqueada até `reconcile` |
+
+## 7. Decisões e pontos por decidir
+
+- Q1–Q5: DESENHO.md, todas decididas pelo mantenedor em 2026-09-23.
+- **Por decidir:** `[ÂMBITO AUTORIZADO]` (§4). Hoje não há nenhum escritor de linhas `C-` com essa marca; a marca só aparece no campo *Validated by* do registo de aprovação. A regra de `states.md` (regra 3) promete uma evidência que o limiar já não aceita.
+
+## 8. Próxima fase
+
+F3 (05_FASES): análise integrada e materialidade funcional. Recebe a metade de cobertura por lente do T07, aceite como excepção em F1. Pontos que ficam para fases posteriores, cada um com dono:
+
+- D06 (`render-validate` não idempotente) → F6;
+- D10 (`migrate restore --force`) → F7;
+- testes de integração com pilotos reais → F4;
+- a limitação das escritas por Bash (§4) → sem fase; o motor recusa o desvio.
