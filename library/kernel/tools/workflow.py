@@ -4,6 +4,7 @@
     python library/kernel/tools/workflow.py check --engagement <slug> [--json]
     python library/kernel/tools/workflow.py check --pack <id> --profile handoff-v1 --route <rota> [--json]
     python library/kernel/tools/workflow.py task plan|start|receive|reconcile|show ... --engagement <slug>
+    python library/kernel/tools/workflow.py resume --engagement <slug> [--budget N] [--json]
 
 Stdlib apenas (ADR-001). `check` nao escreve nada; `task` escreve so o checkpoint
 (`_work/checkpoint.json`), e so pelo coordenador.
@@ -762,6 +763,172 @@ def task_main(argv) -> int:
     return 0
 
 
+# ------------------------------------------------------------ retoma a frio (F2.4)
+
+def _bootstrap_mod() -> dict:
+    if "B" not in _CACHE:
+        _CACHE["B"] = runpy.run_path(str(_HERE / "bootstrap.py"))
+    return _CACHE["B"]
+
+
+def _literal_request(eng: Path):
+    try:
+        ctx = json.loads((eng / "context.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return ctx.get("literal_request") if isinstance(ctx, dict) else None
+
+
+def _decision_titles(eng: Path) -> list:
+    try:
+        texto = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        return []
+    fora = []
+    for m in re.finditer(r"(?m)^#{1,4}\s*\**\s*(D-\d+)\b\s*(?:—|-)?\s*(.*)$", texto):
+        fora.append({"id": m.group(1), "title": m.group(2).strip()[:120]})
+    return fora
+
+
+def resume(eng, budget=None) -> dict:
+    """Retoma a frio (plan 04 §Retoma, T09/T16). So le; nada se escreve.
+
+    Ordem: perfil → bootstrap (pendencia fecha tudo) → checkpoint → reconciliacao PROPOSTA
+    (nao escrita) → frescura dos resultados recebidos → contexto com orcamento → proxima
+    accao com a razao por que e segura. Nada depende da conversa anterior: tudo sai do
+    repositorio. O que ficou fora do orcamento e dito; um bloqueio critico nunca sai calado
+    — os ids de TODOS os criticos vem sempre, mesmo quando o texto nao cabe."""
+    eng = Path(eng)
+    B = _bootstrap_mod()
+    budget = int(B["DEFAULT_BUDGET"] if budget is None else budget)
+    out = {"engagement": eng.name, "ok": False, "code": None, "limitations": [],
+           "objective": None, "authorizations": [], "tasks": {}, "active_task": None,
+           "results_pending": [], "reconcile_proposal": [], "blockers": [],
+           "context": {}, "next_action": None, "input_revision": None}
+
+    # 1. perfil
+    perfil = validate_profile(eng) if profile_of(eng)["kind"] != UNBORN else \
+        response(False, INTEGRITY_FAILURE, [_reason("engagement sem `_state.json`")])
+    if not perfil["ok"]:
+        out.update(code=perfil["code"], limitations=perfil["reasons"],
+                   next_action=(perfil["next_actions"] or [{"action": "/status",
+                                                            "reason": "so leitura"}])[0])
+        return out
+
+    # 2. bootstrap, com o checkpoint no read-set: uma escrita nele a meio repete a leitura
+    boot = B["bootstrap"](eng, budget, inputs=(CHECKPOINT,))
+    out["input_revision"] = (boot.get("snapshot") or {}).get("input_revision")
+    out["limitations"] = boot.get("limitations", [])
+    if not boot.get("ready"):
+        codigos = [l.get("code") for l in out["limitations"]]
+        primeiro = next((l for l in out["limitations"] if l.get("blocking", True)), {})
+        if any(c in ("PENDING_OPERATION", "PENDING_UNREADABLE") for c in codigos):
+            out["code"] = RECOVERY_REQUIRED
+        elif any(c in ("AUTHORITY_UNMIRRORED", "AUTHORITY_DRIFT") for c in codigos):
+            out["code"] = INTEGRITY_FAILURE
+        else:
+            out["code"] = RECOVERY_REQUIRED
+        out["next_action"] = {"action": primeiro.get("recovery") or "/status",
+                              "reason": "{} — enquanto durar, retomar decide sobre estado "
+                                        "misto".format(primeiro.get("detail") or
+                                                       primeiro.get("code", ""))}
+        return out
+
+    # 3. checkpoint
+    try:
+        cp = read_checkpoint(eng)
+    except WorkflowError as exc:
+        out.update(code=exc.code, limitations=out["limitations"] + [
+            {"code": exc.code, "blocking": True, "detail": str(exc)}],
+            next_action={"action": "inspeccionar `{}` (nunca reescrever por cima)".format(
+                CHECKPOINT), "reason": str(exc)})
+        return out
+    data = cp["data"]
+
+    lit = _literal_request(eng)
+    out["objective"] = {"ref": (data or {}).get("objective") or "context.json#literal_request",
+                        "text": lit}
+    if lit is None:
+        out["limitations"].append({"code": "OBJECTIVE_UNDECLARED", "blocking": False,
+                                   "detail": "context.json sem literal_request — o objectivo "
+                                             "nao se reconstroi, nao se inventa"})
+    out["authorizations"] = _decision_titles(eng)
+
+    if data is not None:
+        estados: dict = {}
+        for t in data["tasks"]:
+            estados.setdefault(t["state"], []).append(t["id"])
+        out["tasks"] = estados
+        out["active_task"] = data.get("active_task")
+        # 4. reconciliacao proposta — a mesma regra de `tasks_reconcile`, sem escrever
+        for t in data["tasks"]:
+            if t["state"] != "running":
+                continue
+            recebido = [r["id"] for r in data["results"]
+                        if r["task_id"] == t["id"] and r["status"] == "received"]
+            out["reconcile_proposal"].append(
+                {"task": t["id"], "role": t["role"],
+                 "to": "blocked" if recebido else "planned",
+                 "reason": ("resultado {} recebido, por integrar".format(recebido[-1])
+                            if recebido else "a correr sem prova de que corre — retomavel")})
+        # 5. frescura recalculada: o que o checkpoint diz pode ja nao ser verdade
+        por_id = {t["id"]: t for t in data["tasks"]}
+        for r in data["results"]:
+            if r["status"] != "received":
+                continue
+            t = por_id.get(r["task_id"])
+            agora, mudados = _freshness(eng, t) if t else ("unverified", [])
+            out["results_pending"].append({"result": r["id"], "task": r["task_id"],
+                                           "draft": r["ref"], "freshness_recorded":
+                                           r["freshness"], "freshness_now": agora,
+                                           "changed": mudados})
+
+    # 6. contexto com orcamento — criticos primeiro; os ids de todos os criticos sempre
+    # Do contexto do PROPRIO bootstrap (a janela validada): os criticos incluidos com o
+    # texto; os que nao couberam so com o id — nomeados, nunca calados.
+    ctx = boot.get("context") or {}
+    out["blockers"] = ([{"id": e["id"], "text": (e.get("text") or "")[:100]}
+                        for e in ctx.get("included") or []
+                        if e.get("criticality") == "critical"]
+                       + [{"id": i, "text": None, "note": "fora do orcamento"}
+                          for i in ctx.get("omitted_critical") or []])
+    out["context"] = {"complete": ctx.get("complete"), "budget": budget,
+                      "included": len(ctx.get("included") or []),
+                      "omitted": [o["id"] for o in ctx.get("omitted") or []],
+                      "omitted_critical": ctx.get("omitted_critical") or []}
+    if ctx.get("omitted_critical"):
+        out["context"]["expand"] = {
+            "action": "workflow.py resume --engagement {} --budget {}".format(
+                eng.name, budget + len(ctx["omitted_critical"])),
+            "reason": "{} bloqueio(s) critico(s) fora do contexto — estado PARCIAL; os ids "
+                      "estao em `blockers`, o texto nao coube".format(
+                          len(ctx["omitted_critical"]))}
+
+    # 7. proxima accao, e porque e segura
+    if out["reconcile_proposal"]:
+        out["next_action"] = {"action": "workflow.py task reconcile --engagement {}".format(
+            eng.name), "reason": "ha tarefas `running` de uma sessao anterior; reconciliar "
+                                 "antes de relancar — nunca se assume que continuam"}
+    elif out["results_pending"]:
+        r = out["results_pending"][0]
+        out["next_action"] = (
+            {"action": "resolve.py publish --engagement {} --draft {}".format(
+                eng.name, r["draft"].rsplit("/", 1)[-1]),
+             "reason": "resultado {} recebido e actual; integra-lo nao perde nada".format(
+                 r["result"])}
+            if r["freshness_now"] == "current" else
+            {"action": "refazer {} sobre a revisao actual".format(r["task"]),
+             "reason": "o resultado {} esta stale: mudou {}".format(
+                 r["result"], ", ".join(r["changed"]) or "a base")})
+    elif data is not None and data["next_actions"]:
+        out["next_action"] = data["next_actions"][0]
+    else:
+        out["next_action"] = {"action": "/status",
+                              "reason": "sem trabalho em curso no checkpoint; o marco da "
+                                        "fase diz o passo seguinte"}
+    out["ok"] = True
+    return out
+
 # ------------------------------------------------------------------ CLI
 
 def utf8_console() -> None:
@@ -773,6 +940,22 @@ def main(argv=None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if args and args[0] == "task":
         return task_main(args[1:])
+    if args and args[0] == "resume":
+        import argparse
+        ap = argparse.ArgumentParser(description="retoma a frio (so leitura)")
+        ap.add_argument("command", choices=["resume"])
+        ap.add_argument("--engagement", required=True)
+        ap.add_argument("--budget", type=int, default=None)
+        ap.add_argument("--json", action="store_true")
+        a = ap.parse_args(args)
+        eng = Path(a.engagement)
+        if not eng.is_dir():
+            eng = Path("projects") / a.engagement
+        out = resume(eng, a.budget)
+        print(json.dumps(out, ensure_ascii=False, indent=2) if a.json else
+              "\n".join("{:18} {}".format(k, json.dumps(v, ensure_ascii=False)[:200])
+                        for k, v in out.items()))
+        return 0 if out["ok"] else 1
     import argparse
     ap = argparse.ArgumentParser(description="perfil de workflow handoff-v1 (so leitura)")
     ap.add_argument("command", choices=["check"])

@@ -4,7 +4,12 @@ argument-hint: "[slug]"
 ---
 
 Invoke the `aisa-status` skill for the engagement named in the arguments, or the one found
-in the engagements root.
+in the engagements root. Its step 2b runs the cold resume
+(`python library/kernel/tools/workflow.py resume --engagement <slug> --json`, read-only): work
+left half-done in the repository, results received and not integrated, and what did not fit
+the context budget. When that resume says `RECOVERY_REQUIRED`, its recovery is the first and
+only thing to say; when it proposes a reconciliation, the `A seguir:` line names that command
+before any other — a task left `running` is never taken as still running.
 
 **Show four of its seven blocks, in this order** — this command re-enters a session, it does
 not review the engagement. Language: the column *como se diz ao utilizador* of

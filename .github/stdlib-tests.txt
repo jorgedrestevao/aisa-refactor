@@ -73,3 +73,4 @@ library/kernel/tools/tests/test_fields_draft.py
 .claude/tests/test_handoff_publish.py
 .claude/tests/test_handoff_skill_writes.py
 .claude/tests/test_handoff_checkpoint.py
+.claude/tests/test_handoff_resume.py
