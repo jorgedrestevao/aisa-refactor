@@ -1228,6 +1228,9 @@ CITED_IDS = (
     (re.compile(r"\bM-\d+\b"), "enquadramento.md"),
     (re.compile(r"\b[CAUXR]-\d{3,}\b"), SU_FILE),
 )
+# handoff-v1 F5: os candidatos `O-NNN` têm autoridade em `_design/candidates.json`;
+# `options.md` é a sua projecção legível. Declarar qualquer dos dois cobre a citação.
+CITED_EQUIVALENT = {"options.md": ("_design/candidates.json",)}
 
 
 def cited_sources(eng, text: str) -> dict:
@@ -1277,7 +1280,7 @@ def read_set_gaps(eng, m: dict, novos_txt: dict) -> dict:
             velho = set()
         acrescentado = "\n".join(l for l in novo.splitlines() if l not in velho)
         for fonte, porque in cited_sources(eng, acrescentado).items():
-            if fonte not in declarados:
+            if fonte not in declarados and not declarados & set(CITED_EQUIVALENT.get(fonte, ())):
                 faltam.setdefault(fonte, [])
                 faltam[fonte] += [p for p in porque if p not in faltam[fonte]]
     return dict(sorted(faltam.items()))
