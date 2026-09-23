@@ -17,6 +17,9 @@
 >
 > Antes e depois: **ausência de registo de cobertura significa `not_evaluated`** — nunca
 > "completo", nunca "reprovado", e nunca a revogação de uma aprovação já registada (§10).
+>
+> **handoff-v1 F3:** uma quarta etapa, `lens` (§4.8) — a cobertura das seis perspectivas de
+> uma passagem de Discovery, que fecha a passagem em vez de seis execuções de lente.
 
 ## 1. O que a cobertura é, e o que nunca é
 
@@ -46,13 +49,14 @@ taxonomia.
 
 ## 2. As três etapas
 
-`stage` tem exactamente três valores:
+`stage` tem exactamente quatro valores:
 
 | stage | pergunta | quando | `target` |
 |---|---|---|---|
 | `reconciliation` | as fontes → SU / requisitos / decisão | **antes** de desenhar | `null` |
 | `blueprint` | requisitos e obrigações → versão concreta do desenho | depois de desenhar, antes de aprovar | a versão do desenho |
 | `render` | autoridades que o template permite → deliverable concreto | depois de renderizar | o ficheiro renderizado |
+| `lens` | as seis perspectivas → onde está a prova de cada uma (§4.8) | no fecho de cada passagem de Discovery | `null` (a passagem em `lens_coverage.round`) |
 
 Cada etapa produz um **registo novo** no mesmo contador `coverage_vNN`. Uma revisão anterior
 nunca é editada. `based_on` liga às revisões anteriores relevantes.
@@ -83,15 +87,16 @@ resultado da verificação.
 | `schema_version` | int | sim | `1`. Outro valor → `unsupported`, nunca interpretado por aproximação |
 | `version` | `"vNN"` | sim | corresponde ao nome do ficheiro |
 | `engagement` | string | sim | corresponde ao `_state.json.engagement` |
-| `stage` | enum | sim | `reconciliation` · `blueprint` · `render` |
+| `stage` | enum | sim | `reconciliation` · `blueprint` · `render` · `lens` |
 | `generated_at` | ISO-8601 | sim | quando o rascunho foi produzido |
 | `based_on` | lista de `"coverage_vNN.json"` | sim (pode ser vazia) | §4.6 |
-| `target` | mapa ou `null` | sim | `null` em `reconciliation`; obrigatório nas outras |
+| `target` | mapa ou `null` | sim | `null` em `reconciliation` e `lens`; obrigatório nas outras |
 | `deliverable` | mapa | só em `render` | §4.5 |
 | `basis` | mapa | sim | §4.2 |
 | `source_review` | lista | sim | §4.3 |
 | `coverage` | lista | sim | §4.4 |
-| `semantic_review` | mapa | sim | §4.7 |
+| `semantic_review` | mapa | sim | §4.7 (em `lens`, por perspectiva: §4.8) |
+| `lens_coverage` | mapa | só em `lens` | §4.8 |
 
 Campo desconhecido na raiz → diagnóstico (`COV-SCHEMA`, severidade `warn`), não é lido.
 Campo obrigatório ausente, tipo errado, `version` que não bate com o nome do ficheiro, ou
@@ -449,6 +454,43 @@ ainda não tem os achados todos, e exigir-lhos seria acusar duas vezes a mesma p
 
 `semantic_review.completed` **não é aprovação humana nem prova de verdade**. É a declaração de
 que as duas passagens da §9 foram feitas.
+
+### 4.8 `lens_coverage` — só na etapa `lens` (handoff-v1 F3)
+
+A cobertura das seis perspectivas de uma passagem de Discovery (`business` · `operations` ·
+`user` · `data` · `governance` · `financial`; perguntas centrais nas
+*checklists* das lentes). Uma análise pode cobrir as seis; não se exigem seis
+ficheiros nem seis execuções (T18). `source_review` e `coverage` são listas vazias nesta etapa,
+e `target` é `null`: vale o registo `lens` mais recente.
+
+| campo | tipo | regra |
+|---|---|---|
+| `round` | `R-NN` | a passagem que este registo cobre |
+| `author` | `{kind, name}` | quem fez a análise; o revisor da §4.7 tem de ser outro |
+| `dimensions.<p>.status` | enum | `assessed` (examinada — não resolvida nem aprovada) · `gap` · `not_applicable` |
+| `dimensions.<p>.refs` | lista | ids da SU que existem, ou localizadores das classes do limiar de `Confirmed` (`answers.md#…`, `enquadramento.md#M-n`, `_capture/…`, `inputs/…`) cujo alvo existe |
+| `dimensions.<p>.justification` | string | nunca vazia; `not_applicable` sem motivo é inválido (T07) |
+| `conflict_scan` | `{refs, note}` | obrigatório: as linhas `X-` que o varrimento de conflitos entre fontes produziu; sem nenhuma, a nota diz que se varreu |
+
+Regras de forma (tornam o registo inválido): as seis presentes; `assessed` com pelo menos uma
+referência que prova — **um título, uma secção de `lens-outputs` ou um ficheiro de fase não
+provam cobertura** (T19); `gap` encaminhado para uma pergunta aberta e não estacionada (`U-`,
+`X-`, `R-`). Uma referência que não prova, ao lado de outras que provam, é `COV-DEAD-REF`
+(impeditivo, não inválido).
+
+A revisão semântica da etapa (`semantic_review`, §4.7 sem `passes` nem `findings`) leva
+`dimensions.<p>.verdict ∈ {treated, not_treated, not_applicable_ok}` e uma nota, para as seis:
+a prova apontada **trata** mesmo o risco da perspectiva? `not_treated` é um achado — lacuna à
+vista, e a passagem não fica «revista». `not_applicable_ok` só sobre uma perspectiva declarada
+`not_applicable`. O revisor tem contexto próprio e não é o autor (`performed_by.name` ≠
+`author.name`).
+
+A passagem **fecha** quando o registo `lens` mais recente é dela, válido e actual
+(`coverage.py round-state --round R-NN`). **Revista** quando, além disso, a leitura
+independente está concluída sem perspectiva não tratada (`eligible`). Sem revisão fecha na
+mesma, dita «cobertura por rever» — gate suave. `coverage.py lens-draft --round R-NN` dá o
+esqueleto com a base actual, herdando as perspectivas do registo anterior (é assim que
+`/round <perspectiva>` refaz uma e mantém cinco); a revisão semântica nunca se herda.
 
 ## 5. Locators resolvíveis
 

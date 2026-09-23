@@ -20,6 +20,7 @@
 .claude/tests/test_coverage_freshness.py
 .claude/tests/test_coverage_graph.py
 .claude/tests/test_coverage_integration.py
+.claude/tests/test_coverage_lens.py
 .claude/tests/test_coverage_inventory.py
 .claude/tests/test_coverage_phase4.py
 .claude/tests/test_coverage_phase5.py
