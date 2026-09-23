@@ -80,11 +80,44 @@ AUTHORITIES = ("_state.json", "shared-understanding.md", "answers.md", "decision
 
 DEFAULT_BUDGET = 40
 
+# O que nunca entra num read-set: a barreira, a migração e os rascunhos. Um recibo lido
+# como input de uma operação que produz recibos digere-se a si próprio (plan 04,
+# §Protocolo de publicação); um rascunho não é verdade de ninguém.
+NOT_INPUTS = ("_ops/", "_migration/", "_drafts/")
+
+
+def expand_inputs(eng: Path, inputs=()) -> list:
+    """Caminhos relativos declarados pela tarefa, globs expandidos, ordenados.
+
+    Um caminho sem glob entra mesmo que não exista — ausência é um estado, e o digest
+    `""` fica no snapshot para que o aparecer do ficheiro mude a revisão. Um glob sem
+    correspondência não entra nada. As autoridades não se repetem aqui."""
+    eng = Path(eng)
+    fora = set()
+    for pad in inputs or ():
+        pad = str(pad).replace("\\", "/")
+        if pad.startswith("./"):
+            pad = pad[2:]
+        if any(ch in pad for ch in "*?["):
+            achados = [p.relative_to(eng).as_posix() for p in eng.glob(pad) if p.is_file()]
+        else:
+            achados = [pad]
+        for rel in achados:
+            if rel in AUTHORITIES or any(rel.startswith(n) for n in NOT_INPUTS):
+                continue
+            fora.add(rel)
+    return sorted(fora)
+
 
 # ------------------------------------------------------------------- snapshot
 
-def snapshot(eng: Path) -> dict:
+def snapshot(eng: Path, inputs=()) -> dict:
     """Digests das autoridades, revisão do conjunto, E as linhas da SU dessa leitura.
+
+    `inputs` (F2): o read-set adicional que a tarefa declarou — blueprint, frame, pack,
+    `_capture/…`. Entram com o digest dos bytes em `inputs`, e `input_revision` cobre as
+    autoridades E eles: é a «revisão consumida» que uma publicação cita. `revision`
+    continua a cobrir só as autoridades, com o valor de sempre.
 
     As linhas vêm aqui de propósito. A validação da revisão (`consistent_read`) cobria
     pendência, snapshot e grafo — e depois a comparação autoridade/espelho reabria a SU por
@@ -110,8 +143,12 @@ def snapshot(eng: Path) -> dict:
             except Exception:                                   # noqa: BLE001
                 linhas = []
     body = json.dumps(digests, sort_keys=True, ensure_ascii=False)
-    return {"authorities": digests, "rows": linhas,
-            "revision": hashlib.sha256(body.encode("utf-8")).hexdigest()}
+    extra = {rel: _O["digest"](eng / rel) for rel in expand_inputs(eng, inputs)}
+    corpo = json.dumps({"authorities": digests, "inputs": extra}, sort_keys=True,
+                       ensure_ascii=False)
+    return {"authorities": digests, "rows": linhas, "inputs": extra,
+            "revision": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+            "input_revision": hashlib.sha256(corpo.encode("utf-8")).hexdigest()}
 
 
 def authority_check(rows, nodes: list) -> tuple:
@@ -217,7 +254,7 @@ def items_from_graph(nodes: list[dict]) -> list[dict]:
 READ_TRIES = 3
 
 
-def _state_marker(eng: Path) -> tuple:
+def _state_marker(eng: Path, inputs=()) -> tuple:
     """O que tem de estar igual no fim da leitura e no princípio.
 
     Pendência sozinha não chega, e é essa a armadilha: uma escrita que COMEÇA e ACABA
@@ -225,12 +262,20 @@ def _state_marker(eng: Path) -> tuple:
     a apanha é o snapshot das autoridades — que muda — e a revisão do grafo.
     """
     op = _O["status"](eng)
-    snap = snapshot(eng)
+    snap = snapshot(eng, inputs)
     st = _G["read"](eng)
     return op, snap, st
 
 
-def consistent_read(eng: Path, tries: int = READ_TRIES):
+def same_revision(a: tuple, b: tuple) -> bool:
+    """Dois marcadores de estado dizem a mesma revisão: pendência, autoridades + inputs
+    declarados, e grafo."""
+    return (a[0]["state"] == b[0]["state"]
+            and a[1].get("input_revision") == b[1].get("input_revision")
+            and a[2].get("revision", "") == b[2].get("revision", ""))
+
+
+def consistent_read(eng: Path, tries: int = READ_TRIES, inputs=()):
     """`(op, snapshot, grafo, tentativas)` de UMA revisão — ou o que impediu.
 
     O bootstrap verificava a pendência e só depois lia o conteúdo, sem exclusão. Entre as
@@ -245,13 +290,11 @@ def consistent_read(eng: Path, tries: int = READ_TRIES):
     """
     ultimo = None
     for tentativa in range(1, tries + 1):
-        antes = _state_marker(eng)
+        antes = _state_marker(eng, inputs)
         op, snap, st = antes
-        depois = _state_marker(eng)
+        depois = _state_marker(eng, inputs)
         ultimo = (op, snap, st)
-        if (antes[0]["state"] == depois[0]["state"]
-                and antes[1].get("revision") == depois[1].get("revision")
-                and antes[2].get("revision", "") == depois[2].get("revision", "")):
+        if same_revision(antes, depois):
             return ultimo[0], ultimo[1], ultimo[2], tentativa, None
         # Uma escrita aconteceu durante a leitura. O que se leu vale para nada; repete-se.
     return ultimo[0], ultimo[1], ultimo[2], tries, {
@@ -264,8 +307,11 @@ def consistent_read(eng: Path, tries: int = READ_TRIES):
 
 # ------------------------------------------------------------------- bootstrap
 
-def bootstrap(eng: Path, budget: int = DEFAULT_BUDGET) -> dict:
-    """A leitura completa, pela ordem do contrato. NÃO escreve nada."""
+def bootstrap(eng: Path, budget: int = DEFAULT_BUDGET, inputs=()) -> dict:
+    """A leitura completa, pela ordem do contrato. NÃO escreve nada.
+
+    `inputs`: read-set adicional declarado (F2). Entra na janela de `consistent_read` —
+    uma escrita num input durante a leitura repete a leitura, como numa autoridade."""
     eng = Path(eng)
     limitations: list[dict] = []
 
@@ -282,7 +328,7 @@ def bootstrap(eng: Path, budget: int = DEFAULT_BUDGET) -> dict:
     identity = {"path": str(eng), "resolved": resolved, "slug": eng.name}
 
     # 2-4. pendência, snapshot e grafo, TODOS da mesma revisão (F02)
-    op, snap, st, tentativas, instavel = consistent_read(eng)
+    op, snap, st, tentativas, instavel = consistent_read(eng, inputs=inputs)
     if instavel:
         limitations.append(instavel)
         return {"ready": False, "engagement": identity, "operation": op,

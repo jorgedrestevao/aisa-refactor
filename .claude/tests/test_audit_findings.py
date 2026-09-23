@@ -130,7 +130,7 @@ class F02_LeitorContraEscritaEmCurso(unittest.TestCase):
         # escritor a bater na sua própria pendência, que é outro cenário.
         injectado = []
 
-        def snapshot_com_escritor(e):
+        def snapshot_com_escritor(e, inputs=()):
             if not injectado:
                 injectado.append(True)
                 og["_publish"] = publica_e_morre
@@ -142,7 +142,7 @@ class F02_LeitorContraEscritaEmCurso(unittest.TestCase):
                     pass
                 finally:
                     og["_publish"] = pub_real
-            return snap_real(e)
+            return snap_real(e, inputs)
 
         bg["snapshot"] = snapshot_com_escritor
         try:

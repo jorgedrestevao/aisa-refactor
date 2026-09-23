@@ -23,6 +23,15 @@ O QUE ACRESCENTA, E SO ISTO
 O QUE NAO FAZ
     Nao inventa percentagens. Nao duplica `/resolve` nem `/advance` por existirem no doador.
     Nao decide nada: projecta.
+
+UMA REVISAO SO (handoff-v1 F2, D17)
+    O modelo do dashboard le muito mais do que as seis autoridades — frame, opcoes,
+    sinteses, desenho, conferencias — e lia-o DEPOIS do bootstrap, fora da janela que o
+    bootstrap validou. Uma escrita entre as duas leituras dava um estado composto de duas
+    revisoes, apresentado como um. Agora esses ficheiros sao inputs declarados do bootstrap
+    (`MODEL_INPUTS`), e depois de construir o modelo o marcador de estado e relido: igual
+    ao do bootstrap, o modelo vale; diferente, repete-se; a mexer sempre, bloqueia com
+    `CONCURRENT_WRITE` e nao projecta nada.
 """
 from __future__ import annotations
 
@@ -35,10 +44,17 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 _D = runpy.run_path(str(_HERE / "dashboard.py"))
 _G = runpy.run_path(str(_HERE / "graph.py"))
-_O = runpy.run_path(str(_HERE / "operation.py"))
 _B = runpy.run_path(str(_HERE / "bootstrap.py"))
 
 DASHBOARD = "dashboard.html"
+
+# O que `build_model` le para la das autoridades: os ficheiros do indice e as pastas de
+# cada fase. Declarados como read-set do bootstrap, para caberem na mesma janela.
+MODEL_INPUTS = tuple(_D["INDEX_FILES"]) + (
+    "lens-outputs/*.md", "_synthesis/*.md", "_blueprint/*.yaml", "_blueprint/*.md",
+    "_simulation/**/*.md", "_render/**/*.md", "_coverage/*.json", "_capture/*",
+    "_retro/*.md", "_work/checkpoint.json")
+READ_TRIES = 3
 
 
 def _blocker(what, why, evidence, action, kind):
@@ -104,7 +120,27 @@ def drift_blocker(blocking_drift: list) -> dict:
 def operational_state(eng, today=None):
     """Fase, bloqueios, incerteza visivel e proxima accao — de autoridades verificadas."""
     eng = Path(eng)
-    boot = _B["bootstrap"](eng)
+    boot = _B["bootstrap"](eng, inputs=MODEL_INPUTS)
+    model = st_janela = None
+    for _ in range(READ_TRIES):
+        if not boot["ready"]:
+            break
+        model = _D["build_model"](eng, today or date.today())
+        depois = _B["_state_marker"](eng, MODEL_INPUTS)
+        antes = (boot["operation"], boot["snapshot"],
+                 {"revision": boot["graph"].get("revision", "")})
+        if _B["same_revision"](antes, depois):
+            st_janela = depois[2]
+            break
+        # Uma escrita aconteceu entre o bootstrap e o modelo: o que se leu vale para nada.
+        model = None
+        boot = _B["bootstrap"](eng, inputs=MODEL_INPUTS)
+    if boot["ready"] and model is None:
+        boot = dict(boot, ready=False, limitations=list(boot["limitations"]) + [{
+            "code": "CONCURRENT_WRITE", "blocking": True,
+            "detail": "o estado mudou entre o bootstrap e o modelo, {} vez(es) "
+                      "seguidas".format(READ_TRIES),
+            "recovery": "repetir quando o escritor terminar"}])
     out = {"engagement": boot.get("engagement", {}),
            "ready": boot.get("ready", False),
            "blockers": [], "visible_uncertainty": [], "gate": {},
@@ -134,7 +170,6 @@ def operational_state(eng, today=None):
         out["drift"] = boot.get("drift", [])
         return out
 
-    model = _D["build_model"](eng, today or date.today())
     # As chaves sao as de `build_model`, verificadas contra a saida real: a fase vive em
     # `engagement`, as linhas em `su.rows`, e o gate e o marco em `status`. Assumir nomes
     # aqui daria uma projeccao que le o vazio sem se queixar.
@@ -173,7 +208,7 @@ def operational_state(eng, today=None):
     # vazio, TODOS os nos espelhados saiam como `MIRROR_SOURCE_MISSING` — 225 nos dois
     # pilotos — e a linha seguinte filtrava-os fora. Um falso positivo sobre a populacao
     # inteira, calculado e deitado ao lixo.
-    drift = _G["drift"](_G["read"](eng).get("nodes", []), authority_from_rows(rows))
+    drift = _G["drift"](st_janela.get("nodes", []), authority_from_rows(rows))
     blocking_drift = [d for d in drift
                       if d["code"] in ("MIRROR_DRIFT", "MIRROR_SOURCE_MISSING")]
     out["drift"] = drift

@@ -3775,6 +3775,16 @@
      "evidence": "handoff-contract.md:9,73,75,88",
      "confidence": "verified",
      "source": "F1.6"
+    },
+    {
+     "file": "library/kernel/tools/projection.py",
+     "kind": "tool",
+     "role": "reads",
+     "mechanism": "MODEL_INPUTS declares `_coverage/*.json` (with the other files build_model reads) as bootstrap inputs, so the projection model is read inside the validated window (D17). Digests only; never parses or writes coverage records.",
+     "via": "bootstrap.snapshot(inputs)",
+     "evidence": "projection.py MODEL_INPUTS",
+     "confidence": "verified",
+     "source": "F2.1"
     }
    ],
    "mention_only": [

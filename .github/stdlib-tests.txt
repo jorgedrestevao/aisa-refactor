@@ -69,3 +69,4 @@
 .claude/tests/test_user_language.py
 .claude/tests/test_windows_console.py
 library/kernel/tools/tests/test_fields_draft.py
+.claude/tests/test_handoff_continuity.py
