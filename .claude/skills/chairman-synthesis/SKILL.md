@@ -42,6 +42,16 @@ Read every step below with "persona" meaning either of the two, and apply the sa
 - **Step 2b does not run in Framing**: there is no antithesis round (Q5).
 - In `frame.md` → *Anchors*, the *Source persona(s)* column reads `analista`, `revisor` or both.
 
+## Options inputs in a handoff-v1 engagement (F5.3)
+
+When `_state.json` has the `workflow` block, Options runs no persona council. You read **published reviews**, never votes: `python3 library/kernel/tools/review.py show-reviews --engagement <engagement> --json` lists, over the current candidate revision (`_design/candidates.json`), each mandate (`mandated` · `current` · `stale`), its findings (target, severity, kind, last disposition) and the open divergences.
+
+- **A review is pinned to the revision it read.** A `stale` review closes nothing of the current revision; its findings marked `revalidate` need a new mandate, the others are not affected and are not copied into the new revision.
+- **Every finding of a current review gets a disposition** through `review.py dispose` — `accepted` (what was corrected), `rejected` (with evidence), `delegated` (envelope and owner), `escalated` (to whom), `deferred` (with the impact). The ledger is append-only and the review is immutable: a minority opinion is never deleted.
+- **Agreement is not evidence.** Two reviewers agreeing never raises a state; a `fact` finding changes the SU only by the rules of *Framing inputs* above (locator → correction by evidence; none → `Conflicted`), published by the coordinator.
+- **Material divergence** → `review.py diverge` opens it and `review.py dialectic-call` records each antithesis call; the engine keeps the cap (3 divergences × 2 calls per revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a `fact` divergence is never synthesised without a locator. Escalated divergences go to the owner through `AskUserQuestion`.
+- `options.md` projects the published candidates and the dispositions; the recommendation is aisa's, never the decision.
+
 ## Council launch preamble (canonical)
 
 `aisa-options` step 5 builds **every** persona Task prompt from this one block (`aisa-frame` no longer launches personas; its analyst writes the return schema at the foot of this block),

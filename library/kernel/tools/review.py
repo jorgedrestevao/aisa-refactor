@@ -505,6 +505,294 @@ def read_mandate(eng, rid: str) -> dict:
     return _load(Path(eng) / REVIEWS_DIR / "{}.mandate.json".format(rid), rid + ".mandate")
 
 
+# ------------------------------------------------------------------ pareceres (F5.3)
+
+REVIEW_SCHEMA = "handoff-review/1"
+LEDGER_PATH = REVIEWS_DIR + "/ledger.json"
+LEDGER_SCHEMA = "aisa-review-ledger/1"
+DISPOSITIONS = ("accepted", "rejected", "delegated", "escalated", "deferred")
+CLOSING = ("accepted", "rejected", "delegated")
+MAX_DIVERGENCES, MAX_CALLS = 3, 2
+O_ID_RE = re.compile(r"\bO-\d{3,}\b")
+
+
+def _review_rel(rid: str) -> str:
+    return "{}/{}.json".format(REVIEWS_DIR, rid)
+
+
+def read_review(eng, rid: str) -> dict:
+    p = Path(eng) / _review_rel(rid)
+    return _load(p, rid) if p.is_file() else {}
+
+
+def _source_digest(eng: Path, ref: str) -> str:
+    base = PACKS_DIR.parent.parent if ref.startswith("library/") else eng
+    return _digest(base / ref)
+
+
+def review_integrity(eng, mand: dict, rev: dict) -> list:
+    """O que recusa um parecer (T29 e o contrato de saída)."""
+    W = _W()
+    out = [_problem("SCHEMA", "", str(e))
+           for e in W["validate"](rev, W["load_schema"]("handoff-review"))[0]]
+    if out:
+        return out
+    if rev["task_id"] != mand["task_id"] or rev["role"] != mand["role"]:
+        out.append(_problem("TASK", rev["task_id"], "o parecer não é deste mandato"))
+    if rev["input_revision"] != mand["candidate_revision"]:
+        out.append(_problem("INPUT_REVISION", rev["task_id"], "leu a revisão {} — o mandato é "
+                            "da {}".format(rev["input_revision"], mand["candidate_revision"])))
+    feitas = {c["question"] for c in rev["coverage"]} | {u["question"] for u in rev["unanswered"]}
+    for q in mand["questions"]:
+        if q not in feitas:
+            out.append(_problem("UNCOVERED_QUESTION", rev["task_id"], "pergunta do mandato sem "
+                                "cobertura nem motivo: {}".format(q)))
+    permitidas = {r["ref"]: r["sha256"] for r in mand["input_refs"] + mand["knowledge_refs"]}
+    for s in rev["sources_used"]:
+        if s["ref"] not in permitidas:
+            out.append(_problem("SOURCE_NOT_IN_MANDATE", s["ref"], "fonte fora do mandato"))
+        elif s["sha256"] != permitidas[s["ref"]]:
+            out.append(_problem("SOURCE_DIGEST", s["ref"], "sha256 diferente do mandato"))
+    ids = [f["id"] for f in rev["findings"]]
+    for f in rev["findings"]:
+        if not f["id"].startswith(rev["task_id"] + ".") or ids.count(f["id"]) > 1:
+            out.append(_problem("FINDING_ID", f["id"], "id do achado fora do parecer ou repetido"))
+    return out
+
+
+def receive(eng, rid: str, payload: dict) -> dict:
+    """Valida e publica o parecer de um mandato pelo coordenador. Uma fonte usada que mudou
+    depois do mandato é `STALE_INPUT`: o parecer refaz-se, não se publica sobre outra base."""
+    eng = Path(eng)
+    W, O = _W(), _O()
+    _workflow(eng)
+    mand = read_mandate(eng, rid)
+    mrel = "{}/{}.mandate.json".format(REVIEWS_DIR, rid)
+    rev = dict(json.loads(json.dumps(payload)), schema_version=REVIEW_SCHEMA,
+               task_id=payload.get("task_id", rid),
+               candidate_revision=mand["candidate_revision"],
+               mandate_sha256=_digest(eng / mrel))
+    for i, f in enumerate(rev.get("findings") or [], 1):
+        if isinstance(f, dict) and not f.get("id"):
+            f["id"] = "{}.F{:02d}".format(rid, i)
+    rev.pop("received_at", None)
+    texto = json.dumps(rev, ensure_ascii=False, indent=1) + "\n"
+    rel = _review_rel(rid)
+    if (eng / rel).is_file():
+        prior = dict(read_review(eng, rid))
+        prior.pop("received_at", None)
+        if json.dumps(prior, ensure_ascii=False, indent=1) + "\n" == texto:
+            return {"task_id": rid, "review": rel, "replayed": True}
+        raise ReviewError("{} já tem parecer publicado — um parecer nunca se reescreve"
+                          .format(rid), W["INTEGRITY_FAILURE"], {"task_id": rid})
+    probs = review_integrity(eng, mand, rev)
+    if probs:
+        raise ReviewError("o parecer viola o contrato de saída: " + "; ".join(
+            "{} {}".format(p["candidate"], p["detail"]).strip() for p in probs),
+            W["INTEGRITY_FAILURE"], {"task_id": rid, "problems": probs})
+    mudou = sorted(s["ref"] for s in rev["sources_used"]
+                   if _source_digest(eng, s["ref"]) != s["sha256"])
+    if mudou:
+        raise ReviewError("fontes mudaram depois do mandato: {}".format(", ".join(mudou)),
+                          W["STALE_INPUT"], {"task_id": rid, "paths": mudou})
+    rev["received_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    texto = json.dumps(rev, ensure_ascii=False, indent=1) + "\n"
+    rs = {s["ref"]: s["sha256"] for s in rev["sources_used"]
+          if not s["ref"].startswith("library/")}
+    rs[mrel] = rev["mandate_sha256"]
+    recibo = O["run"](eng, "review-{}".format(hashlib.sha256(texto.encode("utf-8"))
+                                              .hexdigest()[:16]),
+                      {rel: texto}, expected={rel: ""}, read_set=rs)
+    return {"task_id": rid, "review": rel, "receipt": recibo,
+            "findings": [f["id"] for f in rev["findings"]]}
+
+
+def _changed_candidates(eng: Path, since: int) -> set:
+    """Ids cujo candidato mudou (ou saiu) entre a revisão `since` e a corrente."""
+    old = eng / "{}/candidates.r{:04d}.json".format(HISTORY_DIR, since)
+    antes = {c["id"]: c for c in (_load(old, old.name).get("items") or [])} if old.is_file() else {}
+    agora = {c["id"]: c for c in read_candidates(eng)["data"].get("items") or []}
+    return {i for i, c in antes.items() if agora.get(i) != c} | (set(agora) - set(antes))
+
+
+def read_ledger(eng) -> dict:
+    eng = Path(eng)
+    p = eng / LEDGER_PATH
+    dg = _digest(p)
+    if not dg:
+        return {"data": {"schema_version": LEDGER_SCHEMA, "revision": 0, "dispositions": [],
+                         "divergences": []}, "digest": ""}
+    return {"data": _load(p, LEDGER_PATH), "digest": dg}
+
+
+def _publish_ledger(eng: Path, cur: dict, data: dict, read_set: dict, tag: str) -> dict:
+    data = dict(data, revision=int(cur["data"]["revision"]) + 1)
+    texto = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
+    hist = "{}/review-ledger.r{:04d}.json".format(HISTORY_DIR, data["revision"])
+    op = "{}-{}".format(tag, hashlib.sha256((cur["digest"] + texto).encode("utf-8"))
+                        .hexdigest()[:16])
+    recibo = _O()["run"](eng, op, {LEDGER_PATH: texto, hist: texto},
+                         expected={LEDGER_PATH: cur["digest"], hist: ""}, read_set=read_set)
+    return {"operation_id": op, "revision": data["revision"], "receipt": recibo, "data": data}
+
+
+def _reviews(eng: Path) -> list:
+    out = []
+    for p in sorted((eng / REVIEWS_DIR).glob("REV-*.mandate.json")):
+        rid = REV_RE.match(p.name).group(1)
+        out.append((rid, _load(p, p.name), read_review(eng, rid)))
+    return out
+
+
+def _finding(eng: Path, fid: str) -> tuple:
+    rid = fid.split(".")[0]
+    rev = read_review(eng, rid)
+    f = next((x for x in rev.get("findings") or [] if x["id"] == fid), None)
+    if not f:
+        raise ReviewError("achado inexistente: {}".format(fid), _W()["INTEGRITY_FAILURE"],
+                          {"finding": fid})
+    return rid, rev, f
+
+
+def dispose(eng, finding_id: str, disposition: str, rationale: str, evidence: str = "",
+            envelope: str = "", owner: str = "", impact: str = "", to: str = "") -> dict:
+    """Regista a disposição de um achado (plano 03 passo 4). Append-only: a disposição
+    anterior e o parecer ficam; um achado de um parecer `stale` não se fecha (T26)."""
+    eng = Path(eng)
+    W = _W()
+    _workflow(eng)
+    rid, rev, f = _finding(eng, finding_id)
+    cur_rev = int(read_candidates(eng)["data"].get("revision") or 0)
+    if rev["candidate_revision"] != cur_rev:
+        raise ReviewError("{} leu a revisão {} dos candidatos; a corrente é a {} — revalidar, "
+                          "não dispor".format(rid, rev["candidate_revision"], cur_rev),
+                          W["STALE_INPUT"], {"finding": finding_id})
+    falta = {"accepted": [], "rejected": [("evidence", evidence)],
+             "delegated": [("envelope", envelope), ("owner", owner)],
+             "escalated": [("to", to)], "deferred": [("impact", impact)]}
+    if disposition not in falta:
+        raise ReviewError("disposição `{}` fora de {}".format(disposition, DISPOSITIONS),
+                          W["INTEGRITY_FAILURE"], {"finding": finding_id})
+    em_falta = [k for k, v in [("rationale", rationale)] + falta[disposition]
+                if not str(v).strip()]
+    if em_falta:
+        raise ReviewError("disposição `{}` sem {}".format(disposition, ", ".join(em_falta)),
+                          W["INTEGRITY_FAILURE"], {"finding": finding_id, "missing": em_falta})
+    cur = read_ledger(eng)
+    d = cur["data"]
+    ent = {"seq": len(d["dispositions"]) + 1, "finding": finding_id,
+           "disposition": disposition, "rationale": rationale, "candidate_revision": cur_rev,
+           "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    ent.update({k: v for k, v in (("evidence", evidence), ("envelope", envelope),
+                                  ("owner", owner), ("impact", impact), ("to", to)) if v})
+    novo = dict(d, dispositions=d["dispositions"] + [ent])
+    return _publish_ledger(eng, cur, novo, {_review_rel(rid): _digest(eng / _review_rel(rid)),
+                                            CAND_PATH: _digest(eng / CAND_PATH)}, "dispose")
+
+
+def diverge(eng, finding_ids, subject: str) -> dict:
+    """Abre uma divergência material (dialéctica limitada). A quarta na mesma revisão já nasce
+    `escalated`: o limite escala, nunca aceita (T30)."""
+    eng = Path(eng)
+    W = _W()
+    _workflow(eng)
+    if len(finding_ids) < 1 or not str(subject).strip():
+        raise ReviewError("divergência sem achados ou sem assunto", W["INTEGRITY_FAILURE"], {})
+    cur_rev = int(read_candidates(eng)["data"].get("revision") or 0)
+    kinds, rs = set(), {}
+    for fid in finding_ids:
+        rid, rev, f = _finding(eng, fid)
+        if rev["candidate_revision"] != cur_rev:
+            raise ReviewError("{} é de um parecer stale".format(fid), W["STALE_INPUT"],
+                              {"finding": fid})
+        kinds.add(f["kind"])
+        rs[_review_rel(rid)] = _digest(eng / _review_rel(rid))
+    cur = read_ledger(eng)
+    d = cur["data"]
+    desta = [x for x in d["divergences"] if x["candidate_revision"] == cur_rev]
+    div = {"id": "DIV-{:02d}".format(len(d["divergences"]) + 1), "findings": list(finding_ids),
+           "subject": subject, "kind": "fact" if "fact" in kinds else "recommendation",
+           "candidate_revision": cur_rev, "calls": 0, "status": "open", "history": []}
+    if len(desta) >= MAX_DIVERGENCES:
+        div.update(status="escalated", reason="limite de {} divergências por revisão".format(
+            MAX_DIVERGENCES))
+    novo = dict(d, divergences=d["divergences"] + [div])
+    rs[CAND_PATH] = _digest(eng / CAND_PATH)
+    return _publish_ledger(eng, cur, novo, rs, "diverge")
+
+
+def dialectic_call(eng, div_id: str, outcome: str, synthesis: str = "",
+                   locator: str = "") -> dict:
+    """Regista uma chamada da ronda dialéctica. `synthesis_accepted` fecha como `synthesized`
+    (um facto só com localizador); a segunda chamada sem síntese aceite → `escalated` (T30)."""
+    eng = Path(eng)
+    W = _W()
+    _workflow(eng)
+    cur = read_ledger(eng)
+    d = cur["data"]
+    div = next((x for x in d["divergences"] if x["id"] == div_id), None)
+    if not div or div["status"] != "open":
+        raise ReviewError("divergência {} não está aberta".format(div_id),
+                          W["INTEGRITY_FAILURE"], {"divergence": div_id})
+    if outcome not in ("synthesis_accepted", "contested"):
+        raise ReviewError("resultado `{}` fora de synthesis_accepted|contested".format(outcome),
+                          W["INTEGRITY_FAILURE"], {"divergence": div_id})
+    if outcome == "synthesis_accepted" and not str(synthesis).strip():
+        raise ReviewError("síntese aceite sem texto", W["INTEGRITY_FAILURE"],
+                          {"divergence": div_id})
+    if outcome == "synthesis_accepted" and div["kind"] == "fact" and not str(locator).strip():
+        raise ReviewError("uma divergência de facto não se resolve por síntese sem "
+                          "localizador — fica Conflicted ou escala", W["INTEGRITY_FAILURE"],
+                          {"divergence": div_id, "code": "NO_LOCATOR"})
+    nova = dict(div, calls=div["calls"] + 1,
+                history=div["history"] + [{"call": div["calls"] + 1, "outcome": outcome}])
+    if outcome == "synthesis_accepted":
+        nova.update(status="synthesized", synthesis=synthesis)
+        if locator:
+            nova["locator"] = locator
+    elif nova["calls"] >= MAX_CALLS:
+        nova.update(status="escalated", reason="{} chamadas sem síntese aceite".format(
+            MAX_CALLS))
+    novo = dict(d, divergences=[nova if x["id"] == div_id else x for x in d["divergences"]])
+    return _publish_ledger(eng, cur, novo, {CAND_PATH: _digest(eng / CAND_PATH)}, "dialectic")
+
+
+def show_reviews(eng) -> dict:
+    """Estado da revisão sobre a revisão corrente dos candidatos: pareceres `mandated` ·
+    `current` · `stale`, achados com a última disposição, o que revalidar, divergências."""
+    eng = Path(eng)
+    cur_rev = int(read_candidates(eng)["data"].get("revision") or 0)
+    led = read_ledger(eng)["data"]
+    ultima = {}
+    for x in led["dispositions"]:
+        ultima[x["finding"]] = x
+    out, abertos = [], []
+    for rid, mand, rev in _reviews(eng):
+        if not rev:
+            out.append({"task_id": rid, "role": mand["role"], "state": "mandated",
+                        "candidate_revision": mand["candidate_revision"]})
+            continue
+        state = "current" if rev["candidate_revision"] == cur_rev else "stale"
+        fs = []
+        mudou = _changed_candidates(eng, rev["candidate_revision"]) if state == "stale" else set()
+        for f in rev["findings"]:
+            disp = ultima.get(f["id"], {}).get("disposition", "")
+            item = {"id": f["id"], "severity": f["severity"], "kind": f["kind"],
+                    "target": f["target"], "disposition": disp or "open"}
+            if state == "stale":
+                alvo = set(O_ID_RE.findall(f["target"]))
+                item["revalidate"] = not alvo or bool(alvo & mudou)
+            elif disp not in CLOSING:
+                abertos.append(f["id"])
+            fs.append(item)
+        out.append({"task_id": rid, "role": rev["role"], "state": state,
+                    "candidate_revision": rev["candidate_revision"], "findings": fs,
+                    "unanswered": [u["question"] for u in rev["unanswered"]]})
+    return {"candidate_revision": cur_rev, "reviews": out, "open_findings": abertos,
+            "divergences": [{k: v for k, v in x.items() if k != "history"}
+                            for x in led["divergences"]]}
+
+
 # ------------------------------------------------------------------ CLI
 
 def main(argv=None) -> int:
@@ -516,7 +804,23 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="candidatos e revisão independente (coordenador)")
     ap.add_argument("command", choices=["draft-candidates", "check-candidates",
                                         "publish-candidates", "show-candidates", "route",
-                                        "mandate"])
+                                        "mandate", "receive", "show-reviews", "dispose",
+                                        "diverge", "dialectic-call"])
+    ap.add_argument("--task", default="")
+    ap.add_argument("--file", default="")
+    ap.add_argument("--finding", action="append", default=[])
+    ap.add_argument("--disposition", default="")
+    ap.add_argument("--rationale", default="")
+    ap.add_argument("--evidence", default="")
+    ap.add_argument("--envelope", default="")
+    ap.add_argument("--owner", default="")
+    ap.add_argument("--impact", default="")
+    ap.add_argument("--to", default="")
+    ap.add_argument("--subject", default="")
+    ap.add_argument("--divergence", default="")
+    ap.add_argument("--outcome", default="")
+    ap.add_argument("--synthesis", default="")
+    ap.add_argument("--locator", default="")
     ap.add_argument("--phase", default="options")
     ap.add_argument("--role", default="")
     ap.add_argument("--question", action="append", default=[])
@@ -548,6 +852,21 @@ def main(argv=None) -> int:
             out = mandate(eng, a.role, a.question, a.knowledge, a.objective, a.scope)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
+        elif a.command == "receive":
+            out = receive(eng, a.task, _load(Path(a.file), a.file))
+            out, rc = {k: v for k, v in out.items() if k != "receipt" or a.json}, 0
+        elif a.command == "show-reviews":
+            out, rc = show_reviews(eng), 0
+        elif a.command == "dispose":
+            out = dispose(eng, (a.finding or [""])[0], a.disposition, a.rationale, a.evidence,
+                          a.envelope, a.owner, a.impact, a.to)
+            out, rc = {k: v for k, v in out.items() if k not in ("receipt", "data")}, 0
+        elif a.command == "diverge":
+            out = diverge(eng, a.finding, a.subject)
+            out, rc = {k: v for k, v in out.items() if k not in ("receipt", "data")}, 0
+        elif a.command == "dialectic-call":
+            out = dialectic_call(eng, a.divergence, a.outcome, a.synthesis, a.locator)
+            out, rc = {k: v for k, v in out.items() if k not in ("receipt", "data")}, 0
         else:
             out, rc = show_candidates(eng), 0
     except ReviewError as exc:
