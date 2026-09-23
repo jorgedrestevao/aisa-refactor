@@ -3098,6 +3098,10 @@
     {
      "file": "README.md",
      "reason": "Command list and kernel contract list mention /blueprint and the blueprint contract (:20, :55); not in scan."
+    },
+    {
+     "file": ".github/stdlib-tests.txt",
+     "reason": "Lista de ficheiros de teste do job stdlib do CI (F1.1); nomeia test_fields_draft.py como ficheiro a correr, não lê nem escreve o blueprint."
     }
    ],
    "handoff_v1_impact": [

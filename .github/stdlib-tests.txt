@@ -1,0 +1,66 @@
+# Ficheiros de teste que o job `stdlib` do CI corre sem instalar nada (ADR-001: o
+# runtime so precisa da biblioteca padrao). Um ficheiro por linha; `#` comenta.
+#
+# Os ficheiros fora desta lista precisam de PyYAML, openpyxl, python-docx ou pypdf
+# (requirements-dev.txt) e correm no job `suite`. Um ficheiro aqui que deixe de passar
+# sem dependencias e uma regressao de ADR-001, nao um motivo para o tirar da lista.
+#
+# Origem: baseline T01 de handoff-v1 (docs/handoff-v1/F0/test-baseline.json,
+# verdict_stdlib = OK) mais test_handoff_f0.py.
+.claude/tests/test_a5_dictionary_contract.py
+.claude/tests/test_admission_rule.py
+.claude/tests/test_arbiter_declarations.py
+.claude/tests/test_audit_findings.py
+.claude/tests/test_audit_round2.py
+.claude/tests/test_authority_guard.py
+.claude/tests/test_blueprint_yaml.py
+.claude/tests/test_bootstrap.py
+.claude/tests/test_council_wiring.py
+.claude/tests/test_coverage_contract.py
+.claude/tests/test_coverage_freshness.py
+.claude/tests/test_coverage_graph.py
+.claude/tests/test_coverage_integration.py
+.claude/tests/test_coverage_inventory.py
+.claude/tests/test_coverage_phase4.py
+.claude/tests/test_coverage_phase5.py
+.claude/tests/test_dashboard_kernel_state.py
+.claude/tests/test_dashboard_memory_tab.py
+.claude/tests/test_dependents.py
+.claude/tests/test_drift_authority.py
+.claude/tests/test_extraction_limits.py
+.claude/tests/test_frame_identity.py
+.claude/tests/test_graph_birth.py
+.claude/tests/test_graph_inspection.py
+.claude/tests/test_graph_store.py
+.claude/tests/test_handoff_f0.py
+.claude/tests/test_hook_invocation.py
+.claude/tests/test_hooks_gates.py
+.claude/tests/test_knowledge_lifecycle.py
+.claude/tests/test_lens_mirror.py
+.claude/tests/test_locator_resolution.py
+.claude/tests/test_migration.py
+.claude/tests/test_motor_identity.py
+.claude/tests/test_operation_concurrency.py
+.claude/tests/test_operation_recovery.py
+.claude/tests/test_options_artefact.py
+.claude/tests/test_p8_comparator.py
+.claude/tests/test_p8_report_schema.py
+.claude/tests/test_pp_architecture_templates.py
+.claude/tests/test_projection_ux.py
+.claude/tests/test_render_validate.py
+.claude/tests/test_reopen_transition.py
+.claude/tests/test_resolve_operation.py
+.claude/tests/test_retirement.py
+.claude/tests/test_round_in_progress.py
+.claude/tests/test_state_scaffold.py
+.claude/tests/test_status_model.py
+.claude/tests/test_su_table_reader.py
+.claude/tests/test_suite_integrity.py
+.claude/tests/test_swing_parse.py
+.claude/tests/test_synthesis_checks.py
+.claude/tests/test_synthesis_freshness.py
+.claude/tests/test_technical_decision_refocus.py
+.claude/tests/test_text_formats.py
+.claude/tests/test_user_language.py
+.claude/tests/test_windows_console.py
+library/kernel/tools/tests/test_fields_draft.py

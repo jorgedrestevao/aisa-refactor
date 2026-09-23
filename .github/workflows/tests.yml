@@ -12,6 +12,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  # A suite inteira precisa de PyYAML, openpyxl, python-docx e pypdf (requirements-dev.txt).
+  # Sem elas, 19 ficheiros não chegavam a imprimir veredicto e o CI ficava vermelho por
+  # ambiente, não por defeito (handoff-v1, baseline T01 e decisão D-F1-01).
   suite:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -22,14 +25,31 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Sem `pip install`: ADR-001 diz stdlib apenas, e um CI que instalasse
-      # dependências deixava de provar isso.
+      - name: Dependências de teste
+        run: python -m pip install -r requirements-dev.txt
+
       - name: A suite inteira, num clone limpo
         run: python .github/run_tests.py
 
       - name: O que falhou
         if: failure()
         run: |
-          echo "A suite é determinística e corre em qualquer clone:"
+          echo "A suite é determinística e corre em qualquer clone com requirements-dev.txt:"
           echo "  python .github/run_tests.py            (paralelo)"
           echo "  python .github/run_tests.py --sequential"
+
+  # ADR-001: o runtime corre só com a biblioteca padrão. Este job não instala nada, e é
+  # isso que prova. Corre a lista explícita de .github/stdlib-tests.txt; um ficheiro
+  # listado que desapareça reprova o job.
+  stdlib:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Os motores sem dependências (ADR-001)
+        run: python .github/run_tests.py --list .github/stdlib-tests.txt
