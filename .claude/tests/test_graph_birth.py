@@ -27,6 +27,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 M = runpy.run_path(str(TOOLS / "migrate.py"))
 B = runpy.run_path(str(TOOLS / "bootstrap.py"))
@@ -68,7 +70,7 @@ def novo_eng(tmp):
     eng = Path(tmp) / "eng"
     eng.mkdir(parents=True, exist_ok=True)
     (eng / "shared-understanding.md").write_text(SU, encoding="utf-8", newline="\n")
-    (eng / "_state.json").write_text('{"phase":"discovery","round":"R-00"}\n',
+    (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-00"),
                                      encoding="utf-8", newline="\n")
     return eng
 
@@ -267,9 +269,9 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
     SKILL = ROOT / ".claude" / "skills" / "aisa-start" / "SKILL.md"
     PRE = hooks_de_escrita("PreToolUse")
     POST = hooks_de_escrita("PostToolUse")
-    ESTADO = json.dumps({"engagement": "eng-x", "pack": "pp", "phase": "discovery",
-                         "round": "R-00", "round_in_progress": "", "aisa_version": "0.1.0",
-                         "created": "2026-09-23T00:00:00Z"}) + "\n"
+    ESTADO = ESTADO_HANDOFF(engagement="eng-x", phase="discovery", round="R-00",
+                            round_in_progress="", aisa_version="0.1.0",
+                            created="2026-09-23T00:00:00Z")
     LINHA_M1 = ("| M-1 | enquadramento | O preço segue a tabela | declaração do dono do "
                 "processo, 2026-09-23 — enquadramento.md#M-1 | 2026-09-23 | organizacional "
                 "| R-00 |\n")

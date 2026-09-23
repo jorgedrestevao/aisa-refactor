@@ -6257,6 +6257,16 @@
      "evidence": "handoff-state.schema.json (required + properties); consumed by workflow.py load_schema('handoff-state').",
      "confidence": "verified",
      "source": "F1.4a"
+    },
+    {
+     "file": ".claude/hooks/pre-profile-check.py",
+     "kind": "hook",
+     "role": "guard",
+     "mechanism": "PreToolUse Skill (handoff-v1 F1.4). Resolves the named or only engagement and, through workflow.profile_of, denies a writing skill on an engagement whose _state.json has no `workflow` block (historical version). Never guesses among several engagements.",
+     "via": "workflow.py (runpy)",
+     "evidence": "pre-profile-check.py:38 (LEITURA); :41 (escreve); :56 (main: find_engagement, profile_of, block); .claude/settings.json PreToolUse Skill; tested by test_handoff_legacy.py",
+     "confidence": "verified",
+     "source": "F1.4c"
     }
    ],
    "mention_only": [

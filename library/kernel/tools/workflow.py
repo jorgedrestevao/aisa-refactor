@@ -35,7 +35,16 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_D = runpy.run_path(str(_HERE / "dashboard.py"))
+# O leitor de YAML do kernel vive no dashboard (subconjunto Y1-Y7). Carrega-se so quando
+# um `pack.yaml` e lido: o coordenador pergunta o perfil em cada publicacao e nao deve
+# pagar o dashboard inteiro por isso.
+_CACHE: dict = {}
+
+
+def _dash() -> dict:
+    if "D" not in _CACHE:
+        _CACHE["D"] = runpy.run_path(str(_HERE / "dashboard.py"))
+    return _CACHE["D"]
 
 PROFILE = "handoff-v1"
 STATE_SCHEMA = "handoff-state/1"
@@ -211,7 +220,7 @@ def pack_capabilities(pack: str, packs_dir: Path | None = None) -> dict:
     text = p.read_text(encoding="utf-8")
     caps = {}
     for key in ("supported_workflow_profiles", "supported_routes", "design_contract_version"):
-        val = _D["yl_scalar_at"](text, key)
+        val = _dash()["yl_scalar_at"](text, key)
         if val is not None:
             caps[key] = val
     if not caps:
@@ -302,7 +311,7 @@ def validate_profile(eng=None, *, pack=None, profile=None, route=None,
 # ------------------------------------------------------------------ CLI
 
 def utf8_console() -> None:
-    _D["utf8_console"]()
+    _dash()["utf8_console"]()
 
 
 def main(argv=None) -> int:

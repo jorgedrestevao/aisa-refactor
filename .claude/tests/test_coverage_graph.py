@@ -11,6 +11,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 G = runpy.run_path(str(TOOLS / "graph.py"))
 C = runpy.run_path(str(TOOLS / "coverage.py"))
@@ -251,7 +253,7 @@ class C08_EstadoParcial(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             eng = Path(tmp) / "eng"
             eng.mkdir()
-            (eng / "_state.json").write_text('{"phase":"discovery"}\n', encoding="utf-8")
+            (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery"), encoding="utf-8")
             O["run"](eng, "op", G["write_set"](NODES, EDGES))
             state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
         for forbidden in ("coverage_valid", "coverage_stale", "coverage_pct", "graph_pct"):

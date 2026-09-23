@@ -11,6 +11,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 R = runpy.run_path(str(TOOLS / "resolve.py"))
 G = runpy.run_path(str(TOOLS / "graph.py"))
@@ -242,7 +244,7 @@ def eng_ciclo(tmp, nome="eng"):
     eng = Path(tmp) / nome
     eng.mkdir(parents=True, exist_ok=True)
     (eng / "shared-understanding.md").write_text(SU_CICLO, encoding="utf-8", newline="\n")
-    (eng / "_state.json").write_text('{"phase":"discovery","round":"R-01"}\n',
+    (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-01"),
                                      encoding="utf-8", newline="\n")
     # Migrado, como qualquer engagement real desde que o grafo e obrigatorio. Sem isto a
     # fixture modelava um engagement que nao pode existir — e que as operacoes de ciclo de

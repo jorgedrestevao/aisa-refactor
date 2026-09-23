@@ -70,6 +70,8 @@ _HERE = Path(__file__).resolve().parent
 _D = runpy.run_path(str(_HERE / "dashboard.py"))
 _G = runpy.run_path(str(_HERE / "graph.py"))
 _O = runpy.run_path(str(_HERE / "operation.py"))
+_W = runpy.run_path(str(_HERE / "workflow.py"))
+_W["_CACHE"]["D"] = _D          # o mesmo dashboard, carregado uma vez
 
 # Autoridades cujo digest entra no snapshot. Ausência é um estado, não um erro.
 SU_FILE = "shared-understanding.md"
@@ -296,6 +298,23 @@ def bootstrap(eng: Path, budget: int = DEFAULT_BUDGET) -> dict:
                 "graph": {}, "snapshot": {}, "context": {},
                 "limitations": limitations,
                 "detail": "bootstrap parou no passo 2: recuperação é acção separada"}
+
+    # 2b. perfil (handoff-v1 F1). Um engagement da versão histórica, com `_state.json`
+    # ilegível, com schema de perfil desconhecido ou num perfil que o pack não declara NÃO
+    # está pronto para escrita nesta versão. Ler continua possível; o bloqueio diz porquê e
+    # o que fazer. Um engagement a nascer (sem `_state.json`) não tem perfil a verificar.
+    if _W["profile_of"](eng)["kind"] != _W["UNBORN"]:
+        perfil = _W["validate_profile"](eng)
+        if not perfil["ok"]:
+            limitations.append({
+                "code": perfil["code"], "blocking": True,
+                "detail": " · ".join(r["detail"] for r in perfil["reasons"]),
+                "recovery": " · ".join(a["action"] for a in perfil["next_actions"]),
+                "profile": perfil})
+            return {"ready": False, "engagement": identity, "operation": op,
+                    "graph": {"status": st.get("status", ""),
+                              "revision": st.get("revision", "")},
+                    "snapshot": snap, "context": {}, "limitations": limitations}
 
     legacy = st["status"] == _G["ABSENT"]
     graph_info = {"status": st["status"], "legacy_mode": legacy,

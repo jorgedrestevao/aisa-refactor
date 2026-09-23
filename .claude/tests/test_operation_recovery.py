@@ -16,6 +16,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 OP_PY = ROOT / "library" / "kernel" / "tools" / "operation.py"
 O = runpy.run_path(str(OP_PY))
 
@@ -32,7 +34,7 @@ def new_eng(tmp, files=None):
 
 WS = {"shared-understanding.md": "# SU\n\n| C-001 | Confirmed |\n",
       "answers.md": "# Respostas\n\n## A-001\n",
-      "_state.json": '{"phase":"discovery","round":"R-01"}\n'}
+      "_state.json": ESTADO_HANDOFF(phase="discovery", round="R-01")}
 
 
 class W01_CrashAntesDaIntencao(unittest.TestCase):

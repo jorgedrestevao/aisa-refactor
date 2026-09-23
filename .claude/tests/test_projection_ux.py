@@ -17,6 +17,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 P = runpy.run_path(str(TOOLS / "projection.py"))
 O = runpy.run_path(str(TOOLS / "operation.py"))
@@ -77,7 +79,7 @@ def new_eng(tmp, name="eng"):
     (eng / "answers.md").write_text("# Respostas\n", encoding="utf-8", newline="\n")
     (eng / "decisions.md").write_text("# Decisoes\n", encoding="utf-8", newline="\n")
     (eng / "_state.json").write_text(
-        '{"phase":"discovery","round":"R-01","engagement":"eng","pack":"pp"}\n',
+        ESTADO_HANDOFF(phase="discovery", round="R-01", engagement="eng"),
         encoding="utf-8", newline="\n")
     (eng / "context.json").write_text('{}\n', encoding="utf-8", newline="\n")
     # Nasce com grafo, como o `/start` o deixa desde P7.5 §W8 (passo 9c). Sem isto a

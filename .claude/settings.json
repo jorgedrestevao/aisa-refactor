@@ -26,6 +26,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/pre-profile-check.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
             "command": "python \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/pre-lens-order-check.py\""
           }
         ]

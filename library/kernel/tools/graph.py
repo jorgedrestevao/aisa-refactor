@@ -42,7 +42,13 @@ import os
 import sys
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+# 2 desde handoff-v1 F1 (decisao Q1 do mantenedor): os engagements do perfil handoff-v1
+# nascem em 2. A versao historica (jorgedrestevao/aisa@85baf10) le so 1, por isso recusa
+# escrever-lhes pelos seus proprios guardas; e o 2 reserva os tipos de dependencia de
+# handoff-v1 (docs/handoff-v1/F1/DESENHO-CONTRATOS.md 2.5), que ela nao entenderia.
+SCHEMA_VERSION = 2
+# O schema dos engagements da versao historica: aqui so se le, nunca se reescreve.
+HISTORICAL_SCHEMA_VERSION = 1
 STORE_DIR = "_graph"
 GRAPH_FILE = "graph.jsonl"
 META_FILE = "meta.json"
@@ -301,6 +307,13 @@ def read(eng: Path) -> dict:
                 "detail": "meta.json ilegível: {}".format(exc)}
 
     schema = meta.get("schema_version")
+    if schema == HISTORICAL_SCHEMA_VERSION:
+        # Nao e corrupcao nem ausencia: e um engagement da versao historica. Nesta versao so
+        # se le (decisao classic A); publicar por cima reescrevia-o para 2 em silencio.
+        return {"status": UNSUPPORTED_SCHEMA, "nodes": [], "edges": [], "meta": meta,
+                "detail": "schema 1 — engagement da versão histórica (jorgedrestevao/"
+                          "aisa@85baf10): só leitura nesta versão, que lê {}".format(
+                              SCHEMA_VERSION)}
     if schema != SCHEMA_VERSION:
         return {"status": UNSUPPORTED_SCHEMA, "nodes": [], "edges": [], "meta": meta,
                 "detail": "schema {} não suportado (este motor lê {})".format(

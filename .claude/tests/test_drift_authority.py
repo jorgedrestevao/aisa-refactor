@@ -21,6 +21,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 G = runpy.run_path(str(TOOLS / "graph.py"))
 P = runpy.run_path(str(TOOLS / "projection.py"))
@@ -197,7 +199,7 @@ class W5f_ODesvioFechaOGate(unittest.TestCase):
         eng = Path(tmp) / "eng"
         eng.mkdir(parents=True)
         (eng / "shared-understanding.md").write_text(self.SU, encoding="utf-8", newline="\n")
-        (eng / "_state.json").write_text('{"phase":"discovery","round":"R-01"}\n',
+        (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-01"),
                                          encoding="utf-8", newline="\n")
         nodes = [{"id": "C-001", "type": "su-row",
                   "props": {"state": estado_no_grafo, "criticidade": "", "resolved": False,

@@ -42,6 +42,8 @@ _HERE = Path(__file__).resolve().parent
 _D = runpy.run_path(str(_HERE / "dashboard.py"))
 _G = runpy.run_path(str(_HERE / "graph.py"))
 _O = runpy.run_path(str(_HERE / "operation.py"))
+_W = runpy.run_path(str(_HERE / "workflow.py"))
+_W["_CACHE"]["D"] = _D          # o mesmo dashboard, carregado uma vez
 
 MIGRATION_DIR = "_migration"
 MANIFEST = "manifest.json"
@@ -236,9 +238,21 @@ def _nodes_from(plan, rows_by_id):
     return nodes, edges
 
 
+def _refuse_legacy(eng):
+    """Um engagement da versão histórica não se migra nem se repõe aqui (handoff-v1 F1,
+    decisão classic A). A recusa vem ANTES de qualquer backup: o coordenador também recusa,
+    mas só no fim, depois de `apply` já ter copiado ficheiros para `_migration/`."""
+    if _W["profile_of"](eng)["kind"] == _W["LEGACY"]:
+        raise MigrationError(
+            "engagement sem perfil persistido (versão histórica): só leitura nesta versão — "
+            "continuar em {}".format(_W["HISTORICAL_VERSION"]), _W["UNSUPPORTED_PROFILE"],
+            {"source_code": "legacy_profile_absent", "engagement": str(eng)})
+
+
 def apply(eng, plan=None):
     """Aplica pelo coordenador, com backup verificavel antes (C1.4, C1.5)."""
     eng = Path(eng)
+    _refuse_legacy(eng)
     plan = plan or dry_run(eng)
 
     # C1: entrada mudou depois do dry-run -> rejeitar plano antigo
@@ -386,6 +400,7 @@ def read_manifest(eng):
 def restore(eng, force=False):
     """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2)."""
     eng = Path(eng)
+    _refuse_legacy(eng)
     man = read_manifest(eng)
     if not man:
         raise MigrationError("nao ha manifesto de migracao", "NO_MANIFEST",

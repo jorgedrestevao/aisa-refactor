@@ -20,6 +20,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # O T36 (test_handoff_legacy.py) corre o código da versão histórica, extraído
+          # do commit ba0c27b; um clone raso não o tem.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -46,6 +50,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # O T36 (test_handoff_legacy.py) corre o código da versão histórica, extraído
+          # do commit ba0c27b; um clone raso não o tem.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

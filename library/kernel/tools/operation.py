@@ -462,6 +462,30 @@ def request_hash(write_set: dict) -> str:
 
 # ------------------------------------------------------------------- operação
 
+_WF: dict = {}
+
+
+def _refuse_foreign_profile(eng: Path) -> None:
+    """Esta versão não publica num engagement da versão histórica (handoff-v1 F1, decisão
+    classic A): sem bloco `workflow` em `_state.json`, é só leitura aqui.
+
+    Só se olha para o TIPO de engagement. A validação completa (schema, pack, `_state.json`
+    ilegível) é do bootstrap, que bloqueia os escritores a montante. Aqui um `_state.json`
+    ilegível NÃO recusa: a publicação ou a recuperação podem ser exactamente o que o repara,
+    e recusá-las deixava o engagement preso. Um engagement a nascer (sem `_state.json`)
+    publica — é o `migrate.init`."""
+    if "W" not in _WF:
+        import runpy
+        _WF["W"] = runpy.run_path(str(Path(__file__).resolve().parent / "workflow.py"))
+    W = _WF["W"]
+    who = W["profile_of"](eng)
+    if who["kind"] == W["LEGACY"]:
+        raise OperationError(
+            "engagement sem perfil persistido (versão histórica): só leitura nesta versão — "
+            "continuar em {}".format(W["HISTORICAL_VERSION"]), W["UNSUPPORTED_PROFILE"],
+            {"source_code": "legacy_profile_absent", "engagement": str(eng)})
+
+
 def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = None) -> dict:
     """Publica um conjunto de escrita como UMA operação.
 
@@ -488,6 +512,7 @@ def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = N
         agora = {rel: digest(eng / rel) for rel in gravado}
         return dict(prior, replayed=True, effects_present=(agora == gravado))
 
+    _refuse_foreign_profile(eng)
     ident = acquire(eng)
     try:
         existing = read_pending(eng)      # ilegível sobe como PENDING_UNREADABLE
@@ -589,6 +614,7 @@ def recover(eng: Path) -> dict:
         raise OperationError("versão de intenção não suportada", "INTENT_VERSION",
                              {"have": intent.get("intent_version")})
 
+    _refuse_foreign_profile(eng)
     ident = acquire(eng)
     try:
         third = []
