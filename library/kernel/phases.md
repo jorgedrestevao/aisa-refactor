@@ -83,12 +83,12 @@ of the data is the criterion, and the generation is never inferred from a date o
 - `## Confirmed` has ≥10 rows.
 - `## Unknown` Critical = 0. A question parked for lack of demonstrable impact is not open and stops pressing this gate (`states.md` → *Admission of a question*): what remains `Critical` here moves one of the five aspects.
 - `## Conflicted` Critical = 0.
-- All 6 lenses have written to `lens-outputs/`.
+- The last completed round has a valid `lens` coverage record — the six perspectives recorded (`coverage-contract.md` §4.8). The historical version read the six `lens-outputs/` files instead.
 - The last round converged: `Unknown` created in that round ≤ `Unknown` closed in it (any origin). A round with `criadas > fechadas` is labelled `sem convergência` by `/round` and `/status` — visible, not blocking, no new state. Counts come from the motor (`dashboard.py --json`), never by hand. The label is per **closed** round, not per calendar span: a round filled lens by lens over days, with `/answer` in between, is balanced only when it closes.
 
 **Outputs**:
 - `shared-understanding.md` populated.
-- `lens-outputs/<lens>.md` per lens.
+- `lens-outputs/<perspective>.md` per perspective, and the `lens` coverage record in `_coverage/`.
 
 ---
 
@@ -96,9 +96,9 @@ of the data is the criterion, and the generation is never inferred from a date o
 
 **Goal**: Synthesize a single sentence: "The problem is X, felt by Y, costs Z today, evidence is W." Along the way, **confirm or correct each `M-n`** of `enquadramento.md` with evidence — a corrected invariant is a normal transition (`was C-nnn`), never an edit of the R-00 row.
 
-**Lenses active**: subset of the 6 Discovery lenses (chairman picks the 3-4 most relevant given the Shared Understanding).
+**Perspectives**: the six of `lens-checklists.md`, applied by the integrated analyst in framing mode.
 
-**Mode**: `council-independent` (parallel Task subagents; only the chairman writes to the Shared Understanding).
+**Mode**: `analyst + reviewer` (handoff-v1 F3): the analyst proposes inline, one independent reviewer (subagent) contests, and `chairman-synthesis` — the only writer to the Shared Understanding here — applies the evidence rules. No parallel personas, no antithesis round (`orchestration.md` → *Framing mode*).
 
 **Entry criteria**:
 - Exit criteria of Discovery met (overrideable with justification).

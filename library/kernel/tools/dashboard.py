@@ -42,7 +42,7 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-TOOL_VERSION = "1.16.0"
+TOOL_VERSION = "1.17.0"
 ARTEFACT_ID = "aisa.dashboard"
 # Schema 2 unchanged up to 1.14.0: every bump only ADDED keys. 1.15.0 removed some -> 3.
 #   1.2.0  `round_delta` (P-2) · `confirmed_locator` (P-12) · `enquadramento` (P-0) ·
@@ -94,6 +94,10 @@ ARTEFACT_ID = "aisa.dashboard"
 #          not the `lens-outputs/` headers: `corridas` is the six or nothing, and four
 #          keys are ADDED -- `fonte`, `fecha`, `revista`, `motivos`. The historical
 #          version keeps the header reading and the old shape. Additive: schema stays 3.
+#  1.17.0  handoff-v1 F3.4: the Discovery -> Framing gate of a profile engagement reads the
+#          `lens` coverage record of the last completed round (valid for that round; freshness
+#          and review in the value) instead of counting six `lens-outputs/` files. The
+#          historical version keeps the file count. Schema stays 3.
 SCHEMA_VERSION = 3
 DEFAULT_RELOAD_SECS = 5
 
@@ -5378,13 +5382,52 @@ def _options_blocks(options_md: str) -> list[str]:
     return re.findall(r"^###\s+(O-\d+)", options_md or "", re.M)
 
 
+def _lens_record_criterion(eng: Path, round_id: str) -> dict:
+    """handoff-v1 F3.4: a profile engagement leaves Discovery on the `lens` coverage record
+    of its last completed round (coverage-contract.md §4.8), never on a count of files.
+
+    The criterion holds when that record is VALID for that round. Freshness and review are
+    reported in the value, not failed on: an `/answer` after the round closed moves the SU
+    and makes the record stale, and a soft gate that went red on every answer would train
+    the owner to override it. The staleness stays visible; `/round` is the remedy."""
+    label = "as seis perspectivas registadas na última passagem (registo lens)"
+    if not round_id.startswith("R-") or round_id == "R-00":
+        return _g(label, "codigo", False, "nenhuma passagem fechada", "registo válido")
+    C = coverage_module()
+    if C is None:
+        return _g(label, "n/a", None, "", "registo válido",
+                  "motor de cobertura indisponível: " + _COVERAGE_ERR)
+    try:
+        st = C["lens_round_state"](eng, round_id, C["ReaderAdapter"](module=globals()))
+    except Exception as exc:                                            # noqa: BLE001
+        return _g(label, "n/a", None, "", "registo válido",
+                  "{}: {}".format(type(exc).__name__, exc))
+    inner = st.get("state") or {}
+    ok = (inner.get("contract_validity") == "valid"
+          and (inner.get("lens") or {}).get("round") == round_id)
+    value = "{} · {} · {}".format(
+        round_id, "actual" if inner.get("freshness") == "current" else
+        "desactualizado ({})".format(inner.get("freshness") or "-"),
+        "revisto" if st.get("reviewed") else "por rever")
+    return _g(label, "codigo", ok, value, "registo válido",
+              "; ".join(st.get("reasons") or []) or "coverage-contract.md §4.8")
+
+
 def _gate_discovery(eng: Path, model_bits: dict) -> list[dict]:
     rows = model_bits["rows"]
     confirmed = len(_open_rows(rows, "Confirmed"))
     unk = _critical(rows, "Unknown")
     con = _critical(rows, "Conflicted")
-    lenses = _lens_files(eng)
-    missing_lens = [k for k, v in lenses.items() if not v]
+    state = model_bits.get("state") or {}
+    if state.get("workflow"):
+        lens_criterion = _lens_record_criterion(eng, state.get("round") or "")
+    else:
+        lenses = _lens_files(eng)
+        missing_lens = [k for k, v in lenses.items() if not v]
+        lens_criterion = _g("6 lentes escreveram em lens-outputs/", "codigo", not missing_lens,
+                            "{}/6".format(6 - len(missing_lens)), "6/6",
+                            "presença de conteúdo mínimo (ficheiro com >= 1 id da SU), "
+                            "nunca qualidade")
     delta = model_bits["round_delta"].get("por_ronda") or []
     last = [d for d in delta if str(d.get("ronda", "")).startswith("R-")]
     last = last[-1] if last else None
@@ -5396,9 +5439,7 @@ def _gate_discovery(eng: Path, model_bits: dict) -> list[dict]:
            "uma pergunta descida a cosmético leva a criticidade com ela (states.md)"),
         _g("Conflicted Critical = 0", "codigo", not con,
            "{} ({})".format(len(con), ", ".join(r["id"] for r in con[:6]) or "-"), "0"),
-        _g("6 lentes escreveram em lens-outputs/", "codigo", not missing_lens,
-           "{}/6".format(6 - len(missing_lens)), "6/6",
-           "presença de conteúdo mínimo (ficheiro com >= 1 id da SU), nunca qualidade"),
+        lens_criterion,
         _g("a última passagem convergiu", "codigo",
            (last is None) or not last.get("sem_convergencia"),
            "-" if last is None else "{}: criadas {} · fechadas {}".format(
@@ -5630,6 +5671,7 @@ def gate_state(eng: Path, transition: str) -> dict:
         "round_delta": round_delta(rows, parse_round_dates(eng, st, _h)),
         "frame_identity": frame_identity(eng, classify_decisions(_read(eng / "decisions.md") or "")),
         "options_history": options_round_history(eng, st),
+        "state": st if isinstance(st, dict) else {},
     }
     g = gates(eng, transition, bits)
     fp = gate_fingerprint(eng, transition, bits, g["criteria"])

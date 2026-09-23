@@ -1,6 +1,6 @@
 ---
 name: aisa-frame
-description: Transition Discovery → Framing. Checks Discovery's soft exit gate, flips _state.json to phase=framing/round=F-01, launches 6 council personas in parallel via the Task tool (council-independent mode), then invokes the chairman-synthesis skill to write frame.md and the synthesised Shared Understanding rows. On user validation, registers the frame approval (next free D-NNN, with the sentence's fingerprint) in decisions.md.
+description: Transition Discovery → Framing. Checks Discovery's soft exit gate, flips _state.json to phase=framing/round=F-01, has the integrated analyst propose the frame inline, one independent reviewer (subagent) contest it, and the chairman-synthesis skill write frame.md and the synthesised Shared Understanding rows. On user validation, registers the frame approval (next free D-NNN, with the sentence's fingerprint) in decisions.md.
 ---
 
 # aisa-frame
@@ -16,20 +16,20 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 
 - **From**: `phase: discovery`.
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
-- **Mode**: `council-independent`. See `library/kernel/orchestration.md`.
+- **Mode**: integrated analyst + one independent reviewer (`handoff-v1` F3, decision Q4; `library/kernel/orchestration.md` → *Framing mode*). The six council personas are no longer launched here, and there is no antithesis round (Q5).
 
-The aisa-frame skill is itself **NOT a lens** — it does no lens analysis. It is the orchestrator that fans out to the 6 council personas (Discovery lenses, embodied as agents) and then in-fans to the chairman synthesis.
+The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
 
 ## Inputs (read)
 
 - `<engagement>/_state.json`, `<engagement>/context.json`, `<engagement>/shared-understanding.md`, `<engagement>/decisions.md`, `<engagement>/council-log.md`.
-- `<engagement>/lens-outputs/*.md` (so you can compose each persona's thematic SU excerpt).
+- `<engagement>/lens-outputs/*.md` (the perspectives' interpretation of earlier passagens).
 - `library/kernel/phases.md` (Framing entry criteria).
-- `<engagement>/_capture/evidence-index.md` (the shared evidence surface handed to every persona).
+- `<engagement>/_capture/evidence-index.md` (the shared evidence surface for the analyst and the reviewer).
 - `<engagement>/_capture/process-model.md` §4 (the process synopsis) and §6 (PM-U) — for the comprehension-survival soft gate (step 2) and the chairman's survival block; when absent, the gate runs on the SU alone and says so.
 - `<engagement>/lens-outputs/*.md` `Open evidence` blocks — where the dispositions (`MAP` / `ADOPT` / `DISMISS`) live.
 - `library/packs/<pack>/pack.yaml` — `lenses_config.<lens>.extra_signals` only, as attention cues.
-- `.claude/skills/chairman-synthesis/SKILL.md` → *Council launch preamble* (the persona prompt is built from it).
+- `library/kernel/lens-checklists.md` — the six perspectives the analyst frames across.
 
 `<engagement>` resolves to `$AISA_ENGAGEMENTS_ROOT/<slug>` if set, otherwise `projects/<slug>`. `<pack>` is read from `_state.json.pack`.
 
@@ -39,6 +39,7 @@ The aisa-frame skill is itself **NOT a lens** — it does no lens analysis. It i
 - `<engagement>/frame.md` (chairman-synthesis).
 - New rows in `<engagement>/shared-understanding.md` (chairman-synthesis).
 - `<engagement>/lens-outputs/chairman-synthesis-F-<NN>.md` (chairman-synthesis).
+- `<engagement>/lens-outputs/_council-prep/F-<NN>-analyst.md` (the analyst's proposal, this skill) and `F-<NN>-reviewer.md` (the reviewer's findings, verbatim) — the audit trail of what the synthesis read.
 - A `D-NNN — Frame agreed (F-NN)` record in `<engagement>/decisions.md` after the user validates the frame sentence (this skill, on validation), carrying `Frame sha256` — the fingerprint of the sentence approved.
 - `<engagement>/council-log.md` summary lines (this skill + chairman-synthesis).
 
@@ -59,14 +60,14 @@ Compute from `shared-understanding.md`:
 - `confirmed_count` — rows in `## Confirmed`.
 - `unknown_critical_count` — rows in `## Unknown` with `criticidade = Critical`.
 - `conflicted_critical_count` — rows in `## Conflicted` with `criticidade = Critical`.
-- `lenses_with_output` — set of lens narratives present under `lens-outputs/` (expect `business`, `operations`, `user`, `data`, `governance`, `financial`).
+- `perspectives_covered` — the `lens` coverage record of the last completed Discovery round (`python library/kernel/tools/coverage.py round-state --engagement <slug> --round <round> --json`): valid for that round, current or not, reviewed or not. The gate log already carries it.
 
 Soft criteria from `phases.md`:
 - `confirmed_count ≥ 10`.
 - `unknown_critical_count == 0`.
 - `conflicted_critical_count == 0`.
-- `len(lenses_with_output) == 6`.
-- `_state.json.round_in_progress` empty. Non-empty and ahead of `round` means a passagem is still open: part of the lenses ran and the round never closed (`library/kernel/phases.md` → *Rounds — in progress vs completed*). Soft, like the rest — report it as a red criterion naming the open round and the lenses that did not run (`engagement.lentes_ronda_aberta.em_falta` from the motor — never inferred from the habitual order, since `/round <lens>` runs lenses alone in any order), and offer `/round --close` (or `/round <lens>` for each missing one) before the transition. The flip in step 5 clears `round_in_progress` either way: Framing does not inherit an open Discovery round.
+- the last completed round has a valid `lens` coverage record (the six perspectives recorded — `library/kernel/coverage-contract.md` §4.8).
+- `_state.json.round_in_progress` empty. Non-empty and ahead of `round` means a passagem is still open: part of the lenses ran and the round never closed (`library/kernel/phases.md` → *Rounds — in progress vs completed*). Soft, like the rest — report it as a red criterion naming the open round and what its coverage record says (`engagement.lentes_ronda_aberta`: `fecha`, `revista`, `motivos`, from the motor), and offer `/round --close` (or a full `/round`) before the transition. The flip in step 5 clears `round_in_progress` either way: Framing does not inherit an open Discovery round.
 
 **Comprehension survival test** (same gate, same soft doctrine — no score, no completeness percentage, no fixed question count). Read the SU and, where it exists, `_capture/process-model.md` §4/§6 plus the lens `Open evidence` blocks, and answer each question with the ids that make it true or with the concrete missing understanding:
 
@@ -78,7 +79,7 @@ Soft criteria from `phases.md`:
 6. Are the material scope / user-task obligations visible as rows?
 7. Has every Critical `PM-U` row and every labelled material synopsis line received a disposition (`aisa-round` step 5e — `undisposed` must be empty)?
 
-A failing question is a red criterion. **Do not pretend comprehension is sufficient**: name the missing understanding concretely — shape: `output X has no identified consumer`, `material calculation chain Y is not reconstructed`, `structural question Z (where must the data live?) is still absent`, `PM-U-NNN (Critical) undisposed` — and route it through the existing mechanisms: another `/round <lens>` to adopt or dismiss it into the SU, or `/answer` when the sponsor already answered. Never manufacture an SU row, a process model or an Options set from this gate. Few open Unknowns ≠ deep understanding: a 100% epistemic health with an untraced material output family still fails question 2.
+A failing question is a red criterion. **Do not pretend comprehension is sufficient**: name the missing understanding concretely — shape: `output X has no identified consumer`, `material calculation chain Y is not reconstructed`, `structural question Z (where must the data live?) is still absent`, `PM-U-NNN (Critical) undisposed` — and route it through the existing mechanisms: another `/round <perspective>` to adopt or dismiss it into the SU, or `/answer` when the sponsor already answered. Never manufacture an SU row, a process model or an Options set from this gate. Few open Unknowns ≠ deep understanding: a 100% epistemic health with an untraced material output family still fails question 2.
 
 If any criterion is red AND no `--override` was passed → stop with a one-line-per-criterion summary and ask the user: "Proceed anyway (re-run with `--override "<reason>"`)? Or run more Discovery rounds (`/round`)?" Do not transition yet.
 
@@ -104,93 +105,71 @@ The missing item stays visible as what it honestly is — an SU `Unknown` (writt
 2. Update `_state.json`: `phase = framing`, `round = <F-NN>`, `round_in_progress = ""` (an open Discovery passagem does not cross the phase boundary; it stays in the log, not in the state). Items 2 and 3 are one draft — `resolve.py draft --engagement <slug> --files _state.json shared-understanding.md --json`, edit the copies, `resolve.py publish` (`library/kernel/orchestration.md` → *Writing an authority*); never `mv` a `.tmp` over `_state.json`.
 3. Update the SU header `Fase actual: Framing` and `Última actualização: <ISO timestamp>` (same draft).
 
-### 4. Compose thematic Shared Understanding excerpts
-
-For each of the 6 personas, slice the SU into a thematic excerpt:
-
-| Persona | Slice |
-|---|---|
-| business-analyst | All rows where `lens = business` + any row touching shadow stakeholders, KPIs, sponsor authority |
-| operations-lead | All rows where `lens = operations` + any row touching as-is process steps, volumes, cycle times |
-| user-advocate | All rows where `lens = user` + any row touching personas, devices, accessibility |
-| data-steward | All rows where `lens = data` + any row touching sensitivity, ownership, retention |
-| compliance-officer | All rows where `lens = governance` + every Conflicted row + every row touching audit/access control |
-| cfo-lens | All rows where `lens = financial` + any row touching cost, volume × time anchors |
-
-Each excerpt is a Markdown fragment with the section headers preserved. **Every excerpt must ALSO include the resolved rows and their resolutions** (rows marked `resolved →` plus the `C-` rows carrying `(was …)`), under a heading "Resoluções já fechadas (não re-litigar)" — otherwise personas whose slice missed a resolution re-raise closed conflicts (observed in live validation). Save each as a transient file under `<engagement>/lens-outputs/_council-prep/F-<NN>-<persona>.md` so the audit trail can show what each agent saw. Save the union of these into the council-log too.
-
-**solution-architect is NOT invoked in Framing.** Do not launch it. (Its own agent file refuses if called pre-Options.)
-
-### 4b. Assemble the common council context
+### 4. Assemble the framing context
 
 Bookkeeping only — the same resolution `aisa-round` step 3.6 performs, reused here. The orchestrator
 resolves paths and one manifest key; it decides nothing about what any of it means.
 
-a. **Shared evidence** — `<engagement>/_capture/evidence-index.md`. Present → carry its path into every
-   persona prompt. Absent → carry the explicit line
-   *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*; never let a persona
-   assume a shared capture exists. Name likewise any source reported `failed` or `skipped`. Do **not** rank, assign, summarize or bundle sources,
-   and do not build a per-persona evidence view: the index is a source map, and which of it matters
-   is the persona's judgement. This replaces the old instruction to read every file under `inputs/`.
+a. **Shared evidence** — `<engagement>/_capture/evidence-index.md`. Present → carry its path to the
+   analyst and to the reviewer. Absent → carry the explicit line
+   *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*; never assume a shared
+   capture exists. Name likewise any source reported `failed` or `skipped`. Do **not** rank, assign,
+   summarize or bundle sources: the index is a source map.
 b. **Pack attention cues** — read `_state.json.pack`, resolve `library/packs/<pack>/pack.yaml` →
-   `lenses_config.<lens>.extra_signals` for the lens each persona is the council voice of
-   (business-analyst → business · operations-lead → operations · user-advocate → user · data-steward →
-   data · compliance-officer → governance · cfo-lens → financial). Missing `pack` key, missing
-   `lenses_config.<lens>`, missing `extra_signals` or an empty list → inject nothing for that persona
-   and omit the cue line. A `pack.yaml` that does not parse is a visible failure — report it and stop.
-   Pass the tokens through **verbatim**: no scoring, ranking, filtering, reordering or rewriting.
-c. **Memory pointer** — `.claude/agent-memory/_universal/<persona>/*.md` (incl. `diary.md`) and
-   `_tenant/<tenant>/<persona>/*.md`. A pointer, never contents.
+   `lenses_config.<lens>.extra_signals` for the six perspectives. Missing `pack` key, missing
+   `lenses_config.<lens>`, missing `extra_signals` or an empty list → inject nothing for that
+   perspective and omit the cue line. A `pack.yaml` that does not parse is a visible failure — report
+   it and stop. Pass the tokens through **verbatim**: no scoring, ranking, filtering, reordering or rewriting.
+c. **Resolutions already closed** — the rows marked `resolved →` and the `C-` rows carrying `(was …)`:
+   neither the analyst nor the reviewer re-litigates them.
 
-### 5. Launch the 6 personas in parallel via the Task tool
+**solution-architect is NOT invoked in Framing.** Nor is any other persona: the council of six personas
+no longer runs here (Q4). Framing is pre-technology — no vendor or product names anywhere in this skill.
 
-Send **one assistant message with 6 Task tool calls** so they execute concurrently. Each Task call:
+### 5. The integrated analyst proposes (inline)
 
-- `subagent_type`: the persona name (`business-analyst`, `operations-lead`, `user-advocate`, `data-steward`, `compliance-officer`, `cfo-lens`).
-- `description`: e.g., "Framing F-01 — business angle".
-- `prompt`: the **council launch preamble**, authored once in `.claude/skills/chairman-synthesis/SKILL.md`
-  → *Council launch preamble*, used verbatim with these substitutions:
-  - `<phase>` = `Framing` · `<round>` = `F-<NN>` · `<slug>`, `<pack>`, `<engagement>` = this engagement
-  - `<persona>` = the persona being launched; its `_council-prep` excerpt path is `F-<NN>-<persona>.md`
-  - shared evidence · pack cues · memory pointer = whatever step 4b resolved for that persona
-  - keep the `[Framing, all personas]` technology-neutrality line; drop the `frame.md` read (Options only)
-    and the other bracketed selectors
+Framing mode of the same analyst that runs `/round`. Read the SU (the whole of it, with the closed
+resolutions of 4c), `enquadramento.md`, the shared evidence of 4a, the earlier `lens-outputs/`, the
+process synopsis when it exists, and the perspectives of `library/kernel/lens-checklists.md`. Then write
+the proposal to `<engagement>/lens-outputs/_council-prep/F-<NN>-analyst.md`, in the return schema that
+`chairman-synthesis` parses (*Council launch preamble* → the six sections), under
+`## analista integrado — Round F-<NN> / Phase Framing`:
 
-  The preamble is the whole prompt: it carries mode, phase, round, engagement, pack, the excerpt, the
-  evidence pointer, the cues, the memory pointer, the independence rule, technology neutrality, the
-  evidence-integrity invariant and the return schema. Do not restate any of it, and do not tell a
-  persona to read its lens `SKILL.md` — one channel, chosen deliberately
-  (`library/kernel/orchestration.md` → *Persona boundary*).
+- **Headline** — the proposed single sentence: *the problem is X, felt by Y, costs Z today, evidence is W*.
+- **Evidence anchors** — per clause, the SU ids or locators that carry it; per `M-n`, confirmed or
+  corrected, with the evidence (a corrected invariant is a transition, `was C-nnn`, written by the
+  synthesis).
+- **Proposal** — the survival candidates (process meaning, invariants, structural constraints,
+  decision-changing Unknowns, scope obligations), as ids.
+- **Open questions / Unknowns flagged** · **Conflicts seen** · **Risks** — each by id.
 
-Wait for all 6 to return. Collect their tool results verbatim.
+A clause with no anchor says so; the analyst never manufactures one. Pack cues from 4b are cues, not a
+checklist. The analyst does not write the SU here: the synthesis does (step 6).
 
-### 5b. Dialectic round (conditional)
+### 5b. One independent reviewer contests (subagent)
 
-If chairman-synthesis returns material divergences (its Step 2b), run the antithesis round BEFORE it writes anything: for each divergence (max 3 per round), launch 2 Task calls in parallel — each side's persona receives the other's full thesis with this prompt:
+Launch **one** subagent with the Agent tool — `subagent_type: frame-reviewer` — with fresh context, in
+sequence, after the proposal exists. Pass only paths: the engagement root, the proposal file,
+`shared-understanding.md`, `enquadramento.md` and the evidence pointer of 4a. No summary of the analysis
+and no opinion on the sentence: its independence is its only value. It returns findings (target,
+severity, kind `fact` | `recommendation`, premise/evidence, failure scenario, closing condition), the
+coverage of its review, and optionally an alternative sentence. Save the return **verbatim** to
+`<engagement>/lens-outputs/_council-prep/F-<NN>-reviewer.md`.
 
-```
-Estás na ronda dialéctica de <fase> <ronda> do engagement <slug>. A tua proposta diverge da
-da persona <X> neste ponto: <divergência, citada verbatim com ids>.
-Lê a tese completa dela (em anexo). A tua tarefa NÃO é defender a tua — é atacar a tese
-mais forte dela com a melhor evidência disponível, e depois dizer honestamente:
-(1) onde ela tem razão; (2) onde falha e porquê (com ids/inputs);
-(3) a síntese que proporias se tivesses de assinar as duas.
-Devolve nas secções: Concedo / Contesto / Síntese proposta. Máx. 300 palavras.
-```
+Reviewer unavailable or it fails → proceed; log `F-<NN> — revisão independente não feita (<razão>)` in
+`council-log.md` and say so in step 7. A frame that was not reviewed is never presented as reviewed.
 
-Collect the `Concedo / Contesto / Síntese proposta` returns and re-invoke chairman-synthesis with theses + antitheses. Cost cap: ≤6 extra calls per round; if there are more than 3 material divergences, take the 3 with the highest impact on the phase artefact and record the rest as Conflicted directly.
+### 6. Synthesis (chairman-synthesis, Framing mode)
 
-### 6. Hand off to chairman-synthesis
+Invoke the `chairman-synthesis` skill with the two returns — the analyst's proposal and the reviewer's
+findings —, the `<engagement>` paths, phase = `framing`, round = `F-<NN>`. It applies the chairman's
+evidence rules (`chairman-synthesis` → *Framing inputs*): agreement between the two is not evidence; a
+factual finding with a locator is a correction by evidence; a factual divergence without a locator
+becomes `Conflicted` (`partes = analista∧revisor`); a recommendation divergence (wording, scope,
+emphasis of the sentence) is **not** settled by the synthesis — it is listed for the owner and asked in
+step 7. There is no antithesis round (Q5). It writes `frame.md`, the new SU rows and the synthesis log.
 
-Invoke the `chairman-synthesis` skill with:
-
-- The 6 persona outputs (just collected).
-- The current `<engagement>` paths.
-- Phase = `framing`, round = `F-<NN>`.
-
-The chairman-synthesis skill writes `frame.md`, the new SU rows, and the synthesis log. Wait for it to return.
-
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' 'lens-outputs/_council-prep/*' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
 ### 7. Present the frame to the user and ask for validation
 
@@ -206,6 +185,7 @@ Em que se apoia:
 
 Perguntas em aberto que ainda pesam: <nenhuma | <pergunta curta> (U-nnn) …>
 Onde as fontes ainda se contradizem: <nenhuma | <contradição curta> (X-nnn) …>
+O que o revisor independente contestou: <nada de material | <n> — <achado curto> (alvo) … | a revisão não foi feita — <razão>>
 
 O que tem de sobreviver até às alternativas (frame.md):
   O que o processo significa:        <uma linha (ids)> | nada — <porquê>
@@ -232,7 +212,7 @@ A frase do problema não mudou desde que foi aprovada (D-00x) — continua aprov
 A seguir: → `/options` para pôr as alternativas na mesa.
 ```
 
-Otherwise ask via `AskUserQuestion` (never a prose question): *Aceitar a frase* (description: registo a aprovação como uma decisão própria (D-NNN) em `decisions.md`, com a impressão digital da frase) · *Editar a frase* (description: escreve a tua versão em "Other"; escrevo-a em `frame.md` e registo essa) · *Mais passagens de descoberta* (description: volto à etapa de ouvir e perguntar; `/round` corre de novo).
+Otherwise ask via `AskUserQuestion` (never a prose question): *Aceitar a frase* (description: registo a aprovação como uma decisão própria (D-NNN) em `decisions.md`, com a impressão digital da frase) · *Usar a frase do revisor* (only when the reviewer proposed one; description: a alternativa do revisor independente, e porquê) · *Editar a frase* (description: escreve a tua versão em "Other"; escrevo-a em `frame.md` e registo essa) · *Mais passagens de descoberta* (description: volto à etapa de ouvir e perguntar; `/round` corre de novo). Every recommendation divergence the synthesis listed for the owner is decided here, by the owner — never by the synthesis.
 
 ### 8. On validation, write the approval (this skill)
 
@@ -293,10 +273,8 @@ A seguir: comparar alternativas — aqui entra pela primeira vez a perspectiva t
 
 ## Notes
 
-- **Concurrency**: the 6 personas must launch in a single assistant message (one message with 6 parallel Task tool uses). Sequential launches defeat the cost envelope advantage described in `library/kernel/orchestration.md`.
-- **One prompt template.** Every persona prompt is the same preamble with substitutions; the return
-  schema inside it is owned by `chairman-synthesis`, its only consumer. Persona files carry identity,
-  mandate and memory — nothing mechanical.
-- **Only the chairman writes the SU.** The 6 personas have `tools: [Read, Grep, Glob]` and return their proposals as text — they cannot write even if they tried.
+- **Subagents** (README → *Regras de execução*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
+- **One return schema.** The analyst writes its proposal in the schema `chairman-synthesis` owns (*Council launch preamble* → the six sections), so the synthesis reads Framing as it reads any return.
+- **Only the synthesis writes the SU.** The reviewer has `tools: [Read, Grep, Glob]` and returns findings as text — it cannot write even if it tried.
 - **The survival block is a projection, not a second truth.** Semantic ownership of invariants, constraints, obligations and Unknowns stays in the SU; `frame.md` names ids. If the chairman notices a missing material item while framing, the SU row is written first and projected second (`chairman-synthesis` step 6). `/options` personas read the block; the Options blocking set remains the primary candidate-specific check.
 - **Idempotence**: re-running `/frame` is allowed (produces F-02, F-03, …). The previous `frame.md` is overwritten; chairman-synthesis-F-<NN>.md from each round is preserved.

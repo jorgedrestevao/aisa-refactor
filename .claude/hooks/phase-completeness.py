@@ -9,7 +9,8 @@ Soft gate by design (CLAUDE.md principle 5): it reports, never blocks, always ex
 Silent when the phase is complete.
 
 Every check below is grounded in a skill's documented "Outputs (written)" section:
-  .claude/skills/aisa-frame/SKILL.md    steps 3-6 (council) and 8/8c (validation)
+  .claude/skills/aisa-frame/SKILL.md    steps 3-6 (analyst + reviewer since handoff-v1 F3.4;
+                                        the six personas on the historical version) and 8/8c
   .claude/skills/aisa-options/SKILL.md  same shape, 7 personas
   .claude/skills/aisa-decide/SKILL.md   D-NNN + chained _synthesis/
   .claude/skills/chairman-synthesis/SKILL.md  the options.md content rule
@@ -28,6 +29,7 @@ from pathlib import Path
 COUNCIL_6 = ["business-analyst", "operations-lead", "user-advocate",
              "data-steward", "compliance-officer", "cfo-lens"]
 COUNCIL_7 = COUNCIL_6 + ["solution-architect"]
+FRAMING_PREP = ["analyst", "reviewer"]
 SYNTHESIS_PACKS = ["business-story", "as-is", "architecture-story",
                    "risks-and-assumptions", "financial-story"]
 
@@ -117,7 +119,13 @@ def check_framing(eng: Path, rnd: str, su: str) -> tuple[list, list]:
         sentence = " ".join(l.strip().lstrip(">").strip()
                             for l in m.group(1).splitlines() if l.strip())
     prep = eng / "lens-outputs" / "_council-prep"
-    missing_prep = [p for p in COUNCIL_6 if not (prep / f"{rnd}-{p}.md").is_file()]
+    # handoff-v1 F3.4: a profile engagement frames with the integrated analyst + one
+    # independent reviewer (aisa-frame steps 5-5b); the historical version ran six personas.
+    if read_state(eng).get("workflow"):
+        expected, label = FRAMING_PREP, "_council-prep analista + revisor"
+    else:
+        expected, label = COUNCIL_6, "_council-prep 6/6 personas"
+    missing_prep = [p for p in expected if not (prep / f"{rnd}-{p}.md").is_file()]
     rows = su_has_round(su, rnd)
     council = [
         (bool(frame.strip()), "frame.md escrito", f"{len(frame)} caracteres"),
@@ -127,8 +135,8 @@ def check_framing(eng: Path, rnd: str, su: str) -> tuple[list, list]:
          "cabecalho: " + (frame.splitlines()[0][:60] if frame else "-")),
         ((eng / "lens-outputs" / f"chairman-synthesis-{rnd}.md").is_file(),
          f"chairman-synthesis-{rnd}.md", ""),
-        (not missing_prep, f"_council-prep 6/6 personas",
-         "em falta: " + ", ".join(missing_prep) if missing_prep else "6/6"),
+        (not missing_prep, label,
+         "em falta: " + ", ".join(missing_prep) if missing_prep else "presentes"),
         (rows > 0, f"rows novas no SU com ronda {rnd}", f"{rows} rows"),
         (rnd in read_text(eng / "council-log.md"), f"council-log menciona {rnd}", ""),
         ("Framing" in read_text(eng / "shared-understanding.md")[:600],

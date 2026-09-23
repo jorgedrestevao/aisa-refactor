@@ -963,6 +963,16 @@
      "role": "reader",
      "mechanism": "Independent reviewer of the lens coverage record (T19): reads the published SU rows the record cites and returns one verdict per perspective. Tools Read/Grep/Glob; writes nothing — aisa-round puts the returned semantic_review in the draft and finalizes it.",
      "evidence": ".claude/agents/lens-coverage-reviewer.md: Inputs (shared-understanding.md published); tools line"
+    },
+    {
+     "file": ".claude/agents/frame-reviewer.md",
+     "kind": "agent",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.4",
+     "mechanism": "Independent reviewer of a Framing proposal (Q4): reads the published SU rows the proposal cites and the closed resolutions, returns findings. Tools Read/Grep/Glob; writes nothing — chairman-synthesis applies the findings.",
+     "evidence": ".claude/agents/frame-reviewer.md: Inputs (shared-understanding.md); tools line"
     }
    ],
    "mention_only": [
@@ -3776,6 +3786,16 @@
      "role": "reader",
      "mechanism": "Reads the draft lens coverage record (lens_coverage.dimensions, conflict_scan) and returns its semantic_review block (coverage-contract.md §4.8).",
      "evidence": ".claude/agents/lens-coverage-reviewer.md: Inputs, Output"
+    },
+    {
+     "file": ".claude/skills/aisa-frame/SKILL.md",
+     "kind": "skill",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F3.4",
+     "mechanism": "Step 2 soft gate reads the lens coverage record of the last completed Discovery round (coverage.py round-state); the gate log carries the same criterion from dashboard.gate_state.",
+     "evidence": ".claude/skills/aisa-frame/SKILL.md step 2 (perspectives_covered)"
     }
    ],
    "mention_only": [

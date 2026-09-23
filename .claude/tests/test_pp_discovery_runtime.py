@@ -191,7 +191,10 @@ class TestDegradation(unittest.TestCase):
                   encoding="utf-8") as fh:
             options = fh.read()
         self.assertIn("extra_signals", options)
-        self.assertIn("Identical to `aisa-frame` step 4b", options)
+        # handoff-v1 F3.4: /frame no longer runs the council, so Options carries the
+        # resolution itself instead of inheriting it from /frame step 4b.
+        self.assertIn("the same resolution `aisa-round` step 3.6 performs", options)
+        self.assertIn("empty list", options)
 
     def test_status_degrades_without_a_question_bank(self):
         with open(os.path.join(ROOT, ".claude", "skills", "aisa-status", "SKILL.md"),

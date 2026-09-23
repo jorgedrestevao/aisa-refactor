@@ -14,7 +14,7 @@
 1. **Discovery before solution, always.** Lenses do not mention vendor/product before the Options phase.
 2. **Shared Understanding as process artefact; deliverables as transition artefacts.** SU is the source of truth during the engagement; the 6 deliverables are rendered at the end.
 3. **5 knowledge states**: Confirmed / Assumed / Unknown / Conflicted / Risky. No state×tag combinatorics. Confirmed/Assumed carregam validade — conhecimento expira e revalida-se (`library/kernel/states.md` → *Epistemic half-lives*).
-4. **Council híbrido** by phase: inline in Discovery; council-independent (parallel subagents) in Framing/Options. Decision is interactive (user-driven; optional `/decide --consult` technology review).
+4. **Orquestração por fase, subagente só com benefício**: Discovery = uma análise integrada das seis perspectivas (inline) + um revisor independente da cobertura; Framing = análise integrada + um revisor independente; Options = conselho de personas em paralelo (até F5). Decision is interactive (user-driven; optional `/decide --consult` technology review). Um subagente só se define quando não precisa do contexto de quem o lança e só o veredicto volta (`library/kernel/orchestration.md` → *When a subagent is justified*).
 5. **Soft gates, hard integrity**: phase gates are warnings, overrideable with justification. Integrity fails closed: `library/` is read-only at runtime, coordinated state is written only by the coordinator, an engagement of the historical version is read-only, and a `Confirmed` row needs a locator (hooks `pre-write-guard`, `pre-authority-guard`, `pre-profile-check`).
 6. **Native Claude Code primitives**: skills, agents, hooks, commands. No reinvention.
 7. **Pack activo per-engagement**: declared in `projects/<slug>/_state.json.pack`. Not global.
@@ -47,7 +47,7 @@
 | Command | Purpose |
 |---|---|
 | `/start <slug> [pack]` | New engagement |
-| `/round [lens\|--close]` | Run a Discovery round — sem argumento corre as 6 perspectivas pela ordem obrigatória; `/round <lens>` corre **uma** isolada, sem pré-requisito, por qualquer ordem; `--close` dá a passagem por fechada |
+| `/round [perspectiva\|--close]` | Run a Discovery round — sem argumento, **uma** análise integrada das seis perspectivas (`library/kernel/lens-checklists.md`), com revisão independente da cobertura, e a passagem fecha pelo registo `lens` do coverage; `/round <perspectiva>` aprofunda uma, sem fechar; `--close` fecha com o registo que houver |
 | `/capture [file]` | Process-capture an input file (`.xlsx`/`.xlsm`): deterministic extraction + replay + process model into `_capture/`. Auto-runs in `/start` and on stale hashes in `/round` |
 | `/answer <id> "..."` | Resolve an Unknown/Conflicted/Assumed/Risky row (state transition + answers.md) |
 | `/status` | O que falta para o próximo passo — 7 blocos em linguagem de negócio: resumo em 3 linhas (onde estamos · o que falta · o que tens de fazer tu) · alerta só se houver · o que falta (top-3 + também importa) · agenda da próxima reunião · desde a última passagem · confiança no que sabemos · `A seguir:` |

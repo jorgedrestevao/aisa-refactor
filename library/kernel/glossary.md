@@ -44,7 +44,7 @@ The kernel vocabulary is precise and **stays**: in files, ids, column names and 
 | **Decision** | Phase 4 — the user chooses; then blueprint, synthesis, render. | a escolha — e o que vem depois: o desenho dos ecrãs e os documentos finais |
 | **Round** (`ronda`, `R-nn` · `F-nn` · `O-nn` · `D-nn`) | One pass through a phase. Multiple rounds per phase are normal. | uma passagem das perspectivas pelo material |
 | **Lens** (`lens`) | A perspective skill (business, operations, ...). Independent, idempotent. | perspectiva (negócio, operações, utilizador, dados, controlo, custo) |
-| **Mode** (`inline` · `council-independent`) | Orchestration style: sequential with shared context, or parallel and isolated. See [`orchestration.md`](orchestration.md). | as perspectivas uma a uma · as perspectivas em paralelo |
+| **Mode** (`inline` · `analyst + reviewer` · `council-independent`) | Orchestration style: one integrated analysis with shared context (Discovery); the analyst proposes and one independent reviewer contests (Framing); parallel isolated personas (Options, until F5). See [`orchestration.md`](orchestration.md). | uma análise com as seis perspectivas · uma análise com revisão independente · as perspectivas em paralelo |
 | **State** | One of Confirmed, Assumed, Unknown, Conflicted, Risky. See [`states.md`](states.md). | o grau de certeza de cada linha do registo |
 | **Confirmed** | Claim backed by evidence with a resolvable locator. | o que está verificado (e onde) |
 | **Assumed** | Claim held with a declared basis, not yet verified. | o que estamos a assumir (e porquê) |
@@ -61,7 +61,7 @@ The kernel vocabulary is precise and **stays**: in files, ids, column names and 
 | **Override** | Proceeding past a soft gate with a logged reason. | avançar mesmo assim, com a razão registada |
 | **Hard guard** | A hook-enforced integrity rule: `library/` is read-only at runtime; coordinated state is written only by the coordinator; an engagement of the historical version is read-only; a `Confirmed` row needs a locator. | regra que o sistema não deixa quebrar |
 | **Chairman** | The synthesizer in council-independent mode. The only writer to the SU in that mode. | quem junta as conclusões das perspectivas |
-| **Council** | The agents (one per lens) running in parallel via Task subagents. | as perspectivas em paralelo |
+| **Council** | The agents (one per lens) running in parallel via Task subagents — Options only since handoff-v1 F3 (evaluated again in F5). | as perspectivas em paralelo |
 | **Half-life** (validade) | Decay class of a Confirmed/Assumed row; past it, the row is expired and must be revalidated. See [`states.md`](states.md). | até quando um facto vale sem reconfirmar |
 | **Expired** (`expirada`) | A Confirmed/Assumed row past its half-life. | precisa de reconfirmar — não quer dizer que esteja errado |
 | **Epistemic health** (`Saúde epistémica`) | Share of Confirmed/Assumed rows still within validity. | quanto do que sabemos ainda está em prazo |

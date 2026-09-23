@@ -1,6 +1,6 @@
 ---
 name: chairman-synthesis
-description: Synthesize N parallel council-persona outputs into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame and aisa-options after their persona Task subagents return. The only writer to the Shared Understanding in council-independent mode. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
+description: Synthesize the returns of a phase into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame (the integrated analyst's proposal + one independent reviewer's findings) and by aisa-options (the parallel council personas). The only writer to the Shared Understanding in council-independent mode. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
 ---
 
 # chairman-synthesis
@@ -26,9 +26,25 @@ You are executing the **chairman** role described in `.claude/agents/chairman.md
 
 `<engagement>` resolves to `$AISA_ENGAGEMENTS_ROOT/<slug>` if set, otherwise `projects/<slug>`. `<pack>` is read from `_state.json.pack`.
 
+## Framing inputs (handoff-v1 F3, decisions Q4/Q5)
+
+In Framing there is no council. The calling skill (`aisa-frame` steps 5–5b) hands you **two** returns:
+
+- the **integrated analyst**'s proposal (`lens-outputs/_council-prep/F-<NN>-analyst.md`), in the six-section return schema below;
+- the **independent reviewer**'s findings (`lens-outputs/_council-prep/F-<NN>-reviewer.md`, from the `frame-reviewer` agent): per finding, target, severity, kind (`fact` | `recommendation`), premise/evidence, failure scenario, closing condition; the coverage of its review; optionally an alternative sentence. It may be absent — the review was not done — and then the log says so.
+
+Read every step below with "persona" meaning either of the two, and apply the same evidence rules:
+
+- **Agreement is not evidence.** The analyst and the reviewer agreeing never raises a state; only a locator of the *Confirmed threshold* does.
+- **A `fact` finding with a locator** that contradicts a claim is a correction by evidence (`library/kernel/states.md` → *Correction by evidence*): a transition, never an in-place edit.
+- **A `fact` finding without a locator** that contradicts a claim is a `Conflicted` row, `partes = analista∧revisor`. Never pick a winner.
+- **A `recommendation` finding** (the sentence's wording, scope or emphasis) is not settled here: list it under `## For the owner to decide` in the synthesis log, and `aisa-frame` step 7 puts it to the owner through `AskUserQuestion`. The sentence you write in `frame.md` is the analyst's, with the corrections by evidence applied.
+- **Step 2b does not run in Framing**: there is no antithesis round (Q5).
+- In `frame.md` → *Anchors*, the *Source persona(s)* column reads `analista`, `revisor` or both.
+
 ## Council launch preamble (canonical)
 
-`aisa-frame` step 5 and `aisa-options` step 5 build **every** persona Task prompt from this one block,
+`aisa-options` step 5 builds **every** persona Task prompt from this one block (`aisa-frame` no longer launches personas; its analyst writes the return schema at the foot of this block),
 substituting the `<…>` placeholders. It is authored here because the schema at its foot has exactly one
 consumer — the synthesis procedure below — and a schema authored away from its parser drifts from it.
 No persona file carries any of this (`library/kernel/orchestration.md` → *Council-independent mode* and
@@ -137,7 +153,7 @@ Maintain a working table per category:
 
 ### Step 2b — Dialectic hand-back (when ≥1 material divergence)
 
-Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-frame`/`aisa-options`); it runs the antithesis round (max 3 divergences × 2 Task calls) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: an accepted synthesis settles a **recommendation or a disposition** only — it goes to the phase artefact or to a finding, never to a `Confirmed` row. A **factual** divergence becomes `Confirmed` only if the antithesis produced a locator (*Confirmed threshold*); otherwise it is a `Conflicted` row (never silently pick a winner). Divergences still open when the cap is reached are escalated, never accepted by exhaustion (`library/kernel/orchestration.md` → *Dialectic round*). If there are no material divergences — or this is already the second invocation — continue to Step 3.
+Options only — in Framing this step does not run (*Framing inputs* above). Do NOT write yet. Return the material-divergence list to the calling skill (`aisa-options`); it runs the antithesis round (max 3 divergences × 2 Task calls) and re-invokes you with theses + antitheses. On the second invocation, incorporate the `Concedo/Contesto/Síntese proposta` sections: an accepted synthesis settles a **recommendation or a disposition** only — it goes to the phase artefact or to a finding, never to a `Confirmed` row. A **factual** divergence becomes `Confirmed` only if the antithesis produced a locator (*Confirmed threshold*); otherwise it is a `Conflicted` row (never silently pick a winner). Divergences still open when the cap is reached are escalated, never accepted by exhaustion (`library/kernel/orchestration.md` → *Dialectic round*). If there are no material divergences — or this is already the second invocation — continue to Step 3.
 
 ### Step 3 — Assign Shared Understanding states
 
@@ -397,7 +413,7 @@ Write `<engagement>/lens-outputs/chairman-synthesis-<round>.md` (e.g., `chairman
 # Chairman Synthesis — Round <round> / Phase <phase>
 
 ## Personas heard
-- <comma-separated list of persona names that returned>
+- <comma-separated list of persona names that returned — in Framing: `analista integrado`, `frame-reviewer` (or `revisão não feita — <razão>`)>
 
 ## Overlaps → strengthened
 - "<claim>" — anchored by <personas> → <SU id> (<state>)

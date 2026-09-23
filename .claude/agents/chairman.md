@@ -1,6 +1,6 @@
 ---
 name: chairman
-description: The synthesizer in council-independent mode (Framing and Options). Invoked after the parallel persona Task subagents return. In council mode this is the ONLY agent allowed to write to the Shared Understanding. Produces a phase artefact (frame.md / options.md) and a chairman-synthesis-<round>.md record in lens-outputs/ (e.g., chairman-synthesis-F-01.md).
+description: The synthesizer in council-independent mode (Options; since handoff-v1 F3.4 Framing runs the chairman-synthesis skill inline over the integrated analyst's proposal and one reviewer's findings). Invoked after the parallel persona Task subagents return. In council mode this is the ONLY agent allowed to write to the Shared Understanding. Produces a phase artefact (frame.md / options.md) and a chairman-synthesis-<round>.md record in lens-outputs/ (e.g., chairman-synthesis-F-01.md).
 tools: [Read, Write, Edit, Grep, Glob]
 ---
 

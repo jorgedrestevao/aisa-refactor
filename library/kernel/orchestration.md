@@ -4,8 +4,11 @@
 
 Each phase declares its mode in [`phases.md`](phases.md):
 
-- **`inline`**: lenses run sequentially in the current thread, sharing accumulated context. Used in Discovery. The habitual order is mandatory for a full round and a preference otherwise: `/round <lens>` runs one lens alone, in any order (`phases.md` → *Rounds*).
-- **`council-independent`**: each lens runs as a Task subagent (concurrent), seeing only `context.json` + a thematic Shared Understanding excerpt. The chairman synthesizes outputs. Used in Framing/Options/Decision.
+- **`inline`**: one integrated analysis in the current thread applies the six perspectives of `lens-checklists.md`, with the whole accumulated context. Used in Discovery (`/round`); an independent reviewer reads the coverage record when the round closes (*Inline mode* below).
+- **`analyst + reviewer`** (handoff-v1 F3): the integrated analyst proposes inline; one independent reviewer, a subagent with fresh context, contests; the chairman's evidence rules settle the synthesis. Used in Framing (*Framing mode* below).
+- **`council-independent`**: each persona runs as a Task subagent (concurrent), seeing only `context.json` + a thematic Shared Understanding excerpt. The chairman synthesizes outputs. Used in Options until F5, where the council is evaluated by the subagent rule below. Decision is interactive (user-driven).
+
+**When a subagent is justified** (handoff-v1; README → *Regras de execução*). A subagent is defined only when both hold: the task does **not** need the context of whoever launches it, and its detail does **not** have to come back — only its verdict. Independence between an author and a reviewer is the typical case, and the subagent is the only way to get it. Everything else runs inline; in doubt, inline. Parallelism is a further choice, taken only when the subagents are independent of each other and the gain is real; a reviewer runs after what it reviews, never beside it.
 
 ## Evidence contract — parse once, reason many
 
@@ -161,10 +164,18 @@ It is consulted selectively, at question-generation time, to phrase askable ques
 
 ## Inline mode
 
-- Order is fixed in `phases.md`: `business → operations → user → data → governance → financial` (Discovery).
-- Each lens reads: `context.json`, `shared-understanding.md`, `lens-outputs/` (of previous lenses in this round), and the shared evidence the orchestrator carries in (`_capture/evidence-index.md`).
-- Each lens writes: rows to the Shared Understanding + `lens-outputs/<lens>.md`.
+- One integrated analysis applies the six perspectives of `lens-checklists.md` (the single owner of their questions and of the evidence of their coverage); the governance conflict scan runs last inside it. No order is policed — there is one analysis, not six.
+- It reads: `context.json`, `shared-understanding.md`, `enquadramento.md`, `lens-outputs/` (earlier rounds), and the shared evidence the orchestrator carries in (`_capture/evidence-index.md`).
+- It writes, through one draft: rows to the Shared Understanding + a block per perspective in `lens-outputs/<perspective>.md`. Then the `lens` coverage record (`coverage-contract.md` §4.8), which is what closes the round.
+- One reviewer subagent (`lens-coverage-reviewer`) reads the record once, when the round closes, and returns a verdict per perspective (T19).
 - The orchestrator skill (`aisa-round`) drives the sequence.
+
+## Framing mode (handoff-v1 F3)
+
+- The integrated analyst, in framing mode, proposes inline: the single sentence, its anchors, the confirmation or correction of each `M-n`, the survival candidates — in the return schema `chairman-synthesis` owns.
+- One reviewer subagent (`frame-reviewer`, `tools: [Read, Grep, Glob]`, fresh context, paths only) contests it with findings: target, severity, kind (`fact` | `recommendation`), premise/evidence, failure scenario, closing condition.
+- `chairman-synthesis` applies the evidence rules: agreement is not evidence; a `fact` finding with a locator corrects by evidence; without one it is `Conflicted`; a `recommendation` divergence goes to the owner through `AskUserQuestion`. There is no antithesis round.
+- The six council personas are not launched in Framing.
 
 ## Declared technical premises (P-25)
 
@@ -180,7 +191,7 @@ record; the offer is never *we will use it without recording it*.
 
 ## Council-independent mode
 
-- 6 or 7 agents launched **in parallel via concurrent Task subagents**.
+- Options only (until F5). 7 agents launched **in parallel via concurrent Task subagents**.
 - Each agent receives:
   - `context.json` (read-only).
   - A thematic Shared Understanding excerpt curated by the orchestrator (e.g., for the data lens: only `lens: data` rows).
@@ -193,19 +204,19 @@ record; the offer is never *we will use it without recording it*.
   - Writes new rows to the Shared Understanding.
   - Writes `chairman-synthesis-<round>.md` in `lens-outputs/` (`F-<NN>` in Framing, `O-<NN>` in Options — the Decision phase runs no council synthesis).
 
-**Common council mechanics live here, not in the persona files.** The invocation carries them, authored once and used verbatim by `aisa-frame` step 5 and `aisa-options` step 5: read-only tool grant · no in-flight peer reads · the persona returns, never writes · the two hard rules that bind a read-only persona (no vendor/product naming outside Options; no `Confirmed` without evidence) · the persona return schema (owned by `chairman-synthesis`, its only consumer) · the shared-evidence pointer (see *Evidence contract* above) · the pack attention cues.
+**Common council mechanics live here, not in the persona files.** The invocation carries them, authored once and used verbatim by `aisa-options` step 5: read-only tool grant · no in-flight peer reads · the persona returns, never writes · the two hard rules that bind a read-only persona (no vendor/product naming outside Options; no `Confirmed` without evidence) · the persona return schema (owned by `chairman-synthesis`, its only consumer) · the shared-evidence pointer (see *Evidence contract* above) · the pack attention cues.
 
 **Persona boundary.** **Agent = independent perspective + mandate.** A persona file (`.claude/agents/<persona>.md`) carries primarily: identity, perspective, phase mandate, what it challenges, and its memory binding. It does **not** duplicate kernel state semantics (`states.md`), orchestration, full lens procedures, common output schemas, or domain knowledge. **A council persona is not required to re-read its lens `SKILL.md`** — the invocation carries what binds it, and one channel is chosen deliberately: two would drift. Only `solution-architect` reads pack domain knowledge, pull-based and Options-only (see *Pack context* above).
 
 ## Dialectic round
 
-Full peer review was rejected for cost. Its surgical replacement: when the chairman detects **material divergences** between persona outputs (claim vs counter-claim that would change the phase artefact), the orchestrator runs an antithesis round for those points ONLY — each side attacks the other's strongest thesis and returns `Concedo / Contesto / Síntese proposta`. Cap: **3 divergences × 2 calls = ≤6 extra passes** per council round. Divergences that survive the antithesis become Conflicted rows; the chairman never silently picks a winner. Thesis → antithesis → synthesis, only where there is real disagreement.
+Options only — retired in Framing by handoff-v1 F3 (Q5), where a factual divergence without a locator becomes `Conflicted` and a recommendation divergence goes to the owner. Full peer review was rejected for cost. Its surgical replacement: when the chairman detects **material divergences** between persona outputs (claim vs counter-claim that would change the phase artefact), the orchestrator runs an antithesis round for those points ONLY — each side attacks the other's strongest thesis and returns `Concedo / Contesto / Síntese proposta`. Cap: **3 divergences × 2 calls = ≤6 extra passes** per council round. Divergences that survive the antithesis become Conflicted rows; the chairman never silently picks a winner. Thesis → antithesis → synthesis, only where there is real disagreement.
 
 **What a synthesis may settle** (handoff-v1). An accepted synthesis settles a recommendation, a ranking or a disposition — never a fact. A factual divergence becomes a `Confirmed` row only when the antithesis produced a locator of the *Confirmed threshold* classes (`states.md`); otherwise it is `Conflicted`. How many personas agree never changes an epistemic state. The cap is a ceiling, not a verdict: divergences still open when it is reached are **escalated** — to the owner through `AskUserQuestion`, or recorded as a finding with its disposition — and never accepted by exhaustion.
 
-## Why parallel (not sequential isolated)
+## Why parallel in the Options council (not sequential isolated)
 
-Concurrent Task subagents complete the council round in ~1 LLM-pass-time, versus ~6× for sequential isolated. Claude Code supports parallelism natively for the Task tool. There is no race-condition risk because agents do not share writable state.
+Where a council runs (Options, until F5), concurrent Task subagents complete it in ~1 LLM-pass-time, versus ~7× for sequential isolated; agents do not share writable state. Parallelism is not a phase rule: it is justified only when the subagents themselves are (*When a subagent is justified*, above). Discovery and Framing run no parallel subagents.
 
 ## Peer review (omitted in MVP)
 
@@ -213,10 +224,10 @@ Karpathy's full pattern includes peer review (each agent comments on the neighbo
 
 ## Cost envelope per engagement
 
-- Discovery: ~6 lenses × ~2-3 rounds = 12-18 LLM passes (inline, cheaper per pass).
-- Framing: 6 agents + 1 chairman = 7 passes (council) + 0-6 dialectic passes (only on material divergence).
+- Discovery: 1 integrated analysis + 1 coverage review per round × ~2-3 rounds = 4-6 passes (inline).
+- Framing: 1 analysis + 1 reviewer + 1 synthesis = 3 passes (no dialectic).
 - Options: 7 agents + 1 chairman = 8 passes (council, technology enters) + 0-6 dialectic passes.
 - Decision: interactive (user-driven) + optional 1 solution-architect review (`/decide --consult`) + auto synthesize (5 topic packs) = 5-7 passes.
 - Render: 6 deliverables × 1 composition pass = 6 passes.
 
-**Total per engagement**: ~40-50 LLM passes.
+**Total per engagement**: ~25-35 LLM passes (handoff-v1 F3: Discovery and Framing without parallel personas).

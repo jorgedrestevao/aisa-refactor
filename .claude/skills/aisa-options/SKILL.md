@@ -115,19 +115,44 @@ If a soft criterion is red and no `--override` was passed → stop with a one-li
 
 ### 4. Compose thematic Shared Understanding excerpts
 
-Same slicing as `aisa-frame` for the first 6 personas — including the mandatory "Resoluções já fechadas (não re-litigar)" block in every excerpt. Add a 7th excerpt for `solution-architect`:
+For each of the 7 personas, slice the SU into a thematic excerpt (the council stays in Options until F5; `/frame` no longer runs it — handoff-v1 F3.4):
 
 | Persona | Slice |
 |---|---|
+| business-analyst | All rows where `lens = business` + any row touching shadow stakeholders, KPIs, sponsor authority |
+| operations-lead | All rows where `lens = operations` + any row touching as-is process steps, volumes, cycle times |
+| user-advocate | All rows where `lens = user` + any row touching personas, devices, accessibility |
+| data-steward | All rows where `lens = data` + any row touching sensitivity, ownership, retention |
+| compliance-officer | All rows where `lens = governance` + every Conflicted row + every row touching audit/access control |
+| cfo-lens | All rows where `lens = financial` + any row touching cost, volume × time anchors |
 | solution-architect | The **full** Shared Understanding (the architect needs the cross-lens picture) + the pack metadata files listed in *Inputs* + `frame.md` |
+
+Each excerpt is a Markdown fragment with the section headers preserved. **Every excerpt must ALSO include the resolved rows and their resolutions** (rows marked `resolved →` plus the `C-` rows carrying `(was …)`), under a heading "Resoluções já fechadas (não re-litigar)" — otherwise personas whose slice missed a resolution re-raise closed conflicts (observed in live validation).
 
 Each excerpt is saved transiently under `<engagement>/lens-outputs/_council-prep/O-<NN>-<persona>.md` for the audit trail.
 
 ### 4b. Assemble the common council context
 
-Identical to `aisa-frame` step 4b — shared evidence index, pack attention cues, memory pointer — with
-one difference: **`solution-architect` receives no Discovery `extra_signals`.** Its pack access is
-pull-based and its own (see step 5). Bookkeeping only; the orchestrator decides nothing about meaning.
+Bookkeeping only — the same resolution `aisa-round` step 3.6 performs, reused here. The orchestrator
+resolves paths and one manifest key; it decides nothing about what any of it means.
+
+a. **Shared evidence** — `<engagement>/_capture/evidence-index.md`. Present → carry its path into every
+   persona prompt. Absent → carry the explicit line
+   *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*; never let a persona
+   assume a shared capture exists. Name likewise any source reported `failed` or `skipped`. Do **not** rank, assign, summarize or bundle sources,
+   and do not build a per-persona evidence view: the index is a source map, and which of it matters
+   is the persona's judgement.
+b. **Pack attention cues** — read `_state.json.pack`, resolve `library/packs/<pack>/pack.yaml` →
+   `lenses_config.<lens>.extra_signals` for the lens each Discovery persona is the council voice of
+   (business-analyst → business · operations-lead → operations · user-advocate → user · data-steward →
+   data · compliance-officer → governance · cfo-lens → financial). Missing `pack` key, missing
+   `lenses_config.<lens>`, missing `extra_signals` or an empty list → inject nothing for that persona
+   and omit the cue line. A `pack.yaml` that does not parse is a visible failure — report it and stop.
+   Pass the tokens through **verbatim**: no scoring, ranking, filtering, reordering or rewriting.
+   **`solution-architect` receives no Discovery `extra_signals`.** Its pack access is pull-based and
+   its own (see step 5).
+c. **Memory pointer** — `.claude/agent-memory/_universal/<persona>/*.md` (incl. `diary.md`) and
+   `_tenant/<tenant>/<persona>/*.md`. A pointer, never contents.
 
 ### 5. Launch the 7 personas in parallel via the Task tool
 
@@ -223,7 +248,7 @@ A seguir: ensaiar antes de escolher → `/simulate`; o obituário do projecto �
 
 ## Notes
 
-- **Concurrency**: the 7 personas must launch in a single assistant message (one message with 7 parallel Task tool uses), mirroring `aisa-frame`.
+- **Concurrency**: the 7 personas must launch in a single assistant message (one message with 7 parallel Task tool uses). Whether the Options council keeps its personas is decided in F5 by the subagent rule (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
 - **One prompt template.** Every persona prompt is the same preamble with substitutions (plus the two
   architect-only lines); the return schema inside it is owned by `chairman-synthesis`, its only consumer.
 - **Domain knowledge is pulled, never preloaded.** The orchestrator does not read `decision-tree.md` or

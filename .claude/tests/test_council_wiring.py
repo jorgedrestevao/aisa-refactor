@@ -123,7 +123,8 @@ class TestNoFrameworkDuplicationInPersonas(unittest.TestCase):
     def test_council_prompts_do_not_send_personas_to_the_lens_skill(self):
         for name, skill in (("aisa-frame", FRAME), ("aisa-options", OPTIONS)):
             self.assertNotIn("your lens skill at", skill, name)
-            self.assertIn("do not tell", skill.lower(), name)
+        # only Options still launches personas (handoff-v1 F3.4)
+        self.assertIn("do not tell", OPTIONS.lower())
 
     def test_personas_shrank(self):
         for name, text in AGENTS.items():
@@ -133,9 +134,11 @@ class TestNoFrameworkDuplicationInPersonas(unittest.TestCase):
 class TestCommonMechanicsCentralized(unittest.TestCase):
     def test_preamble_exists_once(self):
         self.assertEqual(CHAIRMAN.count("## Council launch preamble"), 1)
-        for skill in (FRAME, OPTIONS):
-            self.assertIn("Council launch preamble", skill)
-            self.assertIn("chairman-synthesis/SKILL.md", skill)
+        # handoff-v1 F3.4: only Options launches personas; the /frame analyst writes the
+        # preamble's return schema, so it still names the preamble.
+        self.assertIn("Council launch preamble", OPTIONS)
+        self.assertIn("chairman-synthesis/SKILL.md", OPTIONS)
+        self.assertIn("Council launch preamble", FRAME)
 
     def test_preamble_carries_every_required_context_item(self):
         for needle in (
@@ -177,7 +180,7 @@ class TestSharedEvidenceInCouncil(unittest.TestCase):
 
     def test_no_persona_specific_evidence_routing(self):
         low = (FRAME + OPTIONS + PREAMBLE).lower()
-        self.assertIn("do not build a per-persona evidence view", FRAME.lower())
+        self.assertIn("do not build a per-persona evidence view", OPTIONS.lower())
         self.assertIn("no evidence has been assigned to you", PREAMBLE.lower())
         for banned in ("evidence bundle", "relevance score", "evidence router"):
             self.assertNotIn(banned, low)
@@ -193,10 +196,11 @@ class TestPackCues(unittest.TestCase):
         self.assertIn("an uncovered cue is not a gap", PREAMBLE)
 
     def test_cues_are_resolved_verbatim_and_degrade(self):
-        self.assertIn("extra_signals", FRAME)
-        self.assertIn("verbatim", FRAME)
-        self.assertIn("omit the cue line", FRAME.lower())
-        self.assertIn("no scoring, ranking, filtering, reordering or rewriting", FRAME)
+        for skill in (FRAME, OPTIONS):
+            self.assertIn("extra_signals", skill)
+            self.assertIn("verbatim", skill)
+            self.assertIn("omit the cue line", skill.lower())
+            self.assertIn("no scoring, ranking, filtering, reordering or rewriting", skill)
 
     def test_technology_is_excluded_from_the_discovery_cue_model(self):
         self.assertIn("receives no Discovery `extra_signals`", OPTIONS)
@@ -215,7 +219,10 @@ class TestPackCues(unittest.TestCase):
 class TestPhaseBoundaries(unittest.TestCase):
     def test_framing_stays_technology_neutral(self):
         self.assertIn("[Framing, all personas] No vendor or product names", PREAMBLE)
-        self.assertIn("keep the `[Framing, all personas]` technology-neutrality line", FRAME)
+        # handoff-v1 F3.4: Framing runs the analyst + one reviewer, both vendor-neutral.
+        self.assertIn("Framing is pre-technology — no vendor or product names", FRAME)
+        self.assertIn("no vendor or product names", read(".claude", "agents",
+                                                         "frame-reviewer.md").lower())
         vendors = (
             "power platform",
             "outsystems",
@@ -275,7 +282,7 @@ class TestMemoryBinding(unittest.TestCase):
 
     def test_memory_is_a_pointer_not_a_dump(self):
         self.assertIn("Memory (optional)", PREAMBLE)
-        self.assertIn("A pointer, never contents", FRAME)
+        self.assertIn("A pointer, never contents", OPTIONS)
 
 
 if __name__ == "__main__":
