@@ -1,6 +1,6 @@
 # Relatório de fase — F0
 
-Estado: **in_progress** — gate técnico cumprido; faltam as decisões do mantenedor listadas em *Gate de saída* (classic, CI, critérios de qualidade, autorização de F1).
+Estado: **completed** — gate cumprido e decisões do mantenedor registadas em §13 (2026-09-23).
 
 - Data e responsável: 2026-09-23 · Claude Code, sessão `session_0156MuyJemPPrVqRKiDrAsct`, por autorização do mantenedor.
 - Repositório, branch e SHA: `jorgedrestevao/aisa-refactor`, branch `claude/clone-repo-awui-7mmi37`. Início de F0 (v1.2): `262fa70`, árvore igual à baseline. Último commit: ver `git log` da branch (este relatório entra no commit de fecho).
@@ -181,7 +181,7 @@ Evidência: 5 famílias de engagements reais referenciadas (`pricing-marinha*`, 
 | B — compatibilidade limitada | Importação única dos engagements nomeados, sem runtime duplo, reutilizando dry-run/backup do `migrate.py` | Médio por formato de origem | Promoção indevida na importação (mitigada pelo passo 7 de 07) |
 | C — manter o runtime classic | Dois runtimes, hooks e suites | Alto e contínuo | Divergência de gates entre perfis |
 
-Recomendação: **A**, com B só para os engagements que o mantenedor nomear. Factos que só o mantenedor confirma: que engagements existem e estão activos no repositório privado; se `pricing-bunkers-v2` continua; se há cópias fora de `projects/`.
+Recomendação: **A**, com B só para os engagements que o mantenedor nomear. **Decisão do mantenedor: A** (sem importação de engagements nomeados). Factos que só o mantenedor confirma: que engagements existem e estão activos no repositório privado; se `pricing-bunkers-v2` continua; se há cópias fora de `projects/`.
 
 ## 13. Gate de saída
 
@@ -191,16 +191,25 @@ Recomendação: **A**, com B só para os engagements que o mantenedor nomear. Fa
 | Todos os ficheiros-alvo resolvidos | cumprido (62 resoluções; ambiguidades em P4) |
 | Grupos legados classificados por relevância actual | cumprido como proposta (164 componentes + 75 testes); 11 itens "indeciso" encaminhados ao mantenedor |
 | T01/T02 | pass |
-| Decisão classic (F0 item 6) | **pendente do mantenedor** (§12) |
+| Decisão classic (F0 item 6) | **decidido pelo mantenedor: opção A** (§12) |
 
-Critérios de qualidade de 06 (a confirmar **antes** de observar resultados): pendente do mantenedor.
+Critérios de qualidade de 06: **confirmados pelo mantenedor tal como estão**, antes de observar resultados (2026-09-23). São critérios de gate do programa.
+
+Decisões do mantenedor registadas no fecho de F0 (2026-09-23, via pergunta explícita):
+
+| Tema | Decisão | Consequência |
+| --- | --- | --- |
+| Classic | **A — sem runtime classic na versão nova**; engagements sem perfil ficam só de leitura e continuam, se preciso, na versão histórica | D-F1-02/04/07 sem ramo classic; `pre-lens-order-check` e testes de ordem de lentes vão para eliminação em F3; T35 deixa de ser obrigatório (só rejeição segura, T03/T36) |
+| CI (D16) | **Dois jobs**: suite completa com dependências de teste (acrescentar python-docx e pypdf ao `requirements-dev.txt`) e job só stdlib para os testes dos motores (ADR-001) | D-F1-01 fechado; implementado em F1 |
+| Critérios de qualidade (06) | Confirmados tal como estão | Gate do programa |
+| F1 | **Autorizado**, começando por D01 (nascimento do `/start`) e pelo CI | Início de F1 |
 
 ## 14. Blockers e riscos
 
 | ID | Âmbito | Impacto | Responsável | Condição de fecho |
 | --- | --- | --- | --- | --- |
-| B1 | Decisão classic | Condiciona D-F1-02/04/07 | mantenedor | Resposta registada neste relatório |
-| B2 | CI vermelho (D16) | Sem evidência de CI para gates de release | mantenedor | D-F1-01 decidido e aplicado em F1 |
+| B1 | Decisão classic | — | mantenedor | **fechado**: opção A |
+| B2 | CI vermelho (D16) | Sem evidência de CI para gates de release até F1 aplicar a decisão | implementador | D-F1-01 decidido (dois jobs); fecha quando o CI ficar verde em F1 |
 | R1 | Hooks activos na sessão de implementação (P3) | Uma mudança de hook pode bloquear a própria sessão | implementador | Testar cada hook novo por subprocesso antes de o registar |
 | R2 | 30 testes dependem de dados privados e saltam aqui | Garantias não verificáveis neste ambiente | — | Reportadas como not-run, nunca como pass |
 | R3 | Inventário por agentes | Erros de papel residuais | — | O T02 garante completude; os papéis têm evidência e adjudicação |
@@ -215,8 +224,8 @@ F0 só acrescenta ficheiros (§3). Rollback: `git revert` dos commits de F0 na b
 - Inputs necessários: `docs/handoff-v1/plan/` (v1.2) e `docs/handoff-v1/F0/*`.
 - Resultados recebidos e não integrados: nenhum. Os resultados brutos dos agentes ficaram fora do repo; o que conta está consolidado nos JSON.
 - Ambiente: `pip install PyYAML openpyxl python-docx pypdf`; regressão com `python .github/run_tests.py` (esperado: 76/76, 2638, 34 skips, 3 xfail).
-- Próxima acção segura: registar as respostas do mantenedor (§13) neste relatório e fechar F0.
-- Autorização necessária antes de continuar: decisão classic, D-F1-01, confirmação dos critérios de 06 e autorização explícita de F1.
+- Próxima acção segura: iniciar F1, incremento 1 (CI em dois jobs + ordem de nascimento do `/start`, D01), com relatório em `docs/handoff-v1/F1/RELATORIO.md`.
+- Autorização: F1 autorizado pelo mantenedor em 2026-09-23. Push para a branch de trabalho autorizado a cada commit; sem PR nem merge sem pedido.
 
 ## 17. Proposta para F1
 
