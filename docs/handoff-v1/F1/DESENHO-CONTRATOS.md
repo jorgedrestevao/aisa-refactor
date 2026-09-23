@@ -1,6 +1,6 @@
 # F1 — Desenho dos contratos (proposta)
 
-Estado: **proposta**. Nada aqui altera o runtime. As decisões Q1–Q6 são do mantenedor; as I-nn são escolhas internas, revertíveis, com base no plano e registadas para objecção. A implementação só começa depois das respostas a Q1–Q6.
+Estado: **Q1–Q6 decididas pelo mantenedor (2026-09-23), todas na opção recomendada (a)**. As I-nn são escolhas internas, revertíveis, com base no plano e registadas para objecção. Implementação pelos incrementos de §4.
 
 Base: plano v1.2 (`../plan/`), F0 (`../F0/RELATORIO.md` §7 defeitos, §11 decisões, §13 decisões do mantenedor). Decisão classic **A**: sem runtime classic na versão nova; engagement sem perfil = legado, só leitura; continua, se preciso, em `jorgedrestevao/aisa@85baf10`.
 
@@ -8,14 +8,14 @@ Convenção: **EXISTE** = verificado no código com `ficheiro:linha`; **PROPOSTO
 
 ## 1. Decisões do mantenedor
 
-| Q | Pergunta | Opções | Recomendação | Porquê é do mantenedor |
+| Q | Pergunta | Opções | Recomendação → **decisão** | Porquê é do mantenedor |
 | --- | --- | --- | --- | --- |
-| Q1 | Como impedir a versão histórica de escrever num engagement novo (T36; 07 matriz "Antigo → Handoff novo") | (a) grafo dos engagements `handoff-v1` com `schema_version = 2`; (b) só o campo de perfil em `_state.json`; (c) raiz de engagements diferente | (a) | Muda o contrato do grafo e exclui a versão histórica dos engagements novos |
-| Q2 | Vocabulário de rota e despacho no pack e no orquestrador (D15, P10) | (a) nomes do plano (`supported_workflow_profiles`, `supported_routes`, `design_contract_version`) e emendar os 2 testes e `orchestration.md` para distinguir despacho por perfil/rota de encaminhamento por conteúdo; (b) nomes que não colidam (`workflow_profiles.<p>.route_kinds`) e testes intactos | (a) | Muda uma regra de fronteira do orquestrador e dois testes de contrato do pack |
-| Q3 | Onde vivem tipo, impacto, âmbito, fecho, bloqueio e referências de uma pergunta (D-F1-02) | (a) colunas novas nas tabelas Unknown/Conflicted da SU; (b) ficheiro lateral indexado pelo id da SU | (a) | Muda o schema da SU, que é a fonte de verdade |
-| Q4 | Declaração de âmbito (SCOPE-STATEMENT v1, `CLAUDE.md:5-6`, `pack.yaml:4-5`) | (a) v2 alargada à decisão **e** ao desenho construível; (b) manter v1 | (a), texto em §2.2 | Muda o que o aisa diz que é |
-| Q5 | Como se cria um engagement na versão nova enquanto o perfil é experimental | (a) `/start` pergunta sempre o perfil (`AskUserQuestion`: `handoff-v1` experimental, ou sair para a versão histórica); (b) só com `--profile handoff-v1`; sem ele, recusa e aponta a versão histórica | (a) | Muda a entrada do produto durante o rollout |
-| Q6 | D02: `/status`, `/resume` e `aisa-orient` escrevem na SU (`aisa-status/SKILL.md:53`) | (a) deixam de escrever; a saúde epistémica passa a ser só calculada e mostrada; (b) manter a escrita só em engagements `handoff-v1` | (a) | Muda o comportamento de um comando de leitura; D-F1-17 pede autorização |
+| Q1 | Como impedir a versão histórica de escrever num engagement novo (T36; 07 matriz "Antigo → Handoff novo") | (a) grafo dos engagements `handoff-v1` com `schema_version = 2`; (b) só o campo de perfil em `_state.json`; (c) raiz de engagements diferente | (a) → **(a)** | Muda o contrato do grafo e exclui a versão histórica dos engagements novos |
+| Q2 | Vocabulário de rota e despacho no pack e no orquestrador (D15, P10) | (a) nomes do plano (`supported_workflow_profiles`, `supported_routes`, `design_contract_version`) e emendar os 2 testes e `orchestration.md` para distinguir despacho por perfil/rota de encaminhamento por conteúdo; (b) nomes que não colidam (`workflow_profiles.<p>.route_kinds`) e testes intactos | (a) → **(a)** | Muda uma regra de fronteira do orquestrador e dois testes de contrato do pack |
+| Q3 | Onde vivem tipo, impacto, âmbito, fecho, bloqueio e referências de uma pergunta (D-F1-02) | (a) colunas novas nas tabelas Unknown/Conflicted da SU; (b) ficheiro lateral indexado pelo id da SU | (a) → **(a)** | Muda o schema da SU, que é a fonte de verdade |
+| Q4 | Declaração de âmbito (SCOPE-STATEMENT v1, `CLAUDE.md:5-6`, `pack.yaml:4-5`) | (a) v2 alargada à decisão **e** ao desenho construível; (b) manter v1 | (a), texto em §2.2 → **(a)** | Muda o que o aisa diz que é |
+| Q5 | Como se cria um engagement na versão nova enquanto o perfil é experimental | (a) `/start` pergunta sempre o perfil (`AskUserQuestion`: `handoff-v1` experimental, ou sair para a versão histórica); (b) só com `--profile handoff-v1`; sem ele, recusa e aponta a versão histórica | (a) → **(a)** | Muda a entrada do produto durante o rollout |
+| Q6 | D02: `/status`, `/resume` e `aisa-orient` escrevem na SU (`aisa-status/SKILL.md:53`) | (a) deixam de escrever; a saúde epistémica passa a ser só calculada e mostrada; (b) manter a escrita só em engagements `handoff-v1` | (a) → **(a)** | Muda o comportamento de um comando de leitura; D-F1-17 pede autorização |
 
 Impacto de cada opção em §2; recomendações fundamentadas no mesmo sítio.
 

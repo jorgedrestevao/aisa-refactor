@@ -1,6 +1,6 @@
 # Relatório de fase — F1
 
-Estado: **in_progress** — F1.1 (CI) e F1.2 (nascimento do `/start`) integrados; desenho dos contratos (F1.3) em curso; nenhum contrato de `library/` alterado ainda.
+Estado: **in_progress** — F1.1 (CI) e F1.2 (nascimento do `/start`) integrados; desenho dos contratos (F1.3) fechado com as decisões Q1–Q6; nenhum contrato de `library/` alterado ainda.
 
 - Data e responsável: 2026-09-23 · Claude Code, sessão `session_0156MuyJemPPrVqRKiDrAsct`, por autorização do mantenedor (F0 §13: «Sim, avançar para F1», começando pelo nascimento do `/start` e pelo ambiente de CI).
 - Repositório, branch e SHA: `jorgedrestevao/aisa-refactor`, branch `claude/clone-repo-awui-7mmi37`. Início de F1: `d7afc5d` (fecho de F0). Último commit: ver `git log` da branch.
@@ -32,6 +32,14 @@ Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; 
 
 - **D-F1-01 (CI)**, decidida pelo mantenedor: dois jobs. Os mínimos de versão em `requirements-dev.txt` são as versões com que a baseline correu (`test-baseline.json` → `environments.devdeps`), não versões escolhidas por conveniência.
 - **Execução em paralelo** (regra do mantenedor, 2026-09-23): workflows paralelos só para tarefas que não precisam do contexto da sessão e cujo detalhe não acrescenta nada à sessão. O desenho dos contratos F1 tinha sido lançado como workflow paralelo (run `wf_a1920f13-d01`: 6 desenhadores e uma revisão cruzada, só leitura). Parado por decisão do mantenedor com 2 agentes em curso; nenhum resultado foi recebido nem integrado. O desenho passou para a sessão. Regra registada em [../README.md](../README.md) → *Regras de execução*.
+- **Desenho dos contratos F1** ([DESENHO-CONTRATOS.md](DESENHO-CONTRATOS.md)), com evidência `ficheiro:linha`. Decisões do mantenedor, 2026-09-23, todas na opção recomendada:
+  - Q1 vedação contra a versão histórica: grafo `schema_version = 2` nos engagements `handoff-v1`;
+  - Q2 nomes do plano no pack (`supported_workflow_profiles`, `supported_routes`, `design_contract_version`), com emenda dos testes que recusam `routes:` e da fronteira do orquestrador;
+  - Q3 campos da pergunta como colunas novas da SU;
+  - Q4 SCOPE-STATEMENT v2;
+  - Q5 `/start` pergunta sempre o perfil;
+  - Q6 (D02) `/status`, `/resume` e `aisa-orient` deixam de escrever na SU.
+  As escolhas internas I-01..I-14 ficam registadas para objecção.
 - **D01**: a ordem nova foi provada com os hooks reais antes de mudar a skill (simulação em diretório temporário: a ordem antiga é recusada por `pre-authority-guard.py` no Write da SU; a ordem nova passa todos os passos, o bootstrap fica `ready` e `M-1` chega ao grafo com `mirror_of = SU:M-1`). `docs/ONBOARDING.md` §3.2 descreve uma sequência sem linhas `M-n` (SU, estado, `init`) que não é recusada. Fica por alinhar com a documentação de F7, não com este incremento.
 
 ## 4. Testes
@@ -64,5 +72,5 @@ F1.1 e F1.2 revertem com `git revert` do commit respectivo. Não há dados de en
 - Última operação integrada: F1.2 (`7989bdf`).
 - Inputs/revisões necessários: plano v1.2; F0/RELATORIO.md §11 (decisões D-F1-02..17) e §17 (proposta de F1).
 - Drafts/resultados recebidos ainda não integrados: nenhum. O workflow de desenho foi parado sem resultados (§3); o desenho dos contratos F1 corre na sessão.
-- Próxima ação segura: fechar o desenho dos contratos e apresentar ao mantenedor as decisões materiais antes de qualquer mudança em `library/`.
-- Autorização necessária antes de continuar: decisões materiais de contrato (perfil/rota/schema, capacidades do pack, materialidade, evidência).
+- Próxima ação segura: F1.4 de [DESENHO-CONTRATOS.md](DESENHO-CONTRATOS.md) §4 (`workflow.py`, schemas, capacidades do pack, `/start` com perfil e rota, grafo schema 2).
+- Autorização necessária antes de continuar: nenhuma nova para F1.4–F1.8 (Q1–Q6 decididas). Uma escolha nova que mude contrato volta ao mantenedor.
