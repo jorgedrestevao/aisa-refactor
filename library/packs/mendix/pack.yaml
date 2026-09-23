@@ -1,0 +1,56 @@
+pack_id: mendix
+pack_version: 0.1.0-skeleton
+display_name: "Mendix Discovery (skeleton)"
+language: pt
+description: >
+  Skeleton pack for Mendix engagements. Populated by the engagement
+  team when the first Mendix discovery starts. See docs/PACK_AUTHORING.md
+  for the populate sequence.
+
+deliverables: []
+
+lenses_config:
+  business:
+    extra_signals: []
+  operations:
+    extra_signals: []
+  user:
+    extra_signals: []
+  data:
+    extra_signals: []
+  technology:
+    constraints_to_check: []   # Mendix-specific: licensing tier, app cloud tier, REST/SOAP integration limits
+  governance:
+    extra_signals: []
+  financial:
+    extra_signals: []
+
+domain_knowledge: []
+
+question_bank: question-bank.md
+glossary: glossary.md
+
+decision_tree:
+  source: decision-tree.md
+  consulted_in_phase: options
+
+blueprint:
+  # Runtime hardening / bloco A — keys this pack ADDS to the kernel's required top-level
+  # keys of ux-blueprint_vNN.yaml (blueprint-contract.md -> Validação estrutural, BP-REQ-KEY).
+  # Empty: the kernel's list is enough for this pack today.
+  required_keys: []
+
+vendor_terms:
+  # Termos que nomeiam uma solucao deste pacote (ver pp/pack.yaml para a regra).
+  solution:
+    - mendix
+    - mendix studio
+    - mendix cloud
+
+enquadramento:
+  # Temas que ESTE pacote acrescenta a entrevista de enquadramento do kernel
+  # (library/kernel/phases.md -> Phase 0). Lista de {id, question_pt, when}.
+  # Vazia: os sete temas do kernel bastam a este pacote, e o conjunto condicional
+  # `pricing` vive no kernel porque pricing e uma forma que um processo tem, nao uma
+  # propriedade de uma plataforma de digitalizacao.
+  extra_themes: []

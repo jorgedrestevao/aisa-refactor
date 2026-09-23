@@ -1,0 +1,58 @@
+pack_id: outsystems
+pack_version: 0.1.0-skeleton
+display_name: "OutSystems Discovery (skeleton)"
+language: pt
+description: >
+  Skeleton pack for OutSystems engagements. Populated by the engagement
+  team when the first OutSystems discovery starts. See docs/PACK_AUTHORING.md
+  for the populate sequence: glossary → question-bank → decision-tree →
+  deliverable-templates → domain-knowledge.
+
+deliverables: []   # to be filled — start by transplanting from pp and adapting
+
+lenses_config:
+  business:
+    extra_signals: []
+  operations:
+    extra_signals: []
+  user:
+    extra_signals: []
+  data:
+    extra_signals: []
+  technology:
+    constraints_to_check: []   # OutSystems-specific: licensing tier, LifeTime ALM, integration extensions
+  governance:
+    extra_signals: []
+  financial:
+    extra_signals: []
+
+domain_knowledge: []   # to be populated with OutSystems patterns
+
+question_bank: question-bank.md   # to be created
+glossary: glossary.md              # to be created
+
+decision_tree:
+  source: decision-tree.md         # to be created
+  consulted_in_phase: options
+
+blueprint:
+  # Runtime hardening / bloco A — keys this pack ADDS to the kernel's required top-level
+  # keys of ux-blueprint_vNN.yaml (blueprint-contract.md -> Validação estrutural, BP-REQ-KEY).
+  # Empty: the kernel's list is enough for this pack today.
+  required_keys: []
+
+vendor_terms:
+  # Termos que nomeiam uma solucao deste pacote (ver pp/pack.yaml para a regra).
+  solution:
+    - outsystems
+    - service studio
+    - integration studio
+    - lifetime
+
+enquadramento:
+  # Temas que ESTE pacote acrescenta a entrevista de enquadramento do kernel
+  # (library/kernel/phases.md -> Phase 0). Lista de {id, question_pt, when}.
+  # Vazia: os sete temas do kernel bastam a este pacote, e o conjunto condicional
+  # `pricing` vive no kernel porque pricing e uma forma que um processo tem, nao uma
+  # propriedade de uma plataforma de digitalizacao.
+  extra_themes: []

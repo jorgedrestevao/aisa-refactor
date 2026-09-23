@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "status": "FULLY_VALIDATED",
+  "pilot_id": "pricing-bunkers-pilot-4",
+  "p8_type": "Excel com regras, cálculos e dependências",
+  "source_files": [
+    {
+      "path": "projects/pricing-bunkers-pilot-4/inputs/PRE#U00c7O BANCAS_03_08_26.xlsm",
+      "sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "note": "18 folhas, 13 262 fórmulas, 134 named ranges de negócio, VBA presente",
+      "filename_warning": "O nome no disco é literalmente `PRE#U00c7O BANCAS_03_08_26.xlsm`. O `Ç` foi mangled na importação. Locators devem usar o nome literal, não o corrigido."
+    },
+    {
+      "path": "projects/pricing-bunkers-pilot-4/inputs/Processos Pricing - Marinha-20260126_150836-Grava#U00e7#U00e3o da Reuni#U00e3o-pt-BR.vtt",
+      "sha256": "19a82a5adc8de65b396f35ea60c8709d6360a5edca00c71ba7e770daf6dce8c5",
+      "note": "1808 falas, 62 399 caracteres, sem marcação de orador"
+    },
+    {
+      "path": "(fora do versionamento) Pricing_Bancas_Especificacao/",
+      "sha256_of_01": "284f6b7e117ecbab7fe6f00283b1e7af811ddaf636ece7c94e59e6ef530047a3",
+      "note": "Especificacao fornecida pelo operador em 2026-09-22, que fechou P-10. NAO versionada: sao regras de negocio de pricing do cliente (margens, premios, codigos Platts, logistica por porto), da mesma familia dos engagements em `projects/`, que ficam fora do git por decisao do operador. Referenciada por sha256, como os pilotos. Versiona-la e decisao dele, nao minha."
+    }
+  ],
+  "baseline_identity": "6066c999e85389d6e9efe7a3e0d3f55a9b10c4fa",
+  "reviewed_by": "Claude (extracção) — validação do responsável do processo PENDENTE nos itens críticos",
+  "review_method": "Leitura directa do .xlsm com openpyxl (data_only=False, keep_vba=True) e do .vtt em texto. Nenhum artefacto de `_capture/` foi lido. Traçado exaustivo dos named ranges e da simetria entre folhas; a cadeia aritmética NÃO foi traçada (ver P-10).",
+  "reviewed_at": "2026-09-21",
+  "items": [
+    {
+      "id": "P-01",
+      "proposition_or_relation": "As quatro folhas `usd_ton`/`eur_ton`/`usd_m3`/`eur_m3` sao o MESMO calculo em quatro apresentacoes. No ficheiro autoritativo: 668 formulas cada, 250 padroes cada, 250/250 partilhados.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "anexos/formulas_completas.json (13 197 registos) — comparacao de padroes normalizados entre as quatro folhas",
+      "source_sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+      "expected_resolution": "Re-medido sobre o ficheiro autoritativo (2026-09-22).",
+      "gate_expectation": "Tratá-las como quatro regras distintas multiplica por 4 o esforço estimado. É erro material de dimensionamento.",
+      "review_notes": "Confirmado nas DUAS versoes. No .xlsm eram 667 formulas / 249 padroes, no .xlsx 668 / 250 — uma formula de diferenca entre versoes, e a propriedade estrutural identica em ambas. Tratar as quatro como calculos distintos multiplica a estimativa por quatro.",
+      "validation": "CLOSED_BY_REMEASURE"
+    },
+    {
+      "id": "P-02",
+      "proposition_or_relation": "O preço decompõe-se em **componentes nomeados por cliente × produto**, não num valor único. O vocabulário é: Margem, Prémio, TransporteBarge, TransporteCT, Desconto, DescontoAdicional, ISP, SLI, PrémioRef, PrémioCli, PrémioPub, PreçoDinheiro.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "134 named ranges de negócio, padrão `<Cliente>_<Produto>_<Componente>`",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Confirmado por parsing dos 134 nomes.",
+      "gate_expectation": "Perder a decomposição é perder o modelo de dados. Um preço escalar não representa isto.",
+      "review_notes": "A transcrição corrobora: «o prémio de cedência do supply», «está relacionado à margem». | Confirmado pela especificacao do ficheiro autoritativo.",
+      "validation": "CLOSED_BY_SPEC"
+    },
+    {
+      "id": "P-03",
+      "proposition_or_relation": "A origem do cálculo é um **feed de mercado externo**: `UlyssesQuotes` traz cotações identificadas por `model://ECB_FX/`, `model://PLATTS_RI/`, `model://PLATTS_EB/` e `model://ICE_GASOIL/`. 525 linhas desde 2023-01-02, **zero fórmulas** — dados importados.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "UlyssesQuotes!A1:J525 — cabeçalhos literais `model://…`",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Confirmado por leitura dos cabeçalhos e ausência de fórmulas.",
+      "gate_expectation": "Qualquer solução tem de resolver a ingestão destas cotações. Omiti-la é omitir a dependência externa central.",
+      "review_notes": "ECB para câmbio, Platts e ICE para produto. São fornecedores de dados de mercado, não ficheiros internos. | Confirmado pela especificacao do ficheiro autoritativo.",
+      "validation": "CLOSED_BY_SPEC"
+    },
+    {
+      "id": "P-04",
+      "proposition_or_relation": "`Inputs` e a maior folha do livro: 1470 linhas, 134 colunas, 89 970 celulas nao vazias, 7906 formulas, ZERO erros em cache. O historico e mecanismo, nao arquivo.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "anexos/inventario_folhas.json -> Inputs; named ranges `Data_Lista` e `Index_TaxaCambio` sobre B9:B1469 / R9:R1469 (1461 linhas de dados)",
+      "source_sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+      "expected_resolution": "Re-medido sobre o ficheiro autoritativo (2026-09-22).",
+      "gate_expectation": "O histórico é parte do mecanismo, não arquivo. Uma solução que só guarde o presente perde-o.",
+      "review_notes": "Confirmado no ficheiro autoritativo, com os mesmos numeros do .xlsm. `cachedErrors: 0` nesta folha — os 497 erros do P-13 estao noutras.",
+      "validation": "CLOSED_BY_REMEASURE"
+    },
+    {
+      "id": "P-05",
+      "proposition_or_relation": "Existem **duas datas distintas**, uma calculada e uma superficie de intervencao manual: `Data_Output` e `Data_Manual`. No ficheiro autoritativo o par de nivel-livro resolve em `'Relatorio Precos'!$B$5` e `$C$5`; alem disso cada folha de apresentacao (`Simulador`, `usd_ton`, `eur_ton`, `usd_m3`, `eur_m3`) tem o seu proprio par em `$C$6`/`$C$7`. `Data_Output` e mecanismo vivo: o `Motor` le-o directamente (`XLOOKUP(Data_Output, Data_Lista, ...)` e `WEEKDAY(Data_Output,2)`).",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "Named ranges `Data_Output`/`Data_Manual`: scope de livro -> `'Relatorio Precos'!$B$5`/`$C$5`; scope por folha -> `<folha>!$C$6`/`$C$7` em Simulador, usd_ton, eur_ton, usd_m3, eur_m3. Uso em Motor!B19, Motor!C25:C26, Motor!C42.",
+      "source_sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+      "expected_resolution": "Re-medido sobre o ficheiro autoritativo (2026-09-22).",
+      "gate_expectation": "Afirmar que o processo é totalmente automático contradiz a existência de `Data_Manual`.",
+      "review_notes": "A transcrição diz «não exige intervenção manual» sobre ALGO — não foi determinado sobre o quê. Não usar essa frase para negar este facto. | A spec CORRIGE os meus locators: os nomes globais apontam para `Relatorio Precos!C5/B5`, e as 5 folhas ocultas redefinem-nos localmente (C7/C6). Eu li os locais como se fossem globais. O facto — ha override manual — mantem-se, e ganha profundidade: ha seletores independentes no modelo. || RE-ANCORADO 2026-09-22: a correccao acima ja estava na nota, mas o campo `source_locator` ficou com as coordenadas do `.xlsm` substituido (`Outputs!$C$6`/`$C$7`). Medicao directa das duas versoes confirma-a de forma independente: o `.xlsx` renomeia `Outputs` -> `Relatorio Precos` e `Outputs BIOS` -> `Relatorio Precos Bios`; o par de nivel-livro passa a `$B$5`/`$C$5`; os pares por folha sao IDENTICOS nas duas versoes (`$C$6`/`$C$7`), tal como o conjunto dos 127 named ranges de padrao `<Cliente>_<Produto>_<Componente>`, cujos alvos nao mudaram — so o nome da folha do scope. A substancia mantem-se; so as coordenadas do locator foram corrigidas. Medido da fonte, nunca de saida de candidato.",
+      "validation": "CLOSED_BY_REMEASURE"
+    },
+    {
+      "id": "P-06",
+      "proposition_or_relation": "As macros VBA do .xlsm sao LEGADO e nao estao em uso. O ficheiro autoritativo (.xlsx) nao tem VBA sequer.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "Entrada `xl/vbaProject.bin` no zip do .xlsm",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Declarado pelo operador (2026-09-22) e coerente com a spec, que descreve `.xlsx sem VBA executavel`.",
+      "gate_expectation": "Ambito morto — NAO entra em estimativa. Antes era o oposto: 'estimar so pelas formulas subestima'. Ja nao subestima.",
+      "review_notes": "Fechado. Duas evidencias independentes concordam: a declaracao do operador e a spec do ficheiro autoritativo.",
+      "validation": "CLOSED_BY_OPERATOR"
+    },
+    {
+      "id": "P-07",
+      "proposition_or_relation": "Taxonomia: **11 clientes**, **22 produtos**, **47 componentes**, dos quais ~25 são portos portugueses (Aveiro, Leixões, Lisboa, Sines, Setúbal, Portimão, Viana, Figueira da Foz, Matosinhos, Nazaré, Olhão, Peniche, Póvoa de Varzim, Sesimbra, V.N.Gaia, Vila do Conde, Cascais, Lagos, Quarteira, Tavira, Sagres, Fuzeta, Régua-Lamego, Vila Real de S. António).",
+      "epistemic_state": "Confirmed",
+      "criticality": "noncritical",
+      "source_locator": "Parsing dos 134 named ranges de negócio",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Confirmado por contagem.",
+      "gate_expectation": "A dimensão portuária é logística, não comercial: transporte por porto.",
+      "review_notes": "Clientes incluem Marinha, SACOR, SEACARRIER, AçoreanaMutualista, ClientesNacionais.",
+      "validation": "not_required"
+    },
+    {
+      "id": "P-08",
+      "proposition_or_relation": "`Simulador` (606 fórmulas, 80×104) espelha a estrutura das folhas de output — é superfície de *what-if*.",
+      "epistemic_state": "Confirmed",
+      "criticality": "noncritical",
+      "source_locator": "Simulador!A1:CZ80 comparado com eur_ton",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Confirmado por dimensão e padrões partilhados.",
+      "gate_expectation": "Capacidade de simulação já existe no as-is e deve constar do enquadramento.",
+      "review_notes": "",
+      "validation": "not_required"
+    },
+    {
+      "id": "P-09",
+      "proposition_or_relation": "Os preços correm em **cadência semanal**.",
+      "epistemic_state": "Assumed",
+      "criticality": "noncritical",
+      "source_locator": "Transcrição, fala: «os preços são semanais e se corre o…»",
+      "source_sha256": "19a82a5adc8de65b396f35ea60c8709d6360a5edca00c71ba7e770daf6dce8c5",
+      "expected_resolution": "Uma só afirmação, sem corroboração no ficheiro. Confirmar com o responsável.",
+      "gate_expectation": "Não promover a Confirmed sem segunda fonte.",
+      "review_notes": "O ficheiro tem série diária; semanal pode referir-se ao ciclo de publicação, não à granularidade dos dados.",
+      "validation": "not_required"
+    },
+    {
+      "id": "P-10",
+      "proposition_or_relation": "A cadeia de calculo, por componente e por ordem:\n  encargo  = premio + SLI            (SLI x FX medio N so em CIF MED DMA e HSFO; VLSFO e Diesel entram SEM conversao, apesar do cabecalho EUR/t)\n  cedencia = media(cotacao Platts) + encargo   (HSFO<-PUAAY00 · VLSFO<-PUMFD00 · DMA<-AAWZC00)\n  IFO180   = 0,9 x cedencia VLSFO + 0,1 x cedencia DMA\n  margem USD = margem EUR x FX medio\n  PRECO USD = cedencia USD + margem USD   |   EUR = cedencia EUR + margem EUR\n  O03 porto = minimo(produto/periodo) + logistica do porto - 10  (MGO: minimo DMA + logistica - 5 - 10)",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "Pricing_Bancas_Especificacao/01_Processo_Entradas_Calculos_Outputs.md seccoes C03, C04, C06, C07",
+      "source_sha256": "284f6b7e117ecbab7fe6f00283b1e7af811ddaf636ece7c94e59e6ef530047a3",
+      "expected_resolution": "Fechado pela especificacao fornecida pelo operador (2026-09-22).",
+      "gate_expectation": "Omitir a decomposicao, ou somar componentes por outra ordem, e erro material.",
+      "review_notes": "Fechado. A spec deriva das mesmas 13 197 formulas que o oraculo nao tinha tracado. Varias sub-regras continuam por decidir pelo NEGOCIO (ver P-12) — isso e decisao pendente, nao lacuna de extraccao.",
+      "validation": "CLOSED_BY_OPERATOR_SPEC"
+    },
+    {
+      "id": "P-11",
+      "proposition_or_relation": "Quais das 11×22 combinações cliente×produto estão activas e quais são históricas.",
+      "epistemic_state": "Unknown",
+      "criticality": "noncritical",
+      "source_locator": "Não determinável dos named ranges, que não distinguem activo de legado",
+      "source_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "expected_resolution": "Só o responsável do processo pode responder.",
+      "gate_expectation": "Não inferir actividade a partir da existência do nome.",
+      "review_notes": "",
+      "validation": "not_required"
+    },
+    {
+      "id": "P-12",
+      "proposition_or_relation": "As quatro decisoes de negocio, declaradas pelo operador em 2026-09-22:\n  Q04  SLI esta em EUR/t em TODAS as series. VLSFO e Diesel entrarem sem conversao e DEFEITO, nao regra -> `encargo = premio + SLI x FX` para todos.\n  Q05  «ISO F DMA» mantem Diesel 10ppm (apesar de existir AAYWS00); o MIN entre semana N e N-1 e regra deliberada e mantem-se.\n  Q06+Q07  a dupla conversao do premio na referencia do O02 e DEFEITO: converter exactamente uma vez, componentes normalizados USD/t somados nessa base. O HSFO deixa de usar a configuracao do VLSFO.\n  Q12  as cinco folhas ocultas de simulacao e o legado GMC sao HISTORICO — fora de ambito, fora da estimativa.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "Pricing_Bancas_Especificacao/06_Duvidas_Decisoes.md — 18 grupos",
+      "source_sha256": "b12fecd4ac0e5dba45c08a5962d5ad7554371f942d2c0876a1c219cb8ea3ee86",
+      "expected_resolution": "Declarado pelo operador (2026-09-22), por AskUserQuestion.",
+      "gate_expectation": "TRES destas mudam o to-be face ao as-is (Q04, Q06/Q07 como correccoes; Q12 como reducao de ambito). Uma solucao que replique o as-is fielmente esta ERRADA face a estas decisoes — e uma que as aplique nao reconcilia com os numeros publicados hoje. As duas coisas tem de conviver explicitamente.",
+      "review_notes": "Fechado. Nao estavam na especificacao: o `06_Duvidas_Decisoes.md` marca as 18 como «Pendente» e traz as perguntas, nao as respostas. Vieram do operador.",
+      "validation": "CLOSED_BY_OPERATOR"
+    },
+    {
+      "id": "P-13",
+      "proposition_or_relation": "O ficheiro carrega defeitos conhecidos e NAO corrigidos: 68 formulas com #REF!, 497 celulas com erro guardado (sobretudo BIOS e folhas ocultas), dupla conversao do premio na referencia do O02, e HSFO a usar premio/desconto da configuracao VLSFO.",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "00_LEIA_PRIMEIRO.md («Resultado essencial») e 01_… seccao C06",
+      "source_sha256": "284f6b7e117ecbab7fe6f00283b1e7af811ddaf636ece7c94e59e6ef530047a3",
+      "expected_resolution": "Confirmado pela especificacao.",
+      "gate_expectation": "Q04 e Q06/Q07 decidiram CORRIGIR dois dos defeitos (conversao do SLI e dupla conversao do premio). As 68 formulas #REF! e as 497 celulas com erro guardado continuam POR ADJUDICAR — nao foram cobertas por nenhuma das quatro decisoes. Replicar o as-is ja nao e o alvo; mas a reconciliacao com os numeros publicados hoje tem de mostrar a diferenca que as correccoes introduzem.",
+      "review_notes": "Nao foram corrigidos sem validacao de negocio — e a postura certa. | Confirmado pela especificacao do ficheiro autoritativo. | Parcialmente adjudicado: dois defeitos vao ser corrigidos por decisao; os #REF! e os erros em cache ficam em aberto.",
+      "validation": "CLOSED_BY_SPEC"
+    },
+    {
+      "id": "P-14",
+      "proposition_or_relation": "A cadeia AS-IS e a cadeia TO-BE divergem, e a divergencia e deliberada:\n  AS-IS  encargo = premio + SLI   (SLI x FX SO em CIF MED DMA e HSFO)\n  TO-BE  encargo = premio + SLI x FX   (sempre — Q04)\n  AS-IS  premio convertido DUAS vezes na referencia do O02\n  TO-BE  convertido exactamente uma vez (Q06/Q07)\n  AS-IS  HSFO usa premio/desconto da configuracao VLSFO\n  TO-BE  HSFO usa a sua propria",
+      "epistemic_state": "Confirmed",
+      "criticality": "critical",
+      "source_locator": "P-10 (as-is, da especificacao) confrontado com P-12 (to-be, do operador)",
+      "source_sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+      "expected_resolution": "Derivado de dois itens ja fechados; nada inferido.",
+      "gate_expectation": "O candidato NAO deve apresentar a cadeia to-be como descricao do processo actual, nem a as-is como especificacao do que construir. Confundi-las e o erro material deste piloto: a primeira reconcilia com o que existe, a segunda e o que foi decidido.",
+      "review_notes": "Este item nao veio de ler nada novo — veio de por P-10 e P-12 lado a lado. E o tipo de coisa que um oraculo tem de dizer, porque o candidato vai ver as duas cadeias nas fontes e tem de saber qual e qual.",
+      "validation": "DERIVED_FROM_CLOSED_ITEMS"
+    }
+  ],
+  "forbidden_claims": [
+    "Que as quatro folhas de moeda×unidade são quatro cálculos distintos (P-01).",
+    "Que o processo é totalmente automático — `Data_Manual` e o VBA dizem o contrário (P-05, P-06).",
+    "Qualquer regra numérica ou ordem de componentes não traçada (P-10).",
+    "Que a cadência semanal está confirmada (P-09 é Assumed).",
+    "Que um par cliente×produto está activo só porque o named range existe (P-11).",
+    "Apresentar o as-is como correcto: ha 68 #REF! e 497 celulas com erro guardado (P-13).",
+    "Apresentar a cadeia as-is como especificacao do to-be, ou vice-versa (P-14)."
+  ],
+  "extraction_limits": [
+    "A cadeia aritmetica DEIXOU de ser lacuna: a especificacao do operador fecha-a (P-10). O que resta e decisao de negocio por tomar (P-12), nao leitura por fazer.",
+    "13 262 fórmulas. Traçados exaustivamente: named ranges, dimensões, contagens e simetria entre folhas. A cadeia aritmética completa NÃO foi traçada — declarado em P-10 como Unknown crítico.",
+    "VBA presente e NÃO descompilado (P-06).",
+    "O nome do ficheiro está mangled no disco (`#U00c7` em vez de `Ç`).",
+    "A transcrição não tem marcação de orador: não é possível atribuir afirmações a papéis.",
+    "Valores em cache não avaliados: a referência é a fórmula.",
+    "Aviso do openpyxl: 'Data Validation extension is not supported and will be removed' — há validação de dados no livro que esta leitura não vê."
+  ],
+  "acceptance": {
+    "critical_recall": 1.0,
+    "critical_false_confirmed": 0,
+    "improper_gate_advances": 0
+  },
+  "owner_validation": {
+    "required_for": [],
+    "status": "COMPLETE",
+    "why": "P-10 fechou com a especificacao. Restam os itens estruturais por confirmar e, sobretudo, P-12: 18 grupos de decisoes que so o negocio toma."
+  },
+  "warning": "Todos os itens criticos fechados. Limitacao que fica: o ficheiro autoritativo (.xlsx) nao esta neste ambiente — as medicoes vieram dos anexos da especificacao, e o input do piloto continua a ser o .xlsm desactualizado.",
+  "authoritative_source": {
+    "decided_by": "operator",
+    "date": "2026-09-22",
+    "file": "PREÇO BANCAS_03_08_26.xlsx",
+    "sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+    "sheets": 19,
+    "has_vba": false,
+    "ruling": "O .xlsx da especificacao e a versao actual. O .xlsm que o engagement carrega (sha 677e7963…, 18 folhas, COM VBA) esta desactualizado.",
+    "consequence": [
+      "O input do piloto tem de ser SUBSTITUIDO pelo .xlsx antes de P8.",
+      "P-01 e P-04 foram RE-MEDIDOS sobre os anexos do ficheiro autoritativo e confirmam-se. A substituicao do input continua necessaria para P8 correr sobre a fonte certa.",
+      "Os locators da spec (`Motor!C24:H24`, `Relatorio!B5`) resolvem no .xlsx e NAO no .xlsm — as folhas `Motor`, `Relatorio Precos` e `Relatorio Precos Bios` nao existem no .xlsm, que tem `Outputs` e `Outputs BIOS` em vez.",
+      "O ficheiro autoritativo NAO existe neste ambiente. Ate chegar, P8 nao pode correr sobre a fonte certa."
+    ]
+  },
+  "remeasurements": [
+    {
+      "item": "P-05",
+      "date": "2026-09-22",
+      "reason": "locator apontava a folha `Outputs`, que nao existe no ficheiro autoritativo",
+      "from_sha256": "677e7963b162aba7e8155fbd2819489268d97a328f1858812877ed826100d158",
+      "to_sha256": "cf40be3ed65983d51e689d9d34ba1714fdb204794d34e89352be667be1692b52",
+      "method": "leitura directa dos named ranges das duas versoes com xlsx_extract.py; comparacao de alvos por (nome, scope)",
+      "substance_changed": false,
+      "note": "A nota de revisao ja registava a correccao vinda da spec; o que estava por corrigir era o campo `source_locator`."
+    }
+  ]
+}

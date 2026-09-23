@@ -1,0 +1,539 @@
+# -*- coding: utf-8 -*-
+"""Migracao legacy -> memoria persistente (contrato C1/C2).
+
+    python library/kernel/tools/migrate.py dry-run --engagement <slug> [--json]
+    python library/kernel/tools/migrate.py apply   --engagement <slug>
+    python library/kernel/tools/migrate.py restore --engagement <slug>
+
+Stdlib apenas (ADR-001). Escreve SEMPRE pelo coordenador (`operation.py`).
+
+O DRY-RUN NAO ESCREVE NO ENGAGEMENT (C1)
+    Le SU, respostas, decisoes e estado; produz o mapa origem -> destino, a classificacao
+    de cada item e as excepcoes. O relatorio fica FORA do snapshot — devolvido ao chamador,
+    nunca gravado no engagement. Um dry-run que escrevesse deixaria de ser ensaio.
+
+CLASSIFICACAO (C1.3) — cinco classes, e nenhuma e "mais ou menos"
+    projectable          projecta sem ambiguidade
+    already_represented  ja existe no grafo com o mesmo id
+    ambiguous            origem nao verificavel ou autoridade nao determinavel
+    invalid              a linha nao le (o parser marcou `malformed`)
+    unsupported          fora do que esta porte trata
+
+    Ambiguo NAO vira confirmado (M04). Um terceiro nao vira owner. Inferencia nao vira
+    confirmacao. Linha `resolved` nao reabre.
+
+REVERSAO (C2)
+    So sobre a MESMA revisao pos-migracao e sem trabalho posterior. Havendo trabalho novo,
+    o restore cego e recusado — preserva-se o que ha e reporta-se, em vez de escolher pelo
+    utilizador. Remove apenas os ficheiros NOVOS listados no manifesto; ficheiros alheios
+    nunca sao tocados.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import runpy
+import shutil
+import sys
+from datetime import date
+from pathlib import Path
+
+_HERE = Path(__file__).resolve().parent
+_D = runpy.run_path(str(_HERE / "dashboard.py"))
+_G = runpy.run_path(str(_HERE / "graph.py"))
+_O = runpy.run_path(str(_HERE / "operation.py"))
+
+MIGRATION_DIR = "_migration"
+MANIFEST = "manifest.json"
+BACKUP = "backup"
+RUNTIME_VERSION = "p5.1"
+
+SU_FILE = "shared-understanding.md"
+DECISIONS_FILE = "decisions.md"
+ANSWERS_FILE = "answers.md"
+STATE_FILE = "_state.json"
+# As autoridades TEXTUAIS que a migracao le e pode reescrever.
+TOUCHED = (SU_FILE, DECISIONS_FILE, ANSWERS_FILE, STATE_FILE)
+
+# O grafo tambem e estado que a migracao muda — e durante muito tempo nao estava aqui. Os
+# ficheiros do grafo so entravam em `new_files`, e SO quando nao existiam; um grafo que ja
+# existia (um engagement nascido com `init`, por exemplo) ficava com o conteudo da migracao
+# e o `restore` declarava `restored` na mesma, sem o verificar. Reverter e devolver o
+# estado inteiro, nao a parte dele que e texto.
+GRAPH_FILES = ("_graph/graph.jsonl", "_graph/meta.json")
+TOUCHED_ALL = TOUCHED + GRAPH_FILES
+
+PROJECTABLE = "projectable"
+ALREADY = "already_represented"
+AMBIGUOUS = "ambiguous"
+INVALID = "invalid"
+UNSUPPORTED = "unsupported"
+
+
+class MigrationError(Exception):
+    def __init__(self, message, code, detail=None):
+        super().__init__(message)
+        self.code = code
+        self.detail = detail or {}
+
+    def as_dict(self):
+        return {"error": str(self), "code": self.code, "detail": self.detail}
+
+
+def mig_dir(eng):
+    return Path(eng) / MIGRATION_DIR
+
+
+def _digests(eng):
+    eng = Path(eng)
+    out = {rel: _O["digest"](eng / rel) for rel in TOUCHED_ALL}
+    gd = Path(eng) / "_graph"
+    for rel in ("_graph/graph.jsonl", "_graph/meta.json"):
+        out[rel] = _O["digest"](eng / rel)
+    return out
+
+
+# ----------------------------------------------------------------- classificacao
+
+def classify(row, in_graph, known_ids=frozenset()):
+    """A classe de UMA linha da SU. Nunca inventa confirmacao (M04)."""
+    rid = (row.get("id") or "").strip()
+    if not rid:
+        return {"class": INVALID, "reason": "linha sem id"}
+    if str(row.get("malformed")) == "True":
+        return {"class": INVALID, "reason": "o parser marcou a linha como malformada"}
+    if rid in in_graph:
+        return {"class": ALREADY, "reason": "ja representado no grafo com o mesmo id"}
+
+    state = row.get("state") or ""
+    resolved = str(row.get("resolved")) == "True"
+    targets = row.get("resolved_to") or []
+    if isinstance(targets, str):
+        try:
+            targets = json.loads(targets.replace("'", '"'))
+        except ValueError:
+            targets = [t.strip() for t in targets.strip("[]").split(",") if t.strip()]
+
+    # resolvida para um sucessor que nao existe -> ambigua; nao se corrige por conta propria
+    if resolved and targets:
+        missing = [t for t in targets if str(t).strip() not in known_ids]
+        if missing:
+            return {"class": AMBIGUOUS, "state": state, "resolved_to": targets,
+                    "reason": "resolvida para sucessor inexistente: {}".format(
+                        ", ".join(missing))}
+        return {"class": PROJECTABLE, "state": state, "resolved_to": targets,
+                "reason": "linha resolvida — cadeia preservada"}
+    if resolved and not targets:
+        return {"class": AMBIGUOUS, "state": state,
+                "reason": "marcada resolvida sem sucessor identificavel"}
+
+    # autoridade nao determinavel numa linha aberta que a exige
+    if state in ("Unknown", "Conflicted"):
+        raw = row.get("support") or ""
+        o = _D["split_owner"](raw)
+        if raw.strip() and not (o.get("role") or o.get("source")) and not o.get("unassigned"):
+            return {"class": AMBIGUOUS, "state": state,
+                    "reason": "`quem responde` sem prefixo `role:`/`fonte:` — o motor nao "
+                              "julga se nomeia papel ou pessoa"}
+    return {"class": PROJECTABLE, "state": state, "reason": "projecta sem ambiguidade"}
+
+
+def active_decision(md):
+    """A decisao ACTIVA: a ultima que nao foi substituida (M02).
+
+    `classify_decisions` ja le `**Supersedes**: D-NNN` e retro-liga `superseded_by`. Usar o
+    que ele computa; varrer outra vez daria uma segunda leitura a divergir da primeira."""
+    blocks = _D["classify_decisions"](md or "")
+    superseded = {b["id"] for b in blocks if b.get("superseded_by")}
+    live = [b for b in blocks if b.get("id") not in superseded]
+    return {"all": [b.get("id") for b in blocks],
+            "superseded": sorted(superseded),
+            "active": live[-1].get("id") if live else ""}
+
+
+# ---------------------------------------------------------------------- dry-run
+
+def dry_run(eng):
+    """Le tudo, nao escreve NADA no engagement (C1.2)."""
+    eng = Path(eng)
+    if not (eng / SU_FILE).exists():
+        raise MigrationError("engagement sem `{}`".format(SU_FILE), "NO_SU",
+                             {"engagement": str(eng)})
+    md = (eng / SU_FILE).read_text(encoding="utf-8")
+    _h, rows, _s, _diag = _D["parse_su"](md)
+
+    st = _G["read"](eng)
+    if st["status"] not in (_G["OK"], _G["ABSENT"]):
+        raise MigrationError("grafo em estado `{}` — migrar exige ausente ou valido".format(
+            st["status"]), "GRAPH_NOT_MIGRATABLE", {"status": st["status"],
+                                                    "detail": st["detail"]})
+    in_graph = {n.get("id") for n in st.get("nodes", [])}
+
+    known_ids = {(r.get('id') or '').strip() for r in rows}
+    mapping, counts = [], {PROJECTABLE: 0, ALREADY: 0, AMBIGUOUS: 0,
+                           INVALID: 0, UNSUPPORTED: 0}
+    for r in rows:
+        c = classify(r, in_graph, known_ids)
+        counts[c["class"]] += 1
+        mapping.append({"source": "{}#{}".format(SU_FILE, r.get("id") or "?"),
+                        "id": r.get("id"), "state": r.get("state"),
+                        "destination": ("graph:node:{}".format(r.get("id"))
+                                        if c["class"] == PROJECTABLE else ""),
+                        "class": c["class"], "reason": c["reason"],
+                        "preserved": ["id", "state", "lens", "support", "ronda",
+                                      "resolved", "resolved_to", "was"],
+                        "resolved_to": c.get("resolved_to", [])})
+
+    dec_md = (eng / DECISIONS_FILE).read_text(encoding="utf-8") if (eng / DECISIONS_FILE).exists() else ""
+    decisions = active_decision(dec_md)
+
+    exceptions = [m for m in mapping if m["class"] in (AMBIGUOUS, INVALID, UNSUPPORTED)]
+    before = _digests(eng)
+    return {"engagement": str(eng), "runtime_version": RUNTIME_VERSION,
+            "when": date.today().isoformat(),
+            "before": before,
+            "plan_hash": hashlib.sha256(
+                json.dumps(before, sort_keys=True).encode("utf-8")).hexdigest(),
+            "rows": len(rows), "counts": counts, "mapping": mapping,
+            "decisions": decisions, "exceptions": exceptions,
+            "graph_status_before": st["status"],
+            "complete": not exceptions,
+            "note": ("migracao com excepcoes — nao declara sucesso total (C1)"
+                     if exceptions else "todas as linhas projectam sem ambiguidade")}
+
+
+# ------------------------------------------------------------------------ apply
+
+def _nodes_from(plan, rows_by_id):
+    nodes, edges = [], []
+    for m in plan["mapping"]:
+        if m["class"] != PROJECTABLE:
+            continue
+        r = rows_by_id.get(m["id"], {})
+        nodes.append({"id": m["id"], "type": "su-row",
+                      "props": {"state": m["state"] or "",
+                                "text": r.get("claim", ""),
+                                # A SU DECLARA a criticidade numa coluna propria. Sem a
+                                # projectar, quem le o grafo so tem o estado e infere
+                                # «aberta => critica»: no piloto de tickets isso dava 50
+                                # criticos em vez dos 15 declarados, e 50 nao cabem num
+                                # orcamento de 40. A informacao existia e era deitada fora.
+                                "criticidade": r.get("criticidade", ""),
+                                "resolved": str(r.get("resolved")) == "True"},
+                      "provenance": {"lens": r.get("lens", ""), "ronda": r.get("ronda", ""),
+                                     "support": r.get("support", ""),
+                                     "source": m["source"],
+                                     "migrated": plan["runtime_version"],
+                                     "mirror_of": "SU:" + str(m["id"])}})
+    have = {n["id"] for n in nodes}
+    for m in plan["mapping"]:
+        for t in (m.get("resolved_to") or []):
+            t = str(t).strip()
+            if m["id"] in have and t in have:
+                edges.append({"src": t, "rel": "was", "dst": m["id"], "props": {},
+                              "provenance": {"inferred": False,
+                                             "source": "SU resolved -> marker"}})
+    return nodes, edges
+
+
+def apply(eng, plan=None):
+    """Aplica pelo coordenador, com backup verificavel antes (C1.4, C1.5)."""
+    eng = Path(eng)
+    plan = plan or dry_run(eng)
+
+    # C1: entrada mudou depois do dry-run -> rejeitar plano antigo
+    now = _digests(eng)
+    if now != plan["before"]:
+        raise MigrationError("a entrada mudou depois do ensaio — recalcular", "PLAN_STALE",
+                             {"expected": plan["before"], "actual": now})
+
+    # No-op: o estado ACTUAL ja e o estado pos-migracao registado. Comparar `plan_hash`
+    # nao serve — ele deriva dos digests PRE-migracao, que mudam assim que se migra.
+    existing = read_manifest(eng)
+    if existing and existing.get("after") == now:
+        return {"result": "no_op", "reason": "migracao ja aplicada; o estado actual e o "
+                                             "estado pos-migracao registado",
+                "manifest": existing}
+
+    md = (eng / SU_FILE).read_text(encoding="utf-8")
+    _h, rows, _s, _d = _D["parse_su"](md)
+    rows_by_id = {(r.get("id") or "").strip(): r for r in rows}
+
+    st = _G["read"](eng)
+    nodes, edges = _nodes_from(plan, rows_by_id)
+    known = {n["id"] for n in st.get("nodes", [])}
+    nodes = [n for n in nodes if n["id"] not in known] + list(st.get("nodes", []))
+    edges = list(st.get("edges", [])) + [e for e in edges
+                                         if not any(x.get("src") == e["src"] and
+                                                    x.get("dst") == e["dst"]
+                                                    for x in st.get("edges", []))]
+
+    # backup verificavel ANTES de publicar
+    bdir = mig_dir(eng) / BACKUP
+    bdir.mkdir(parents=True, exist_ok=True)
+    backed, new_files = {}, []
+    for rel in TOUCHED_ALL:
+        src = eng / rel
+        if src.exists():
+            dst = bdir / rel.replace("/", "__")
+            shutil.copy2(src, dst)
+            back = _O["digest"](dst)
+            if back != _O["digest"](src):
+                raise MigrationError("backup nao confere em `{}`".format(rel), "BACKUP_MISMATCH",
+                                     {"path": rel})
+            backed[rel] = back
+    for rel in GRAPH_FILES:
+        if not (eng / rel).exists():
+            new_files.append(rel)
+
+    write_set = _G["write_set"](nodes, edges)
+    op = "migrate-{}".format(plan["plan_hash"][:16])
+    receipt = _O["run"](eng, op, write_set, expected={k: plan["before"].get(k, "")
+                                                     for k in write_set})
+
+    # O id da operacao deriva do `plan_hash`, que deriva dos digests PRE-migracao.
+    # Depois de um `restore` o estado volta a ser o de antes, o plano volta a dar o
+    # mesmo hash, e o coordenador reconhecia o recibo antigo e devolvia sucesso sem
+    # escrever nada — um `migrated` sobre um grafo ausente. `ACCEPTANCE.md` §2 diz
+    # «Zero sucesso falso de operacao interrompida/rejeitada», e era isso.
+    if receipt.get("replayed") and receipt.get("effects_present") is False:
+        raise MigrationError(
+            "o recibo desta migracao existe mas os ficheiros nao — um `restore` "
+            "reverteu-a e deixou o recibo para tras", "RECEIPT_STALE",
+            {"operation_id": op, "published": receipt.get("published", []),
+             "recovery": "apagar o recibo desta operacao antes de re-migrar"})
+
+    manifest = {"runtime_version": plan["runtime_version"], "when": plan["when"],
+                "plan_hash": plan["plan_hash"], "operation_id": op,
+                "before": plan["before"], "after": _digests(eng),
+                "backed_up": backed, "new_files": new_files,
+                "counts": plan["counts"], "exceptions": plan["exceptions"],
+                "complete": plan["complete"]}
+    _O["_atomic_write"](mig_dir(eng) / MANIFEST,
+                        json.dumps(manifest, ensure_ascii=False, indent=2))
+    return {"result": "migrated", "manifest": manifest, "receipt": receipt,
+            "success_declared": plan["complete"],
+            "note": ("sucesso PARCIAL — ha excepcoes; o avanco afectado fica bloqueado"
+                     if not plan["complete"] else "migracao completa")}
+
+
+def init(eng):
+    """O grafo com que um engagement NASCE: válido, vazio, publicado pelo coordenador.
+
+    Consequência directa da decisão de P7.5 §2. Com `LEGACY_MODE` a bloquear, ausência de
+    grafo passa a significar uma coisa só — legado por migrar. Um engagement acabado de
+    criar não é legado e não tem nada que migrar: ou nasce com grafo, ou bloqueia à nascença
+    por um trabalho que não existe.
+
+    Vive aqui, e não em `graph.py`, porque publicar é da camada de cima: `graph.py` prepara
+    bytes e não conhece o coordenador (contrato B2.4). Vive aqui, e não num motor novo,
+    porque é o caso degenerado do que este módulo já faz — migrar um engagement sem nada
+    para migrar.
+
+    Idempotente das duas maneiras: um grafo `ok` não é tocado, e repetir devolve o recibo em
+    vez de publicar outra vez. Um grafo PARTIDO nunca é substituído por um vazio — isso
+    apagava a avaria, e o material com ela.
+    """
+    eng = Path(eng)
+    st = _G["read"](eng)
+    if st["status"] == _G["OK"]:
+        return {"result": "already", "status": st["status"],
+                "nodes": len(st["nodes"]), "edges": len(st["edges"]),
+                "note": "o engagement ja tem grafo — nada a criar"}
+    if st["status"] != _G["ABSENT"]:
+        raise MigrationError(
+            "grafo em estado `{}` — nao se substitui por um vazio".format(st["status"]),
+            "NOT_ABSENT", {"status": st["status"], "detail": st["detail"]})
+
+    # Olhar so para o estado do GRAFO nao chega, e foi assim que isto nasceu partido: um
+    # engagement com SU povoada e sem grafo recebia um grafo VAZIO, e a partir dai o
+    # bootstrap dizia `ready` com zero itens de contexto e o gate aberto. A ausencia ficava
+    # «resolvida» sem nada do conhecimento existente estar representado — exactamente o que
+    # tornar o grafo obrigatorio queria impedir. `init` e para o que esta vazio; o que tem
+    # conhecimento migra-se.
+    linhas = []
+    su = eng / SU_FILE
+    if su.exists():
+        _h, linhas, _s, _d = _D["parse_su"](su.read_text(encoding="utf-8"))
+    if linhas:
+        raise MigrationError(
+            "o engagement tem {} linha(s) na autoridade — `init` e para um scaffold "
+            "vazio; isto migra-se".format(len(linhas)),
+            "NOT_EMPTY",
+            {"rows": len(linhas),
+             "ids": [r.get("id") for r in linhas][:10],
+             "action": "python library/kernel/tools/migrate.py apply "
+                       "--engagement <slug>"})
+
+    recibo = _O["run"](eng, "graph-init", _G["write_set"]([], []))
+    return {"result": "created", "status": _G["read"](eng)["status"],
+            "nodes": 0, "edges": 0,
+            "operation_id": recibo.get("operation_id"),
+            "replayed": bool(recibo.get("replayed")),
+            "note": "grafo vazio publicado — o engagement nasce migrado"}
+
+
+def read_manifest(eng):
+    p = mig_dir(eng) / MANIFEST
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+# ---------------------------------------------------------------------- restore
+
+def restore(eng, force=False):
+    """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2)."""
+    eng = Path(eng)
+    man = read_manifest(eng)
+    if not man:
+        raise MigrationError("nao ha manifesto de migracao", "NO_MANIFEST",
+                             {"engagement": str(eng)})
+
+    # `now` e a base que se VERIFICA e a base que se DECLARA — a mesma leitura. Sem isto,
+    # entre a verificacao e a publicacao cabia trabalho novo, e a reposicao escrevia-lhe por
+    # cima sem uma recusa: `expected` nao era passado de todo.
+    now = _digests(eng)
+    drifted = {rel: {"expected": man["after"].get(rel, ""), "actual": now.get(rel, "")}
+               for rel in man["after"] if now.get(rel, "") != man["after"].get(rel, "")}
+    if drifted and not force:
+        raise MigrationError(
+            "houve trabalho depois da migracao — restore cego recusado", "WORK_AFTER",
+            {"changed": drifted,
+             "detail": "o trabalho novo e preservado; reconciliar antes de reverter"})
+
+    # --- tudo se verifica ANTES de um byte se mexer, e depois publica-se de uma vez
+    conteudos = {}
+    for rel, want in man["backed_up"].items():
+        src = mig_dir(eng) / BACKUP / rel.replace("/", "__")
+        if not src.is_file():
+            raise MigrationError("backup em falta para `{}`".format(rel), "BACKUP_MISSING",
+                                 {"path": rel})
+        if _O["digest"](src) != want:
+            raise MigrationError("backup de `{}` nao confere".format(rel), "BACKUP_CORRUPT",
+                                 {"path": rel})
+        conteudos[rel] = src.read_text(encoding="utf-8")
+
+    # Escrever e apagar a mao era a unica parte da migracao fora da barreira: sem recibo,
+    # sem exclusao, sem recuperacao se morresse a meio. A reposicao vai pelo coordenador
+    # como qualquer outra escrita.
+    #
+    # O LIMITE, declarado: o coordenador escreve, nao apaga. Os ficheiros que a migracao
+    # CRIOU (um grafo que nao existia antes) continuam a ser removidos a mao, depois, fora
+    # da barreira. Um grafo que ja existia nao passa por aqui — volta pelo seu backup, que
+    # e o caso que esta funcao deixava por fazer.
+    if conteudos:
+        op_restore = "restore-{}".format(man["plan_hash"][:16])
+        _O["run"](eng, op_restore, conteudos,
+                  expected={rel: now.get(rel, "") for rel in conteudos})
+
+    # Reverter e desfazer a operacao, logo o recibo dela deixa de descrever a
+    # realidade. Deixa-lo para tras fazia com que uma re-migracao a partir do mesmo
+    # estado batesse no recibo antigo e recebesse sucesso sem escrita nenhuma —
+    # ver `RECEIPT_STALE` em `apply`.
+    op_revertida = man.get("operation_id")
+    if op_revertida:
+        try:
+            _O["receipt_path"](eng, op_revertida).unlink()
+        except OSError:
+            pass
+
+    # O coordenador escreve e nao apaga — mas apagar sem precondicao era a outra metade do
+    # mesmo buraco. As remocoes acontecem sob o lock e so sobre os bytes que a verificacao
+    # viu: um ficheiro que mudou depois dela NAO se apaga, reporta-se.
+    removed, recusadas = [], []
+    ident = _O["acquire"](eng)
+    try:
+        for rel in man.get("new_files", []):
+            alvo = eng / rel
+            if not alvo.exists():
+                continue
+            if _O["digest"](alvo) != now.get(rel, ""):
+                recusadas.append({"path": rel, "verified": now.get(rel, ""),
+                                  "actual": _O["digest"](alvo)})
+                continue
+            alvo.unlink()
+            removed.append(rel)
+    finally:
+        _O["release"](eng, ident)
+    if recusadas:
+        raise MigrationError(
+            "ficheiro(s) criados pela migracao mudaram depois da verificacao — nao "
+            "apagados", "REMOVAL_CHANGED",
+            {"paths": recusadas,
+             "detail": "o trabalho novo fica; reconciliar antes de reverter"})
+    gd = eng / "_graph"
+    if gd.is_dir() and not any(gd.iterdir()):
+        gd.rmdir()
+
+    # A verificacao final e sobre TUDO o que o manifesto diz que mudou — o que voltou pelo
+    # backup e o que tinha de desaparecer. Comparar so `backed_up` deixava um ficheiro
+    # criado pela migracao sobreviver a um `restored`.
+    after = _digests(eng)
+    esperado = dict(man["before"])
+    mismatched = {rel: {"expected": esperado.get(rel, ""), "actual": after.get(rel, "")}
+                  for rel in set(man["backed_up"]) | set(man.get("new_files", []))
+                  if after.get(rel, "") != esperado.get(rel, "")}
+    if mismatched:
+        raise MigrationError("restore nao reproduziu os hashes originais", "RESTORE_MISMATCH",
+                             {"paths": mismatched})
+    return {"result": "restored", "restored": sorted(man["backed_up"]),
+            "removed_new_files": removed,
+            "note": "apenas ficheiros do manifesto foram tocados; ficheiros alheios intactos"}
+
+
+# --------------------------------------------------------------------------- CLI
+
+def utf8_console() -> None:
+    """A consola em UTF-8, venha ela como vier.
+
+    Uma consola Windows fala cp1252 e este motor imprime portugues, setas e aspas
+    angulares. Medido numa sessao real: `bootstrap.py --json` rebentou com
+    UnicodeEncodeError em '\\u2192' — e o `migrate.py apply` que o guarda manda correr
+    para recuperar rebentaria da mesma forma. `errors="replace"` porque um caracter
+    perdido na consola e ruido; um processo morto a meio de uma recuperacao nao e."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
+def main(argv=None):
+    utf8_console()
+    import argparse
+    ap = argparse.ArgumentParser(description="migracao legacy -> memoria persistente")
+    ap.add_argument("command", choices=["dry-run", "apply", "restore", "init"])
+    ap.add_argument("--engagement", required=True)
+    ap.add_argument("--force", action="store_true")
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args(argv)
+    eng = Path(a.engagement)
+    if not eng.is_dir():
+        eng = Path("projects") / a.engagement
+    try:
+        if a.command == "dry-run":
+            out = dry_run(eng)
+        elif a.command == "apply":
+            out = apply(eng)
+        elif a.command == "init":
+            out = init(eng)
+        else:
+            out = restore(eng, force=a.force)
+    except (MigrationError, _O["OperationError"], _G["GraphError"]) as exc:
+        print(json.dumps(exc.as_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
+        return 1
+    if a.json:
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+    else:
+        for k in ("result", "rows", "counts", "note", "success_declared"):
+            if k in out:
+                print("{:18} {}".format(k, out[k]))
+        for e in out.get("exceptions", [])[:10]:
+            print("  ! {:10} {} — {}".format(e["class"], e["id"], e["reason"]))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,60 @@
+pack_id: generic
+pack_version: 0.1.0-skeleton
+display_name: "Generic Discovery (no specific low-code/custom platform)"
+language: pt
+description: >
+  Vendor-agnostic skeleton pack. Use when the engagement explicitly
+  must not assume a particular low-code platform — e.g., for early
+  process-redesign or feasibility studies. The technology lens here
+  considers non-platform options (custom code, off-the-shelf SaaS,
+  process change without digitalization) on equal footing.
+
+deliverables: []
+
+lenses_config:
+  business:
+    extra_signals: []
+  operations:
+    extra_signals: []
+  user:
+    extra_signals: []
+  data:
+    extra_signals: []
+  technology:
+    constraints_to_check:
+      - integration_capability        # what existing systems can be reached, with what cost
+      - regulatory_constraints        # residency, security accreditation, etc.
+      - in_house_skill_alignment      # what the team can build and maintain
+      - reversibility                 # how locked-in the option is
+  governance:
+    extra_signals: []
+  financial:
+    extra_signals: []
+
+domain_knowledge: []
+
+question_bank: question-bank.md
+glossary: glossary.md
+
+decision_tree:
+  source: decision-tree.md
+  consulted_in_phase: options
+
+blueprint:
+  # Runtime hardening / bloco A — keys this pack ADDS to the kernel's required top-level
+  # keys of ux-blueprint_vNN.yaml (blueprint-contract.md -> Validação estrutural, BP-REQ-KEY).
+  # Empty: the kernel's list is enough for this pack today.
+  required_keys: []
+
+vendor_terms:
+  # Termos que nomeiam uma solucao deste pacote (ver pp/pack.yaml para a regra).
+  solution:
+    []
+
+enquadramento:
+  # Temas que ESTE pacote acrescenta a entrevista de enquadramento do kernel
+  # (library/kernel/phases.md -> Phase 0). Lista de {id, question_pt, when}.
+  # Vazia: os sete temas do kernel bastam a este pacote, e o conjunto condicional
+  # `pricing` vive no kernel porque pricing e uma forma que um processo tem, nao uma
+  # propriedade de uma plataforma de digitalizacao.
+  extra_themes: []
