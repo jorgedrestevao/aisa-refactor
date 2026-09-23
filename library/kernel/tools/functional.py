@@ -49,6 +49,19 @@ ESSENTIAL = ("rule", "acceptance_examples", "actors", "trigger", "postconditions
 EXAMPLE_KINDS = ("positive", "negative", "boundary")
 BLOCKING = ("blocks_all", "blocks_scope")
 
+# Autorização (F4.2, DESENHO §2). O bloco que o dono aprova, em `decisions.md`.
+AUTH_TITLE = "Contratos funcionais autorizados"
+AUTH_HEAD_RE = re.compile(r"^##\s+(D-\d+)\s+—\s+" + AUTH_TITLE + r"\b[^\n]*$", re.M)
+AUTH_ITEM_RE = re.compile(r"(FC-\d{4})\s*\(sha256\s+([0-9a-f]{64})\)")
+VALIDATED_RE = re.compile(r"\*\*Validated by\*\*\s*:\s*(.+)")
+OWNER_RE = re.compile(r"^owner\s*\((?P<quem>[^)]+)\)")
+# Quem nunca autoriza pelo cliente (plano 05 F4 item 6): o executor, um agente, uma
+# persona do conselho, um revisor. Lista fechada, lida por palavra, nunca por semelhança.
+NOT_HUMAN = ("executor", "agente", "agent", "claude", "chairman", "persona", "revisor",
+             "reviewer", "business-analyst", "operations-lead", "user-advocate",
+             "data-steward", "compliance-officer", "cfo-lens", "solution-architect",
+             "frame-reviewer", "fc-reviewer", "lens-coverage-reviewer", "[âmbito autorizado]")
+
 
 def _mod(name: str) -> dict:
     if name not in _CACHE:
@@ -162,6 +175,106 @@ def item_sha256(item: dict) -> str:
              if k not in ("authorization_ref", "authorization", "publication_status")}
     return hashlib.sha256(json.dumps(corpo, ensure_ascii=False, sort_keys=True,
                                      separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+# ------------------------------------------------------------------ autorização (F4.2)
+
+def validator_problem(validated_by: str) -> str:
+    """"" quando o validador é um papel humano do lado do cliente; senão, porquê não."""
+    v = (validated_by or "").strip()
+    m = OWNER_RE.match(v)
+    if not m:
+        return "o validador não é `owner (<papel>, …)`"
+    baixo = v.lower()
+    for t in NOT_HUMAN:
+        if re.search(r"(?<![\w-])" + re.escape(t) + r"(?![\w-])", baixo):
+            return "`{}` não autoriza pelo cliente".format(t)
+    if "via askuserquestion" not in baixo and "dados de teste" not in baixo:
+        return "a autorização não diz como foi pedida (via AskUserQuestion)"
+    return ""
+
+
+def authorization_blocks(eng) -> list:
+    """Os blocos de autorização de FC em `decisions.md`, pela ordem do ficheiro."""
+    try:
+        md = (Path(eng) / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        return []
+    out = []
+    heads = list(AUTH_HEAD_RE.finditer(md))
+    for i, m in enumerate(heads):
+        fim = md.find("\n## ", m.end())
+        corpo = md[m.end(): fim if fim != -1 else len(md)]
+        vm = VALIDATED_RE.search(corpo)
+        rm = re.search(r"\*\*Revision\*\*\s*:\s*r?(\d+)", corpo)
+        validado = vm.group(1).strip() if vm else ""
+        out.append({"id": m.group(1),
+                    "items": {fc: sha for fc, sha in AUTH_ITEM_RE.findall(corpo)},
+                    "revision": int(rm.group(1)) if rm else None,
+                    "validated_by": validado,
+                    "problem": validator_problem(validado)})
+    return out
+
+
+def authorization_state(eng, item: dict, blocks: list | None = None) -> dict:
+    """`current` — o bloco mais recente que lista este FC tem o `sha256` do item de agora e
+    um validador humano; `stale` — lista-o com outra impressão (a revisão antiga não cobre
+    a nova, T24); `invalid` — o validador não é humano; `missing` — nenhum bloco o lista."""
+    blocks = authorization_blocks(eng) if blocks is None else blocks
+    sha = item_sha256(item)
+    for b in reversed(blocks):
+        if item["id"] not in b["items"]:
+            continue
+        if b["problem"]:
+            return {"state": "invalid", "block": b["id"], "reason": b["problem"]}
+        if b["items"][item["id"]] == sha:
+            return {"state": "current", "block": b["id"], "revision": b["revision"]}
+        return {"state": "stale", "block": b["id"], "revision": b["revision"],
+                "reason": "o FC mudou depois da autorização {} (r{})".format(
+                    b["id"], b["revision"])}
+    return {"state": "missing", "block": None}
+
+
+def assumed_premises(eng, item: dict, su: dict | None = None) -> list:
+    """As linhas `Assumed` em que o FC se apoia. Uma autorização não as confirma (T22):
+    ficam listadas, e o motor nunca muda o estado de uma linha da SU."""
+    su = _su_rows(Path(eng)) if su is None else su
+    out = []
+    for r in item.get("requirement_refs") or []:
+        rid = r.split("#")[-1]
+        if su.get(rid, {}).get("state") == "Assumed":
+            out.append(rid)
+    return out
+
+
+def authorization_block(eng, fc_ids, validated_by: str, scope: str,
+                        timestamp: str | None = None) -> str:
+    """O texto do bloco, com as impressões calculadas pelo motor (nunca à mão). Recusa um
+    validador que não é humano e um FC que não é autorizável — com lacunas ou inexistente."""
+    eng = Path(eng)
+    cur = read_current(eng)["data"]
+    por_id = {it["id"]: it for it in cur.get("items") or []}
+    prob = validator_problem(validated_by)
+    if prob:
+        raise FunctionalError("autorização recusada: " + prob, _W()["AUTHORIZATION_REQUIRED"],
+                              {"validated_by": validated_by})
+    gaps = completeness(eng, cur)
+    linhas = []
+    for fc in fc_ids:
+        if fc not in por_id:
+            raise FunctionalError("{} não existe na revisão corrente".format(fc),
+                                  _W()["INTEGRITY_FAILURE"], {"fc": fc})
+        if any(g["fc"] == fc for g in gaps):
+            raise FunctionalError("{} tem lacunas — não é autorizável".format(fc),
+                                  _W()["BLOCKING_GAP"], {"fc": fc})
+        linhas.append("{} (sha256 {})".format(fc, item_sha256(por_id[fc])))
+    did = "D-{:03d}".format(max([int(d[2:]) for d in _W()["_decision_ids"](eng)] or [0]) + 1)
+    ts = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    return ("\n## {} — {} (functional-contracts r{:04d})\n\n"
+            "- **Authorizes**: {}\n- **Revision**: r{:04d}\n- **Scope**: {}\n"
+            "- **Validated by**: {}\n- **Timestamp**: {}\n").format(
+                did, AUTH_TITLE, int(cur["revision"]), " · ".join(linhas),
+                int(cur["revision"]), scope, validated_by, ts)
 
 
 # ------------------------------------------------------------------ verificação
@@ -403,14 +516,20 @@ def show(eng) -> dict:
     cur = read_current(eng)
     data = cur["data"]
     gaps = completeness(eng, data)
+    blocks = authorization_blocks(eng)
+    su = _su_rows(eng)
     por_fc = {}
     for it in data.get("items") or []:
+        auth = authorization_state(eng, it, blocks)
         por_fc[it["id"]] = {
             "purpose": it.get("purpose"), "scope_id": it.get("scope_id"),
             "semantic_origin": it.get("semantic_origin"),
             "publication_status": it.get("publication_status"),
             "sha256": item_sha256(it),
-            "gaps": [g for g in gaps if g["fc"] == it["id"]]}
+            "gaps": [g for g in gaps if g["fc"] == it["id"]],
+            "authorization": auth,
+            "assumed_premises": assumed_premises(eng, it, su),
+            "authorizable": not any(g["fc"] == it["id"] for g in gaps)}
     return {"revision": data.get("revision"), "digest": cur["digest"],
             "blueprint": _blueprint_of(data), "items": por_fc,
             "retired_ids": data.get("retired_ids") or []}
@@ -425,7 +544,11 @@ def main(argv=None) -> int:
     except Exception:                                                   # noqa: BLE001
         pass
     ap = argparse.ArgumentParser(description="contratos funcionais (publica pelo coordenador)")
-    ap.add_argument("command", choices=["draft", "check", "publish", "show"])
+    ap.add_argument("command", choices=["draft", "check", "publish", "show",
+                                        "authorization-block"])
+    ap.add_argument("--fc", action="append", default=[])
+    ap.add_argument("--validated-by", default="")
+    ap.add_argument("--scope", default="")
     ap.add_argument("--engagement", required=True)
     ap.add_argument("--draft", default="")
     ap.add_argument("--json", action="store_true")
@@ -445,6 +568,9 @@ def main(argv=None) -> int:
             out = publish(eng, a.draft)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
+        elif a.command == "authorization-block":
+            print(authorization_block(eng, a.fc, a.validated_by, a.scope))
+            return 0
         else:
             out, rc = show(eng), 0
     except FunctionalError as exc:

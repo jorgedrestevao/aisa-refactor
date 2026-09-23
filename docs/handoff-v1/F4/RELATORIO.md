@@ -6,8 +6,8 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 
 | Inc. | Estado | Commit | Evidência |
 | --- | --- | --- | --- |
-| F4.1 `functional.py` + completude | integrado | (este) | `library/kernel/tools/functional.py`: `draft`, `check`, `publish`, `show`. Publica pelo coordenador numa operação: a revisão corrente e a cópia imutável em `_design/history/`. A integridade recusa com `INTEGRITY_FAILURE` (schema, ids nunca reutilizados nem largados fora de `retired_ids`, revisão +1, referências a SU, `D-` e desenho que resolvem, desenho de opção recusado). A frescura vem antes da integridade (`STALE_INPUT`). Um replay devolve o mesmo recibo. A completude dá `BLOCKING_GAP` sem recusar: essenciais, cálculo sem unidades, arredondamento ou os três tipos de exemplo, delegação incompleta, pergunta bloqueante aberta. Schema aditivo sem mudar de versão. `handoff-contract.md` descreve o motor e corrige a tabela F1 (FC em F4, pelo plano 05). Matriz F0: 3 entradas. `test_functional_contracts.py` 19 casos (T20). Full 91/91, 2863; stdlib 72/72, 2065; ambos exit 0 |
-| F4.2 Autorização | por fazer | | |
+| F4.1 `functional.py` + completude | integrado | `405f3f9` | `library/kernel/tools/functional.py`: `draft`, `check`, `publish`, `show`. Publica pelo coordenador numa operação: a revisão corrente e a cópia imutável em `_design/history/`. A integridade recusa com `INTEGRITY_FAILURE` (schema, ids nunca reutilizados nem largados fora de `retired_ids`, revisão +1, referências a SU, `D-` e desenho que resolvem, desenho de opção recusado). A frescura vem antes da integridade (`STALE_INPUT`). Um replay devolve o mesmo recibo. A completude dá `BLOCKING_GAP` sem recusar: essenciais, cálculo sem unidades, arredondamento ou os três tipos de exemplo, delegação incompleta, pergunta bloqueante aberta. Schema aditivo sem mudar de versão. `handoff-contract.md` descreve o motor e corrige a tabela F1 (FC em F4, pelo plano 05). Matriz F0: 3 entradas. `test_functional_contracts.py` 19 casos (T20). Full 91/91, 2863; stdlib 72/72, 2065; ambos exit 0 |
+| F4.2 Autorização | integrado | (este) | `functional.py`: leitura dos blocos `D-NNN — Contratos funcionais autorizados`; estado por FC (`current` · `stale` · `invalid` · `missing`) por impressão digital do item; `authorization-block` gera o bloco com as impressões do motor e recusa FC com lacunas e validador não humano (`AUTHORIZATION_REQUIRED`); `show` lista as premissas `Assumed` e se o FC é autorizável. Contrato no `handoff-contract.md`. `test_functional_authorization.py` 7 casos (T22, T24, item 6). Full 92/92, 2870; stdlib 73/73, 2072; ambos exit 0 |
 | F4.3 Coerência desenho ↔ FC | por fazer | | |
 | F4.4 Passo funcional do `/blueprint` + `fc-reviewer` | por fazer | | |
 | F4.5 Render | por fazer | | |
@@ -19,6 +19,7 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 | --- | --- | --- | --- |
 | F4.0 | levantamento e desenho | precisa do contexto da sessão (plano, contratos, motores); o detalhe volta a ser preciso | na sessão |
 | F4.1 | motor, schema, testes | idem | na sessão |
+| F4.2 | autorização, testes | idem | na sessão |
 
 ## 3. Testes adaptados
 
@@ -28,3 +29,5 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q6: [DESENHO.md](
 
 - A completude verifica a presença dos campos essenciais, não a sua qualidade: uma `rule` escrita mas errada passa. Isso é do `fc-reviewer` (F4.4) e do dono (F4.2).
 - «Cálculo» é declarado pelo autor (campo `calculation`); o motor não deduz que um FC calcula. Um cálculo não declarado escapa à exigência de arredondamento e dos três exemplos — é achado do revisor.
+- O validador humano é verificado por forma (`owner (<papel>, … via AskUserQuestion)`) e por uma lista fechada de nomes que nunca autorizam (executor, agentes, personas, revisores). Não prova que a pessoa respondeu: isso vem da regra do `AskUserQuestion` na sessão.
+- O bloco de autorização é classificado pelo dashboard como `other` (não é aprovação de frase, solução ou desenho); fica assim até alguém precisar de outra leitura.
