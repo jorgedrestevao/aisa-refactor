@@ -71,6 +71,12 @@ class UmFicheiroSeisPerspectivas(unittest.TestCase):
         for titulo in SECTIONS.values():
             self.assertNotIn("Admission", section(titulo), titulo)
 
+    def test_as_is_and_to_be_stay_apart(self):
+        """Plano F3 item 4: origem AS-IS vs proposta/decisão TO-BE (states.md → âmbito)."""
+        for marca in ("`observed_as_is`", "`proposed_to_be`", "`authorized_to_be`"):
+            self.assertIn(marca, TEXT)
+        self.assertIn("A marker is not a state", FLAT)
+
     def test_no_vendor_before_options(self):
         for v in VENDORS:
             self.assertNotIn(v, TEXT, v)

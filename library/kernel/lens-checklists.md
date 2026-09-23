@@ -42,6 +42,7 @@ They bind every perspective.
    - its answer moves at least one of the five aspects — `solucao` · `funcional` · `aceitacao` · `operacao` · `viabilidade`;
    - fill `tipo`, `impacto` (`aspecto[, aspecto]: o que muda`), `âmbito`, `quem responde`, `fecho`, `bloqueio` and `referências`;
    - a missing fact is `fact_gap` and needs no invented second answer; a `design_choice` names its real alternatives in `swing`;
+   - `âmbito` carries the origin marker where it matters — `observed_as_is` · `proposed_to_be` · `authorized_to_be` (`library/kernel/states.md` → *Admission of a question*). A marker is not a state: approving the TO-BE never turns an AS-IS premise into `Confirmed`;
    - no demonstrable impact → do not write it. `decisivo` also names the option or branch it eliminates, else `dimensionante`.
 
    Not every uncertainty is a question: changes only detail, configuration or a band → `Assumed` with basis and revision condition; settles only at implementation and cannot invalidate feasibility → no row.

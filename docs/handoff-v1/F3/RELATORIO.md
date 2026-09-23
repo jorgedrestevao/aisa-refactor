@@ -1,6 +1,6 @@
 # F3 — Relatório da fase (análise integrada e materialidade funcional)
 
-Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md). Gate: T05–T08, T18, T19 e a fixture `fx-hv1-02` (§6 do desenho).
+Estado: **gate avaliado, aguarda aceitação do mantenedor** (2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md). O gate (T05–T08, T18, T19 e a fixture `fx-hv1-02`) está cumprido, com os limites declarados (§5).
 
 ## 1. Incrementos
 
@@ -10,8 +10,8 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](
 | F3.2 `lens-checklists.md` + retirada das 6 skills de lente | integrado | `f6f62f0` | `library/kernel/lens-checklists.md`: dono único das seis perspectivas. Leva as perguntas centrais do plano 03, as quatro perguntas, o que cada perspectiva privilegia, as pistas, as regras próprias (`step_duration`, `data_shape`, varrimento de conflitos depois das outras cinco, `funding_gate` e aritmética da *baseline*, papéis e não pessoas), a evidência de cobertura por perspectiva e as regras comuns, escritas uma vez só. Saem `lens-business`, `-operations`, `-user`, `-data`, `-governance` e `-financial`; `lens-technology` fica. Ponte no `/round` (4a, 4b): aplica a secção inline. Os agentes-persona apontam a sua secção. Matriz F0: 11 entradas retiradas, 3 novas e 1 `mention_only`. Docs de consulta anotados. `test_lens_checklists.py` 14 casos. Full 88/88, 2834; stdlib 69/69, 2036; ambos exit 0 |
 | F3.3 `/round` integrado + revisor + fecho por cobertura | integrado | `b73c43a` | `/round` reescrito: uma análise, um rascunho da SU (passo 4), depois o árbitro (passo 5, antes do registo, para o registo não nascer desactualizado), depois o registo `lens` (`lens-draft` → preencher → revisor → `finalize`), depois o fecho por `round-state` (passo 7). `/round <perspectiva>` aprofunda uma, herda as outras cinco e nunca fecha. `--close` = revisor + `round-state`. Revisor: agente `lens-coverage-reviewer` (Read/Grep/Glob, contexto novo, uma chamada no fecho, devolve `semantic_review`). Dashboard 1.16.0: `lentes_ronda_aberta` lê o registo `lens` num engagement com perfil (seis ou nenhuma, mais `fonte`/`fecha`/`revista`/`motivos`); a versão histórica mantém a leitura por cabeçalhos. Sai o `pre-lens-order-check` (ficheiro, `settings.json`, `HOOKS.md`) e o `round_lenses`; `phases.md` diz a regra nova. Matriz F0: 2 entradas do hook retiradas, 2 do revisor novas. Full 88/88, 2819; stdlib 69/69, 2021; ambos exit 0 |
 | F3.4 `/frame` integrado + revisor; hooks de fase por perfil | integrado | `e5b23eb` | `/frame` passos 4–6: contexto → o analista propõe inline (`_council-prep/F-NN-analyst.md`, no esquema de retorno do chairman) → um revisor `frame-reviewer` (Read/Grep/Glob, contexto novo, uma chamada) contesta com achados (alvo, gravidade, tipo facto/recomendação, evidência, cenário de falha, condição de fecho) → `chairman-synthesis` em modo Framing (*Framing inputs*). Sem personas e sem antítese. A divergência de recomendação vai ao dono (opção *Usar a frase do revisor*). O conselho do `/options` fica auto-contido (passos 4/4b copiados do `/frame`) até F5. `phase-completeness` com perfil pede analista + revisor. Dashboard 1.17.0: o aviso Discovery → Framing com perfil lê o registo `lens` da última passagem fechada (válido; frescura e revisão no valor). Texto normativo: `orchestration.md` (*When a subagent is justified*, *Framing mode*, dialéctica só em Options, paralelismo só no conselho de Options, custo), `phases.md` Framing, `glossary.md` (Mode, Council), `CLAUDE.md` princípio 4 e linha do `/round`. `test_frame_integrated.py` 14 casos. Full 89/89, 2833; stdlib 70/70, 2035; ambos exit 0 |
-| F3.5 Captura PM-U, `/status`, fixture `fx-hv1-02` | integrado | (este) | Captura: as PM-U passam pela regra de admissão de `states.md` (`tipo`, `impacto`; sem aspecto, não se escreve), com duas colunas novas no fim da tabela §6 do template, para os leitores posicionais continuarem a funcionar. A regra 6 do `/capture` deixa de apontar as skills de lente. `/status`: a linha da passagem a meio lê o registo `lens` (seis ou nenhuma, fecha, revista). `test_hv1_02_discovery.py` 10 casos: a fixture `fx-hv1-02` atravessa a cadeia real (fontes → rascunho → publicação com integridade → árbitro → registo `lens` → fecho → aviso de fase → modelo do dono). T05, T06, T07 e T08 ficam provados sobre ela; a regra de arredondamento e o limiar em falta ficam visíveis, graves e bem classificados. Full 90/90, 2843; stdlib 71/71, 2045; ambos exit 0 |
-| F3.6 Relatório e gate | por fazer | | |
+| F3.5 Captura PM-U, `/status`, fixture `fx-hv1-02` | integrado | `741c8a7` | Captura: as PM-U passam pela regra de admissão de `states.md` (`tipo`, `impacto`; sem aspecto, não se escreve), com duas colunas novas no fim da tabela §6 do template, para os leitores posicionais continuarem a funcionar. A regra 6 do `/capture` deixa de apontar as skills de lente. `/status`: a linha da passagem a meio lê o registo `lens` (seis ou nenhuma, fecha, revista). `test_hv1_02_discovery.py` 10 casos: a fixture `fx-hv1-02` atravessa a cadeia real (fontes → rascunho → publicação com integridade → árbitro → registo `lens` → fecho → aviso de fase → modelo do dono). T05, T06, T07 e T08 ficam provados sobre ela; a regra de arredondamento e o limiar em falta ficam visíveis, graves e bem classificados. Full 90/90, 2843; stdlib 71/71, 2045; ambos exit 0 |
+| F3.6 Relatório e gate | integrado | (este) | Avaliação do gate (§5) e dos seis itens do plano (§6). A revisão do item 4 encontrou uma lacuna: `lens-checklists.md` não falava da origem AS-IS/TO-BE. Passou a apontar os marcadores de `âmbito` (`states.md`), com um teste. Full 90/90, 2844; stdlib 71/71, 2046; ambos exit 0. CI #43–#47 verdes (#44 com falha de checkout antes dos testes, coberta pelo #45) |
 
 ## 2. Subagentes (README → *Regras de execução*)
 
@@ -70,3 +70,56 @@ Estado: **in progress** (2026-09-23). Desenho e decisões Q1–Q5: [DESENHO.md](
 - A regra fixa da T19 prova que cada referência resolve (linha da SU que existe, `answers.md#…`, `enquadramento.md#…`, ficheiro em `_capture/` ou `inputs/`). Não prova que a linha citada trata a perspectiva. Isso fica para o revisor independente (`semantic_review.dimensions`). Sem revisão, a passagem fecha «por rever».
 - A regra «revisor ≠ autor» compara nomes declarados (`performed_by.name` ≠ `lens_coverage.author.name`). Não prova que a sessão do revisor não tinha o contexto do autor. Isso vem das instruções do `/round` (F3.3).
 - Ambiente: o contentor reiniciado perdeu `openpyxl` e `cffi`. Instalados de `requirements-dev.txt` e com `pip install cffi` antes da corrida. Não houve mudança de código.
+
+## 5. Gate (05_FASES F3: T05–T08, T18, T19; fixture)
+
+| Teste | Critério (06_VALIDACAO) | Estado | Evidência |
+| --- | --- | --- | --- |
+| T05 | Regra de arredondamento não altera tecnologia → admitida como material funcional, com teste de limite | **cumprido** | `test_hv1_02_discovery.Passagem.test_t05_*` (cadeia real: `design_choice`, `funcional` + `aceitacao`, `blocks_scope`, grave, exemplo 1,02 € / 1,01 € preservado, `dimensionante`, sem achado do árbitro); F1: `test_admission_rule.test_t05_*` |
+| T06 | Facto necessário sem valor conhecido → `fact_gap` válido sem alternativas artificiais | **cumprido** | `test_hv1_02_discovery.Passagem.test_t06_*` (fora de `sem_declaracao` e de `alternativas_nao_avaliadas`); F1: `test_admission_rule.test_t06_*` |
+| T07 | Pergunta sem impacto e N/A sem motivo → estacionamento justificado; N/A inválido não fecha a cobertura | **cumprido** | `test_hv1_02_discovery.Passagem.test_t07_*` (estacionada com motivo e fora das graves; o `finalize` recusa um N/A sem motivo); `test_coverage_lens.T07_NaoAplicavelSemMotivo` |
+| T08 | Agentes concordam sem evidência → estado epistémico não é promovido | **cumprido** | `test_hv1_02_discovery.Passagem.test_t08_*` («o analista e o revisor concordam» → `INTEGRITY_FAILURE`, a linha não entra); `chairman-synthesis` → *Framing inputs* («Agreement is not evidence», `test_frame_integrated`); F1: `test_handoff_evidence` |
+| T18 | Uma análise cobre seis lentes → fecha coverage válida sem seis ficheiros ou execuções obrigatórios | **cumprido** | `test_coverage_lens.T18_UmaAnaliseSeisLentes` (sem `lens-outputs/`, a passagem fecha); `test_round_in_progress.RecordIsTheSourceForAProfile` (seis cabeçalhos não fecham; o registo sim); `test_hv1_02_discovery` (fecha com duas lacunas visíveis) |
+| T19 | Texto lista lentes sem tratar risco → revisão semântica identifica gap; títulos não contam como prova | **cumprido, com limite** | Regra fixa: `test_coverage_lens.T19_TituloNaoEProva` (título, secção de `lens-outputs`, fase, id inexistente → recusados; referência morta ao lado de prova real → não fica «revista»). Revisão: `test_the_independent_reviewer_marks_an_untreated_perspective` (`not_treated` → lacuna visível, não revista); revisor ≠ autor. Limite: o motor regista e aplica o veredicto do revisor, mas não o produz. A qualidade da leitura do `lens-coverage-reviewer` mede-se nos pilotos |
+| Fixture | Arredondamento e ausência de valor factual permanecem visíveis e correctamente classificados | **cumprido, com limite** | `test_hv1_02_discovery.Passagem.test_the_passagem_closes_and_both_questions_stay_visible`: U-001 e U-002 abertas, com o tipo certo, graves no aviso de fase (`Unknown Critical = 0` falha e nomeia as duas), lacunas `LENS:data` e `LENS:financial` no registo. Limite: as linhas da análise são escritas pelo teste a partir do `expected` (§4) |
+
+Suites no fecho: full 90/90 ficheiros, 2844 testes; stdlib 71/71, 2046; ambos exit 0. CI #43 (F3.1), #45 (F3.2 e F3.3), #46 (F3.4) e #47 (F3.5) verdes. #44 falhou no `actions/checkout`, antes de qualquer teste (o job stdlib do mesmo commit passou), e o mesmo conteúdo passou no #45.
+
+## 6. Itens do plano (05_FASES F3)
+
+| # | Trabalho | Estado | Onde |
+| --- | --- | --- | --- |
+| 1 | Analista integrado aplica seis lentes, publica coverage e questões materiais | feito | F3.1 (etapa `lens`), F3.3 (`/round`) |
+| 2 | Conteúdo útil das lentes em checklists; agentes classic só quando justificados | feito | F3.2 (`lens-checklists.md`; 6 skills retiradas). Personas mantidas só para o `/options` até F5 (§0 do desenho) |
+| 3 | Admissão `fact_gap` / `design_choice` / `conflict` / `proof_obligation` e impacto por âmbito | feito | F1.5 (SU, árbitro); F3.5 (PM-U da captura) |
+| 4 | Origem AS-IS vs TO-BE; facto confirmado vs regra autorizada | feito | marcadores de `âmbito` (F1.5), apontados em `lens-checklists.md` (F3.6); linhas `[ÂMBITO AUTORIZADO]` (F2, Q6) |
+| 5 | capture / round / frame / answer / status e validadores | feito | F3.3 (`/round`, dashboard), F3.4 (`/frame`, `phase-completeness`, aviso de fase), F3.5 (captura, `/status`). O `/answer` mantém os tipos de pergunta sem mudança |
+| 6 | Menos chamadas não elimina regras, excepções nem questões financeiras e de compliance | feito, com limite | O registo `lens` exige as seis perspectivas, incluindo a financeira e a de governação, com referências. A fixture carrega a regra de cálculo, a excepção urgente, a separação de funções e o limiar financeiro até ao fim. Limite: as linhas da fixture são escritas pelo teste |
+
+**Entregável**: percurso Discovery/Framing do perfil novo com coverage rastreável — feito. O handoff continua explicitamente incompleto: `handoff_ready` é calculado em F6.
+
+## 7. Leitor, escritor e schema — o que F3 acrescenta
+
+| Artefacto | Escritor | Leitores | Schema |
+| --- | --- | --- | --- |
+| `_coverage/coverage_vNN.json` com `stage: lens` | `coverage.py finalize` (coordenador), a partir do rascunho do `/round` | `coverage.py round-state`, dashboard (`lentes_ronda_aberta`, aviso Discovery → Framing), `/round`, `/frame`, `/status` | `coverage-contract.md` §4.8 (`lens_coverage`, `semantic_review.dimensions`) |
+| `library/kernel/lens-checklists.md` | edição administrativa | `/round`, `/frame`, os dois revisores, as personas (apontador) | texto normativo |
+| `lens-outputs/_council-prep/F-NN-analyst.md` / `-reviewer.md` | `/frame` (analista, sessão) / `frame-reviewer` (devolvido, gravado verbatim) | `chairman-synthesis`, `phase-completeness` | esquema de retorno do chairman; achados do revisor |
+| `.claude/agents/lens-coverage-reviewer.md`, `frame-reviewer.md` | — | `/round` 6c, `/frame` 5b | `semantic_review` (§4.8); lista de achados (03) |
+| Tabela §6 do `process-model.template.md` | `/capture` | as perspectivas (disposição) | colunas `tipo` e `impacto` no fim |
+
+Retirados: `pre-lens-order-check.py`, `_state.json.round_lenses`, as skills `lens-business`, `lens-operations`, `lens-user`, `lens-data`, `lens-governance` e `lens-financial`, e a ronda de antítese no Framing.
+
+## 8. Decisões e pontos por decidir
+
+- Tomadas (mantenedor, 2026-09-23): Q1–Q5 do desenho, e a regra dos subagentes do README, aplicada a toda a execução e ao desenho do framework.
+- Por decidir em F5: o conselho de personas do `/options` (e com ele as seis personas, o `/retro` e a linha `[Framing, all personas]` do preâmbulo), avaliado pela mesma regra.
+- Nenhuma decisão de contrato ficou tomada sem o mantenedor. As escolhas de implementação estão declaradas nos incrementos e nas limitações:
+  - o critério do aviso aceita um registo válido mesmo que desactualizado;
+  - as colunas das PM-U vão no fim da tabela;
+  - uma primeira passagem aberta por uma perspectiva só fica sem registo.
+
+## 9. Próxima fase
+
+F4 — autoria funcional e primeiro desenho coerente (`../plan/05_FASES.md`). Arranca com o seu `DESENHO.md` (§0 dos subagentes incluído) e as decisões de contrato levadas ao mantenedor por `AskUserQuestion`.
+
