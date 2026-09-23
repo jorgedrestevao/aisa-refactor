@@ -35,7 +35,7 @@ The aisa-frame skill is itself **NOT a lens** — it does no lens analysis. It i
 
 ## Outputs (written, via chairman-synthesis except where noted)
 
-- `<engagement>/_state.json` (atomic write — this skill).
+- `<engagement>/_state.json` (through the coordinator — this skill; `library/kernel/orchestration.md` → *Writing an authority*).
 - `<engagement>/frame.md` (chairman-synthesis).
 - New rows in `<engagement>/shared-understanding.md` (chairman-synthesis).
 - `<engagement>/lens-outputs/chairman-synthesis-F-<NN>.md` (chairman-synthesis).
@@ -96,13 +96,13 @@ proceed: allowed under existing soft-gate doctrine
 
 The missing item stays visible as what it honestly is — an SU `Unknown` (written first, through the existing authority model, if it does not yet exist), an unresolved material trace, or an `undisposed` line named by `aisa-round` step 5e — and the chairman projects **that id** into the survival block. The chairman never writes `(none) — <override reason>`: `(none) — <reason>` is reserved for the substantive conclusion that **no material item of that semantic class exists for this engagement** (`chairman-synthesis` → rules for the survival block). An override that hides a missing material trace behind `(none)` is a defect, not a projection.
 
-### 3. Flip state to Framing (atomic)
+### 3. Flip state to Framing (through the coordinator)
 
 1. Determine the framing round:
    - If `_state.json.round` does not yet start with `F-` → set `round = F-01`.
    - Else → increment (`F-01` → `F-02`).
-2. Update `_state.json`: `phase = framing`, `round = <F-NN>`, `round_in_progress = ""` (an open Discovery passagem does not cross the phase boundary; it stays in the log, not in the state). Write atomically: `_state.json.tmp` → `Move-Item -Force` (Windows) / `mv` (Unix).
-3. Update the SU header `Fase actual: Framing` and `Última actualização: <ISO timestamp>`.
+2. Update `_state.json`: `phase = framing`, `round = <F-NN>`, `round_in_progress = ""` (an open Discovery passagem does not cross the phase boundary; it stays in the log, not in the state). Items 2 and 3 are one draft — `resolve.py draft --engagement <slug> --files _state.json shared-understanding.md --json`, edit the copies, `resolve.py publish` (`library/kernel/orchestration.md` → *Writing an authority*); never `mv` a `.tmp` over `_state.json`.
+3. Update the SU header `Fase actual: Framing` and `Última actualização: <ISO timestamp>` (same draft).
 
 ### 4. Compose thematic Shared Understanding excerpts
 
@@ -190,6 +190,8 @@ Invoke the `chairman-synthesis` skill with:
 
 The chairman-synthesis skill writes `frame.md`, the new SU rows, and the synthesis log. Wait for it to return.
 
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+
 ### 7. Present the frame to the user and ask for validation
 
 Output to the user (business language — `CLAUDE.md` → *Duas línguas*; kernel labels and ids only between parentheses). The contract block *What must survive into Options (projection of SU ids — `frame.md`)* renders as «O que tem de sobreviver até às alternativas»: same five sub-lists, same `(none) — <reason>` semantics, ids projected from the SU.
@@ -244,7 +246,7 @@ Portuguese one in `D-001`: that drift is what this ordering closes).
 2. Run the motor (`--json`) and read `frame.sha256` — never compute a hash by hand.
 3. Read the next free id: `max(D-NNN in decisions.md) + 1`, zero-padded to 3 digits. It is
    **not** always `D-001`; frame, solution and blueprint approvals share one counter.
-4. Append to `<engagement>/decisions.md` the record contracted in
+4. Append to `<engagement>/decisions.md` — through a draft that declares the frame as read (`resolve.py draft --engagement <slug> --files decisions.md council-log.md --reads frame.md --json`, then `resolve.py publish`; a `frame.md` changed after its fingerprint was read is `STALE_INPUT`) — the record contracted in
    `library/kernel/phases.md` → *Frame approval record*:
 
 ```markdown

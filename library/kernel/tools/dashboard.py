@@ -1218,11 +1218,18 @@ def locator_classes(text: str) -> list[str]:
     return [name for name, rx in LOCATOR_PATTERNS if rx.search(txt)]
 
 
-def evidence_targets(eng: Path) -> dict:
+def evidence_targets(eng: Path, overlay: dict | None = None) -> dict:
     """What the engagement actually holds, so a locator can be resolved and not just
     matched. `inputs/` and `_capture/` by file name; `answers.md` by section anchor
     (states.md rule 1: first segment of the heading before ' - ', spaces as hyphens);
-    `enquadramento.md` by `M-n`."""
+    `enquadramento.md` by `M-n`.
+
+    `overlay` (handoff-v1 F2): `{rel: text}` of files about to be published in the SAME
+    coordinator operation as the rows being audited — a birth that writes
+    `enquadramento.md` and its `M-n` rows together, an answer that writes its section and
+    the row citing it. Their anchors are read from the new text, never from disk.
+    Only `answers.md`, `enquadramento.md` and `context.json` are read this way."""
+    ov = overlay or {}
     names: set[str] = set()
     for sub in ("inputs", "_capture"):
         d = eng / sub
@@ -1233,7 +1240,8 @@ def evidence_targets(eng: Path) -> dict:
                 names.add(p.name.lower())
                 names.add(deaccent(p.name).lower())
     anchors: set[str] = set()
-    for line in (_read(eng / "answers.md") or "").splitlines():
+    for line in (ov.get("answers.md") if "answers.md" in ov
+                 else (_read(eng / "answers.md") or "")).splitlines():
         if not line.startswith("#"):
             continue
         head = line.lstrip("#").strip().strip("*` ")
@@ -1242,7 +1250,8 @@ def evidence_targets(eng: Path) -> dict:
             a = head.replace(" ", "-")
             anchors.add(a.lower())
             anchors.add(deaccent(a).lower())
-    enq = _read(eng / "enquadramento.md") or ""
+    enq = ov["enquadramento.md"] if "enquadramento.md" in ov \
+        else (_read(eng / "enquadramento.md") or "")
     # The theme anchors `aisa-start` writes: `## T1 · actors` answers both `#T1` and
     # the full slug. Same rule as answers.md -- the first segment of the heading.
     enq_anchors: set[str] = set()
@@ -1256,18 +1265,31 @@ def evidence_targets(eng: Path) -> dict:
                 a = form.replace(" ", "-")
                 enq_anchors.add(a.lower())
                 enq_anchors.add(deaccent(a).lower())
+    # Decision blocks (`## D-NNN — …`): the target of a `D-NNN` row's own locator
+    # (states.md → *Confirmed threshold*, the decision-record rule).
+    dec = ov["decisions.md"] if "decisions.md" in ov \
+        else (_read(eng / "decisions.md") or "")
+    decision_ids = {m.upper() for m in re.findall(r"(?m)^#{1,4}\s*\**\s*(D-\d+)\b", dec)}
     ctx_path = eng / "context.json"
-    ctx_raw = _read(ctx_path)
-    ctx = _read_json(ctx_path)
+    if "context.json" in ov:
+        ctx_raw = ov["context.json"]
+        try:
+            ctx = json.loads(ctx_raw)
+        except ValueError:
+            ctx = None
+    else:
+        ctx_raw = _read(ctx_path)
+        ctx = _read_json(ctx_path)
     return {
         "files": names,
+        "decision_ids": decision_ids,
         "answers_anchors": anchors,
-        "has_answers": (eng / "answers.md").is_file(),
+        "has_answers": "answers.md" in ov or (eng / "answers.md").is_file(),
         "enq_ids": set(re.findall(r"\bM-\d+\b", enq)),
         "enq_anchors": enq_anchors,
-        "has_enq": (eng / "enquadramento.md").is_file(),
+        "has_enq": "enquadramento.md" in ov or (eng / "enquadramento.md").is_file(),
         "context": ctx,
-        "has_context": ctx_path.is_file(),
+        "has_context": "context.json" in ov or ctx_path.is_file(),
         # a file that exists and does not parse is NOT the same as a missing one: the
         # locator points somewhere real that nothing can be read from.
         "context_broken": bool(ctx_raw) and not ctx,
@@ -1377,11 +1399,36 @@ def locator_target_gaps(text: str, classes: list[str], tgt: dict) -> list[str]:
     return gaps
 
 
+DECISION_ROW_RE = re.compile(r"^D-\d+$")
+
+CAPTURE_RUN_RE = re.compile(r"\brun\s+(\d+)\b")
+
+
+def capture_run(eng: Path, state: dict | None = None) -> int:
+    """How many L2 capture passes ran — derived from `_capture/_capture-log.md`, never
+    stored (handoff-v1 F2: `aisa-capture` no longer writes `_state.json`). The highest
+    `run N` of an `L2` line wins; an engagement written before this rule may still carry
+    `_state.json.capture_run`, read as a floor."""
+    best = 0
+    for line in (_read(Path(eng) / "_capture" / "_capture-log.md") or "").splitlines():
+        if "L2" not in line:
+            continue
+        for m in CAPTURE_RUN_RE.finditer(line):
+            best = max(best, int(m.group(1)))
+    try:
+        legado = int((state or {}).get("capture_run") or 0)
+    except (TypeError, ValueError):
+        legado = 0
+    return max(best, legado)
+
+
 def audit_confirmed_locators(rows: list[dict], eng: Path,
-                             only_ids: set[str] | None = None) -> dict:
+                             only_ids: set[str] | None = None,
+                             overlay: dict | None = None) -> dict:
     """P-12 deterministic half. Open `Confirmed` rows without a resolvable locator.
-    `only_ids` narrows it to the rows a single write touched (the hook's use)."""
-    tgt = evidence_targets(eng)
+    `only_ids` narrows it to the rows a single write touched (the hook's use);
+    `overlay` resolves targets published in the same operation (`evidence_targets`)."""
+    tgt = evidence_targets(eng, overlay)
     sem: list[dict] = []
     alvo: list[dict] = []
     excepcao: list[str] = []
@@ -1394,6 +1441,22 @@ def audit_confirmed_locators(rows: list[dict], eng: Path,
             continue
         total += 1
         text = " ".join((r.get("support") or "", r.get("extra") or ""))
+        if DECISION_ROW_RE.match(r["id"] or ""):
+            # A `D-NNN` row points at an authorised choice, not at a fact: its one locator
+            # is its own record, `decisions.md#D-NNN`, and the block must exist. Only D-
+            # ids take this path — a fact never confirms itself by citing decisions.md.
+            por_classe["decision"] = por_classe.get("decision", 0) + 1
+            if ("decisions.md#" + r["id"]).lower() not in text.lower():
+                sem.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                            "motivo": "linha de decisao sem `decisions.md#{}`".format(
+                                r["id"])})
+            elif r["id"].upper() not in tgt["decision_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["decision"],
+                             "motivo": "decisions.md sem o bloco {}".format(r["id"])})
+            else:
+                ok += 1
+            continue
         classes = locator_classes(text)
         if not classes:
             if LOCATOR_EXCEPTION.search(text):
@@ -5780,7 +5843,7 @@ def build_model(eng: Path, today: date) -> dict:
             "lentes_ronda_aberta": lenses_for_round(eng, _open_round(state)),
             "created": state.get("created", ""),
             "aisa_version": state.get("aisa_version", ""),
-            "capture_run": state.get("capture_run", 0),
+            "capture_run": capture_run(eng, state),
             "path": str(eng),
             "sponsor": su_header.get("sponsor", "") or (requester.get("name") or ""),
             "requester_role": requester.get("role", ""),

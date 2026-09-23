@@ -255,7 +255,7 @@ def state_problems(actual_text: str, new_text: str) -> list:
     return fora
 
 
-def su_problems(eng, old_text: str, new_text: str) -> list:
+def su_problems(eng, old_text: str, new_text: str, overlay: dict | None = None) -> list:
     """Razoes para recusar `new_text` como SU de um engagement `handoff-v1` (T08, F0 D19).
 
     1. Nenhuma linha desaparece: a SU e append-only; uma transicao acrescenta a sucessora e
@@ -263,7 +263,9 @@ def su_problems(eng, old_text: str, new_text: str) -> list:
     2. Uma linha `Confirmed` nova, ou existente que a escrita muda (promocao no lugar com o
        mesmo id incluida), traz um localizador das classes de `states.md` → *Confirmed
        threshold*, com o alvo presente. Verificador do motor (`audit_confirmed_locators`),
-       o mesmo que o `/status` le: presenca e existencia do alvo, nunca a verdade."""
+       o mesmo que o `/status` le: presenca e existencia do alvo, nunca a verdade.
+       `overlay` sao os outros ficheiros publicados na MESMA operacao: um alvo que nasce
+       com a linha que o cita conta (`dashboard.evidence_targets`)."""
     D = _dash()
     velhas = {r["id"]: (r["state"], r["raw"]) for r in D["parse_su"](old_text or "")[1]}
     linhas = D["parse_su"](new_text)[1]
@@ -278,7 +280,8 @@ def su_problems(eng, old_text: str, new_text: str) -> list:
                if r["state"] == "Confirmed" and not r["resolved"]
                and velhas.get(r["id"]) != (r["state"], r["raw"])}
     if tocadas:
-        audit = D["audit_confirmed_locators"](linhas, Path(eng), only_ids=tocadas)
+        audit = D["audit_confirmed_locators"](linhas, Path(eng), only_ids=tocadas,
+                                              overlay=overlay)
         falhas = ["{} ({})".format(x["id"], x["motivo"])
                   for x in audit["sem_locator"] + audit["alvo_ausente"]]
         if falhas:

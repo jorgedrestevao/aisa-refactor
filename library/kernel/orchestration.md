@@ -116,6 +116,25 @@ An orchestrator **must not**:
 
 If a revision has the orchestrator scoring evidence relevance, ranking signals, or selecting questions, that is the line being crossed.
 
+## Writing an authority (`handoff-v1`)
+
+The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place (`docs/handoff-v1/F2/DESENHO.md` §3). One protocol, every skill:
+
+1. **Open a draft** for everything the step writes, authorities and their companions together (`lens-outputs/<lens>.md`, `council-log.md`, `story.md`), declaring what the step read to decide: `python library/kernel/tools/resolve.py draft --engagement <slug> --files <rel>... --reads <rel|glob>... --json`. The draft copies the files to `_drafts/<id>/` and records their base.
+2. **Edit the copies** under the returned `path` — Edit/Write on `_drafts/<id>/<rel>`, never on the engagement file. A draft is nobody's truth: no reader, gate or render consumes it.
+3. **Publish**: `python library/kernel/tools/resolve.py publish --engagement <slug> --draft <id>`. One operation writes the changed files and, when the SU changed, its graph mirror, with one receipt. Publishing the same draft again returns the same receipt.
+
+A refusal leaves the draft as it was and prints a structured reason:
+
+| Code | Meaning | What the step does |
+|---|---|---|
+| `STALE_INPUT` | a file the draft started from, or declared as read, changed since | re-read, open a new draft on the current base, redo the edit — never force the old one |
+| `INTEGRITY_FAILURE` | the new content breaks an authority rule (a SU row removed, a `Confirmed` without a resolvable locator, a `_state.json` key dropped, the `workflow` block changed) | fix the copy and publish again |
+| `NOT_READY` / `RECOVERY_REQUIRED` | the engagement is not reconstructed (pending operation, divergent mirror) | follow the recovery the reason names; never write around it |
+| `CONCURRENT_WRITE` | another writer holds the engagement | publish again when it finishes |
+
+Never `mv` a `.tmp` over `_state.json`, never edit an authority with Bash, never Edit the SU in place. A direct edit that happened anyway is **preserved**: `on-su-mirror.py` reports it, the engagement stops being ready, and `python library/kernel/tools/resolve.py reconcile --engagement <slug>` shows the reconciliation (`--apply` publishes it). The `/answer` state transitions keep their own engine (`resolve.py --row …`), which publishes through the same coordinator. Phase artefacts (`frame.md`, `options.md`, `_blueprint/`, `_synthesis/`, `_render/`) stay tool-written until their phases (F4–F6).
+
 ## Pack context — Discovery vs Options
 
 **The six Discovery lenses** (`business`, `operations`, `user`, `data`, `governance`, `financial`):

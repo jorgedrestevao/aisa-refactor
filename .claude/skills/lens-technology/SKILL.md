@@ -38,6 +38,8 @@ Shared evidence: `_capture/evidence-index.md` as the source map; open a raw sour
 
 1. **`shared-understanding.md`** — atomic material findings, one per row, `lens=technology`, with evidence + round.
 2. **`lens-outputs/technology.md`** — appended under `## <round> — technology`: **What matters** (2–4 sentences) · **Tensions / risks** · **Open evidence** (`(none)` where empty). Interpretation, not a restatement of the rows.
+
+Both are written into the **draft copies** the caller opened (`_drafts/<id>/`), never in place; the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*).
 3. In council mode, the structured proposal returned to the chairman — schema as the council invocation states (today `.claude/agents/solution-architect.md`; owned by `chairman-synthesis`, its only consumer).
 
 ## Hard rules

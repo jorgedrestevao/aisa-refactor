@@ -114,7 +114,7 @@ that applies to this phase and persona, drop the rest.
 2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to a persona output that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
 3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven personas saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the personas' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
 4. **Surface contradictions as Conflicted rows.** Never silently pick a winner. The user resolves at `/decide` time.
-5. **Atomic writes**. Update `_state.json` via tmp → rename (`Move-Item -Force` on Windows, `mv` on Unix), matching `aisa-start`.
+5. **Through the coordinator, never in place.** The SU rows, the `_state.json` round and the `council-log.md` line go into the **draft copies** the calling skill opened for you (`_drafts/<id>/`), and the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*). The phase artefact and the synthesis log are written directly. A refusal on publish (`INTEGRITY_FAILURE` — e.g. a `Confirmed` without a resolvable locator) comes back to you to fix in the copy.
 6. **`costs <Z> today` follows the funding gate** (P-4). Read `context.json.funding_gate` (absent = `true`). With `false`, the engagement's go-ahead does not depend on a third party's budget approval, so the clause is **stated with its basis, not monetized**: name what the situation costs the business in its own terms — rework, exposure, dependency, time of the people named in the SU — anchored to the rows that carry it, and write *«enunciado com base, não monetizado»* in the Anchors table for that clause. Never invent a figure to fill the slot, and never mark the frame incomplete for the absence of one. With `true`, the clause carries the figure the financial lens established, or the clause stays open as an `Unknown`.
 7. **Epistemic columns.** Every Confirmed/Assumed row you write carries `verificado_em` = today (ISO date) and a `validade` decay class (`library/kernel/states.md` → *Epistemic half-lives*; in doubt: `organizacional`). An **expired** row (past its half-life) reads as *Assumed fraca*: a persona claim anchored only on expired rows never becomes Confirmed — keep it Assumed and raise the re-question as an Unknown.
 
@@ -185,7 +185,7 @@ step exists to prevent.
 
 ### Step 5 — Write the SU rows
 
-Edit `<engagement>/shared-understanding.md`, appending to each section table. Stamp `verificado_em` = today and a `validade` class on every Confirmed/Assumed row. Preserve existing rows and headers exactly. Update the SU header `Última actualização` timestamp.
+Edit the draft copy `<engagement>/_drafts/<id>/shared-understanding.md` (rule 5), appending to each section table. Stamp `verificado_em` = today and a `validade` class on every Confirmed/Assumed row. Preserve existing rows and headers exactly. Update the SU header `Última actualização` timestamp.
 
 ### Step 6 — Write the phase artefact
 
@@ -474,6 +474,6 @@ this record: every claim it carries traces to a field here, and nothing material
 
 ### Step 8 — Update state and log
 
-1. Update `_state.json.round` to the current round (atomically). For Framing rounds use the `F-NN` form, Options `O-NN`; the calling skill (`aisa-frame` / `aisa-options`) is responsible for the prefix, but if you find the prefix already correct in `_state.json`, leave it alone.
-2. Append a one-line summary to `<engagement>/council-log.md`: round, `agent: chairman`, what was produced.
+1. Update `_state.json.round` to the current round, in the draft copy (rule 5). For Framing rounds use the `F-NN` form, Options `O-NN`; the calling skill (`aisa-frame` / `aisa-options`) is responsible for the prefix, but if you find the prefix already correct in `_state.json`, leave it alone.
+2. Append a one-line summary to the draft copy of `council-log.md`: round, `agent: chairman`, what was produced.
 3. Return control to the calling skill with: "Chairman synthesis complete for `<phase>` round `<round>`. Wrote `<N>` SU rows; phase artefact `<frame.md | options.md | decisions.md draft>`."

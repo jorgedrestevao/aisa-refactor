@@ -1245,7 +1245,11 @@ def plan_publish(eng, draft_id) -> dict:
     if SU_FILE in novos_txt:
         antes = (eng / SU_FILE).read_text(encoding="utf-8") if (eng / SU_FILE).is_file() \
             else ""
-        problemas += W["su_problems"](eng, antes, novos_txt[SU_FILE])
+        # os outros ficheiros do mesmo rascunho publicam-se na MESMA operacao: um alvo
+        # que nasce com a linha que o cita (o `enquadramento.md` do nascimento) conta
+        problemas += W["su_problems"](eng, antes, novos_txt[SU_FILE],
+                                      overlay={k: v for k, v in novos_txt.items()
+                                               if k != SU_FILE})
     if "_state.json" in novos_txt and (eng / "_state.json").is_file():
         problemas += W["state_problems"]((eng / "_state.json").read_text(encoding="utf-8"),
                                          novos_txt["_state.json"])

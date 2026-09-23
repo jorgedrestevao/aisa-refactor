@@ -313,7 +313,7 @@ class D02_EstadoSoLe(unittest.TestCase):
     def test_the_start_skeleton_has_no_health_line_to_fill(self):
         texto = self.START.read_text(encoding="utf-8")
         esqueleto = texto[texto.index("8. **Write the `shared-understanding.md` skeleton**"):
-                          texto.index("9. Write `council-log.md`")]
+                          texto.index("9. Write, in the birth-draft copies, `council-log.md`")]
         self.assertNotIn("> Saúde epistémica", esqueleto)
 
 

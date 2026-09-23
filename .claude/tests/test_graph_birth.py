@@ -321,42 +321,57 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
         texto = self.SKILL.read_text(encoding="utf-8")
         init = texto.index("migrate.py init")
         for passo in ("7. **Write `_state.json`", "8. **Write the `shared-understanding.md`",
-                      "9. Write `council-log.md`", "9b. **Write `enquadramento.md`"):
+                      "9. Write, in the birth-draft copies, `council-log.md`",
+                      "9b. **Write `enquadramento.md`", "5c. **Open the birth draft.**"):
             self.assertLess(init, texto.index(passo),
                             "o grafo nasce depois de `{}` — D01 volta".format(passo))
         self.assertGreater(init, texto.index("5. **Create the folder structure**"))
 
     def test_the_birth_in_the_skill_order_is_never_refused(self):
+        """Passos 5b–9d (handoff-v1 F2): `init`, UM rascunho com todo o scaffold, UMA
+        publicação. As linhas `M-n` citam `enquadramento.md#M-n`, que nasce na mesma
+        operação — o limiar de `Confirmed` resolve o alvo no próprio rascunho."""
         self.eng.mkdir()
         p = self.init()
         self.assertEqual(p.returncode, 0, p.stderr)
-        passos = [("context.json", '{"engagement": "eng-x"}\n'),
-                  ("_state.json", self.ESTADO),
-                  ("shared-understanding.md", SU),
-                  ("council-log.md", "# Council Log — eng-x\n"),
-                  ("decisions.md", "# Decisions — eng-x\n"),
-                  ("answers.md", "# Answers — eng-x\n"),
-                  ("story.md", "# Story — eng-x\n"),
-                  # como o passo 9b: a tabela `M-n` existe antes das linhas da SU, e o
-                  # guarda de `Confirmed` (T08) encontra o alvo do localizador
-                  ("enquadramento.md", "# Enquadramento — eng-x\n\n| id | invariante | o que "
-                                       "orienta | fonte |\n|---|---|---|---|\n| M-1 | O preço "
-                                       "segue a tabela | cálculo | dono |\n")]
-        for nome, conteudo in passos:
-            self.assertIsNone(self.escreve(nome, conteudo))
-        # passo 9c (handoff-v1 F2): as linhas R-00 entram pelo coordenador — rascunho,
-        # edição da cópia, publicação —, SU e espelho numa operação. O hook já não espelha.
-        p = self.resolve("draft", "--files", "shared-understanding.md", "council-log.md",
-                         "--reads", "enquadramento.md", "answers.md", "--json")
+        ficheiros = ["context.json", "_state.json", "shared-understanding.md",
+                     "council-log.md", "decisions.md", "answers.md", "story.md",
+                     "enquadramento.md"]
+        p = self.resolve("draft", "--files", *ficheiros, "--json")
         self.assertEqual(p.returncode, 0, p.stderr)
         d = json.loads(p.stdout)
-        copia = Path(d["path"]) / "shared-understanding.md"
-        copia.write_text(copia.read_text(encoding="utf-8").replace(
-            "|---|---|---|---|---|---|---|\n\n## Assumed",
-            "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1),
-            encoding="utf-8", newline="\n")
-        p = self.resolve("publish", "--draft", d["draft"])
+        conteudos = {
+            "context.json": '{"engagement": "eng-x"}\n',
+            "_state.json": self.ESTADO,
+            "council-log.md": "# Council Log — eng-x\n",
+            "decisions.md": "# Decisions — eng-x\n",
+            "answers.md": "# Answers — eng-x\n",
+            "story.md": "# Story — eng-x\n",
+            "enquadramento.md": "# Enquadramento — eng-x\n\n| id | invariante | o que "
+                                "orienta | fonte |\n|---|---|---|---|\n| M-1 | O preço "
+                                "segue a tabela | cálculo | dono |\n",
+            "shared-understanding.md": SU.replace(
+                "|---|---|---|---|---|---|---|\n\n## Assumed",
+                "|---|---|---|---|---|---|---|\n" + self.LINHA_M1 + "\n## Assumed", 1)}
+        for nome, texto in conteudos.items():
+            # uma escrita do agente numa cópia do rascunho: os hooks reais correm, e nenhum
+            # a trata como autoridade (é `_drafts/<id>/<ficheiro>`)
+            alvo = Path(d["path"]) / nome
+            payload = {"tool_name": "Write",
+                       "tool_input": {"file_path": str(alvo), "content": texto}}
+            for h in self.PRE:
+                r = self.hook(h, payload)
+                self.assertEqual(r.returncode, 0, "{} recusou a cópia {}: {}".format(
+                    h, nome, r.stderr[:300]))
+            alvo.write_text(texto, encoding="utf-8", newline="\n")
+        self.assertFalse((self.eng / "_state.json").exists(),
+                         "o rascunho escreveu no engagement antes de publicar")
+        p = self.resolve("publish", "--draft", d["draft"], "--json")
         self.assertEqual(p.returncode, 0, p.stderr)
+        recibo = json.loads(p.stdout)["receipt"]
+        self.assertTrue(set(ficheiros) <= set(recibo["revision"]),
+                        "o nascimento não foi uma operação só")
+        self.assertTrue([k for k in recibo["revision"] if k.startswith("_graph/")])
         boot = B["bootstrap"](self.eng)
         self.assertTrue(boot["ready"], boot.get("limitations"))
         g = G["read"](self.eng)
@@ -364,6 +379,26 @@ class W8d_ONascimentoPelaOrdemDaSkill(unittest.TestCase):
         m1 = [n for n in g["nodes"] if n["id"] == "M-1"]
         self.assertEqual(len(m1), 1, "a linha M-1 não chegou ao grafo com a publicação")
         self.assertEqual(m1[0]["provenance"]["mirror_of"], "SU:M-1")
+
+    def test_a_birth_row_whose_anchor_is_not_in_the_draft_is_refused(self):
+        """O overlay resolve o que nasce junto — e só isso: um `M-2` sem alvo recusa."""
+        self.eng.mkdir()
+        self.assertEqual(self.init().returncode, 0)
+        p = self.resolve("draft", "--files", "_state.json", "shared-understanding.md",
+                         "enquadramento.md", "--json")
+        d = json.loads(p.stdout)
+        (Path(d["path"]) / "_state.json").write_text(self.ESTADO, encoding="utf-8")
+        (Path(d["path"]) / "enquadramento.md").write_text(
+            "# Enquadramento\n\n| id | invariante |\n|---|---|\n| M-1 | x |\n",
+            encoding="utf-8")
+        (Path(d["path"]) / "shared-understanding.md").write_text(SU.replace(
+            "|---|---|---|---|---|---|---|\n\n## Assumed",
+            "|---|---|---|---|---|---|---|\n"
+            + self.LINHA_M1.replace("M-1", "M-2") + "\n## Assumed", 1), encoding="utf-8")
+        p = self.resolve("publish", "--draft", d["draft"])
+        self.assertEqual(p.returncode, 1)
+        self.assertIn("CONFIRMED_WITHOUT_LOCATOR", p.stderr)
+        self.assertFalse((self.eng / "_state.json").exists())
 
     def test_the_old_order_is_refused_so_this_test_can_see_d01(self):
         """Mutante: a ordem antiga (estado antes do grafo) tem de continuar a ser recusada,

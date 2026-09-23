@@ -29,7 +29,7 @@ description: Interactive Decision phase. User picks an option from options.md, g
 
 ## Outputs (written)
 
-- `<engagement>/_state.json` (atomic, this skill).
+- `<engagement>/_state.json` (through the coordinator, this skill — `library/kernel/orchestration.md` → *Writing an authority*).
 - A new `D-NNN` block appended to `<engagement>/decisions.md` (this skill).
 - `<engagement>/_synthesis/{business-story,as-is,architecture-story,risks-and-assumptions,financial-story}.md` (chained `aisa-synthesize`).
 - `<engagement>/council-log.md` summary lines.
@@ -75,7 +75,9 @@ If a sponsor confirmation is `no` → warn the user but allow `--override "..."`
 
 If `--consult` was passed (or the user asks for a technical review mid-flow), launch ONE Task subagent: `subagent_type: solution-architect`, prompt = review the chosen `<O-NNN>` against the SU, the pack's `decision-tree.md` and `domain-knowledge/` — return newly visible risks, constraint re-checks, and revision triggers per its output schema. Present the review to the user before step 3. Any new risks the user accepts become `R-NNN` rows in step 4. The review is advisory: it never changes the choice by itself.
 
-### 3. Flip state to Decision (atomic)
+### 3. Flip state to Decision (through the coordinator)
+
+Steps 3, 4 and 4b are **one** draft, published once at the end of 4b: `python library/kernel/tools/resolve.py draft --engagement <slug> --files _state.json decisions.md shared-understanding.md council-log.md --reads frame.md options.md premortem.md --json`. Every write below goes into its copies, never in place and never through a `.tmp` renamed over `_state.json` (`library/kernel/orchestration.md` → *Writing an authority*). The `D-NNN` row of 4b cites the block of step 4, and both publish in the same operation, so its locator resolves.
 
 1. Update `_state.json`: `phase = decision`, `round = D-<NN>` (D-01 for the first decision in the engagement; if a prior D-NN exists in `_state.json`, increment).
 2. Update SU header `Fase actual: Decision`.
@@ -131,10 +133,12 @@ If the user introduced **new** accepted risks not yet in the SU, add them as `R-
 The SU stays complete (understanding + commitments). Append ONE row to `## Confirmed`:
 
 ```
-| D-NNN | <dominant lens, or `chair`> | <decision title>; ver decisions.md#D-NNN | decisions.md#D-NNN | <current round> |
+| D-NNN | <dominant lens, or `chair`> | <decision title>; ver decisions.md#D-NNN | decisions.md#D-NNN | <today, ISO> | organizacional | <current round> |
 ```
 
-Update the SU header `Última actualização`. (Per `docs/ARCHITECTURE.md §4.5` — the decision is citable from the SU like any other id.)
+Seven cells, the `## Confirmed` columns (`id | lens | claim | evidência | verificado_em | validade | ronda`). The evidence is the decision's own record — the decision-record rule of `library/kernel/states.md` → *Confirmed threshold*: only a `D-` row may cite `decisions.md`, and the block must exist.
+
+Update the SU header `Última actualização`. (Per `docs/ARCHITECTURE.md §4.5` — the decision is citable from the SU like any other id.) Then **publish the decision draft** (`resolve.py publish --engagement <slug> --draft <id>`); a refusal follows *Writing an authority*, and the decision is not reported recorded until the publish succeeds.
 
 ### 4c. Freeze the counterfactuals (multiverse)
 

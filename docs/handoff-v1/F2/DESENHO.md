@@ -10,6 +10,7 @@ Decisões do mantenedor (2026-09-23), todas na opção recomendada:
 | Q2 | Âmbito de F2 | Os escritores das 6 autoridades (`_state.json`, SU, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md`). Os artefactos de fase ficam para F4–F6 |
 | Q3 | `coverage finalize` (D07) | Pelo coordenador: um só mecanismo de publicação. A idempotência vem do conteúdo do rascunho; a versão é a maior emitida + 1, nunca reutilizada |
 | Q4 | `su-confirmed-guard` | Retirado. A regra fica em `dashboard.audit_confirmed_locators`, consultada pelo guarda e pelo coordenador |
+| Q5 | Linha `D-NNN` na SU (o `/decide` era recusado desde F1: `decisions.md#D-NNN` não é localizador das cinco classes) | Classe própria só para ids `D-`: localizador `decisions.md#D-NNN`, com o bloco presente (conta se for publicado na mesma operação). Um facto nunca se confirma citando `decisions.md` (`states.md` → *Confirmed threshold*) |
 
 Nenhum motor novo. `operation.py` continua a ser o único publicador e `bootstrap.py` a única reconstrução. `resolve.py` continua dono do espelho SU→grafo. O `workflow.py` só liga tarefa, inputs e próxima acção a estes três.
 
@@ -55,7 +56,7 @@ Se a base mudou depois do rascunho, dá `STALE_INPUT`. O rascunho fica como est�
 
 **Edição directa (T17).** Num engagement `handoff-v1`, o `on-su-mirror` deixa de publicar: escreve no stderr a divergência e o comando de reconciliação. O bootstrap passa a não pronto (`AUTHORITY_UNMIRRORED`/`AUTHORITY_DRIFT`), por isso o guarda recusa a escrita seguinte e o coordenador recusa publicar sobre o estado divergente. A edição fica nos ficheiros. `resolve.py reconcile --engagement E` mostra o que vai espelhar, com as mudanças de estado material destacadas; `--apply` publica pelo coordenador, com recibo. A SU prevalece, como sempre.
 
-**Nascimento.** `/start` escreve o scaffold num rascunho e publica-o com `workflow.py birth --draft <id>`: scaffold, grafo de `migrate.init` e checkpoint inicial numa operação e num recibo. Fecha a sequência de escritas à mão (disposição F0 do `aisa-start`).
+**Nascimento** (como ficou em F2.5). `/start` corre `migrate.py init` (grafo vazio, uma operação) e escreve depois o scaffold inteiro num rascunho: `context.json`, `_state.json`, SU com as linhas `R-00`, `council-log.md`, `decisions.md`, `answers.md`, `story.md` e `enquadramento.md`. Publica-o com `resolve.py publish` numa operação e num recibo, com o espelho das linhas `R-00`. A regra de `Confirmed` resolve os alvos no próprio rascunho (`overlay`), e por isso um `M-n` que cita `enquadramento.md#M-n` passa na mesma operação. Não existe `workflow.py birth`: um comando novo duplicaria o `publish`. O checkpoint inicial entra em F2.3. Fica fechada a sequência de escritas à mão (disposição F0 do `aisa-start`).
 
 ## 4. Checkpoint, tarefas e resultados
 

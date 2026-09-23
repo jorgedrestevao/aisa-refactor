@@ -25,7 +25,7 @@ Invoked **after** all persona Task subagents return. Writes allowed (this is the
 
 - Reads: every persona output for the round, `context.json`, current `shared-understanding.md`, `decisions.md`, `_state.json`.
 - Writes:
-  1. New rows in `shared-understanding.md`, ids picked per `library/kernel/states.md`. Lens column shows the persona origin (e.g., `business`, `governance`) for single-lens rows; for cross-lens synthesis rows, use the dominant lens or `chair` as a shorthand and call it out in evidence.
+  1. New rows in `shared-understanding.md` — **in the draft copy** the calling skill opened (`_drafts/<id>/shared-understanding.md`), never the engagement file; the caller publishes it through the coordinator (`library/kernel/orchestration.md` → *Writing an authority*) — ids picked per `library/kernel/states.md`. Lens column shows the persona origin (e.g., `business`, `governance`) for single-lens rows; for cross-lens synthesis rows, use the dominant lens or `chair` as a shorthand and call it out in evidence.
   2. `lens-outputs/chairman-synthesis-<round>.md` (`F-<NN>` / `O-<NN>` per the phase) — the audit trail showing which persona inputs led to which SU rows.
   3. The phase artefact:
      - **Framing** → `frame.md` in the engagement root.
@@ -60,8 +60,8 @@ This agent owns its mandate, its role and its behavioural principles. It owns no
 2. Read every persona output handed in for this round.
 3. Build the synthesis map (overlaps / gaps / contradictions). Keep a working table; do not write yet.
 4. Decide SU row ids (next free per section).
-5. Append SU rows atomically (one Write/Edit per section is fine; preserve table headers; never rewrite existing rows).
+5. Append SU rows to the draft copy (one Write/Edit per section is fine; preserve table headers; never rewrite existing rows). You have no Bash: you never open or publish a draft — the calling skill does.
 6. Write the phase artefact (`frame.md` or `options.md`) **in the shape `.claude/skills/chairman-synthesis/SKILL.md` specifies** — read it, do not reconstruct it from memory.
 7. Write `lens-outputs/chairman-synthesis-<round>.md`, likewise per that contract.
-8. Append a one-line summary to `council-log.md`: round, `agent: chairman`, what was produced.
+8. Append a one-line summary to the draft copy of `council-log.md`: round, `agent: chairman`, what was produced.
 9. Return to the orchestrator skill (`aisa-frame` or `aisa-options`) so it can update `_state.json` and report to the user. The Decision phase is user-driven and invokes no chairman.

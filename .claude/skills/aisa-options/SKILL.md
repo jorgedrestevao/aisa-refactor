@@ -33,7 +33,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 ## Outputs (written, via chairman-synthesis except where noted)
 
-- `<engagement>/_state.json` — atomic write (this skill).
+- `<engagement>/_state.json` — through the coordinator (this skill; `library/kernel/orchestration.md` → *Writing an authority*).
 - `<engagement>/options.md` (chairman-synthesis).
 - New rows in `<engagement>/shared-understanding.md` (chairman-synthesis).
 - `<engagement>/lens-outputs/chairman-synthesis-O-<NN>.md` (chairman-synthesis).
@@ -93,7 +93,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 If a soft criterion is red and no `--override` was passed → stop with a one-line-per-criterion summary and ask the user. If `--override` is set, log the reason — it goes into `decisions.md` alongside D-NNN.
 
-### 3. Flip state to Options (atomic)
+### 3. Flip state to Options (through the coordinator)
 
 1. Compute the options round **from history, never from `_state.json` alone**: use
    `options_history.next` from the motor (highest of `lens-outputs/chairman-synthesis-O-NN.md`,
@@ -101,8 +101,10 @@ If a soft criterion is red and no `--override` was passed → stop with a one-li
    decision the state holds `D-01`, and deriving `O-01` from it would overwrite the very round
    that produced the decision being revisited (F07).
 2. Update `_state.json`: `phase = options`, `round = <options_history.next>`, `round_in_progress = ""`
-   (a Discovery passagem left open never crosses a phase boundary). Atomic write
-   (`_state.json.tmp` → `Move-Item -Force` / `mv`).
+   (a Discovery passagem left open never crosses a phase boundary). Items 2, 2b and 3 are one
+   draft — `resolve.py draft --engagement <slug> --files _state.json shared-understanding.md
+   council-log.md story.md --json`, edit the copies, `resolve.py publish` (`library/kernel/orchestration.md` → *Writing an authority*);
+   never `mv` a `.tmp` over `_state.json`.
 2b. **When this is a reopening**, also append to `council-log.md`:
    `## O-NN — reabertura da decisão D-00x — <ISO ts>` with what triggered it
    (`_simulation/<revisit file>`, `TW-n`) or the `--reopen` justification, and the line
@@ -177,6 +179,8 @@ Collect the `Concedo / Contesto / Síntese proposta` returns and re-invoke chair
 ### 6. Hand off to chairman-synthesis
 
 Invoke `chairman-synthesis` with the 7 persona outputs and phase = `options`, round = `O-<NN>`. The chairman writes `options.md` (≥3 options) and the new SU rows.
+
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
 Four contract checks before reporting to the user, all owned by `chairman-synthesis`:
 

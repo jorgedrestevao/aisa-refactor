@@ -29,6 +29,8 @@ The invocation carries the round context: round id, next free SU ids, the Shared
 1. **`shared-understanding.md`** — atomic material findings, one per row, `lens=data`, with evidence + round.
 2. **`lens-outputs/data.md`** — appended under `## <round> — data`: **What matters** (2–4 sentences) · **Tensions / risks** · **Open evidence** (`(none)` where empty). Interpretation, not a restatement of the rows.
 
+Both are written into the **draft copies** the caller opened (`_drafts/<id>/`), never in place; the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*).
+
 ## Hard rules
 
 1. No vendor/product names; an existing system may be named as *current state* (`.claude/rules/no-tech-mention-before-options.md`).

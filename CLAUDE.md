@@ -18,7 +18,7 @@
 5. **Soft gates, hard integrity**: phase gates are warnings, overrideable with justification. Integrity fails closed: `library/` is read-only at runtime, coordinated state is written only by the coordinator, an engagement of the historical version is read-only, and a `Confirmed` row needs a locator (hooks `pre-write-guard`, `pre-authority-guard`, `pre-profile-check`).
 6. **Native Claude Code primitives**: skills, agents, hooks, commands. No reinvention.
 7. **Pack activo per-engagement**: declared in `projects/<slug>/_state.json.pack`. Not global.
-8. **Atomic writes** to `_state.json`: tmp → mv pattern.
+8. **Authorities are published by the coordinator** (`handoff-v1` F2): the six authorities (`_state.json`, SU, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md`) are written by draft → `resolve.py publish` — one atomic, receipted operation with base and read-set as precondition; never a `.tmp` renamed over a file (`library/kernel/orchestration.md` → *Writing an authority*).
 9. **Knowledge expires; questions have prices; decisions keep their counterfactuals.** (kernel v0.2.0: half-lives, question economics, tripwires/multiverso, diários do council.)
 10. **Reason deeply → persist selectively → claim conservatively → rehydrate selectively → revalidate when premises change.** Determinism governs what must survive compression, who owns it (SU), what may not be silently promoted or dropped (disposition `MAP`/`ADOPT`/`DISMISS`; fact ≠ fit), what is revalidated when a premise changes, and what a fresh session reloads (phase ≠ session). Never the internal reasoning sequence. (`library/kernel/orchestration.md` → *Comprehension survival*.)
 

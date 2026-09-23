@@ -620,7 +620,7 @@ aisa/                                              # repo 1 — partilhável den
 
 # Estrutura típica de UM engagement (vive em aisa-engagements-<tenant>/<slug>/):
 #   <slug>/
-#   ├── _state.json                              # phase, round, pack, atomic writes (tmp → mv)
+#   ├── _state.json                              # phase, round, pack, workflow — published by the coordinator (draft → resolve.py publish)
 #   ├── context.json                             # captura do /start
 #   ├── shared-understanding.md                  # ARTEFACTO VIVO (5 secções por estado)
 #   ├── dashboard.html                           # PÁGINA VIVA (gerada; nunca editada à mão)

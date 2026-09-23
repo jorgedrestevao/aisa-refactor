@@ -108,7 +108,9 @@ description: Record an answer or resolution for a Shared Understanding row (Unkn
    ` — resolved → <new-id(s)>` marker and is never deleted: append-only, and this marker
    plus the revalidation renewal are the only two sanctioned edits to an existing row.
 6. Update the SU header `Última actualização` and append one line to `council-log.md`:
-   `<round> — /answer <id> → <new-id(s)> (<state>)`. These two are outside the engine's
+   `<round> — /answer <id> → <new-id(s)> (<state>)` — one draft (`resolve.py draft
+   --engagement <slug> --files shared-understanding.md council-log.md --json`, edit the
+   copies, `resolve.py publish`; `library/kernel/orchestration.md` → *Writing an authority*). These two are outside the engine's
    write set on purpose — the log is the skill's narration of what it did, not part of the
    transition, and folding it in would make a narration failure look like a failed
    transition.
@@ -143,17 +145,17 @@ For expired (or ageing) Confirmed/Assumed rows — see `library/kernel/states.md
 
 1. Locate the row (`C-NNN`/`A-NNN`). Not found → stop and list the expired ids (per `/status`). Already `resolved → …` → stop and say so.
 2. Judge the confirmation note (ask for one if absent): does the fact still hold **unchanged**?
-   - **Holds** → renew `verificado_em` = today on the row itself. No new row, no `resolved` marker — this renewal and the `resolved →` marker are the only two sanctioned edits to existing rows.
-   - **Changed** (the note contradicts or amends the claim) → say so and apply the NORMAL flow instead (steps 3–6 above): new row(s) with `was <id>`, original marked resolved. Never renew a changed fact.
-3. Record the revalidation in `answers.md`:
+   - **Holds** → the engine renews it: `python library/kernel/tools/resolve.py --engagement <slug> --row <id> --op revalidate --note "<verbatim note>" --by "role: <who> | fonte: <what>" --json`. It renews `verificado_em` = today on the row, writes the `answers.md` section below and the graph mirror in **one** coordinator operation, with a receipt — never by hand. No new row, no `resolved` marker — this renewal and the `resolved →` marker are the only two sanctioned edits to existing rows.
+   - **Changed** (the note contradicts or amends the claim) → say so and apply the NORMAL flow instead (steps 3–6 above): new row(s) with `was <id>`, original marked resolved. Never renew a changed fact (the engine refuses `--changed`).
+3. The `answers.md` section the engine records (shape, for reading — the engine writes it):
    ```markdown
-   ## <id> — <date ISO> (revalidação)
+   ## <id> — <date ISO> (revalidacao)
    - **Claim**: <original claim>
-   - **Confirmação**: mantém-se — <verbatim note>
+   - **Confirmacao**: mantem-se — <verbatim note>
    - **Fonte**: <source>
-   - **verificado_em**: <old date> → <today>
+   - **verificado_em**: <old date> -> <today>
    ```
-4. Update the SU header `Última actualização`. Append to `council-log.md`: `<round> — /answer --revalidate <id> (verificado_em renovado)`.
+4. Update the SU header `Última actualização`. Append to `council-log.md`: `<round> — /answer --revalidate <id> (verificado_em renovado)` — one draft, as in step 6 above.
 5. Output:
    ```user-output
    Reconfirmado: <o facto, em meia linha> (<id>) — volta a valer a partir de hoje.
