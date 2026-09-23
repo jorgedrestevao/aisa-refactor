@@ -1,0 +1,24 @@
+{
+ "schema_version": "aisa-review-ledger/1",
+ "revision": 2,
+ "dispositions": [
+  {
+   "seq": 1,
+   "finding": "REV-0001.F01",
+   "disposition": "deferred",
+   "rationale": "fica para o FC do valor",
+   "candidate_revision": 1,
+   "at": "2026-09-23T22:55:37Z",
+   "impact": "FC-0002 não é autorizável enquanto U-001 estiver aberta"
+  },
+  {
+   "seq": 2,
+   "finding": "REV-0002.F01",
+   "disposition": "accepted",
+   "rationale": "entra no desenho como regra do servidor e no FC como exemplo negativo",
+   "candidate_revision": 1,
+   "at": "2026-09-23T22:55:37Z"
+  }
+ ],
+ "divergences": []
+}

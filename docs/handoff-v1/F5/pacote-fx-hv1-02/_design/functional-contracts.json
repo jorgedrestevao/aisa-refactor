@@ -1,0 +1,135 @@
+{
+ "schema_version": "handoff-functional/1",
+ "engagement_id": "fx-hv1-02",
+ "revision": 1,
+ "based_on": [
+  {
+   "ref": "_blueprint/ux-blueprint_v01.yaml",
+   "sha256": "294021237e0973a91a983d19f4c35df52e1edebad3ee36051779ddc4f98c240d"
+  },
+  {
+   "ref": "shared-understanding.md"
+  }
+ ],
+ "retired_ids": [],
+ "items": [
+  {
+   "id": "FC-0001",
+   "journey_id": "J-0001",
+   "purpose": "Submeter um pedido de equipamento sem o duplicar",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "owner_role": "responsável de compras",
+   "requirement_refs": [
+    "C-002",
+    "C-003"
+   ],
+   "architecture_refs": [
+    "pedidos",
+    "submissao-idempotente"
+   ],
+   "authorization_ref": null,
+   "actors": [
+    "Requerente"
+   ],
+   "trigger": "o requerente submete o formulário",
+   "inputs": [
+    {
+     "field_ref": "pedidos.chave_submissao",
+     "required": true
+    },
+    {
+     "field_ref": "pedidos.estado",
+     "required": true,
+     "values": [
+      "submetido",
+      "aprovado",
+      "rejeitado"
+     ]
+    }
+   ],
+   "rule": "uma segunda submissão com a mesma chave devolve o pedido existente",
+   "postconditions": [
+    "existe um só pedido por chave de submissão"
+   ],
+   "exceptions": [
+    {
+     "condition": "falha de rede depois da gravação",
+     "behavior": "a repetição devolve o mesmo pedido"
+    }
+   ],
+   "acceptance_examples": [
+    {
+     "kind": "positive",
+     "given": "um pedido novo",
+     "when": "submete",
+     "then": "fica um pedido submetido"
+    },
+    {
+     "kind": "negative",
+     "given": "o mesmo pedido já submetido",
+     "when": "submete de novo",
+     "then": "não nasce um segundo pedido"
+    }
+   ],
+   "publication_status": "draft"
+  },
+  {
+   "id": "FC-0002",
+   "journey_id": "J-0001",
+   "purpose": "Calcular o valor do pedido",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "owner_role": "responsável de compras",
+   "requirement_refs": [
+    "C-002"
+   ],
+   "architecture_refs": [
+    "pedidos"
+   ],
+   "authorization_ref": null,
+   "actors": [
+    "Requerente"
+   ],
+   "trigger": "o requerente submete o formulário",
+   "inputs": [
+    {
+     "field_ref": "pedidos.chave_submissao",
+     "required": true
+    }
+   ],
+   "rule": "soma de quantidade × preço unitário por linha, mais IVA à taxa normal",
+   "postconditions": [
+    "pedidos.valor_total fica gravado em EUR"
+   ],
+   "exceptions": [
+    {
+     "condition": "linha sem preço",
+     "behavior": "o pedido não é submetido"
+    }
+   ],
+   "acceptance_examples": [
+    {
+     "kind": "positive",
+     "given": "duas linhas de 10,00 € sem IVA",
+     "when": "calcula",
+     "then": "24,60 € com IVA a 23%"
+    },
+    {
+     "kind": "negative",
+     "given": "uma linha sem preço",
+     "when": "calcula",
+     "then": "não há valor e o pedido não segue"
+    }
+   ],
+   "publication_status": "draft",
+   "calculation": {
+    "units": "EUR",
+    "rounding": ""
+   },
+   "open_refs": [
+    "U-001"
+   ]
+  }
+ ]
+}

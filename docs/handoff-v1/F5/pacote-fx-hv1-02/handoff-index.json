@@ -1,0 +1,169 @@
+{
+ "schema_version": "handoff-index/1",
+ "engagement_id": "fx-hv1-02",
+ "revision": 1,
+ "based_on": [
+  {
+   "ref": "_design/candidates.json",
+   "revision": 1,
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce"
+  },
+  {
+   "ref": "_design/functional-contracts.json",
+   "revision": 1,
+   "sha256": "74a8e1db1802614e1b66531fa62e5749c4d796d76a69cc30995d3b3c924d7a24"
+  },
+  {
+   "ref": "_blueprint/ux-blueprint_v01.yaml",
+   "sha256": "294021237e0973a91a983d19f4c35df52e1edebad3ee36051779ddc4f98c240d"
+  }
+ ],
+ "scope_refs": [
+  "SCOPE-0001"
+ ],
+ "exclusions": [
+  {
+   "ref": "implementation-spec",
+   "reason": "não renderizada no ensaio F5.5 — texto da skill de render, sem motor (DESENHO Q9); trabalho e testes por projectar"
+  },
+  {
+   "ref": "estimate",
+   "reason": "não renderizada no ensaio F5.5 (DESENHO Q9); só a ordem de grandeza dos candidatos, por analogia"
+  },
+  {
+   "ref": "FC-0002",
+   "reason": "bloqueado: a regra de arredondamento (U-001) não foi escolhida pelo dono; não autorizável"
+  },
+  {
+   "ref": "gestão de stock",
+   "reason": "fora do âmbito (fixture fx-hv1-02)"
+  },
+  {
+   "ref": "recepção física",
+   "reason": "fora do âmbito (fixture fx-hv1-02)"
+  }
+ ],
+ "code_version": "ce218ce",
+ "pack_version": "1.10.0",
+ "files": [
+  {
+   "path": "shared-understanding.md",
+   "sha256": "f7f07e49bfdfaabd33b6a8281e8c91dd93173f24f7f3529c584711d1140a359f"
+  },
+  {
+   "path": "decisions.md",
+   "sha256": "5b7ae1834be07bd09a6d17a4f5dfb9d803522602781c4702f4b6fb2f45aaa657"
+  },
+  {
+   "path": "answers.md",
+   "sha256": "603a71f0d26e7a4f4e23676b5dbafba79821a51ccc539dd434056a64773f0788"
+  },
+  {
+   "path": "_state.json",
+   "sha256": "ebb6f0873693ac0e447e95aee6372435e57066d968d724606d33a5df5c549f84"
+  },
+  {
+   "path": "_design/candidates.json",
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce"
+  },
+  {
+   "path": "_design/functional-contracts.json",
+   "sha256": "74a8e1db1802614e1b66531fa62e5749c4d796d76a69cc30995d3b3c924d7a24"
+  },
+  {
+   "path": "_blueprint/ux-blueprint_v01.yaml",
+   "sha256": "294021237e0973a91a983d19f4c35df52e1edebad3ee36051779ddc4f98c240d"
+  },
+  {
+   "path": "_design/reviews/REV-0001.json",
+   "sha256": "37d90f28a6cfd5d998ee08f45b303c5cfd51ee54dccfe2a86e6e0e8ebecd2117"
+  },
+  {
+   "path": "_design/reviews/REV-0001.mandate.json",
+   "sha256": "e8ece065fcdc8c9cd42ba53f8145c2223cf3599e56a0d0484aee1ba08d7272cf"
+  },
+  {
+   "path": "_design/reviews/REV-0002.json",
+   "sha256": "337c61138d1fc81a80ee256949e88cc93cb6dd1d5d150d10800772eea0762953"
+  },
+  {
+   "path": "_design/reviews/REV-0002.mandate.json",
+   "sha256": "e83572884f385a12cb38f43e39d6f93994573264ee5cd7a86e34a7f1336445a9"
+  },
+  {
+   "path": "_design/reviews/REV-0003.json",
+   "sha256": "6b7aa37e6d9e826e562599e9bd6ec3dbb6c662d290e8a5093e82be1a7cfc2b46"
+  },
+  {
+   "path": "_design/reviews/REV-0003.mandate.json",
+   "sha256": "ae88da9ed7c7184423845d1742e4f614f6008146c2e9d724b39068764a78f45b"
+  },
+  {
+   "path": "_design/reviews/ledger.json",
+   "sha256": "d87423fdd026d896cc1aa08598289c7a19fd3f60a984f3a7cec2e5e4627eb57e"
+  },
+  {
+   "path": "inputs/entrevista-processo.md",
+   "sha256": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55"
+  },
+  {
+   "path": "inputs/matriz-papeis.md",
+   "sha256": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204"
+  },
+  {
+   "path": "inputs/nota-dados.md",
+   "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc"
+  },
+  {
+   "path": "inputs/pedido.md",
+   "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d"
+  },
+  {
+   "path": "render-gate.json",
+   "sha256": "f6b5308e003758404f2ac4ad01a0314f89fbc58e6aaef4fb33560539839099df"
+  }
+ ],
+ "authorization_refs": [
+  "decisions.md#D-001",
+  "decisions.md#D-002",
+  "decisions.md#D-003",
+  "decisions.md#D-004"
+ ],
+ "readiness": {
+  "render_final_allowed": false,
+  "fc": {
+   "FC-0001": {
+    "authorizable": true,
+    "authorization": "current",
+    "gaps": []
+   },
+   "FC-0002": {
+    "authorizable": false,
+    "authorization": "missing",
+    "gaps": [
+     "MISSING_ROUNDING",
+     "MISSING_EXAMPLE_BOUNDARY",
+     "OPEN_BLOCKER"
+    ]
+   }
+  },
+  "open_findings": [
+   "REV-0001.F01"
+  ],
+  "reviews": {
+   "REV-0001": "current",
+   "REV-0002": "current",
+   "REV-0003": "current"
+  }
+ },
+ "proofs": {
+  "performed": [],
+  "pending": [
+   "prova: submissão repetida não duplica (FC-0001, exemplo negativo)",
+   "prova: a segregação C-004 recusa no servidor"
+  ]
+ },
+ "receiver_acceptance": null,
+ "delivery_level": "preliminary",
+ "label": "preliminary · incompleto — ensaio F5.5, dados sintéticos; não é pronto para construção"
+}

@@ -1,0 +1,40 @@
+{
+ "final_allowed": false,
+ "cited": [
+  "FC-0001",
+  "FC-0002"
+ ],
+ "approved_blueprint": "_blueprint/ux-blueprint_v01.yaml",
+ "blocked": [
+  {
+   "code": "AUTHORIZATION_MISSING",
+   "fc": "FC-0002",
+   "detail": "FC-0002 sem autorização do dono"
+  },
+  {
+   "code": "FUNCTIONAL_GAP",
+   "fc": "",
+   "detail": "3 lacuna(s) funcionais devolvidas ao autor"
+  }
+ ],
+ "gaps": [
+  {
+   "owner": "functional",
+   "fc": "FC-0002",
+   "code": "MISSING_ROUNDING",
+   "detail": "cálculo sem regra de arredondamento — lacuna, nunca um valor escolhido"
+  },
+  {
+   "owner": "functional",
+   "fc": "FC-0002",
+   "code": "MISSING_EXAMPLE_BOUNDARY",
+   "detail": "cálculo sem exemplo `boundary`"
+  },
+  {
+   "owner": "functional",
+   "fc": "FC-0002",
+   "code": "OPEN_BLOCKER",
+   "detail": "U-001 está em aberto e bloqueia (blocks_scope)"
+  }
+ ]
+}
