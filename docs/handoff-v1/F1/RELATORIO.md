@@ -31,6 +31,7 @@ Por fazer em F1: contratos de perfil, rota e schema; materialidade; evidência; 
 ## 3. Decisões e evidência
 
 - **D-F1-01 (CI)**, decidida pelo mantenedor: dois jobs. Os mínimos de versão em `requirements-dev.txt` são as versões com que a baseline correu (`test-baseline.json` → `environments.devdeps`), não versões escolhidas por conveniência.
+- **Execução em paralelo** (regra do mantenedor, 2026-09-23): workflows paralelos só para tarefas que não precisam do contexto da sessão e cujo detalhe não acrescenta nada à sessão. O desenho dos contratos F1 tinha sido lançado como workflow paralelo (run `wf_a1920f13-d01`: 6 desenhadores e uma revisão cruzada, só leitura). Parado por decisão do mantenedor com 2 agentes em curso; nenhum resultado foi recebido nem integrado. O desenho passou para a sessão. Regra registada em [../README.md](../README.md) → *Regras de execução*.
 - **D01**: a ordem nova foi provada com os hooks reais antes de mudar a skill (simulação em diretório temporário: a ordem antiga é recusada por `pre-authority-guard.py` no Write da SU; a ordem nova passa todos os passos, o bootstrap fica `ready` e `M-1` chega ao grafo com `mirror_of = SU:M-1`). `docs/ONBOARDING.md` §3.2 descreve uma sequência sem linhas `M-n` (SU, estado, `init`) que não é recusada. Fica por alinhar com a documentação de F7, não com este incremento.
 
 ## 4. Testes
@@ -62,6 +63,6 @@ F1.1 e F1.2 revertem com `git revert` do commit respectivo. Não há dados de en
 
 - Última operação integrada: F1.2 (`7989bdf`).
 - Inputs/revisões necessários: plano v1.2; F0/RELATORIO.md §11 (decisões D-F1-02..17) e §17 (proposta de F1).
-- Drafts/resultados recebidos ainda não integrados: desenho dos contratos F1 (workflow de leitura e desenho, sem escrita no repositório).
+- Drafts/resultados recebidos ainda não integrados: nenhum. O workflow de desenho foi parado sem resultados (§3); o desenho dos contratos F1 corre na sessão.
 - Próxima ação segura: fechar o desenho dos contratos e apresentar ao mantenedor as decisões materiais antes de qualquer mudança em `library/`.
 - Autorização necessária antes de continuar: decisões materiais de contrato (perfil/rota/schema, capacidades do pack, materialidade, evidência).
