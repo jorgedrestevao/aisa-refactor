@@ -1,6 +1,6 @@
 # F6 — Relatório da fase (rastreabilidade completa e handoff implementável)
 
-Estado: **gate avaliado — aguarda aceitação** (2026-09-24). Desenho e decisões Q1–Q8: [DESENHO.md](DESENHO.md). Gate: T31–T34, T37–T40; zero requisito material órfão no âmbito entregue; esforço por WP coerente; pacote parcial nunca apresentado como completo.
+Estado: **concluída — gate aceite pelo mantenedor** (2026-09-24), com os limites declarados (T34 sem `funded: no`; T38 ao nível do motor; T40 lista fechada; item 4 só no pack `pp`; T43 simulado) e o desvio registado (`ARCHITECTURE.md`/`ONBOARDING.md`). Desenho e decisões Q1–Q8: [DESENHO.md](DESENHO.md). Gate: T31–T34, T37–T40; zero requisito material órfão no âmbito entregue; esforço por WP coerente; pacote parcial nunca apresentado como completo.
 
 ## 1. Incrementos
 
