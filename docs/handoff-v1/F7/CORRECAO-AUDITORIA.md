@@ -1,6 +1,6 @@
 # Correcção pós-auditoria dos gates da F6 e da F7 (A1–A5)
 
-Estado: **correcção integrada, à espera da nova aceitação dos gates pelo mantenedor** — os cinco casos reproduzidos e corrigidos (2026-09-24). Os gates da F6 (T33, T39, aceitação do destinatário) e da F7 (T41) ficam **reabertos** até a correcção ter evidência e o mantenedor os aceitar de novo.
+Estado: **concluída — gates da F6 e da F7 aceites de novo pelo mantenedor** (2026-09-24), depois do CI #93 verde (`c93ff75`: jobs `suite` e `stdlib` com sucesso). Os cinco casos reproduzidos e corrigidos. Os gates da F6 (T33, T39, aceitação do destinatário) e da F7 (T41) ficam **reabertos** até a correcção ter evidência e o mantenedor os aceitar de novo.
 
 Origem: auditoria externa trazida pelo mantenedor, sobre `claude/clone-repo-awui-7mmi37` em `1dcdb61` (suite 111/111, 3033 casos, CI verde): quatro falhas nos gates de entrega. A reprodução desta sessão confirmou as quatro e encontrou a quinta (A5), no próprio cenário «pronto» dos testes do release. O mantenedor separou A3 de A5 e fixou o princípio da correcção: a actualidade das dependências verifica-se também ao consumir, ao renderizar e ao construir o release, não só ao publicar; o hash identifica a mudança, uma revalidação explícita decide se o artefacto tem de mudar.
 
@@ -100,6 +100,5 @@ Reverter o commit desta correcção devolve o comportamento da F7. Os artefactos
 
 ## 9. Retoma
 
-- Estado: correcção integrada; os gates da F6 e da F7 aguardam a nova aceitação do mantenedor.
-- Próxima acção segura: com a aceitação, o F8.2 (execução R3 da fx-02) pelo `../F8/protocolo/README.md`.
-- Autorização necessária: aceitação dos gates F6/F7 corrigidos.
+- Estado: correcção integrada; CI #93 verde; gates da F6 e da F7 **aceites de novo pelo mantenedor** (2026-09-24).
+- Próxima acção: o F8.2 (execução R3 da fx-02), numa sessão nova, pela retoma de `../F8/RELATORIO.md`.

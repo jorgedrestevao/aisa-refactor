@@ -1,6 +1,6 @@
 # F8 — Relatório da fase (pilotos adversariais e aceitação do destinatário)
 
-Estado: **in_progress** — F8.0 e F8.1 integrados. **F8.2 suspenso**: a auditoria externa de 2026-09-24 reabriu os gates da F6 e da F7 (A1–A5, reproduzidos nesta sessão); os pilotos correm depois da correcção. Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md).
+Estado: **in_progress** — F8.0 e F8.1 integrados; a correcção da auditoria (A1–A5) está integrada e os gates da F6/F7 foram aceites de novo (2026-09-24). **Próximo: F8.2, numa sessão nova** (decisão do mantenedor). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md).
 
 - Data e responsável: 2026-09-24 · Claude Code, sessão `session_012oqQ6tbYUsoyZT1RPUfpcH`.
 - Repositório e branch: `jorgedrestevao/aisa-refactor`, `claude/continua-com-o-plano-xaeq46`. SHA inicial: `1dcdb61` (fim da F7, trazido de `claude/clone-repo-awui-7mmi37` por fast-forward; `main` não tem as fases F0–F7).
@@ -44,7 +44,7 @@ O mantenedor trouxe uma auditoria ao commit `1dcdb61` com quatro falhas nos gate
 | A4 | uma edição entre a readiness e a cópia produz um pacote `ready_for_receiver_review` que verifica, com uma estimativa que não passaria |
 | A5 | o desenho muda no mesmo caminho e a aprovação é renovada; os FC assentes no sha anterior continuam prontos |
 
-Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito sem autorização mantém o release `preliminary` — passou a ser verdade com a correcção do A2 (`trace.scope_gate` lê o `inventory.check`). O F8.2 espera pela nova aceitação dos gates.
+Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito sem autorização mantém o release `preliminary` — passou a ser verdade com a correcção do A2 (`trace.scope_gate` lê o `inventory.check`). Os gates foram aceites de novo a 2026-09-24; o F8.2 arranca numa sessão nova.
 
 ## 5. Ambiente
 
@@ -52,9 +52,11 @@ Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito 
 
 ## 6. Retoma (para uma sessão nova)
 
-- Última operação integrada: F8.1 (preparação dos pilotos).
-- Inputs necessários: `../plan/` (v1.2), [DESENHO.md](DESENHO.md), fixtures `.claude/tests/fixtures/handoff-v1/`.
-- Resultados recebidos e não integrados: nenhum.
-- Ambiente: `pip install -r requirements-dev.txt` e, se `test_text_extract.py` falhar com `_cffi_backend`, `pip install cffi`; regressão `python .github/run_tests.py` (esperado 111/111, 3033).
-- Próxima acção segura: a correcção A1–A5 está integrada ([../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md)); com os gates da F6/F7 de novo aceites pelo mantenedor, o F8.2 (execução R3, fx-02) pelo `protocolo/README.md`.
-- Autorização necessária: nova aceitação dos gates F6/F7 depois da correcção; depois do F8.2, o mantenedor confirma as restantes execuções com o custo medido (Q5).
+- **Branch**: `claude/continua-com-o-plano-xaeq46` tem todo o programa (F0–F8.1 e a correcção A1–A5); `main` só tem o clone inicial. Uma sessão nova começa por `git fetch origin claude/continua-com-o-plano-xaeq46` e avança a sua branch por fast-forward a partir dela (`git merge --ff-only origin/claude/continua-com-o-plano-xaeq46`), antes de ler qualquer coisa.
+- **Última operação integrada**: registo da nova aceitação dos gates F6/F7 (2026-09-24), depois do CI #93 verde sobre `c93ff75`.
+- **Ambiente**: `pip install -r requirements-dev.txt`; se `test_text_extract.py` falhar com `_cffi_backend`, `pip install cffi`. Regressão: `python .github/run_tests.py` (esperado 114/114, 3096) e `--list .github/stdlib-tests.txt` (95/95, 2298).
+- **Inputs necessários**: `../plan/` (v1.2), [DESENHO.md](DESENHO.md), [protocolo/](protocolo/README.md), fixtures `.claude/tests/fixtures/handoff-v1/`.
+- **Resultados recebidos e não integrados**: nenhum. Nenhuma execução-piloto começou; `projects/` não tem engagements (só `.gitkeep`).
+- **Próxima acção segura — F8.2, execução R3 (fx-02)**, pelo [protocolo/README.md](protocolo/README.md): cartão [cartoes/R3.json](cartoes/R3.json) (slug `f8-r3-fx02`, segmentos S1, S2 com a pausa cooperativa depois de os candidatos serem publicados, S3, SM com a nota dos urgentes, S4, SC), ficha [fichas/fx-hv1-02.cliente.json](fichas/fx-hv1-02.cliente.json), mudança `mudancas/fx-hv1-02-pp-constrained/`. Executor = subagente novo por segmento; relé literal; cliente simulado continuado por `SendMessage`; snapshot e push a cada fim de segmento (`execucoes/R3/`). O orquestrador conhece os `expected`: não escreve no engagement, não compõe respostas nem achados, e todo o relé fica literal no run-log ([DESENHO.md](DESENHO.md) §1 Papéis e isolamento).
+- **No fim do F8.2**: custo real medido (tokens, usos de ferramenta, duração por papel, do run-log) e avaliação assistida (tabela do avaliador + `f8.py verify-eval` + canário) apresentados ao mantenedor.
+- **Autorização necessária**: depois do F8.2, o mantenedor confirma as restantes seis execuções com o custo medido (Q5). O T46 (o mantenedor como destinatário real) fica para o fim do F8.3, sobre um pacote da fx-01 ou da fx-05.

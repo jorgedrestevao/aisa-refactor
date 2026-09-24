@@ -1,6 +1,6 @@
 # F7 — Relatório da fase (mudanças, migração e compatibilidade)
 
-> **Gate reaberto e corrigido (2026-09-24).** A auditoria externa ao commit `1dcdb61` reproduziu falhas nos gates de entrega (A1–A5); a correcção está em [../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md). O gate desta fase (A3 derivados de um FC mudado, A5 FC sobre um desenho mudado, revalidação explícita; T42 substituído com a mesma intenção) volta a precisar da aceitação do mantenedor. Este relatório fica como registo do que foi aceite antes da auditoria.
+> **Gate reaberto e corrigido (2026-09-24).** A auditoria externa ao commit `1dcdb61` reproduziu falhas nos gates de entrega (A1–A5); a correcção está em [../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md). O gate desta fase (A3 derivados de um FC mudado, A5 FC sobre um desenho mudado, revalidação explícita; T42 substituído com a mesma intenção) foi **aceite de novo pelo mantenedor** a 2026-09-24, depois da correcção e do CI #93 verde. Este relatório fica como registo do que foi aceite antes da auditoria.
 
 
 Estado: **concluída — gate aceite pelo mantenedor** (2026-09-24), com os limites declarados (T35 não aplicável por decisão, opção A; rollback provado só com o código do fim da F5; artefactos anteriores ao F7.1 e nós do desenho sem impressão por linha; linha movida de secção lida como inexistente). Desenho e decisões Q1–Q4: [DESENHO.md](DESENHO.md). Gate: T35/T36/T41/T42; o rollback preserva a informação nova e bloqueia o downgrade destrutivo.
