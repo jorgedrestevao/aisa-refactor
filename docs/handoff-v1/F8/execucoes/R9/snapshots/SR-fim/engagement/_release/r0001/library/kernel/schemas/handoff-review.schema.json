@@ -1,0 +1,173 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "handoff-review/1",
+ "title": "Parecer de um especialista (_design/reviews/REV-NNNN.json)",
+ "description": "O parecer publicado por review.py receive (coordenador), preso ao mandato e à revisão dos candidatos que leu (handoff-v1 F5). Imutável: uma opinião minoritária nunca se apaga; as disposições vivem no registo (_design/reviews/ledger.json). Regras de integridade em review.review_integrity.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "task_id",
+  "role",
+  "candidate_revision",
+  "mandate_sha256",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": "handoff-review/1"
+  },
+  "task_id": {
+   "type": "string",
+   "pattern": "^REV-\\d{4}$"
+  },
+  "role": {
+   "type": "string",
+   "minLength": 1
+  },
+  "candidate_revision": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "mandate_sha256": {
+   "type": "string",
+   "pattern": "^[0-9a-f]{64}$"
+  },
+  "input_revision": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "coverage": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "question",
+     "checked"
+    ],
+    "properties": {
+     "question": {
+      "type": "string",
+      "minLength": 1
+     },
+     "checked": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "findings": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "target",
+     "severity",
+     "kind",
+     "evidence",
+     "failure_scenario",
+     "closing_condition"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^REV-\\d{4}\\.F\\d{2}$"
+     },
+     "target": {
+      "type": "string",
+      "minLength": 1
+     },
+     "severity": {
+      "enum": [
+       "blocking",
+       "material",
+       "minor"
+      ]
+     },
+     "kind": {
+      "enum": [
+       "fact",
+       "recommendation"
+      ]
+     },
+     "evidence": {
+      "type": "string",
+      "minLength": 1
+     },
+     "failure_scenario": {
+      "type": "string",
+      "minLength": 1
+     },
+     "closing_condition": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "assumptions": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "unanswered": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "question",
+     "reason"
+    ],
+    "properties": {
+     "question": {
+      "type": "string",
+      "minLength": 1
+     },
+     "reason": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "recommended_actions": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "sources_used": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "ref",
+     "sha256"
+    ],
+    "properties": {
+     "ref": {
+      "type": "string",
+      "minLength": 1
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "received_at": {
+   "type": "string"
+  }
+ }
+}

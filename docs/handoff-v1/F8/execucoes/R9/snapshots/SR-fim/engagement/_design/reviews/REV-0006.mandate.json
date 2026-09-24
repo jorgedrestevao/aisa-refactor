@@ -1,0 +1,76 @@
+{
+ "schema_version": "aisa-review-mandate/1",
+ "task_id": "REV-0006",
+ "role": "architecture-review",
+ "objective": "Rever a solidez arquitectural do delta O-006 sobre a decisão adoptada (D-002/O-002): nível a que a regra de arredondamento se aplica, e se a mudança de limiar tem alguma consequência estrutural além do valor.",
+ "route": "platform-constrained",
+ "scope_ids": [
+  "O-006",
+  "O-002",
+  "C-006",
+  "C-007",
+  "C-008"
+ ],
+ "questions": [
+  "Mover a regra de arredondamento de nível 'Pedido' (total) para nível 'Linha de pedido' (X1, O-006) é uma mudança meramente de valor/configuração, ou desloca onde a regra de negócio vive na arquitectura de O-002 (Dataverse, model-driven)? Que componente exacto muda?",
+  "A descida do limiar de aprovação financeira de 5 000 € para 3 000 € (X3, O-006) tem alguma consequência estrutural (novo estado, novo papel, novo ecrã), ou é só um valor de configuração na regra de routing chefia→direcção financeira já desenhada?",
+  "O candidato retirado O-002 e o novo O-006 preservam a mesma forma (model-driven/Dataverse) e o mesmo âmbito autorizado (C-008), sem mudança de plataforma? Confirmar ou apontar desvio."
+ ],
+ "input_refs": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "208723d441e0910370a17f1d5e682c3c84726b88663c45ed20784934e2c2f2c4"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "51824512613b1f05a48e0e8fad5b97d822773cf012edab83007147a75438c8c0"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  }
+ ],
+ "candidate_revision": 2,
+ "knowledge_refs": [
+  {
+   "ref": "library/packs/pp/decision-tree.md",
+   "sha256": "28819049f3431ff6704dcbfd552feda485c94c4fe0d975d79ab46e7ce8cbd4b2",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/architecture/patterns.md",
+   "sha256": "e539e8cda314f7e59e6a9d98876ecbded22c7be254e9df92d4bba90c3181195f",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  }
+ ],
+ "output_contract": [
+  "task_id",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "stop_conditions": [
+  "todas as perguntas com cobertura ou em `unanswered`"
+ ],
+ "budget": "uma leitura; sem rondas próprias",
+ "prohibited_actions": [
+  "escrever numa autoridade",
+  "autorizar pelo cliente",
+  "confirmar um facto por constar de outra resposta",
+  "ler o parecer de outro revisor",
+  "rever um candidato ainda em construção"
+ ],
+ "created_at": "2026-09-24T16:48:59Z"
+}

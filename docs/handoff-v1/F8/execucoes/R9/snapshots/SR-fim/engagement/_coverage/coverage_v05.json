@@ -1,0 +1,1473 @@
+{
+ "schema_version": 1,
+ "version": "v05",
+ "engagement": "f8-r9-fx03",
+ "stage": "blueprint",
+ "generated_at": "2026-09-24T13:22:42Z",
+ "based_on": [
+  "coverage_v04.json"
+ ],
+ "target": {
+  "file": "_blueprint/ux-blueprint_v01.yaml",
+  "kind": "blueprint",
+  "identity": "v01",
+  "sha256": "0046a1053e9082b14ed8c7dfc75624855de168b0f4bc8acd9e4ddd15b75181c0"
+ },
+ "basis": {
+  "inventory_sha256": "2127ac6c3b01750a9cf0da518726fbda8d1a03a37ebf26b4c0969d7c638209c7",
+  "su_fingerprint": "8d3f2a5eca36f7714bf256368dcbceaf74e2bf573d6f072ef36559bea1f6414c",
+  "decision_fingerprint": "4fcf722bc5c2d716c462cf59b0a12800a600f1e936b31a2bbea40c4426ac8777",
+  "sources": [
+   {
+    "path": "_capture/entrevista-processo.md.extraction.json",
+    "sha256": "cfb9d5075c8c77cc4e2f6e36c8e6ef9eda282d09e95f874e6b7afeb3246c531f",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/entrevista-processo.md.text.md",
+    "sha256": "524031c1a5af5efe90c8df143a475b495a55b8001c8793a6b69bba86a77c5813",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/evidence-index.md",
+    "sha256": "057f8691d4eede2b6ef0ae5b3419deab4c3b4eed3c3692d7f2990e5dff237adb",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/matriz-papeis.md.extraction.json",
+    "sha256": "c8d2ba0dabba894059e18dd00926513fac48c5d8e40e4627e9ac6d88e1bca89c",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/matriz-papeis.md.text.md",
+    "sha256": "8b7394f6dab553e100cfd263e43e1e05d13024c76f08f4cf3670ca00d601ef41",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/nota-dados.md.extraction.json",
+    "sha256": "d1a6f0f43745a3d05a5172d93208f9be15ee45d1bc13fb0d93b1c51eeea87826",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/nota-dados.md.text.md",
+    "sha256": "63592b3b7f3fa717f0767f3733977fae40cd2e93695a37ffaf074446b2809f2a",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/pedido.md.extraction.json",
+    "sha256": "901b61521d2c3b82b5e0c06cb9a324621d2e2499d51b49a5091de0137d9acd50",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/pedido.md.text.md",
+    "sha256": "6da7190fea68694ed0b2cab1d2140a3d0590d0f46246e05ae7e28ed1edb7de3a",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/process-model.md",
+    "sha256": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/candidates.json",
+    "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/candidates.r0001.json",
+    "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0001.json",
+    "sha256": "01a063523a79e9bca0bfa74df4e79efb288e9eb3956a695e969f063f52f3b5da",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0002.json",
+    "sha256": "c24e6018e9bab0c7e5d8b198f0dfc97b497048b2c931f0d3ed26593582aae689",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0003.json",
+    "sha256": "328e9a1b5ac397d7bdd5d745921d75818b18cb9ee8a70debf5258a2e3ffc9817",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0004.json",
+    "sha256": "ffdbf327921ee755d6f6b9d34d54e1747addf7358a037b58a8ff54703e4a9a73",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0005.json",
+    "sha256": "a3e3853c610ace73a92717c81e7e01c9b9b1a53d63818f61235e5945afd982cc",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0006.json",
+    "sha256": "02e3b4b4a6e941e7bccce1151f5eee80e573c94693636ec20172a1a5f675b370",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0007.json",
+    "sha256": "ba87a45b5975ee6b682300fbe0ca4e2fd0f8edaf3b5ae4c607549c85fb11c92d",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0008.json",
+    "sha256": "78df8a83762d024ee93c2c54582ad28b3d680b589fdb371891e5985ade79e70f",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0009.json",
+    "sha256": "aa11c96e050c6470b5e3981b54b6db352c30f6d69deab8144fb51acf3a384569",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0010.json",
+    "sha256": "332fba6505bcd2c4f96125279dd261f76378b5eae45ef9ebce8536b9e0bac31a",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0011.json",
+    "sha256": "017ef8b9f4fb7569088570f8cd17d600db06fbdf23f89838e96e56cc4895ea3d",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0012.json",
+    "sha256": "b8424bdfab1aee82efe45def206554f17d46d7b8127cb6c8ad5888ce91cd8e77",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0013.json",
+    "sha256": "13f4044e0bce1f8350e7bbabfc73773e15daf83a3806df94c5644892ea414a6f",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0014.json",
+    "sha256": "18d1d941b11b5cbe2b04794afa256837fc6e7e566abc7853a8966f34c6277ef2",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0015.json",
+    "sha256": "62d7c83efc81581ae80071023f53aad10cb2f3ddacf26c1be5215472948aef6e",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0016.json",
+    "sha256": "0ec94e073c488f2c1d8d3f1076ddbf690561fc102824b79fb7c300a1db946302",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/history/review-ledger.r0017.json",
+    "sha256": "97b504d56bf5a75a70839853facd72b6291decee28905c0c3a596073e08c7f62",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0001.json",
+    "sha256": "9560ab41858529366d32bd2bcb1d12a61ca916a13d8b59561d48862e32bfeede",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0001.mandate.json",
+    "sha256": "e38f8d449b7de2f3059ec443292a6ecd6033e90c29a475e1de6af0e4946003b4",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0002.json",
+    "sha256": "dcfa33e5c0e29d586ae90c64f502fb1dc204bf6d5a5ff08b725f67f75e61a7b5",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0002.mandate.json",
+    "sha256": "06fd43bc68c1135b3e0e0062dea49488f0bb6a13516aa1954a8dffc7ba1a12bb",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0003.json",
+    "sha256": "4d63a3f289539ca23bf95c06b3319259e922d31a3c33ad4633b376e277a4b731",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0003.mandate.json",
+    "sha256": "8fdc28930bcf2ab6cfd4b35268290cc98b1443d2ff3de63e1edab90b6a133764",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0004.json",
+    "sha256": "a7641ed75192354bec604dd6a94de84c547b8803e5eac6752fc64d4037796c36",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0004.mandate.json",
+    "sha256": "70e74cb660e6e25ef271512e3f1bc37bed53106968bcf76d0556e8c76caed5eb",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0005.json",
+    "sha256": "1403c513dfa04741302a4ce1af6f226145ac8602c7c7f15b68eccf7dbea4df14",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/REV-0005.mandate.json",
+    "sha256": "ae8f23b5f4859b50f7555a0df1f3c1eeda7551cf914a4a28bd77930803b645c3",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_design/reviews/ledger.json",
+    "sha256": "97b504d56bf5a75a70839853facd72b6291decee28905c0c3a596073e08c7f62",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "_state.json",
+    "sha256": "9ea54e791be98b932f195488326bec023a70ba95be75f398a563921020e29483",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "answers.md",
+    "sha256": "4dd48d08924970fa2cd9fb0cb80379210be0a90fb99534be825f2566c80482c8",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "context.json",
+    "sha256": "79d90f675b6dd4b87dfce978290cdd748585828157071a840c88d05096504074",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "decisions.md",
+    "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e",
+    "role": "engagement",
+    "use": "informative"
+   },
+   {
+    "path": "enquadramento.md",
+    "sha256": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "frame.md",
+    "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/entrevista-processo.md",
+    "sha256": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/matriz-papeis.md",
+    "sha256": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/nota-dados.md",
+    "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/pedido.md",
+    "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/F-01-analyst.md",
+    "sha256": "44f39199e75b1bd72d7ab63e024570823331a4b0fc353336779bb7eb0a448e17",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/F-01-reviewer.md",
+    "sha256": "2aa52ec6c4c3bb980eafa06bedbdb048c5dee44f3ac9d46124471aa701e1a711",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/O-01-REV-0001.json",
+    "sha256": "dfc2ec3c227d2a9be6f7801e208c547eaec3e8ec5b934a540d4b2c10b92635fd",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/O-01-REV-0002.json",
+    "sha256": "80004aeac990986df7bd4ab6192568596fc6ade4354f765d190782fab55406e3",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/O-01-REV-0003.json",
+    "sha256": "4a130f80ccef8382fd3a528cc4528f6e04f4f1dd7e40662a8c699402460366f7",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/O-01-REV-0004.json",
+    "sha256": "faee70d3958b83d678d5bc643640db87e3367fb65e190e71f59dd12e283fc7e7",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/_council-prep/O-01-REV-0005.json",
+    "sha256": "85e122f563dd46703ca40db59e27a9464823e94260d5a00eb323c33525d8840c",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/business.md",
+    "sha256": "7b159568000239edb3e0d0379ce8480072374405a279e059a100f4f3838ece64",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/chairman-synthesis-F-01.md",
+    "sha256": "742da858ca541e2e67abe75392fb814e92a22731fbf5539e4f6cb3bcbad586be",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/chairman-synthesis-O-01.md",
+    "sha256": "8fe5901fc4fef7ec0bb9f44cc23a30934cbe3571b3760d24d4eb21de80b2cc2e",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/data.md",
+    "sha256": "e9609e67bbbd39abce07c677691b0286f20de94a7c1a589a6633fbc5abbb68bd",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/financial.md",
+    "sha256": "0c29cc56611d1d1e63227491d34b9d5ce80c209b526b307fc9867b13f519783f",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/governance.md",
+    "sha256": "b9b13d1db82eefff8e5d4fffc492a569926ffa3f6f043b1b412e43911d96a8c6",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/operations.md",
+    "sha256": "a440e74275eafe27b5311973651bc5058a86c7b56f64b1e34bd5831a973b42fc",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/user.md",
+    "sha256": "15915ccdc059b9133da957135294f5dc876288f2241c7c6b0cffd3b8258e7311",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "options.md",
+    "sha256": "e7323e956e0dc09453561e9355ee4fd1f89fe47f48013aa796b6eba80c236558",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "premortem.md",
+    "sha256": "88e069a5391d75d6a9cfd22aef10f8dee24cbe2fdde2bb3c96ac77b6447869ee",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "shared-understanding.md",
+    "sha256": "ac8ba1f6e91ea85cc2333b7bc375caac706565f7c5bd67e922963533e2c54be2",
+    "role": "engagement",
+    "use": "informative"
+   }
+  ],
+  "authorities": [
+   {
+    "path": "library/packs/pp/architecture-templates/README.md",
+    "sha256": "69f0940c34695fd1bc6d34448627141e5a67f68ae53b2a9c5a4112d79e9b49c2",
+    "state": "ok"
+   },
+   {
+    "path": "library/packs/pp/architecture-templates/architecture-core.md",
+    "sha256": "bec7235958c6b465e9576f8a1c5d331c06817737906d7352988a432735fd591b",
+    "state": "ok"
+   }
+  ],
+  "decision_ref": "D-002",
+  "contract_version": "1",
+  "pack": "pp",
+  "diagnostics": []
+ },
+ "source_review": [
+  {
+   "id": "b-sr-c001",
+   "unit_refs": [
+    "shared-understanding.md#C-001"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-001.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-001"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-invariants",
+   "unit_refs": [
+    "shared-understanding.md#M-1",
+    "shared-understanding.md#M-2",
+    "shared-understanding.md#M-3",
+    "shared-understanding.md#M-4"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-002.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-002"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-process",
+   "unit_refs": [
+    "shared-understanding.md#C-002",
+    "shared-understanding.md#C-003"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-003.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-003"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-data",
+   "unit_refs": [
+    "shared-understanding.md#C-004",
+    "shared-understanding.md#C-005",
+    "shared-understanding.md#C-006",
+    "shared-understanding.md#C-007"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-004.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-004"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-scope",
+   "unit_refs": [
+    "shared-understanding.md#C-008"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-005.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-005"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-decision",
+   "unit_refs": [
+    "shared-understanding.md#D-002",
+    "decisions.md#D-002"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-006.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-006"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-frame",
+   "unit_refs": [
+    "decisions.md#D-001"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-024.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-024"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-assumed",
+   "unit_refs": [
+    "shared-understanding.md#A-001",
+    "shared-understanding.md#A-002",
+    "shared-understanding.md#A-003",
+    "shared-understanding.md#A-004",
+    "shared-understanding.md#A-005"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-007.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-007"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u001",
+   "unit_refs": [
+    "shared-understanding.md#U-001"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-008.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-008"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u009",
+   "unit_refs": [
+    "shared-understanding.md#U-009"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-009.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-009"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u010",
+   "unit_refs": [
+    "shared-understanding.md#U-010"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-010.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-010"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u002",
+   "unit_refs": [
+    "shared-understanding.md#U-002"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-011.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-011"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u013",
+   "unit_refs": [
+    "shared-understanding.md#U-013"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-012.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-012"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u004",
+   "unit_refs": [
+    "shared-understanding.md#U-004"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-013.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-013"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u012",
+   "unit_refs": [
+    "shared-understanding.md#U-012"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-014.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-014"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u006",
+   "unit_refs": [
+    "shared-understanding.md#U-006"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-015.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-015"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u007",
+   "unit_refs": [
+    "shared-understanding.md#U-007"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-016.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-016"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u008",
+   "unit_refs": [
+    "shared-understanding.md#U-008"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-017.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-017"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u011",
+   "unit_refs": [
+    "shared-understanding.md#U-011"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-018.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-018"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-x001",
+   "unit_refs": [
+    "shared-understanding.md#X-001"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-019.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-019"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-risky",
+   "unit_refs": [
+    "shared-understanding.md#R-003",
+    "shared-understanding.md#R-004"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-020.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-020"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u003",
+   "unit_refs": [
+    "shared-understanding.md#U-003"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-021.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-021"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-u005",
+   "unit_refs": [
+    "shared-understanding.md#U-005"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-022.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-022"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-risky-orig",
+   "unit_refs": [
+    "shared-understanding.md#R-001",
+    "shared-understanding.md#R-002"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Ver b-cov-023 (anomalia).",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [
+     "b-cov-023"
+    ],
+    "obligations": []
+   }
+  },
+  {
+   "id": "b-sr-lens-options",
+   "unit_refs": [
+    "lens-outputs/chairman-synthesis-O-01.md"
+   ],
+   "assessment": "reviewed",
+   "materiality": "material",
+   "rationale": "Consultado para o texto de arquitectura de O-002 (architecture, order_of_magnitude, preconditions) — base do bloco architecture desta versão. Domain Knowledge do pacote (application-surfaces.md §3) informou experience.mode e o forfeit móvel, fora da lista fechada de autoridades citáveis (contrato §5.3) — citado em prosa, não como unidade/autoridade.",
+   "links": {
+    "su_refs": [],
+    "coverage_items": [],
+    "obligations": []
+   }
+  }
+ ],
+ "coverage": [
+  {
+   "id": "b-cov-001",
+   "requirement_refs": [
+    "C-001"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "architecture/record_authority[key=pedido-aprovacao]",
+     "kind": "record_authority",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Plataforma imposta — base do entry gate de arquitectura (authorization/architectability_basis citam C-001).",
+    "acceptance_basis_refs": [
+     "C-001"
+    ]
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-002",
+   "requirement_refs": [
+    "M-1",
+    "M-2",
+    "M-3",
+    "M-4"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    },
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=RegistoAprovacao]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Invariantes desenhadas: M-1/M-2 nas transições de Pedido.estado; M-3 na entidade RegistoAprovacao; M-4 é obrigação de retenção, carregada como nota (sem campo próprio nesta versão — plataforma retém por configuração, fora do dicionário de campos).",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-003",
+   "requirement_refs": [
+    "C-002",
+    "C-003"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Processo as-is e via de urgência desenhados como campos/estados de Pedido (urgente, justificacao_urgencia, estado).",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-004",
+   "requirement_refs": [
+    "C-004",
+    "C-005",
+    "C-006",
+    "C-007"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=LinhaPedido]",
+     "kind": "entity",
+     "role": "implementation"
+    },
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Regras de cálculo (fórmula do valor, arredondamento, limiar) desenhadas em LinhaPedido.valor_linha, Pedido.valor_total e Pedido.estado; fonte dos preços (C-004) permanece condicionada ao open_architecture_choice do catálogo.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-005",
+   "requirement_refs": [
+    "C-008"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Âmbito autorizado = scope 'whole solution' do bloco architecture; gestão de stock/recepção física fora (nenhuma entidade/ecrã desenhados para eles) — reflectido no conjunto de entidades desenhadas.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-006",
+   "requirement_refs": [
+    "D-002"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "architecture/record_authority[key=pedido-aprovacao]",
+     "kind": "record_authority",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Decisão-solução em vigor — base do scope/authorization/architectability_basis e da composição (Power Apps model-driven + Dataverse).",
+    "acceptance_basis_refs": [
+     "D-002"
+    ]
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-007",
+   "requirement_refs": [
+    "A-001",
+    "A-002",
+    "A-003",
+    "A-004",
+    "A-005"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [
+    "D-002"
+   ],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "screens[name=PedidoListScreen]",
+     "kind": "screen",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "partial",
+    "rationale": "A-002 (necessidade de confirmação visível) desenhada: PedidoListScreen mostra o estado do pedido em tempo real ao requerente, endereçando a causa dos duplicados. A-001, A-003, A-004, A-005 são narrativa do caso de negócio (impacto qualitativo, ausência de sistema único, custo as-is) — não são nós de arquitectura; ficam projectados em _synthesis/business-story.md e financial-story.md, fora do âmbito de um nó de desenho. Excluídas deste registo com autoridade de âmbito (D-002 define o âmbito arquitectural como pedido/aprovação/compras, não a narrativa financeira).",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [],
+   "required_action": null,
+   "responsible_role": null
+  },
+  {
+   "id": "b-cov-008",
+   "requirement_refs": [
+    "U-001"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Frequência do processo — nenhum desenho a resolve; permanece Unknown (expected_volume dos entities).",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-001"
+   ],
+   "required_action": "resposta do responsável de compras sobre volume mensal/semanal",
+   "responsible_role": "role: responsável de compras"
+  },
+  {
+   "id": "b-cov-009",
+   "requirement_refs": [
+    "U-009"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Tempo por passo — nenhum desenho o resolve.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-009"
+   ],
+   "required_action": "resposta de quem faz cada passo hoje, por passo",
+   "responsible_role": "role: responsável de compras / role: requerente"
+  },
+  {
+   "id": "b-cov-010",
+   "requirement_refs": [
+    "U-010"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Taxa horária carregada — nenhum desenho a resolve.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-010"
+   ],
+   "required_action": "resposta da direcção financeira/RH sobre a taxa carregada",
+   "responsible_role": "role: direcção financeira"
+  },
+  {
+   "id": "b-cov-011",
+   "requirement_refs": [
+    "U-002"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Contexto de uso do requerente — ainda \"não sei\"; device_targets do app ficam desktop/tablet browser, sem app nativa desenhada nesta versão (forfeit aceite em D-002).",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-002"
+   ],
+   "required_action": "levantamento junto de uma amostra de requerentes",
+   "responsible_role": "role: requerente / role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-012",
+   "requirement_refs": [
+    "U-013"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Instalabilidade da app nativa móvel — condicional a U-002; nenhum desenho a resolve nesta versão.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-013"
+   ],
+   "required_action": "confirmar instalabilidade/entitlement da app nativa, condicional ao fecho de U-002",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-013",
+   "requirement_refs": [
+    "U-004"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "architecture/open_architecture_choices[0]",
+     "kind": "open_architecture_choice",
+     "role": "open_choice"
+    }
+   ],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Fonte dos preços (tempo real vs cópia) — representada explicitamente como open_architecture_choice estrutural nesta versão; não resolvida.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-004"
+   ],
+   "required_action": "decisão do director de SI sobre a fonte de verdade dos preços, informada por U-012",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-014",
+   "requirement_refs": [
+    "U-012"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "architecture/open_architecture_choices[0]",
+     "kind": "open_architecture_choice",
+     "role": "open_choice"
+    }
+   ],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Interface do ERP-X — representada no mesmo open_architecture_choice estrutural; não confirmada.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-012"
+   ],
+   "required_action": "confirmação técnica de que a interface existe, quem a detém e que garantia documenta",
+   "responsible_role": "role: director de sistemas de informação / fonte: ERP-X"
+  },
+  {
+   "id": "b-cov-015",
+   "requirement_refs": [
+    "U-006",
+    "M-3"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=RegistoAprovacao]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Mecanismo de auditoria DESENHADO nesta versão: entidade RegistoAprovacao (aprovador, papel, decisão, data_hora, comentário), mais o log de auditoria nativo da loja governada herdado pela app orientada a registos (application-surfaces.md §3: \"row and column security and audit inherited from the store\"). Fecha o design; a confirmação do dono (SU) fica por /answer.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-016",
+   "requirement_refs": [
+    "U-007"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Envelope orçamental — não é uma obrigação de desenho de ecrãs; nenhum nó a resolve.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-007"
+   ],
+   "required_action": "resposta da direcção financeira/director de SI sobre orçamento",
+   "responsible_role": "role: direcção financeira / role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-017",
+   "requirement_refs": [
+    "U-008"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Critério de sucesso do projecto — não é uma obrigação de desenho de ecrãs; nenhum nó a resolve.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-008"
+   ],
+   "required_action": "decisão do dono sobre o critério de sucesso",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-018",
+   "requirement_refs": [
+    "U-011"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "architecture/open_architecture_choices[1]",
+     "kind": "open_architecture_choice",
+     "role": "open_choice"
+    }
+   ],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Entitlement/licenciamento — representado como open_architecture_choice não-estrutural nesta versão; não confirmado.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "U-011"
+   ],
+   "required_action": "verificação VC-05 e resposta do director de SI sobre licenciamento",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-019",
+   "requirement_refs": [
+    "X-001"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Conflito do caminho de urgência — citado como nota de regra em Pedido.estado e su_refs de PedidoFormScreen, mas NÃO resolvido (nenhum dos lados escolhido); fecha só por decisão do dono.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "X-001"
+   ],
+   "required_action": "decisão do dono sobre a regra do caminho urgente face ao limiar financeiro (/answer X-001)",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-020",
+   "requirement_refs": [
+    "R-003",
+    "R-004"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "partial",
+    "rationale": "R-003 (duplicados): mecanismo desenhado — regra de transição Pedido.estado com verificação atómica de duplicado num plug-in síncrono/custom API em transacção (mitigação registada). R-004 (cópia do catálogo) continua contingente ao open_architecture_choice do catálogo (U-004) — se resolver para cópia local, precisa de dono/cadência/deteção de drift, ainda por nomear.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "R-004"
+   ],
+   "required_action": "se U-004 resolver para cópia local, nomear dono de reconciliação, cadência e deteção de drift",
+   "responsible_role": "role: director de sistemas de informação"
+  },
+  {
+   "id": "b-cov-021",
+   "requirement_refs": [
+    "U-003"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Regra de arredondamento (C-007) desenhada em LinhaPedido/Pedido.valor_total.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-022",
+   "requirement_refs": [
+    "U-005"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Limiar financeiro (C-006) desenhado nas regras de Pedido.estado.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": []
+  },
+  {
+   "id": "b-cov-023",
+   "requirement_refs": [
+    "R-001",
+    "R-002"
+   ],
+   "source_unit_refs": [],
+   "disposition": "clarify",
+   "scope_basis_refs": [],
+   "targets": [],
+   "assessment": {
+    "status": "partial",
+    "rationale": "Mesma anomalia sinalizada na reconciliação (v04) — linhas originais não marcadas resolved apesar de R-003/R-004 as citarem como \"was\". Não corrigida por esta via.",
+    "acceptance_basis_refs": []
+   },
+   "unresolved_refs": [
+    "R-001",
+    "R-002"
+   ],
+   "required_action": "confirmar com o mantenedor do motor/skill; corrigir a escrita se for defeito",
+   "responsible_role": "aisa (mantenedor do motor/skill, fora do papel do dono do processo)"
+  },
+  {
+   "id": "b-cov-024",
+   "requirement_refs": [
+    "D-001"
+   ],
+   "source_unit_refs": [],
+   "disposition": "preserve",
+   "scope_basis_refs": [],
+   "targets": [
+    {
+     "file": "_blueprint/ux-blueprint_v01.yaml",
+     "selector": "entities[name=Pedido]",
+     "kind": "entity",
+     "role": "implementation"
+    }
+   ],
+   "assessment": {
+    "status": "covered",
+    "rationale": "Frame agreed — base do âmbito (C-008) e do scope 'whole solution' do bloco architecture — reflectido no conjunto de entidades desenhadas.",
+    "acceptance_basis_refs": [
+     "D-001"
+    ]
+   },
+   "unresolved_refs": []
+  }
+ ],
+ "semantic_review": {
+  "status": "completed",
+  "performed_by": {
+   "kind": "agent",
+   "name": "aisa (aisa-blueprint, passo 13b)"
+  },
+  "completed_at": "2026-09-24T13:22:42Z",
+  "method": "leitura cruzada: fonte->desenho (cada obrigacao material da reconciliacao v04 contra um no concreto de ux-blueprint_v01.yaml) e desenho->fonte (cada campo/regra desenhada contra a SU/decisao que a justifica); nenhuma invencao de mecanismo sem su_ref.",
+  "passes": {
+   "source_to_target": true,
+   "target_to_source": true
+  },
+  "limitations": [
+   "Sem workbook .xlsx no engagement — sem inventario L1/fields_draft.py; todos os campos desenhados carregam state=Assumed/Confirmed com source design/SU, nunca L1."
+  ],
+  "findings": [
+   "b-cov-007",
+   "b-cov-008",
+   "b-cov-009",
+   "b-cov-010",
+   "b-cov-011",
+   "b-cov-012",
+   "b-cov-013",
+   "b-cov-014",
+   "b-cov-016",
+   "b-cov-017",
+   "b-cov-018",
+   "b-cov-019",
+   "b-cov-020",
+   "b-cov-023"
+  ]
+ }
+}

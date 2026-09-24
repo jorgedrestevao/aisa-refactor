@@ -1,0 +1,92 @@
+{
+ "task_id": "REV-0010",
+ "role": "cost-estimate",
+ "input_revision": 2,
+ "coverage": [
+  {
+   "question": "O modelo de estimativa do pacote (craft/estimation-model.md) tem alguma unidade de custo para uma mudança de regra de negócio já construída (mover nível de cálculo, ajustar constante), ou está mesmo limitado a construções inteiras, como O-006 declara ao marcar a ordem de grandeza indisponível?",
+   "checked": "Li a EFFORT TABLE completa, 'Three legitimate uses' e a tabela de Uncertainty Handling de estimation-model.md; comparei com O-006.order_of_magnitude.unavailable, .risks[0] e .impact_refs. Verifiquei O-004 e O-005 (mesmos scope_ids, mesmo campo 'unavailable') como controlo: ambos fundamentam bem a indisponibilidade — O-006 não faz o mesmo exercício apesar de ter componentes nomeáveis."
+  },
+  {
+   "question": "Falta nomear algum driver de custo no candidato (ex.: uma prova/UAT adicional só para a nova regra de arredondamento, X1) que O-006 não nomeou?",
+   "checked": "Cruzei architecture/risks/delta de O-006 com a convenção de teste de estimation-model.md (Phase 1, risco R2) e com a origem do engagement (A-001, frame.md). Verifiquei se a pergunta nativo-vs-plug-in tem linha Unknown própria — não tem."
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "estimation-model.md EFFORT TABLE: 'Business rule' (0.5d), 'Calculated/rollup column' (0.25d), 'Low-code plugin' (3d); candidates.json impact_refs já nomeia 5 âncoras de blueprint; .risks[0] já nomeia o fork nativo-vs-plug-in.",
+   "failure_scenario": "O dono lê 'ORDER OF MAGNITUDE UNAVAILABLE' e conclui que nada se pode dizer — quando o modelo já tem linhas ao grão exacto para o componente que X1 toca, e O-006 já sabe nomear os 5 elementos de blueprint que essas linhas dimensionariam.",
+   "closing_condition": "O-006 substitui 'unavailable' por uma banda PACK MODEL derivada das linhas do modelo, aplicada aos componentes já nomeados em impact_refs e contingente na pergunta nativo-vs-plug-in — ou nomeia, com locator, por que não basta.",
+   "id": "REV-0010.F01"
+  },
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "estimation-model.md Phase 1 ('Unit test: calculations must match Excel exactly') e Risk Register R2; shared-understanding.md#A-001 e frame.md (divergências de arredondamento reportadas à contabilidade — uma das duas dores que abriram este engagement).",
+   "failure_scenario": "X1 troca uma regra de arredondamento por outra sem que ninguém fique nomeado para a revalidar contra um período de referência antes do go-live. A mesma classe de falha que abriu este engagement reaparece numa forma nova, descoberta só depois de entregue.",
+   "closing_condition": "O-006 (ou o /blueprint --refresh) nomeia uma tarefa de prova/UAT de reconciliação da nova regra contra um período de referência, dono nomeado (contabilidade/direcção financeira), antes de aceitar o delta.",
+   "id": "REV-0010.F02"
+  },
+  {
+   "target": "O-006",
+   "severity": "blocking",
+   "kind": "recommendation",
+   "evidence": "shared-understanding.md#C-005 (soma por linha + IVA); decisions.md#D-002 Justification cita M-2/C-006 como regra inquebrável; candidates.json trata X1 e X3 como alterações independentes.",
+   "failure_scenario": "X1 muda como o total do pedido é calculado — o mesmo total que X3 compara com 3 000€ para decidir se vai à direcção financeira. Um pedido cujo total cai perto da fronteira pode ficar de um lado do limiar com uma regra de arredondamento e do outro lado com a outra. Se X1 e X3 forem testados isoladamente, este caso de fronteira nunca é exercitado — quebra directa de M-2.",
+   "closing_condition": "Nomear, como item de aceitação explícito, pelo menos um caso de fronteira (pedido a uma unidade de arredondamento dos 3 000€) testado sob as duas regras, dono direcção financeira, antes de aceitar o delta.",
+   "id": "REV-0010.F03"
+  },
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json risks[0] (\"por verificar antes do blueprint\"); shared-understanding.md tabela Unknown (U-001 a U-014) — nenhuma linha cobre suporte nativo a arredondamento meio-para-o-par, ao contrário de U-004/U-006/U-011/U-012/U-013.",
+   "failure_scenario": "A pergunta que decide entre a linha barata (0.5d) e a cara (3d) do próprio modelo — factor ~6× — só existe como frase dentro do risco de um candidato, sem dono, sem critério de fecho, sem swing registado.",
+   "closing_condition": "Abrir uma linha Unknown própria em shared-understanding.md para a pergunta nativo-vs-plug-in (fact_gap ou design_choice; quem responde: função técnica; swing: pelo menos dimensionante), ou justificar com locator por que fica deliberadamente fora da SU.",
+   "id": "REV-0010.F04"
+  }
+ ],
+ "assumptions": [
+  "Assumo que D-002/O-002 tem blueprint aprovado mas ainda não construído — se já em produção, os achados 2 e 3 agravam-se.",
+  "Não verifiquei os sha256 dos ficheiros lidos (sem ferramenta de hash).",
+  "Não confirmei se o Power Platform tem função nativa de meio-para-o-par — fora dos meus knowledge_refs; tomo a pergunta como genuinamente em aberto.",
+  "Assumo contabilidade/direcção financeira como donos naturais de validar a regra e o teste do limiar — nenhum campo nomeia isso explicitamente."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Autor técnico: substituir O-006.order_of_magnitude.unavailable por banda PACK MODEL contingente, usando as linhas do modelo sobre os 5 elementos já nomeados em impact_refs.",
+  "Autor técnico: nomear em O-006 uma tarefa de prova/UAT de reconciliação de X1, dono contabilidade/direcção financeira, antes do go-live.",
+  "Autor técnico/dono: nomear um caso de aceitação de fronteira para a interacção X1×X3 sobre o teste do limiar M-2, dono direcção financeira.",
+  "Analista/chairman: abrir linha Unknown para a pergunta nativo-vs-plug-in do arredondamento, com quem responde/fecho/swing."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "208723d441e0910370a17f1d5e682c3c84726b88663c45ed20784934e2c2f2c4"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "51824512613b1f05a48e0e8fad5b97d822773cf012edab83007147a75438c8c0"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+   "sha256": "a2aa0669f0c1bbc33a5f7a974ebcdbf08ac4e855c7a665cb49f40ff07c11697f"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 2,
+ "mandate_sha256": "5f9804ca8d976382ea58b066eb2740165d15bd03aa1527b588b9e440000c0b2c",
+ "received_at": "2026-09-24T17:16:55Z"
+}

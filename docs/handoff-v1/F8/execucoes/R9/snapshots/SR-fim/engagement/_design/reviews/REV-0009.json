@@ -1,0 +1,127 @@
+{
+ "task_id": "REV-0009",
+ "role": "ux-process",
+ "input_revision": 2,
+ "coverage": [
+  {
+   "question": "O requerente ou a chefia vê o valor do pedido com arredondamento por linha (X1) em vez do total arredondado uma vez — isto muda algum ecrã, texto ou critério de aceitação visível ao utilizador, para além do valor final apresentado?",
+   "checked": "Texto de O-006 contra C-005/C-007, U-003→C-007 (mesma mudança de nível já registada como alterando o teste de aceitação financeiro), M-2/C-006 e U-002/U-013. screen-patterns.md (único knowledge_ref dado) é Canvas-only — não cobre model-driven, a superfície real de O-006; usei-o só para princípios gerais transferíveis. Conclusão: sim, há consequência plausível além do valor final, em quatro pontos que o candidato não nomeia."
+  },
+  {
+   "question": "A gralha corrigida (X2, 'encomeda'→'encomenda') tem correspondência em texto de ecrã ou mensagem já desenhada, a corrigir também?",
+   "checked": "Procurei 'encomeda' em candidates.json, SU, frame.md, decisions.md — não ocorre; só a grafia correcta aparece. Não consigo confirmar ausência/presença fora destes quatro ficheiros: ux-blueprint_v01.yaml e inputs/mudancas.md não estão em input_refs deste mandato."
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "candidates.json:481 (\"muda o NÍVEL a que a regra de negócio se aplica\").",
+   "failure_scenario": "Se o valor de linha arredondado não for exposto como campo próprio no ecrã de Linha de pedido, requerente/chefia vêem linhas cuja soma não bate com o total — parece erro de conta, mina confiança, gera pedido de esclarecimento ou rejeição em UAT.",
+   "closing_condition": "/blueprint --refresh nomeia o campo (nome, etiqueta, formato) do valor de linha arredondado, declara se substitui ou coexiste com o valor bruto anterior.",
+   "id": "REV-0009.F01"
+  },
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "shared-understanding.md:44 (U-003, agora C-007: \"muda a regra de cálculo do valor do pedido e o teste de aceitação financeiro\") vs candidates.json:486-488 (riscos, sem menção a teste de aceitação).",
+   "failure_scenario": "UAT financeiro assina critério redigido para C-007 (arredondar uma vez, meio-para-cima, no total); sistema entrega meio-para-o-par por linha; teste passa sobre critério desactualizado, divergência só aparece depois na reconciliação com a contabilidade — o mesmo sintoma que originou o projecto.",
+   "closing_condition": "Critério de aceitação financeiro reescrito para meio-para-o-par a nível de linha, validado por contabilidade/direcção financeira, antes do UAT assinar.",
+   "id": "REV-0009.F02"
+  },
+  {
+   "target": "O-006",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json:487 (\"alarga o conjunto de pedidos sujeitos a aprovação financeira\") + M-2, C-006 (limiar 5 000€).",
+   "failure_scenario": "Pedidos entre 3 000€ e 5 000€ passam a exigir também direcção financeira; se o UAT só testar a fronteira antiga, a banda nova fica sem caso de teste; requerente/chefia veem um passo de aprovação que nunca viram, sem texto explicativo — ou um desvio de M-2 passa despercebido.",
+   "closing_condition": "Caso de teste UAT dedicado à banda 3 000–5 000€ (incl. texto/estado que requerente/chefia vêem), antes de fechar O-006.",
+   "id": "REV-0009.F03"
+  },
+  {
+   "target": "O-006",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "candidates.json:486 (risco já nomeado: meio-para-o-par pode exigir plug-in).",
+   "failure_scenario": "Se a implementação for plug-in síncrono e ocorrer excepção não tratada, requerente/chefia/direcção financeira vêem erro técnico em bruto, não mensagem compreensível.",
+   "closing_condition": "Antes do blueprint fechar X1: decisão de implementação inclui tratamento de erro amigável nomeado.",
+   "id": "REV-0009.F04"
+  },
+  {
+   "target": "O-006",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "no locator",
+   "failure_scenario": "Se algum texto de ecrã já desenhado mencionar '5 000 €' (o limiar antigo), fica desactualizado depois do delta sem verificação — utilizador vê valor de política errado.",
+   "closing_condition": "Procurar '5 000'/'5000' em toda a cópia de ecrã e mensagens desenhadas para O-006, corrigir para 3 000 €.",
+   "id": "REV-0009.F05"
+  },
+  {
+   "target": "knowledge_refs (screen-patterns.md)",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "screen-patterns.md:1,9,13 (\"Scope: Canvas standard components only\") vs candidates.json:476-477 (O-006 form.surface: \"Model-driven app\").",
+   "failure_scenario": "Mandato ux-process para candidato model-driven só recebe craft de Canvas — convenções citadas não se aplicam directamente; qualquer veredicto sobre mecânica de ecrã fica sem base de craft própria.",
+   "closing_condition": "Mandatos ux-process sobre candidatos model-driven recebem o craft equivalente do pacote; se não existir, registar a lacuna em vez de reutilizar o de Canvas.",
+   "id": "REV-0009.F06"
+  },
+  {
+   "target": "U-002",
+   "severity": "minor",
+   "kind": "fact",
+   "evidence": "shared-understanding.md:43 (U-002, Unknown, ainda aberta) + candidates.json premise_refs.",
+   "failure_scenario": "Se X1 acrescentar elemento visível novo, a sua visibilidade em contexto móvel herda a mesma incerteza que já pesa sobre O-002 — O-006 não a resolve para o elemento novo.",
+   "closing_condition": "Fecho de U-002 cobre explicitamente qualquer elemento novo de ecrã introduzido por X1.",
+   "id": "REV-0009.F07"
+  }
+ ],
+ "assumptions": [
+  "Assumi revisão 2 de candidates.json já publicada.",
+  "Assumi que os princípios gerais de craft do pacote se transferem em espírito para um ecrã model-driven, apesar de o ficheiro se declarar Canvas-only.",
+  "Não recalculei sha256 dos ficheiros lidos."
+ ],
+ "unanswered": [
+  {
+   "question": "A gralha corrigida (X2, 'encomeda'→'encomenda') tem alguma correspondência em texto de ecrã ou mensagem já desenhada nesta engagement, a corrigir também? (Não localizada em nenhuma fonte capturada — confirmar se existe fora do que este engagement captura.)",
+   "reason": "Confirmação exige ux-blueprint_v01.yaml e inputs/mudancas.md — nenhum em input_refs deste mandato. Nos quatro ficheiros dados a grafia errada não ocorre."
+  }
+ ],
+ "recommended_actions": [
+  "Nomear no /blueprint --refresh o campo de valor de linha arredondado.",
+  "Reescrever o critério de aceitação financeiro para meio-para-o-par por linha antes do UAT assinar.",
+  "Incluir caso de teste UAT para a banda 3 000–5 000€.",
+  "Nomear tratamento de erro amigável se X1 exigir plug-in síncrono.",
+  "Procurar e corrigir menções a '5 000 €' em cópia já desenhada.",
+  "Mandatos futuros ux-process: fornecer craft model-driven quando o candidato for model-driven.",
+  "Ao fechar U-002, cobrir explicitamente qualquer elemento novo de ecrã do delta O-006.",
+  "Verificar 'encomeda' contra ux-blueprint_v01.yaml e inputs/mudancas.md — fora do alcance deste mandato."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "208723d441e0910370a17f1d5e682c3c84726b88663c45ed20784934e2c2f2c4"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "51824512613b1f05a48e0e8fad5b97d822773cf012edab83007147a75438c8c0"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/screen-patterns.md",
+   "sha256": "c54d38972807210d3e6c912c0cddee61fdc273e18ec1e63ba6c373319783ae75"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 2,
+ "mandate_sha256": "8cf4dcaac0c224aa666aae64eead8abe928de19d8a48c4c7342a47fdf0db9b5b",
+ "received_at": "2026-09-24T17:16:55Z"
+}

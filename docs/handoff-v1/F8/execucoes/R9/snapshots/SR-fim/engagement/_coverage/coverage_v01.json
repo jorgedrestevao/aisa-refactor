@@ -1,0 +1,301 @@
+{
+ "schema_version": 1,
+ "version": "v01",
+ "engagement": "f8-r9-fx03",
+ "stage": "lens",
+ "generated_at": "2026-09-24T11:08:48Z",
+ "based_on": [],
+ "target": null,
+ "basis": {
+  "inventory_sha256": "7c0016654b9d7a7e5c1253178dafb288462a84de9282b0bb7e77d426a198fd6d",
+  "su_fingerprint": "1d7b67eb15e48fe1cafd2813d1dc56a9e29889191406fb83ddef96e5d150ce6d",
+  "decision_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "sources": [
+   {
+    "path": "_capture/entrevista-processo.md.extraction.json",
+    "sha256": "cfb9d5075c8c77cc4e2f6e36c8e6ef9eda282d09e95f874e6b7afeb3246c531f",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/entrevista-processo.md.text.md",
+    "sha256": "524031c1a5af5efe90c8df143a475b495a55b8001c8793a6b69bba86a77c5813",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/evidence-index.md",
+    "sha256": "057f8691d4eede2b6ef0ae5b3419deab4c3b4eed3c3692d7f2990e5dff237adb",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/matriz-papeis.md.extraction.json",
+    "sha256": "c8d2ba0dabba894059e18dd00926513fac48c5d8e40e4627e9ac6d88e1bca89c",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/matriz-papeis.md.text.md",
+    "sha256": "8b7394f6dab553e100cfd263e43e1e05d13024c76f08f4cf3670ca00d601ef41",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/nota-dados.md.extraction.json",
+    "sha256": "d1a6f0f43745a3d05a5172d93208f9be15ee45d1bc13fb0d93b1c51eeea87826",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/nota-dados.md.text.md",
+    "sha256": "63592b3b7f3fa717f0767f3733977fae40cd2e93695a37ffaf074446b2809f2a",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/pedido.md.extraction.json",
+    "sha256": "901b61521d2c3b82b5e0c06cb9a324621d2e2499d51b49a5091de0137d9acd50",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/pedido.md.text.md",
+    "sha256": "6da7190fea68694ed0b2cab1d2140a3d0590d0f46246e05ae7e28ed1edb7de3a",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_capture/process-model.md",
+    "sha256": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "role": "capture",
+    "use": "freshness"
+   },
+   {
+    "path": "_state.json",
+    "sha256": "9a49c5557aaffe40e242448c1984b95a8192e6edec930a56255dcddf60be39a4",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "answers.md",
+    "sha256": "4467ea70af4b42b3cf211b3a701083483bdd5ec80e45296f737bd51b1716372d",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "context.json",
+    "sha256": "79d90f675b6dd4b87dfce978290cdd748585828157071a840c88d05096504074",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "decisions.md",
+    "sha256": "5d772f9d9987cf5bfaf12678cfa43a5de9a277ac401c9e457af5b8655ce7452c",
+    "role": "engagement",
+    "use": "informative"
+   },
+   {
+    "path": "enquadramento.md",
+    "sha256": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/entrevista-processo.md",
+    "sha256": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/matriz-papeis.md",
+    "sha256": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/nota-dados.md",
+    "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "inputs/pedido.md",
+    "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d",
+    "role": "input",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/business.md",
+    "sha256": "a1ebd01a84f23b03f69daaf508b56c906d40a836793514c8ee870a1e308415ba",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/data.md",
+    "sha256": "d8deaf2477a1baad6384e4898d3051041c543db3a2a59ee25223046b1de0cfd5",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/financial.md",
+    "sha256": "993c3cd20f2ed1fb11029849f8b6b5e53e3df528d2cb1f5925169b54d76a467e",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/governance.md",
+    "sha256": "fbaa9777b10e60bbb3b1ca31ef76a3a09a1762f76478c5abe9e4315ab264877c",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/operations.md",
+    "sha256": "bc27c4534a087947b561e962a774ed54670a681b426fed45155b1293af56c44f",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "lens-outputs/user.md",
+    "sha256": "0eb7f2bd6626b4a4ee00148277333d33678a4763455d1b22d94da6d90934ff1b",
+    "role": "engagement",
+    "use": "freshness"
+   },
+   {
+    "path": "shared-understanding.md",
+    "sha256": "3a90968e7640b13dfd4a1b7c161efc7c3ac1c03e18c22aaf48187d32d717b7b2",
+    "role": "engagement",
+    "use": "informative"
+   }
+  ],
+  "authorities": [],
+  "decision_ref": "",
+  "contract_version": "1",
+  "pack": "pp"
+ },
+ "source_review": [],
+ "coverage": [],
+ "lens_coverage": {
+  "round": "R-01",
+  "author": {
+   "kind": "agent",
+   "name": "analista integrado (/round)"
+  },
+  "dimensions": {
+   "business": {
+    "status": "gap",
+    "refs": [
+     "C-002",
+     "C-003",
+     "M-1",
+     "M-2",
+     "M-3",
+     "M-4",
+     "A-001",
+     "U-008"
+    ],
+    "justification": "outcome (pedido -> aprovacao -> compra), regras (M-1..M-4) e excepcao urgente (C-003) declarados e evidenciados; impacto ainda qualitativo (A-001); criterio de sucesso nao declarado pelo dono (enquadramento.md#T4: \"nao sei dizer\") -- rota para U-008."
+   },
+   "operations": {
+    "status": "assessed",
+    "refs": [
+     "C-002",
+     "C-003",
+     "R-001",
+     "U-001",
+     "U-009"
+    ],
+    "justification": "fluxo, responsabilidades e excepcao urgente evidenciados (C-002, C-003); falha operacional concreta registada (R-001); volume (U-001) e tempo por passo (U-009, P-5) por apurar, sem bloquear a resposta a quem corre/recupera o processo."
+   },
+   "user": {
+    "status": "gap",
+    "refs": [
+     "U-002",
+     "A-002"
+    ],
+    "justification": "actores e tarefa evidenciados (matriz-papeis.md); contexto de uso real nao esta declarado -- rota para U-002; friccao de confirmacao de recepcao registada (A-002)."
+   },
+   "data": {
+    "status": "gap",
+    "refs": [
+     "C-004",
+     "C-005",
+     "A-003",
+     "R-002",
+     "U-003",
+     "U-004",
+     "M-4"
+    ],
+    "justification": "modelo, dono e risco de desactualizacao descritos e evidenciados (C-004, A-003, R-002); a formula de calculo esta confirmada (C-005), mas o mecanismo que garante consistencia do valor -- o ponto de arredondamento -- nao esta definido e ja gerou divergencia real com a contabilidade: rota para U-003 (bloqueia aceitacao financeira, criticidade Med). U-004 (integracao com ERP-X) e uma segunda questao estrutural, tambem em aberto."
+   },
+   "governance": {
+    "status": "gap",
+    "refs": [
+     "M-1",
+     "M-2",
+     "M-3",
+     "U-005",
+     "U-006",
+     "X-001"
+    ],
+    "justification": "separacao de papeis e obrigacao de auditoria declaradas (M-1..M-3); valor do limiar por apurar (U-005, Critical) e mecanismo de auditoria por desenhar (U-006); conflito entre via de urgencia e aprovacao financeira por resolver (X-001)."
+   },
+   "financial": {
+    "status": "gap",
+    "refs": [
+     "A-004",
+     "A-005",
+     "U-001",
+     "U-007",
+     "U-009",
+     "U-010"
+    ],
+    "justification": "custo do nao-fazer-nada descrito qualitativamente (A-004); envelope de custo as-is ESCRITO como Assumed (A-005: formula custo = volume x tempo por passo x taxa carregada + duplicados + arredondamento), como o checklist manda mesmo sem numeros do cliente. Quantificacao bloqueada por tres factores em aberto: volume (U-001), tempo por passo (U-009) e taxa horaria carregada (U-010). Envelope orcamental do projecto (U-007) e uma questao distinta (tecto de investimento, nao custo as-is)."
+   }
+  },
+  "conflict_scan": {
+   "refs": [
+    "X-001"
+   ],
+   "note": "colisao entre a via de urgencia (operations) e o limiar de aprovacao financeira (governance)."
+  }
+ },
+ "semantic_review": {
+  "status": "completed",
+  "performed_by": {
+   "kind": "agent",
+   "name": "lens-coverage-reviewer"
+  },
+  "method": "Read shared-understanding.md (all cited ids: C-002..C-005, M-1..M-4, A-001..A-005, U-001..U-010, X-001, R-001, R-002), library/kernel/lens-checklists.md (central question + Coverage evidence per perspective, Financial 'Apply' paragraph, Operations step_duration/P-5 note), context.json and enquadramento.md (funding_gate = absent -> true).",
+  "completed_at": "2026-09-24T12:00:00Z",
+  "limitations": [
+   "A-005's stated basis said the loaded rate 'fica implicita em U-009', but the SU splits it into a separate U-010 -- a stale cross-reference inside A-005, not a blocking conflict. Fixed after this review, before finalize (A-005 now names U-001/U-009/U-010 explicitly)."
+  ],
+  "dimensions": {
+   "business": {
+    "verdict": "treated",
+    "note": "C-002/C-003/M-1..M-4 give outcome+rules+exception, A-001 marks impact as qualitative, and U-008 correctly routes the one open piece -- the owner's undeclared success criterion (enquadramento.md#T4) -- so the gap is real and the right one."
+   },
+   "operations": {
+    "verdict": "treated",
+    "note": "C-002/C-003 give the real flow and exception, R-001 gives a concrete failure/recovery gap, and U-009 now supplies the per-step time row the checklist's P-5 rule requires (Unknown, custo=email, swing tying it to A-005), closing the limitation the second review had raised."
+   },
+   "user": {
+    "verdict": "treated",
+    "note": "Actors/task are evidenced (matriz-papeis.md, named in the justification though not itself in refs) and A-002 gives concrete friction; U-002 correctly routes the undeclared real-use context, which is the part of the central question actually left open."
+   },
+   "data": {
+    "verdict": "treated",
+    "note": "C-004/A-003/R-002 cover model, ownership and staleness risk, and the gap is now scored against U-003 -- the rounding-point question that literally is the 'how does it stay consistent' central question and already produced a real divergence with accounting -- correcting the prior mis-scoring."
+   },
+   "governance": {
+    "verdict": "treated",
+    "note": "M-1..M-3 give separation of duties and audit obligation, U-005 (threshold value, Critical) and U-006 (audit mechanism) route what is undesigned, and X-001 correctly surfaces the unresolved urgency-path/financial-threshold collision."
+   },
+   "financial": {
+    "verdict": "treated",
+    "note": "A-005 writes the as-is cost envelope formula as Assumed with visible arithmetic per the checklist's 'written, not asked' rule, and U-001/U-009/U-010 are the three factors that actually block its quantification (each with dimensionante swing tying back to A-005); U-007 is correctly kept separate as the funding-gate question (gate defaults true, so it is legitimately in scope)."
+   }
+  }
+ }
+}

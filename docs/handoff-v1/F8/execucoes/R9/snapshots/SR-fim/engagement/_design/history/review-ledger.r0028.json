@@ -1,0 +1,305 @@
+{
+ "schema_version": "aisa-review-ledger/1",
+ "revision": 28,
+ "dispositions": [
+  {
+   "seq": 1,
+   "finding": "REV-0001.F01",
+   "disposition": "delegated",
+   "rationale": "Reversibilidade de O-003 incompleta (falta custo de reapontar fontes de dados/fórmulas por ecrã, não só migração de registos) — correcção de texto do candidato, a fazer pelo autor na próxima revisão.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:27Z",
+   "envelope": "Reformular candidates.json#O-003.reversibility antes de /decide, nomeando o custo de rebinding de ecrãs.",
+   "owner": "technical author (solution-architect)"
+  },
+  {
+   "seq": 2,
+   "finding": "REV-0001.F02",
+   "disposition": "accepted",
+   "rationale": "Entitlement/licenciamento das 5 populações não verificado, apesar de M-3/M-4 despoletarem a obrigação de verificação (VC-05) — admitido como pergunta em aberto própria em vez de nota de risco em prosa.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:27Z",
+   "corrected_by": [
+    "U-011"
+   ]
+  },
+  {
+   "seq": 3,
+   "finding": "REV-0001.F03",
+   "disposition": "accepted",
+   "rationale": "Os dois factores que decidem entre O-001/O-002/O-003 (U-002 e a força exigida de M-3) estavam dispersos pelos campos de risco de cada candidato — consolidados em options.md#Recommendation.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:27Z",
+   "corrected_by": [
+    "options.md"
+   ]
+  },
+  {
+   "seq": 4,
+   "finding": "REV-0002.F01",
+   "disposition": "accepted",
+   "rationale": "A mitigação de duplicados descrita (correspondência difusa) não é idempotente/recuperável — correcção por evidência de R-001, que passa a R-003 (was R-001) com o mecanismo exigido e o comportamento de retry nomeados.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:27Z",
+   "corrected_by": [
+    "R-003"
+   ]
+  },
+  {
+   "seq": 5,
+   "finding": "REV-0002.F02",
+   "disposition": "accepted",
+   "rationale": "A viabilidade da leitura em tempo real do ERP-X pressupõe uma interface programável nunca confirmada na SU — admitida como pergunta própria.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:27Z",
+   "corrected_by": [
+    "U-012"
+   ]
+  },
+  {
+   "seq": 6,
+   "finding": "REV-0002.F03",
+   "disposition": "accepted",
+   "rationale": "Cópia local do catálogo é anti-padrão de cache de valor volátil (pack) sem reconciliação/cadência/deteção de drift obrigatórias — correcção por evidência de R-002, que passa a R-004 (was R-002).",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:28Z",
+   "corrected_by": [
+    "R-004"
+   ]
+  },
+  {
+   "seq": 7,
+   "finding": "REV-0002.F04",
+   "disposition": "accepted",
+   "rationale": "A condição de fecho da cópia local só estava explícita em O-001 (remissão nos outros) — R-004 e options.md tornam-na explícita para o candidato que a escolher.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:28Z",
+   "corrected_by": [
+    "options.md"
+   ]
+  },
+  {
+   "seq": 8,
+   "finding": "REV-0001.F01",
+   "disposition": "delegated",
+   "rationale": "test rerun check",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:44:36Z",
+   "envelope": "Reformular candidates.json#O-003.reversibility antes de /decide, nomeando o custo de rebinding de ecrãs.",
+   "owner": "technical author (solution-architect)"
+  },
+  {
+   "seq": 9,
+   "finding": "REV-0003.F01",
+   "disposition": "delegated",
+   "rationale": "Mecanismo de auditoria concreto (imutabilidade, retenção alinhada a M-4) por desenhar em O-001/O-002 — a pergunta já existe (U-006), não se escreve nova.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "envelope": "Nomear mecanismo concreto, quem tem direito de escrita sobre registos fechados, retenção M-4 — em /blueprint, ao fechar U-006.",
+   "owner": "arquitecto / director de sistemas de informação"
+  },
+  {
+   "seq": 10,
+   "finding": "REV-0003.F02",
+   "disposition": "delegated",
+   "rationale": "Texto de O-002 sobre-estima o que vem 'herdado' da shell (só a vista de histórico, não a captura de auditoria em si) — correcção de texto menor.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "envelope": "Reformular candidates.json#O-002.architecture antes de /decide.",
+   "owner": "technical author (solution-architect)"
+  },
+  {
+   "seq": 11,
+   "finding": "REV-0003.F03",
+   "disposition": "accepted",
+   "rationale": "Segregação do limiar de 5 000 € (M-2/C-006) não imposta pela loja em O-003 (sem segurança de coluna) — projectado como precondição/disqualificador provisório em options.md#O-003.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "corrected_by": [
+    "options.md"
+   ]
+  },
+  {
+   "seq": 12,
+   "finding": "REV-0003.F04",
+   "disposition": "delegated",
+   "rationale": "Nenhum candidato reserva premissa/esforço para o fluxo de urgência (C-003), pendente do fecho de X-001 — falta nos premise_refs.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "envelope": "Adicionar C-003 aos premise_refs de O-001/O-002/O-003 e nomear a adição pendente de X-001, antes de /simulate ou /decide.",
+   "owner": "technical author (solution-architect)"
+  },
+  {
+   "seq": 13,
+   "finding": "REV-0004.F01",
+   "disposition": "accepted",
+   "rationale": "Jornada de excepção do reenvio (R-001/A-002) sem critério de aceitação nomeado — incorporado na correcção por evidência de R-001 (R-003, was R-001).",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "corrected_by": [
+    "R-003"
+   ]
+  },
+  {
+   "seq": 14,
+   "finding": "REV-0004.F02",
+   "disposition": "accepted",
+   "rationale": "Forfeit de acesso móvel em O-002 incompleto sem a pergunta irmã sobre instalabilidade/entitlement da app nativa — admitida como pergunta própria, condicional a U-002.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "corrected_by": [
+    "U-013"
+   ]
+  },
+  {
+   "seq": 15,
+   "finding": "REV-0005.F01",
+   "disposition": "delegated",
+   "rationale": "Multiplicador de complexidade (1.2×) aplicado a O-001/O-002/O-003 não justificado pela própria contagem de entidades do modelo do pacote (4 entidades = banda Simple/1.0×) — banda a rever.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:00Z",
+   "envelope": "Justificar a banda Medium ou recalcular com 1.0× e actualizar O-001/O-002/O-003, antes de /decide.",
+   "owner": "technical author (solution-architect) / analista financeiro"
+  },
+  {
+   "seq": 16,
+   "finding": "REV-0005.F02",
+   "disposition": "accepted",
+   "rationale": "Mesmo achado de entitlement/licenciamento que REV-0001.F02, por caminho independente (verificação VC-05) — mesma linha U-011, não duplicada.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:01Z",
+   "corrected_by": [
+    "U-011"
+   ]
+  },
+  {
+   "seq": 17,
+   "finding": "REV-0005.F03",
+   "disposition": "delegated",
+   "rationale": "Ambíguo se o fluxo de sincronização de uma cópia local (variante de U-004) está incluído na contagem de '4 fluxos' ou só coberto implicitamente pelo buffer.",
+   "candidate_revision": 1,
+   "at": "2026-09-24T12:45:01Z",
+   "envelope": "Ao resolver U-004 para cópia local, confirmar se cabe nos 4 fluxos contados ou exige linha adicional, e ajustar a banda.",
+   "owner": "technical author (solution-architect)"
+  },
+  {
+   "seq": 18,
+   "finding": "REV-0006.F01",
+   "disposition": "delegated",
+   "rationale": "TW-4 (decisions.md#D-002) está calibrado ao limiar antigo (5000€) e não cobre a banda nova (3000-5000€) introduzida por A-008/X3.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "envelope": "antes de /decide fechar O-006",
+   "owner": "dono do processo (director de sistemas de informação)"
+  },
+  {
+   "seq": 19,
+   "finding": "REV-0006.F02",
+   "disposition": "accepted",
+   "rationale": "Suporte nativo a meio-para-o-par não confirmado; admitido como pergunta em aberto rastreada.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "U-015"
+   ]
+  },
+  {
+   "seq": 20,
+   "finding": "REV-0006.F03",
+   "disposition": "accepted",
+   "rationale": "Caso de fronteira X1x X3 sobre o mesmo Total; admitido como proof_obligation rastreada.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "U-016"
+   ]
+  },
+  {
+   "seq": 21,
+   "finding": "REV-0006.F04",
+   "disposition": "delegated",
+   "rationale": "Confirmação automática da rota change-impact foi recusada pelo motor; impact_refs de O-006 carecem de verificação manual contra o blueprint.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "envelope": "antes de /blueprint --refresh avançar",
+   "owner": "coordenador/autor técnico"
+  },
+  {
+   "seq": 22,
+   "finding": "REV-0006.F05",
+   "disposition": "delegated",
+   "rationale": "Nomear explicitamente os dois campos afectados por X1 (linha + total) é detalhe de desenho.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "envelope": "/blueprint --refresh",
+   "owner": "autor técnico"
+  },
+  {
+   "seq": 23,
+   "finding": "REV-0006.F06",
+   "disposition": "accepted",
+   "rationale": "C-006/C-007 já ficam supersedidos por linhas novas nesta síntese (A-007/A-008); a marcação de premise_refs no candidato é cosmética e delegada à próxima revisão.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "A-007",
+    "A-008"
+   ]
+  },
+  {
+   "seq": 24,
+   "finding": "REV-0007.F01",
+   "disposition": "accepted",
+   "rationale": "C-006/C-007 revalidados: novas linhas A-007 (was C-007) e A-008 (was C-006) publicadas nesta síntese, citando mudancas.md.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "A-007",
+    "A-008"
+   ]
+  },
+  {
+   "seq": 25,
+   "finding": "REV-0007.F02",
+   "disposition": "accepted",
+   "rationale": "Ponto de imposição server-side do arredondamento admitido como Unknown de desenho (mecanismo transaccional).",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "U-017"
+   ]
+  },
+  {
+   "seq": 26,
+   "finding": "REV-0007.F03",
+   "disposition": "accepted",
+   "rationale": "Mecanismo transaccional da escrita Pedido+Linhas coberto pela mesma Unknown de desenho (U-017).",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "corrected_by": [
+    "U-017"
+   ]
+  },
+  {
+   "seq": 27,
+   "finding": "REV-0007.F04",
+   "disposition": "delegated",
+   "rationale": "Sequência exacta IVA/arredondamento por linha é detalhe de blueprint, a fixar quando U-015/U-017 fecharem.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "envelope": "ao decompor as regras em /blueprint",
+   "owner": "autor técnico"
+  },
+  {
+   "seq": 28,
+   "finding": "REV-0007.F05",
+   "disposition": "delegated",
+   "rationale": "Evitar formatNumber/texto para persistir o arredondamento é orientação de implementação, a aplicar quando U-015 fechar.",
+   "candidate_revision": 2,
+   "at": "2026-09-24T17:29:46Z",
+   "envelope": "ao implementar U-015/U-017 em /blueprint",
+   "owner": "autor técnico"
+  }
+ ],
+ "divergences": []
+}

@@ -1,0 +1,24 @@
+{
+  "operation_id": "publish-d558a443e0ef5ac8",
+  "request_hash": "92048c2e18926bf798ecdf45ba7d36c88440cda95b4120c9969d174548dabaf1",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "229e62bd6f7898968667d0e0f62b8f9a1fcad9a71f28e03b67f33c350c631bdf",
+    "_graph/meta.json": "7b5ac0db22e3a93418f9209afeb6a916d190eb4d7fe03418513d9f290dfe90bc",
+    "shared-understanding.md": "9543d4953b164b2eff5d0f604f9440e795e38b28a77c76ea97f6dbe5a08e16f7"
+  },
+  "expected": {
+    "shared-understanding.md": "b6b67cc2dbf10cceea1261b5847689bd6ef69b4727dd7026d8c35917d8a60abe",
+    "_graph/graph.jsonl": "e8672a9dce2dbc82e7808f39f2195c1a490dc92760999d4f5b68a4610697eac8",
+    "_graph/meta.json": "95ffa73093b3f5b6486b8ca7a09ac4e2052fc798f0ebea91266ad8bc27e29715"
+  },
+  "read_set": {
+    "answers.md": "472f214b8e3c7bd2ca413d15887ca2470a701942c73f4362d3fad7ce60da49d3"
+  },
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T17:33:16Z"
+}

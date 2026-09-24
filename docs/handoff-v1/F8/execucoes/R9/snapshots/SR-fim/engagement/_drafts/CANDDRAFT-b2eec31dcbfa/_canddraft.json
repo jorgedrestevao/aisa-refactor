@@ -1,0 +1,13 @@
+{
+  "schema_version": "aisa-candidates-draft/1",
+  "id": "CANDDRAFT-b2eec31dcbfa",
+  "base": "",
+  "reads": {
+    "shared-understanding.md": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+    "decisions.md": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "_state.json": "fad1934b260dce38ca6dea4fe1a68fbb0792e6dbc4f0963ffb6106d8a59049e7"
+  },
+  "published": "candidates-12f7b946c596062c",
+  "created_at": "2026-09-24T11:59:34Z"
+}

@@ -1,0 +1,43 @@
+{
+ "delivery": "blocked",
+ "blockers": [
+  {
+   "code": "PROOF_WITHOUT_WORK",
+   "ref": "_blueprint/ux-blueprint_v01.yaml#architecture/proof_obligations[0]",
+   "scope": "",
+   "detail": "obrigação de prova sem WP: «viabilidade do mecanismo de duplicados e da base de segurança/auditoria de O-002»"
+  },
+  {
+   "code": "UNLINKED_BLOCKING_QUESTION",
+   "ref": "U-006",
+   "scope": "",
+   "detail": "pergunta que bloqueia o âmbito, sem FC que a cite e sem exclusão autorizada"
+  },
+  {
+   "code": "BLOCKS_ALL_OPEN",
+   "ref": "U-007",
+   "scope": "",
+   "detail": "pergunta em aberto bloqueia tudo"
+  },
+  {
+   "code": "UNLINKED_BLOCKING_QUESTION",
+   "ref": "U-008",
+   "scope": "",
+   "detail": "pergunta que bloqueia o âmbito, sem FC que a cite e sem exclusão autorizada"
+  },
+  {
+   "code": "UNLINKED_BLOCKING_QUESTION",
+   "ref": "U-011",
+   "scope": "",
+   "detail": "pergunta que bloqueia o âmbito, sem FC que a cite e sem exclusão autorizada"
+  },
+  {
+   "code": "UNLINKED_BLOCKING_QUESTION",
+   "ref": "U-012",
+   "scope": "",
+   "detail": "pergunta que bloqueia o âmbito, sem FC que a cite e sem exclusão autorizada"
+  }
+ ],
+ "incoherent": [],
+ "excluded": []
+}

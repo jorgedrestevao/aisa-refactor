@@ -1,0 +1,19 @@
+{
+  "operation_id": "publish-985855e9e452cc74",
+  "request_hash": "199f3a69ed6c1c63bbd6ad77045afbae755e85a3f22a0a7ac4fdb2ed26dcbf78",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "03acf50ea836026ed3fef5ff63d40e472406c189accd418f831e7c6186bba2a4"
+  },
+  "expected": {
+    "council-log.md": "d7da566847b13e60d438601f017632f3892cf7941c443630b444560fa27c2bb9"
+  },
+  "read_set": {
+    "options.md": "e7323e956e0dc09453561e9355ee4fd1f89fe47f48013aa796b6eba80c236558",
+    "shared-understanding.md": "ac8ba1f6e91ea85cc2333b7bc375caac706565f7c5bd67e922963533e2c54be2"
+  },
+  "published": [
+    "council-log.md"
+  ],
+  "committed_at": "2026-09-24T13:26:22Z"
+}

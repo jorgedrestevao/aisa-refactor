@@ -1,0 +1,66 @@
+{
+ "schema_version": "aisa-review-mandate/1",
+ "task_id": "REV-0010",
+ "role": "cost-estimate",
+ "objective": "Rever se a ordem de grandeza do delta O-006, declarada indisponível pelo modelo do pacote, está bem fundamentada, e se falta algum driver de custo.",
+ "route": "platform-constrained",
+ "scope_ids": [
+  "O-006",
+  "O-004",
+  "O-005"
+ ],
+ "questions": [
+  "O modelo de estimativa do pacote (craft/estimation-model.md) tem alguma unidade de custo para uma mudança de regra de negócio já construída (mover nível de cálculo, ajustar constante), ou está mesmo limitado a construções inteiras, como O-006 declara ao marcar a ordem de grandeza indisponível?",
+  "Falta nomear algum driver de custo no candidato (ex.: uma prova/UAT adicional só para a nova regra de arredondamento, X1) que O-006 não nomeou?"
+ ],
+ "input_refs": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "208723d441e0910370a17f1d5e682c3c84726b88663c45ed20784934e2c2f2c4"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "51824512613b1f05a48e0e8fad5b97d822773cf012edab83007147a75438c8c0"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  }
+ ],
+ "candidate_revision": 2,
+ "knowledge_refs": [
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+   "sha256": "a2aa0669f0c1bbc33a5f7a974ebcdbf08ac4e855c7a665cb49f40ff07c11697f",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  }
+ ],
+ "output_contract": [
+  "task_id",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "stop_conditions": [
+  "todas as perguntas com cobertura ou em `unanswered`"
+ ],
+ "budget": "uma leitura; sem rondas próprias",
+ "prohibited_actions": [
+  "escrever numa autoridade",
+  "autorizar pelo cliente",
+  "confirmar um facto por constar de outra resposta",
+  "ler o parecer de outro revisor",
+  "rever um candidato ainda em construção"
+ ],
+ "created_at": "2026-09-24T16:49:21Z"
+}

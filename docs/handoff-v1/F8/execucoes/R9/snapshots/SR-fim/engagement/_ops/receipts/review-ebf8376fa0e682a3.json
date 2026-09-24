@@ -1,0 +1,22 @@
+{
+  "operation_id": "review-ebf8376fa0e682a3",
+  "request_hash": "ebd45736afdcca4159ccfdaf0bcfd947d3bbccd9c2b89b06a1a11e8bf5f363e9",
+  "result": "committed",
+  "revision": {
+    "_design/reviews/REV-0009.json": "ebf8376fa0e682a3bc62ad30a6cdb519a9896ca7c4421de9beec53dbd1b81994"
+  },
+  "expected": {
+    "_design/reviews/REV-0009.json": ""
+  },
+  "read_set": {
+    "_design/candidates.json": "208723d441e0910370a17f1d5e682c3c84726b88663c45ed20784934e2c2f2c4",
+    "shared-understanding.md": "51824512613b1f05a48e0e8fad5b97d822773cf012edab83007147a75438c8c0",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "decisions.md": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e",
+    "_design/reviews/REV-0009.mandate.json": "8cf4dcaac0c224aa666aae64eead8abe928de19d8a48c4c7342a47fdf0db9b5b"
+  },
+  "published": [
+    "_design/reviews/REV-0009.json"
+  ],
+  "committed_at": "2026-09-24T17:16:55Z"
+}
