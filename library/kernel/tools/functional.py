@@ -707,6 +707,8 @@ def publish(eng, draft_id: str) -> dict:
                                         for p in res["integrity"]),
                               W["INTEGRITY_FAILURE"], {"draft": draft_id,
                                                        "problems": res["integrity"]})
+    # F7 (Q2): a impressão de cada linha citada, da SU que o read-set garante inalterada
+    data = _mod("impact")["with_row_basis"](data, _mod("impact")["su_rows"](eng))
     texto = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
     hist = "{}/functional-contracts.r{:04d}.json".format(HISTORY_DIR, int(data["revision"]))
     op_id = "functional-{}".format(hashlib.sha256(

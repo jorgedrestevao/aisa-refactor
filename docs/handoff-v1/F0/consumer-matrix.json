@@ -973,9 +973,23 @@
      "source": "handoff-v1 F6.5",
      "mechanism": "Copies the SU into the release package (sha256 in the index) and reads it through trace.py for readiness. Never writes it.",
      "evidence": "release.py build, readiness"
+    },
+    {
+     "file": "library/kernel/tools/impact.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F7.1",
+     "mechanism": "Reads SU rows (dashboard.parse_su) to derive stale dependents (resolved, withdrawn, missing, state/criticidade against the row basis recorded in based_on). Called by functional/inventory/review at publication to compute that basis from the SU the draft read-set pins. Never writes the SU.",
+     "evidence": "impact.py stale, with_row_basis"
     }
    ],
    "mention_only": [
+    {
+     "file": "library/kernel/handoff-contract.md",
+     "reason": "Normative text (Dependencies, F7) naming the row reference `shared-understanding.md#<id>` in based_on; not a runtime reader."
+    },
     {
      "file": "docs/CONSOLIDATED_PLAN.md",
      "reason": "Planning history (P-12 su-confirmed-guard design, locator rules); not read at runtime for SU writes. Lines 281-294, 584, 646."
