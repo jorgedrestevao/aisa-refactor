@@ -12,6 +12,7 @@ Desenho: `docs/handoff-v1/F7/DESENHO.md` §1 (Q1–Q3).
                 mandato não consumiu → nada reabre; a revisão de bytes continua exacta
     Q1          nada se escreve: o motor só lê
 """
+import hashlib
 import json
 import runpy
 import tempfile
@@ -118,12 +119,27 @@ class T41(unittest.TestCase):
             self.assertEqual(codes(r), [("ROW_CHANGED", "FC-0002")])
             self.assertIn("criticidade Critical → Med", r["findings"][0]["detail"])
 
-    def test_republishing_records_no_semantic_impact_and_keeps_the_fingerprint(self):
+    def test_republishing_needs_a_recorded_assessment_and_keeps_the_fingerprint(self):
+        """Substitui `test_republishing_records_no_semantic_impact_and_keeps_the_fingerprint`
+        (auditoria de 2026-09-24, ponto 4 do mantenedor). Republicar sem avaliação recalculava
+        a impressão da linha e limpava o ROW_CHANGED: trocar o hash equivalia a revalidar.
+        Agora é recusado; com a avaliação registada (`still_valid`) o achado sai e a impressão
+        do FC mantém-se — nenhuma autorização se perde."""
         with tempfile.TemporaryDirectory() as tmp:
             eng = TT["montado"](tmp)
             _linha(eng, "U-001", "| Critical |", "| Med |")
             antes = F["show"](eng)["items"]["FC-0002"]["sha256"]
             dr = F["draft"](eng)
+            with self.assertRaises(F["FunctionalError"]) as cm:
+                F["publish"](eng, dr["draft"])
+            self.assertEqual(cm.exception.code, "REVALIDATION_REQUIRED")
+            dr = F["draft"](eng)
+            pd = Path(dr["path"])
+            d = json.loads(pd.read_text(encoding="utf-8"))
+            d["revalidation"] = {"items": {"FC-0002": "still_valid"},
+                                 "assessment": "a criticidade baixou; o contrato mantém-se",
+                                 "assessed_by": "autor funcional (dados de teste)"}
+            pd.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
             F["publish"](eng, dr["draft"])
             self.assertEqual(I["stale"](eng)["findings"], [])
             self.assertEqual(F["show"](eng)["items"]["FC-0002"]["sha256"], antes)
@@ -194,16 +210,63 @@ class T42(unittest.TestCase):
                                   note="continua a valer", by="role: dono | fonte: reunião")
             self.assertEqual(I["stale"](eng)["findings"], [])
 
-    def test_the_byte_revision_stays_exact(self):
+    # `test_the_byte_revision_stays_exact` afirmava que um byte do desenho mudado não abre
+    # nada. Substituído (auditoria A5, mantenedor 2026-09-24): um sha diferente prova a
+    # mudança e não a classifica. A intenção do T42 fica nos três casos: alteração editorial →
+    # revalidação registada sem reabrir decisões; alteração material → dependentes bloqueados
+    # até serem actualizados; unidade do pack não consumida → sem impacto (o caso abaixo).
+
+    def test_an_editorial_design_change_is_revalidated_by_record_without_reopening(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = TT["montado"](tmp)
+            antes = (eng / "decisions.md").read_text(encoding="utf-8")
+            autorizados = {k: v["authorization"]["state"]
+                           for k, v in F["show"](eng)["items"].items()}
             p = eng / IT["BP"]
             p.write_text(p.read_text(encoding="utf-8") + "\n# nota editorial\n",
                          encoding="utf-8")
             r = I["stale"](eng)
             b = [x for x in r["bytes"] if x["ref"] == IT["BP"]]
             self.assertTrue(b and b[0]["changed"] and b[0]["recorded"] != b[0]["now"])
-            self.assertEqual(r["findings"], [])
+            self.assertTrue({("BASIS_CHANGED", "FC-0001"), ("BASIS_CHANGED", "WP-0001")}
+                            <= set(codes(r)))
+            IT["revalida_fc_desenho"](eng, "nota editorial no desenho; nenhum contrato muda")
+            IT["revalida_inventario"](eng, {"WP-0001": "still_valid"},
+                                      "nota editorial no desenho; o trabalho não muda")
+            self.assertEqual(I["stale"](eng)["findings"], [])
+            self.assertEqual({k: v["authorization"]["state"]
+                              for k, v in F["show"](eng)["items"].items()}, autorizados)
+            self.assertEqual((eng / "decisions.md").read_text(encoding="utf-8"), antes)
+
+    def test_a_material_design_change_blocks_the_dependents_until_updated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = TT["montado"](tmp)
+            p = eng / IT["BP"]
+            p.write_text(p.read_text(encoding="utf-8").replace(
+                "name: estado, type: choice", "name: estado, type: text"), encoding="utf-8")
+            self.assertTrue({"FC-0001", "FC-0003", "WP-0001"}
+                            <= {f["ref"] for f in I["blocking"](eng)})
+            dr = F["draft"](eng)
+            pd = Path(dr["path"])
+            d = json.loads(pd.read_text(encoding="utf-8"))
+            for bb in d["based_on"]:
+                if bb.get("ref") == IT["BP"]:
+                    bb["sha256"] = hashlib.sha256(p.read_bytes()).hexdigest()
+            for it in d["items"]:
+                if it["id"] == "FC-0001":
+                    it["rule"] = it["rule"] + " (o estado passou a texto livre no desenho)"
+            d["revalidation"] = {"items": {"FC-0001": "updated", "FC-0002": "still_valid",
+                                           "FC-0003": "still_valid"},
+                                 "assessment": "o estado passou a texto; só a submissão o usa",
+                                 "assessed_by": "autor funcional (dados de teste)"}
+            pd.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+            F["publish"](eng, dr["draft"])
+            estados = {k: v["authorization"]["state"] for k, v in F["show"](eng)["items"].items()}
+            self.assertEqual(estados["FC-0001"], "stale")      # o dono volta a autorizar
+            self.assertEqual(estados["FC-0003"], "current")    # still_valid: nada reaberto
+            bloq = {(f["code"], f["ref"]) for f in I["blocking"](eng)}
+            self.assertIn(("CONTRACT_CHANGED", "WP-0001"), bloq)
+            self.assertNotIn("FC-0003", {ref for _c, ref in bloq})
 
     def test_only_a_consumed_knowledge_unit_reaches_its_review(self):
         with tempfile.TemporaryDirectory() as tmp:

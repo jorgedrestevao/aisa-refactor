@@ -10,6 +10,7 @@
 .claude/tests/test_a5_dictionary_contract.py
 .claude/tests/test_admission_rule.py
 .claude/tests/test_arbiter_declarations.py
+.claude/tests/test_audit_f6f7.py
 .claude/tests/test_audit_findings.py
 .claude/tests/test_audit_round2.py
 .claude/tests/test_authority_guard.py

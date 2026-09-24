@@ -53,6 +53,9 @@ def montado(tmp, includes=("J-0001", "J-0003"), items=None, prova=False):
         p = eng / BP
         p.write_text(p.read_text(encoding="utf-8").replace("entities:", PROVA + "entities:"),
                      encoding="utf-8")
+        # auditoria A5: o desenho mudou depois dos FC — revalidação registada, não troca de hash
+        IT["revalida_fc_desenho"](eng, "o desenho ganhou uma obrigação de prova; os contratos "
+                                       "não mudam")
     IT["publish"](eng, "scope", escopo(eng, includes))
     IT["publish"](eng, "work-packages", IT["inventario"](eng, items or wps()))
     return eng

@@ -289,10 +289,26 @@ def scope_gate(eng) -> dict:
         elif v["authorization"]["state"] != "current":
             blockers.append(_f("FC_NOT_AUTHORIZED", f, "autorização {}".format(
                 v["authorization"]["state"])))
-    # F7 (Q3): dependente do âmbito entregue sobre premissa resolvida, retirada ou mudada
-    for f in _mod("impact")["blocking"](eng):
-        blockers.append(_f("STALE_PREMISE", f["ref"], "{} ({})".format(
-            f["detail"], " → ".join(f["chain"]))))
+    # Auditoria A2: o que o motor do âmbito e do inventário já vê — integridade e lacunas
+    # (âmbito sem autorização, WP sem aceitação ou sem definição de feito) — chega ao gate
+    # final. Antes, `inventory.check` dizia SCOPE_NOT_AUTHORIZED e o release saía pronto.
+    INV = _mod("inventory")
+    for kind, rel in (("scope", "_design/scope.json"),
+                      ("work-packages", "_design/work-packages.json")):
+        if (eng / rel).is_file():
+            c = INV["check"](eng, kind)
+            for pr in list(c.get("integrity") or []) + list(c.get("gaps") or []):
+                blockers.append(_f(pr["code"], pr.get("item") or rel, pr["detail"]))
+    if (eng / "_design/work-packages.json").is_file() and \
+            not (eng / "_design/scope.json").is_file():
+        blockers.append(_f("NO_SCOPE", "_design/scope.json", "inventário sem âmbito"))
+    # F7 (Q3): dependente do âmbito entregue sobre premissa resolvida, retirada ou mudada;
+    # auditoria A3/A5: dependência fixada que mudou, que falta fixar, ou que o histórico não
+    # justifica — cada uma com o seu código
+    I = _mod("impact")
+    for f in I["blocking"](eng):
+        blockers.append(_f(f["code"] if f["code"] in I["PIN_CODES"] else "STALE_PREMISE",
+                           f["ref"], "{} ({})".format(f["detail"], " → ".join(f["chain"]))))
     try:
         md = (eng / "shared-understanding.md").read_text(encoding="utf-8")
     except OSError:

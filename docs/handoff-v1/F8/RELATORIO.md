@@ -44,7 +44,7 @@ O mantenedor trouxe uma auditoria ao commit `1dcdb61` com quatro falhas nos gate
 | A4 | uma edição entre a readiness e a cópia produz um pacote `ready_for_receiver_review` que verifica, com uma estimativa que não passaria |
 | A5 | o desenho muda no mesmo caminho e a aprovação é renovada; os FC assentes no sha anterior continuam prontos |
 
-Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito sem autorização mantém o release `preliminary` — só passa a ser verdade com a correcção do A2. O F8.2 espera pela correcção e pela nova aceitação dos gates.
+Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito sem autorização mantém o release `preliminary` — passou a ser verdade com a correcção do A2 (`trace.scope_gate` lê o `inventory.check`). O F8.2 espera pela nova aceitação dos gates.
 
 ## 5. Ambiente
 
@@ -56,5 +56,5 @@ Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito 
 - Inputs necessários: `../plan/` (v1.2), [DESENHO.md](DESENHO.md), fixtures `.claude/tests/fixtures/handoff-v1/`.
 - Resultados recebidos e não integrados: nenhum.
 - Ambiente: `pip install -r requirements-dev.txt` e, se `test_text_extract.py` falhar com `_cffi_backend`, `pip install cffi`; regressão `python .github/run_tests.py` (esperado 111/111, 3033).
-- Próxima acção segura: correcção A1–A5 ([../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md)); depois, com os gates da F6/F7 de novo aceites pelo mantenedor, o F8.2 (execução R3, fx-02) pelo `protocolo/README.md`.
+- Próxima acção segura: a correcção A1–A5 está integrada ([../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md)); com os gates da F6/F7 de novo aceites pelo mantenedor, o F8.2 (execução R3, fx-02) pelo `protocolo/README.md`.
 - Autorização necessária: nova aceitação dos gates F6/F7 depois da correcção; depois do F8.2, o mantenedor confirma as restantes execuções com o custo medido (Q5).

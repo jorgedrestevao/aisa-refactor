@@ -1,5 +1,8 @@
 # F6 — Relatório da fase (rastreabilidade completa e handoff implementável)
 
+> **Gate reaberto e corrigido (2026-09-24).** A auditoria externa ao commit `1dcdb61` reproduziu falhas nos gates de entrega (A1–A5); a correcção está em [../F7/CORRECAO-AUDITORIA.md](../F7/CORRECAO-AUDITORIA.md). O gate desta fase (A1 aceitação do destinatário, A2 lacunas do âmbito e do inventário no gate, A4 build sobre estado estável) volta a precisar da aceitação do mantenedor. Este relatório fica como registo do que foi aceite antes da auditoria.
+
+
 Estado: **concluída — gate aceite pelo mantenedor** (2026-09-24), com os limites declarados (T34 sem `funded: no`; T38 ao nível do motor; T40 lista fechada; item 4 só no pack `pp`; T43 simulado) e o desvio registado (`ARCHITECTURE.md`/`ONBOARDING.md`). Desenho e decisões Q1–Q8: [DESENHO.md](DESENHO.md). Gate: T31–T34, T37–T40; zero requisito material órfão no âmbito entregue; esforço por WP coerente; pacote parcial nunca apresentado como completo.
 
 ## 1. Incrementos

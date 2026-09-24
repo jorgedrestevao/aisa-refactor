@@ -483,7 +483,8 @@ def render_gate(eng, fc_ids=None, text: str = "") -> dict:
     # F7 (Q3): um FC que assenta numa premissa resolvida, retirada ou mudada não sai em
     # versão final; republicá-lo com a referência de agora é o caminho (DESENHO F7 §1)
     for f in (_mod("impact")["blocking"](eng, ids) if ids else []):
-        blocked.append({"code": "STALE_PREMISE", "fc": f["ref"],
+        blocked.append({"code": f["code"] if f["code"] in _mod("impact")["PIN_CODES"]
+                        else "STALE_PREMISE", "fc": f["ref"],
                         "detail": "{} ({})".format(f["detail"], " → ".join(f["chain"]))})
     if gaps:
         blocked.append({"code": "FUNCTIONAL_GAP", "fc": "",
@@ -701,6 +702,9 @@ def publish(eng, draft_id: str) -> dict:
     if man["base"] != cur["digest"]:
         raise FunctionalError("os contratos funcionais mudaram depois do rascunho — abrir "
                               "um rascunho novo", W["STALE_INPUT"], {"draft": draft_id})
+    # Auditoria A5: a avaliação que acompanha uma dependência que se moveu vem no rascunho e é
+    # o motor que a regista (`revalidations`); o resto do rascunho segue como estava.
+    pendente = data.pop("revalidation", None)
     mudou = sorted(r for r, dg in (man.get("reads") or {}).items() if _digest(eng / r) != dg)
     if mudou:
         raise FunctionalError("inputs mudaram depois do rascunho: {}".format(", ".join(mudou)),
@@ -713,7 +717,27 @@ def publish(eng, draft_id: str) -> dict:
                               W["INTEGRITY_FAILURE"], {"draft": draft_id,
                                                        "problems": res["integrity"]})
     # F7 (Q2): a impressão de cada linha citada, da SU que o read-set garante inalterada
-    data = _mod("impact")["with_row_basis"](data, _mod("impact")["su_rows"](eng))
+    I = _mod("impact")
+    data = I["with_row_basis"](data, I["su_rows"](eng))
+    # Auditoria A5: o desenho que os contratos consomem fica fixado pelo sha de agora (o
+    # read-set garante que é o do rascunho); mover esse pin, ou o de uma linha, exige a
+    # avaliação registada de cada contrato que depende dele — trocar o hash não revalida.
+    bp = _blueprint_of(data)
+    if bp:
+        data = dict(data, based_on=[dict(b, sha256=_digest(eng / bp).split(":")[-1])
+                                    if isinstance(b, dict) and b.get("ref") == bp
+                                    and not b.get("sha256") else b
+                                    for b in data.get("based_on") or []])
+    agora = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    probs, registo = I["revalidation_record"](FC_PATH, cur["data"], data, pendente,
+                                              data["revision"], agora)
+    if probs:
+        raise FunctionalError("dependências dos contratos por revalidar: " + "; ".join(
+            "{} {}".format(x["item"], x["detail"]).strip() for x in probs),
+            "REVALIDATION_REQUIRED" if any(x["code"] == "REVALIDATION_REQUIRED" for x in probs)
+            else W["INTEGRITY_FAILURE"], {"draft": draft_id, "problems": probs})
+    if registo:
+        data["revalidations"] = list(cur["data"].get("revalidations") or []) + [registo]
     texto = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
     hist = "{}/functional-contracts.r{:04d}.json".format(HISTORY_DIR, int(data["revision"]))
     op_id = "functional-{}".format(hashlib.sha256(

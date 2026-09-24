@@ -3107,6 +3107,16 @@
      "source": "handoff-v1 F6.2",
      "mechanism": "Reads the approved blueprint (functional.approved_blueprint; else the latest non-draft, said so) for proof obligations (T31) and headless applicability (T37). Read-only.",
      "evidence": "trace.py _blueprint, _headless, proofs"
+    },
+    {
+     "file": "library/kernel/tools/impact.py",
+     "kind": "engine",
+     "role": "reader",
+     "mechanism": "Reads the design file itself (sha256) to check the pins the functional contracts and the work inventory record: `design_file`/`needed_pins` name the `_blueprint/ux-blueprint_vNN.yaml` a contract document or a WP consumes, `with_dependency_pins` pins it at inventory publication, `pin_findings` reports BASIS_CHANGED/DEPENDENCY_UNPINNED on read, `history_findings` checks each pin movement in `_design/history/` carries a recorded assessment. Also reads the design's su_refs (`_bp_nodes`, F7.1). handoff-v1 external audit A3/A5, 2026-09-24.",
+     "via": "",
+     "evidence": "library/kernel/tools/impact.py:82, :426, :448, :471, :570, :615",
+     "confidence": "verified",
+     "source": "handoff-v1 audit correction (A5)"
     }
    ],
    "mention_only": [

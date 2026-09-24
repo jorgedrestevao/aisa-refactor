@@ -100,6 +100,8 @@ class GateDeAmbito(unittest.TestCase):
             p.write_text(p.read_text(encoding="utf-8").replace(
                 "name: valor_total, type: number, required: true",
                 "name: valor_total, type: number, required: false"), encoding="utf-8")
+            IT["revalida_fc_desenho"](eng, "valor_total passou a opcional; nenhum contrato o "
+                                           "exige")
             s = TT["escopo"](eng)
             IT["publish"](eng, "scope", s)
             IT["publish"](eng, "work-packages", IT["inventario"](eng, TT["wps"]()))

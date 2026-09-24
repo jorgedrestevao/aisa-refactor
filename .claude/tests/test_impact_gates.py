@@ -10,7 +10,6 @@ Desenho: `docs/handoff-v1/F7/DESENHO.md` §1 (consumidores).
           a prontidão volta
     excl. um dependente de um item excluído informa, não bloqueia
 """
-import hashlib
 import json
 import runpy
 import tempfile
@@ -33,9 +32,8 @@ def _refs(eng, fc, refs):
     dr = F["draft"](eng)
     p = Path(dr["path"])
     d = json.loads(p.read_text(encoding="utf-8"))
-    for b in d["based_on"]:              # o `pronto` retocou o desenho depois dos FC
-        if b["ref"].startswith("_blueprint/"):
-            b["sha256"] = hashlib.sha256((eng / b["ref"]).read_bytes()).hexdigest()
+    # Antes trocava aqui o sha do desenho, porque o `pronto` o retocava depois dos FC — a
+    # troca de hash que a auditoria (A5) proíbe. O `pronto` revalida agora os FC.
     for it in d["items"]:
         if it["id"] == fc:
             it["requirement_refs"] = refs
@@ -49,11 +47,18 @@ def _autoriza(eng, fcs, quando):
 
 
 def com_premissa(tmp):
-    """O pacote pronto, com o FC-0001 a assentar também na premissa A-001, autorizado."""
+    """O pacote pronto, com o FC-0001 a assentar também na premissa A-001, autorizado. O FC
+    mudou: o WP que o realiza é revalidado e a spec e a estimativa re-renderizadas (A3)."""
     eng = RT["pronto"](tmp)
     _refs(eng, "FC-0001", ["C-002", "C-003", "A-001"])
     _autoriza(eng, ["FC-0001"], "2026-09-24T09:00:00Z")
+    _revalida_trabalho(eng, "FC-0001 passou a assentar também em A-001; a submissão não muda")
     return eng
+
+
+def _revalida_trabalho(eng, porque):
+    RT["IT"]["revalida_inventario"](eng, {"WP-0001": "still_valid"}, porque)
+    RT["rerender"](eng)
 
 
 def _responde_a001(eng):
@@ -106,11 +111,15 @@ class T41PontaAPonta(unittest.TestCase):
             eng = com_premissa(tmp)
             nova = _responde_a001(eng)
             _refs(eng, "FC-0001", ["C-002", "C-003", nova])
-            self.assertEqual([f for f in I["blocking"](eng)], [])
+            # a premissa sai do FC; o FC mudou, logo o WP que o realiza fica por revalidar (A3)
+            self.assertEqual([(f["code"], f["ref"]) for f in I["blocking"](eng)],
+                             [("CONTRACT_CHANGED", "WP-0001")])
             auth = F["show"](eng)["items"]["FC-0001"]["authorization"]["state"]
             self.assertEqual(auth, "stale")
             self.assertFalse(REL["readiness"](eng)["ready"])
             _autoriza(eng, ["FC-0001"], "2026-09-24T10:00:00Z")
+            self.assertFalse(REL["readiness"](eng)["ready"])        # o dono não revalida o WP
+            _revalida_trabalho(eng, "a premissa passou a ser a sucessora; o trabalho não muda")
             r = REL["readiness"](eng)
             self.assertTrue(r["ready"], r["reasons"])
 

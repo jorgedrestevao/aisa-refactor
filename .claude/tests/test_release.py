@@ -39,7 +39,9 @@ def _decisao(eng, bloco):
     R["publish"](eng, d["draft"])
 
 
-def pronto(tmp, render=True):
+def pronto(tmp, render=True, revalidar=True):
+    """O pacote pronto. `revalidar=False` deixa os FC no sha do desenho anterior à mudança
+    que a fixture faz — é o caso A5 da auditoria (`test_audit_f6f7.py`)."""
     eng = IT["engagement"](tmp)
     p = eng / IT["BP"]
     p.write_text(p.read_text(encoding="utf-8").replace(
@@ -47,6 +49,9 @@ def pronto(tmp, render=True):
         "name: valor_total, type: number, required: false"), encoding="utf-8")
     _decisao(eng, F["blueprint_approval_block"](eng, "01", AU["OWNER"],
                                                 timestamp="2026-09-24T08:00:00Z"))
+    if revalidar:
+        IT["revalida_fc_desenho"](eng, "valor_total passou a opcional no desenho; nenhum "
+                                       "contrato o exige")
     s = TT["escopo"](eng)
     s["items"][0]["excludes"].append(SG["U002_FORA"])
     IT["publish"](eng, "scope", s)
@@ -56,6 +61,16 @@ def pronto(tmp, render=True):
         (eng / "_render" / "fx_implementation-spec_v01.md").write_text(SPEC, encoding="utf-8")
         (eng / "_render" / "fx_estimate_v01.md").write_text(SG["EST"], encoding="utf-8")
     return eng
+
+
+def rerender(eng):
+    """A spec e a estimativa voltam a ser renderizadas sobre o inventário corrente (fixture:
+    só a revisão citada muda — T32 compara ids e a revisão lida)."""
+    import re
+    rev = json.loads((eng / "_design/work-packages.json").read_text(encoding="utf-8"))["revision"]
+    for p in (eng / "_render").glob("*.md"):
+        p.write_text(re.sub(r"((?:[Ii]nvent[aá]rio|inventory)\s*r)\d+", r"\g<1>{}".format(rev),
+                            p.read_text(encoding="utf-8")), encoding="utf-8")
 
 
 class Build(unittest.TestCase):

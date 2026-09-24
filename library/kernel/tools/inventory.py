@@ -374,6 +374,9 @@ def publish(eng, draft_id: str) -> dict:
     if man["base"] != cur["digest"]:
         raise InventoryError("{} mudou depois do rascunho — abrir um rascunho novo".format(
             k["path"]), W["STALE_INPUT"], {"draft": draft_id})
+    # Auditoria A3: a avaliação que acompanha uma dependência que se moveu vem no rascunho e
+    # é o motor que a regista (`revalidations`).
+    pendente = data.pop("revalidation", None)
     mudou = sorted(r for r, dg in (man.get("reads") or {}).items() if _digest(eng / r) != dg)
     if mudou:
         raise InventoryError("inputs mudaram depois do rascunho: {}".format(", ".join(mudou)),
@@ -384,7 +387,23 @@ def publish(eng, draft_id: str) -> dict:
             "{} {}".format(p["item"], p["detail"]).strip() for p in res["integrity"]),
             W["INTEGRITY_FAILURE"], {"draft": draft_id, "problems": res["integrity"]})
     # F7 (Q2): a impressão de cada linha citada, da SU que o read-set garante inalterada
-    data = _mod("impact")["with_row_basis"](data, _mod("impact")["su_rows"](eng))
+    I = _mod("impact")
+    data = I["with_row_basis"](data, I["su_rows"](eng))
+    # Auditoria A3/A5: o inventário fixa a impressão de cada FC que realiza e o sha de cada
+    # ficheiro do desenho que referencia; mover um desses pins, ou o de uma linha, exige a
+    # avaliação registada de cada WP que depende dele — trocar o hash não revalida.
+    if kind == "work-packages":
+        data = I["with_dependency_pins"](eng, data)
+    agora = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    probs, registo = I["revalidation_record"](k["path"], cur["data"], data, pendente,
+                                              data["revision"], agora)
+    if probs:
+        raise InventoryError("dependências por revalidar: " + "; ".join(
+            "{} {}".format(x["item"], x["detail"]).strip() for x in probs),
+            "REVALIDATION_REQUIRED" if any(x["code"] == "REVALIDATION_REQUIRED" for x in probs)
+            else W["INTEGRITY_FAILURE"], {"draft": draft_id, "problems": probs})
+    if registo:
+        data["revalidations"] = list(cur["data"].get("revalidations") or []) + [registo]
     texto = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
     stem = k["file"].rsplit(".", 1)[0]
     hist = "{}/{}.r{:04d}.json".format(HISTORY_DIR, stem, int(data["revision"]))

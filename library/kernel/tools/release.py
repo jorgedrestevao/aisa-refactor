@@ -50,6 +50,15 @@ DESIGN = ["_design/candidates.json", "_design/functional-contracts.json",
           "_design/scope.json", "_design/work-packages.json"]
 CONTRACTS = ["library/kernel/handoff-contract.md", "library/kernel/states.md",
              "library/kernel/specialists.md"]
+# Auditoria A1: o bloco de aceitação lê-se inteiro. Um campo em falta ou inválido não promove;
+# a ausência de `Simulated` não é um «no».
+ACC_FIELDS = ("Release sha256", "Scope", "Conditions", "Simulated", "Validated by",
+              "Timestamp")
+FIELD_RE = re.compile(r"^-\s*\*\*(.+?)\*\*\s*:\s*(.*?)\s*$", re.M)
+ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z$")
+# Auditoria A4: o que o build não conta como estado do engagement — o próprio destino, os
+# rascunhos e a página viva, que o hook regenera sozinho.
+VOLATILE = ("_release", "_drafts")
 
 
 def _mod(name: str) -> dict:
@@ -114,6 +123,19 @@ def _pack_version(eng: Path) -> str:
     return "{} {}".format(pack, m.group(1)) if m else pack
 
 
+def _state_digest(eng: Path) -> dict:
+    """`caminho → sha256` de cada ficheiro do engagement, fora o que o build não conta."""
+    out = {}
+    for p in sorted(Path(eng).rglob("*")):
+        if not p.is_file() or "__pycache__" in p.parts or p.name == "dashboard.html":
+            continue
+        rel = p.relative_to(eng).as_posix()
+        if rel.split("/", 1)[0] in VOLATILE:
+            continue
+        out[rel] = _sha(p)
+    return out
+
+
 def readiness(eng) -> dict:
     """O que o nível de entrega exige, lido dos motores (nunca declarado)."""
     eng = Path(eng)
@@ -131,6 +153,15 @@ def readiness(eng) -> dict:
     if velhos:
         motivos.append("{} dependente(s) sobre premissa mudada (STALE_PREMISE)".format(
             len(velhos)))
+    # Auditoria A2/A3/A5: o motivo diz o quê — lacunas do âmbito e do inventário, dependências
+    # por revalidar — e não só que o gate fechou
+    contagem: dict = {}
+    for b in gate["blockers"]:
+        if b["code"] != "STALE_PREMISE":
+            contagem[b["code"]] = contagem.get(b["code"], 0) + 1
+    if contagem:
+        motivos.append("bloqueios do gate: {}".format(", ".join(
+            "{} ×{}".format(c, n) for c, n in sorted(contagem.items()))))
     checks = {}
     if not spec:
         motivos.append("implementation-spec não renderizada")
@@ -218,6 +249,16 @@ def build(eng, out: str | None = None) -> dict:
     if dest.exists():
         raise ReleaseError("{} já existe — um release nunca se reescreve".format(dest),
                            W["INTEGRITY_FAILURE"], {"path": str(dest)})
+    # Auditoria A4: um leitor que declara prontidão não o faz sobre estado misto — operação
+    # pendente, grafo ilegível, desvio — e o pacote tem de ser o estado que passou a
+    # validação: o engagement fica igual do princípio ao fim do build, ou nada se publica.
+    boot = _mod("bootstrap")["bootstrap"](eng)
+    if not boot.get("ready"):
+        raise ReleaseError("o engagement não está reconstruído ({}) — recuperar antes do "
+                           "release".format(", ".join(l.get("code", "?") for l in
+                                                      boot.get("limitations") or [])),
+                           W["RECOVERY_REQUIRED"], {"limitations": boot.get("limitations")})
+    antes = _state_digest(eng)
     rd = readiness(eng)
     ap = rd["blueprint_approval"]
     rels = [r for r in AUTHORITIES + DESIGN if (eng / r).is_file()]
@@ -257,6 +298,15 @@ def build(eng, out: str | None = None) -> dict:
     todos = sorted(rels + repo_rels + list(leituras))
     scope = json.loads((eng / "_design/scope.json").read_text(encoding="utf-8")) \
         if (eng / "_design/scope.json").is_file() else {}
+    depois = _state_digest(eng)
+    mudou = sorted(r for r in set(antes) | set(depois) if antes.get(r) != depois.get(r))
+    copias = sorted(r for r in rels if _sha(dest / r) != antes.get(r))
+    if mudou or copias:
+        shutil.rmtree(dest)
+        raise ReleaseError("o engagement mudou durante o build ({}) — o pacote não seria o que "
+                           "passou a validação; nada foi publicado".format(
+                               ", ".join((mudou or copias)[:5])), W["STALE_INPUT"],
+                           {"paths": mudou or copias})
     level = "ready_for_receiver_review" if rd["ready"] else "preliminary"
     based = []
     for r in DESIGN + ([ap["ref"]] if ap.get("ref") else []):
@@ -376,20 +426,47 @@ def status(eng, revision: int) -> dict:
         md = (eng / "decisions.md").read_text(encoding="utf-8")
     except OSError:
         md = ""
-    aceite = None
-    for m in ACC_HEAD_RE.finditer(md):
-        if int(m.group(2)) != int(revision):
-            continue
-        corpo = md[m.end():].split("\n## ", 1)[0]
-        sha = re.search(r"\*\*Release sha256\*\*\s*:\s*([0-9a-f]{64})", corpo)
-        sim = re.search(r"\*\*Simulated\*\*\s*:\s*(\w+)", corpo)
-        aceite = {"block": m.group(1), "simulated": bool(sim and sim.group(1) == "yes"),
-                  "matches": bool(sha and v["ok"] and sha.group(1) == v["index_sha256"])}
-    if aceite and aceite["matches"] and not aceite["simulated"] \
-            and level == "ready_for_receiver_review":
+    leituras = [acceptance_reading(m.group(1), md[m.end():].split("\n## ", 1)[0], v, index)
+                for m in ACC_HEAD_RE.finditer(md) if int(m.group(2)) == int(revision)]
+    decisivo = next((a for a in leituras if a["valid"] and not a["simulated"]), None)
+    aceite = decisivo or (leituras[-1] if leituras else None)
+    if decisivo and level == "ready_for_receiver_review":
         level = "accepted_by_receiver"
     return {"revision": int(revision), "verify": v, "delivery_level": level,
-            "acceptance": aceite}
+            "acceptance": aceite, "acceptance_blocks": leituras}
+
+
+def acceptance_reading(block: str, corpo: str, v: dict, index: dict) -> dict:
+    """Auditoria A1: o bloco de aceitação inteiro — sha do índice que verifica, âmbito do
+    release, condições, `Simulated` explícito, validador humano e data não anterior ao build.
+    Um campo em falta ou inválido não promove, e diz porquê."""
+    campos = {k.strip(): val.strip() for k, val in FIELD_RE.findall(corpo)}
+    probs = ["`{}` em falta".format(k) for k in ACC_FIELDS if not campos.get(k)]
+    sha = campos.get("Release sha256", "")
+    matches = bool(re.fullmatch(r"[0-9a-f]{64}", sha) and v.get("ok")
+                   and sha == v.get("index_sha256"))
+    if sha and not matches:
+        probs.append("`Release sha256` não é o do índice deste release, ou o release não "
+                     "verifica")
+    sim = campos.get("Simulated", "").lower()
+    if sim and sim not in ("yes", "no"):
+        probs.append("`Simulated` tem de ser yes ou no")
+    vb = campos.get("Validated by", "")
+    if vb:
+        prob = _mod("functional")["validator_problem"](vb)
+        if prob:
+            probs.append("`Validated by`: " + prob)
+    esc = campos.get("Scope", "")
+    if esc and esc not in (index.get("scope_refs") or []):
+        probs.append("`Scope` {} não é um âmbito deste release".format(esc))
+    ts = campos.get("Timestamp", "")
+    if ts and not ISO_RE.match(ts):
+        probs.append("`Timestamp` não é uma data ISO-8601 (UTC)")
+    elif ts and ts < str(index.get("built_at") or ""):
+        probs.append("`Timestamp` {} é anterior ao build do release ({})".format(
+            ts, index.get("built_at")))
+    return {"block": block, "simulated": sim != "no", "matches": matches,
+            "valid": not probs, "problems": probs}
 
 
 def main(argv=None) -> int:

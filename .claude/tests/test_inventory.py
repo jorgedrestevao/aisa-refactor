@@ -11,6 +11,7 @@ Desenho: `docs/handoff-v1/F6/DESENHO.md` §1 (Q1, Q3).
     publicação  uma operação do coordenador, revisão + cópia imutável; ids nunca reutilizados;
                 base ou inputs mudados → `STALE_INPUT`; repetir a publicação devolve o recibo
 """
+import hashlib
 import json
 import runpy
 import tempfile
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 VT = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_hv1_vertical.py"))
 INV = runpy.run_path(str(TOOLS / "inventory.py"))
+FUN = runpy.run_path(str(TOOLS / "functional.py"))
 BP = "_blueprint/ux-blueprint_v01.yaml"
 NO = BP + "#architecture/compositions[component=submissao-idempotente]"
 
@@ -64,6 +66,35 @@ def inventario(eng, items, revision=1, **extra):
 def publish(eng, kind, data):
     dr = INV["draft"](eng, kind)
     Path(dr["path"]).write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return INV["publish"](eng, dr["draft"])
+
+
+def revalida_fc_desenho(eng, porque="o desenho mudou depois de os contratos serem publicados; "
+                        "nenhum contrato muda por isso", por="autor funcional (dados de teste)"):
+    """Auditoria A5: a fixture mudou o desenho depois de publicar os FC. Um sha diferente não
+    diz se a mudança é editorial — os FC republicam-se com o sha de agora e a avaliação
+    registada de cada um (`still_valid`); trocar o hash, sozinho, é recusado."""
+    dr = FUN["draft"](eng)
+    p = Path(dr["path"])
+    d = json.loads(p.read_text(encoding="utf-8"))
+    for b in d["based_on"]:
+        if str(b.get("ref", "")).startswith("_blueprint/"):
+            b["sha256"] = hashlib.sha256((eng / b["ref"]).read_bytes()).hexdigest()
+    d["revalidation"] = {"items": {it["id"]: "still_valid" for it in d["items"]},
+                         "assessment": porque, "assessed_by": por}
+    p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    return FUN["publish"](eng, dr["draft"])
+
+
+def revalida_inventario(eng, itens, porque, por="autor do inventário (dados de teste)",
+                        kind="work-packages"):
+    """Auditoria A3: algo que o inventário fixou (um FC, o desenho, uma linha) mudou — o
+    inventário republica-se com a avaliação registada de cada WP que dependia disso."""
+    dr = INV["draft"](eng, kind)
+    p = Path(dr["path"])
+    d = json.loads(p.read_text(encoding="utf-8"))
+    d["revalidation"] = {"items": dict(itens), "assessment": porque, "assessed_by": por}
+    p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
     return INV["publish"](eng, dr["draft"])
 
 

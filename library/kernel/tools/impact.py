@@ -36,6 +36,25 @@ Achados de `stale`:
     VIA_CANDIDATE     parecer sobre um candidato desactualizado (transitivo)
     KNOWLEDGE_CHANGED unidade do pack ou da memória que o mandato consumiu mudou
 
+Dependências fixadas e revalidação explícita (auditoria externa de 2026-09-24, A3/A5;
+`docs/handoff-v1/F7/CORRECAO-AUDITORIA.md`). Um sha diferente prova que o conteúdo mudou; não
+diz se a mudança é editorial. Por isso cada artefacto do desenho fixa em `based_on` o que
+consome — o sha do desenho (FC e WP), a impressão de cada FC que um WP realiza, a impressão de
+cada linha citada — e a leitura confere-o, além da publicação:
+
+    BASIS_CHANGED       o ficheiro do desenho fixado mudou (o mesmo caminho, outro conteúdo)
+    CONTRACT_CHANGED    o FC que um WP realiza já não tem a impressão que o WP fixou
+    DEPENDENCY_UNPINNED o artefacto consome algo que não fixou: não se prova que está actual
+    HISTORY_MISMATCH    o artefacto não é a revisão que o coordenador publicou no histórico
+    PIN_UNREVALIDATED   no histórico, uma dependência mudou de impressão sem avaliação registada
+
+Mover uma dependência exige uma avaliação registada no próprio artefacto (`revalidations`):
+por item, `still_valid` (conteúdo igual) ou `updated` (conteúdo mudou), o texto da avaliação e
+o papel de quem avaliou; o motor preenche de/para e data, e os registos só se acrescentam.
+Trocar o hash, sozinho, não revalida nada: o publicador recusa (`REVALIDATION_REQUIRED`) e a
+leitura apanha a troca feita por fora do motor. `updated` num FC continua a pedir nova
+autorização do dono (a impressão do item mudou); `still_valid` não reabre decisões.
+
 Desenho: `docs/handoff-v1/F7/DESENHO.md` §1.
 """
 from __future__ import annotations
@@ -60,6 +79,16 @@ REVIEWS_DIR = "_design/reviews"
 ROW_FIELDS = ("state", "criticidade", "resolved", "retired")
 SEMANTIC = ("ROW_RESOLVED", "ROW_WITHDRAWN", "ROW_MISSING", "ROW_CHANGED")
 BP_SECTIONS_KEYS = ("id", "name", "key", "component")
+DESIGN_RE = re.compile(r"^_blueprint/ux-blueprint_v\d+\.yaml$")
+# Os artefactos cujas dependências só se movem com uma avaliação registada. Os candidatos
+# ficam de fora: uma revisão nova dos candidatos já obriga a pareceres novos (T26).
+PINNED = (FC_PATH, SCOPE_PATH, WP_PATH)
+HISTORY_STEM = {FC_PATH: "_design/history/functional-contracts",
+                SCOPE_PATH: "_design/history/scope",
+                WP_PATH: "_design/history/work-packages"}
+VERDICTS = ("still_valid", "updated")
+PIN_CODES = ("BASIS_CHANGED", "CONTRACT_CHANGED", "DEPENDENCY_UNPINNED", "HISTORY_MISMATCH",
+             "PIN_UNREVALIDATED")
 
 
 def _mod(name: str) -> dict:
@@ -313,6 +342,7 @@ def stale(eng) -> dict:
                     _digest(repo / k["ref"]) != str(k["sha256"]).split(":")[-1]:
                 findings.append(_f("KNOWLEDGE_CHANGED", rid, k["ref"], [k["ref"], rid],
                                    "`{}` mudou depois do mandato".format(k["ref"]), art))
+    findings += pin_findings(eng) + history_findings(eng)
     return {"stale": bool(findings), "findings": findings, "unverified": unverified,
             "affected": sorted({f["ref"] for f in findings}), "bytes": byte_revisions(eng)}
 
@@ -324,13 +354,15 @@ def blocking(eng, refs=None) -> list:
     alvo = set(refs) if refs is not None else None
     return [f for f in stale(eng)["findings"]
             if f["artefact"] in (FC_PATH, SCOPE_PATH, WP_PATH) and not f.get("excluded")
-            and (alvo is None or f["ref"] in alvo)]
+            and (alvo is None or f["ref"] in alvo
+                 or (f.get("document_level") and f["artefact"] == FC_PATH))]
 
 
 def byte_revisions(eng) -> list:
     """A revisão de bytes, exacta, de cada ficheiro que um artefacto registou em `based_on`
-    com `sha256`. Informa; nunca abre nada (T42): um byte mudado sem mudança nas linhas
-    citadas é editorial."""
+    com `sha256`. Informa. O que bloqueia é `pin_findings` (BASIS_CHANGED): um sha mudado
+    prova a mudança mas não a classifica — editorial ou material decide-o uma avaliação
+    registada, nunca este leitor (auditoria A5; T42 substituído)."""
     eng = Path(eng)
     out = []
     for path in (FC_PATH, SCOPE_PATH, WP_PATH, CAND_PATH):
@@ -370,6 +402,257 @@ def impact(eng, changed) -> dict:
             "text_citations": {k: v for k, v in texto.items() if v},
             "verdict": "estrutura: dependências registadas; texto: candidatos — o julgamento "
                        "por dependente de texto livre é de quem lê"}
+
+
+# ------------------------------------------------------------ dependências fixadas
+
+def item_fingerprint(path: str, item: dict) -> str:
+    """A impressão de um item: a do FC (sem os campos que a autorização escreve), ou o item
+    inteiro, canónico, para âmbito e WP."""
+    if path == FC_PATH:
+        return _mod("functional")["item_sha256"](item)
+    return _sha(item)
+
+
+def pins(data: dict) -> dict:
+    """`ref → sha256` de cada entrada de `based_on` que fixa uma dependência."""
+    out = {}
+    for b in data.get("based_on") or []:
+        if isinstance(b, dict) and b.get("ref") and b.get("sha256"):
+            out[str(b["ref"])] = str(b["sha256"]).split(":")[-1]
+    return out
+
+
+def design_file(ref) -> str:
+    """O ficheiro do desenho de `ref` (`<ficheiro>` ou `<ficheiro>#<selector>`); senão vazio."""
+    head = str(ref or "").split("#", 1)[0]
+    return head if DESIGN_RE.match(head) else ""
+
+
+def _items(data: dict) -> list:
+    return [it for it in data.get("items") or [] if isinstance(it, dict) and it.get("id")]
+
+
+def _fc_refs(it: dict) -> set:
+    out = {str(r) for r in it.get("realizes") or [] if FC_RE.match(str(r))}
+    out |= {str(a["fc"]) for a in it.get("acceptance") or []
+            if isinstance(a, dict) and FC_RE.match(str(a.get("fc") or ""))}
+    return out
+
+
+def _design_refs(it: dict) -> set:
+    return {design_file(r) for r in list(it.get("realizes") or []) + list(it.get("proves") or [])
+            if design_file(r)}
+
+
+def needed_pins(path: str, data: dict) -> dict:
+    """O que o artefacto consome e tem de fixar: `ref do pin → itens que dependem dele`.
+    Os FC dependem do desenho que o documento nomeia; um WP, dos FC que realiza ou cuja
+    aceitação usa e dos ficheiros do desenho cujos nós realiza ou prova; todos, das linhas que
+    citam."""
+    out: dict = {}
+    items = _items(data)
+    if path == FC_PATH:
+        bp = _mod("functional")["_blueprint_of"](data)
+        if bp:
+            out[bp] = [it["id"] for it in items]
+    elif path == WP_PATH:
+        for it in items:
+            for fc in sorted(_fc_refs(it)):
+                out.setdefault("{}#{}".format(FC_PATH, fc), []).append(it["id"])
+            for f in sorted(_design_refs(it)):
+                out.setdefault(f, []).append(it["id"])
+    for it in items:
+        for rid in cited_rows(it):
+            out.setdefault("{}#{}".format(SU_FILE, rid), []).append(it["id"])
+    return {k: sorted(set(v)) for k, v in out.items()}
+
+
+def with_dependency_pins(eng, data: dict) -> dict:
+    """O inventário com a impressão de cada FC que realiza e o sha de cada ficheiro do desenho
+    que referencia — calculados pelo motor, sobre o que o read-set do rascunho garante
+    inalterado. As entradas desses tipos que o autor tenha escrito saem: o pin é do motor."""
+    eng = Path(eng)
+    fcs = {it["id"]: it for it in _items(_load(eng / FC_PATH))}
+
+    def do_motor(b):
+        ref = str(b.get("ref", "")) if isinstance(b, dict) else ""
+        return ref.startswith(FC_PATH + "#") or (design_file(ref) == ref and ref)
+    fora = [b for b in data.get("based_on") or [] if not do_motor(b)]
+    for ref in sorted(needed_pins(WP_PATH, data)):
+        if ref.startswith(FC_PATH + "#"):
+            fc = ref.split("#", 1)[1]
+            if fc in fcs:
+                fora.append({"ref": ref, "sha256": item_fingerprint(FC_PATH, fcs[fc])})
+        elif design_file(ref) == ref:
+            d = _digest(eng / ref)
+            if d:
+                fora.append({"ref": ref, "sha256": d})
+    return dict(data, based_on=fora)
+
+
+def moved_pins(path: str, prev: dict, new: dict) -> list:
+    """As dependências fixadas nas duas revisões com impressões diferentes. Uma dependência que
+    aparece ou desaparece entra ou sai com o conteúdo do próprio item — não é movimento."""
+    a, b = pins(prev), pins(new)
+    dep = needed_pins(path, new)
+    return [{"ref": ref, "from": a[ref], "to": b[ref], "dependents": dep.get(ref, [])}
+            for ref in sorted(set(a) & set(b)) if a[ref] != b[ref]]
+
+
+def _rp(code, item, detail) -> dict:
+    return {"code": code, "item": item, "detail": detail}
+
+
+def revalidation_record(path: str, prev: dict, new: dict, pending, revision, at: str) -> tuple:
+    """`(problemas, registo)` — chamado por quem publica, com os pins novos já calculados.
+
+    Mover uma dependência exige a avaliação de cada item que depende dela: `still_valid` só se
+    o conteúdo do item não mudou, `updated` só se mudou; a avaliação por escrito e o papel de
+    quem a fez. Os registos anteriores vão tal como estavam (só se acrescentam), e o registo
+    novo é o motor que o escreve — um rascunho não traz registos feitos."""
+    probs = []
+    antes = list(prev.get("revalidations") or [])
+    agora = list(new.get("revalidations") or [])
+    if agora != antes:
+        probs.append(_rp("REVALIDATION_DROPPED" if agora[:len(antes)] != antes
+                         else "REVALIDATION_FORGED", "",
+                         "os registos de revalidação só se acrescentam, e só pelo motor"))
+    moved = moved_pins(path, prev, new)
+    if not moved:
+        if pending:
+            probs.append(_rp("NOTHING_TO_REVALIDATE", "", "nenhuma dependência mudou desde a "
+                             "revisão anterior — não há o que revalidar"))
+        return probs, None
+    if not isinstance(pending, dict):
+        probs.append(_rp("REVALIDATION_REQUIRED", "", "mudaram dependências desde a revisão "
+                         "anterior ({}) — cada item que depende delas precisa de uma avaliação "
+                         "registada; trocar o sha não revalida".format(
+                             ", ".join(m["ref"] for m in moved))))
+        return probs, None
+    itens = pending.get("items") if isinstance(pending.get("items"), dict) else {}
+    precisa = sorted({d for m in moved for d in m["dependents"]})
+    antes_it = {it["id"]: it for it in _items(prev)}
+    agora_it = {it["id"]: it for it in _items(new)}
+    for d in precisa:
+        if d not in itens:
+            probs.append(_rp("REVALIDATION_INCOMPLETE", d, "depende de uma dependência que "
+                             "mudou e não foi avaliado"))
+    for iid, v in sorted(itens.items()):
+        if iid not in precisa:
+            probs.append(_rp("REVALIDATION_NOT_DEPENDENT", iid, "não depende de nenhuma "
+                             "dependência que mudou"))
+            continue
+        if v not in VERDICTS:
+            probs.append(_rp("BAD_VERDICT", iid, "`{}` — esperado still_valid ou updated"
+                             .format(v)))
+            continue
+        mudou = iid not in antes_it or iid not in agora_it or \
+            item_fingerprint(path, antes_it[iid]) != item_fingerprint(path, agora_it[iid])
+        if v == "still_valid" and mudou:
+            probs.append(_rp("VERDICT_MISMATCH", iid, "still_valid, mas o conteúdo mudou"))
+        elif v == "updated" and not mudou:
+            probs.append(_rp("VERDICT_MISMATCH", iid, "updated, mas o conteúdo é o mesmo"))
+    if not str(pending.get("assessment") or "").strip():
+        probs.append(_rp("ASSESSMENT_MISSING", "", "a avaliação vai por escrito: o que mudou "
+                         "e porque cada item se mantém ou mudou"))
+    if not str(pending.get("assessed_by") or "").strip():
+        probs.append(_rp("ASSESSOR_MISSING", "", "o papel de quem avaliou"))
+    if probs:
+        return probs, None
+    return [], {"revision": int(revision),
+                "moved": [{"ref": m["ref"], "from": m["from"], "to": m["to"]} for m in moved],
+                "items": {k: itens[k] for k in sorted(itens)},
+                "assessment": str(pending["assessment"]).strip(),
+                "assessed_by": str(pending["assessed_by"]).strip(), "at": at}
+
+
+def pin_findings(eng) -> list:
+    """A leitura (auditoria A3/A5): cada dependência fixada contra o estado de agora. O estado
+    das linhas citadas continua com os achados ROW_* de sempre; aqui, o que falta fixar."""
+    eng = Path(eng)
+    excl = _excluded(eng)
+    fcs = {it["id"]: it for it in _items(_load(eng / FC_PATH))}
+    rows = su_rows(eng)
+    out = []
+    for path in PINNED:
+        data = _load(eng / path)
+        if not data:
+            continue
+        p = pins(data)
+        for ref, deps in sorted(needed_pins(path, data).items()):
+            if ref.startswith(SU_FILE + "#"):
+                rid = ref.split("#", 1)[1]
+                if rid in rows and ref not in p:
+                    for d in deps:
+                        out.append(_f("DEPENDENCY_UNPINNED", d, ref, [ref, d],
+                                      "cita `{}` sem impressão registada — não se prova que "
+                                      "está actual".format(rid), path, excluded=d in excl))
+                continue
+            fc = ref.split("#", 1)[1] if ref.startswith(FC_PATH + "#") else ""
+            if ref not in p:
+                for d in deps:
+                    out.append(_f("DEPENDENCY_UNPINNED", d, ref, [ref, d],
+                                  "consome `{}` sem impressão registada — não se prova que "
+                                  "está actual".format(ref), path,
+                                  excluded=d in excl or fc in excl))
+            elif fc:
+                agora = item_fingerprint(FC_PATH, fcs[fc]) if fc in fcs else ""
+                if agora != p[ref]:
+                    for d in deps:
+                        out.append(_f("CONTRACT_CHANGED", d, fc, [fc, d], "{} {} depois de {} "
+                                      "o fixar — revalidar".format(
+                                          fc, "mudou" if agora else "deixou de existir", d),
+                                      path, excluded=fc in excl))
+            elif _digest(eng / ref) != p[ref]:
+                for d in deps:
+                    out.append(_f("BASIS_CHANGED", d, ref, [ref, d], "`{}` mudou depois de {} "
+                                  "o fixar — revalidar".format(ref, d), path,
+                                  excluded=d in excl))
+    return out
+
+
+def history_findings(eng) -> list:
+    """O artefacto é a revisão que o coordenador publicou, e cada mudança de impressão no seu
+    histórico tem a avaliação registada — a troca do hash feita por fora do motor, ou por um
+    motor anterior a esta regra, não passa por revalidação."""
+    eng = Path(eng)
+    out = []
+    for path in PINNED:
+        cur = eng / path
+        if not cur.is_file():
+            continue
+        rev = int(_load(cur).get("revision") or 0)
+        stem = HISTORY_STEM[path]
+        h = eng / "{}.r{:04d}.json".format(stem, rev)
+        if not h.is_file() or h.read_bytes() != cur.read_bytes():
+            out.append(_f("HISTORY_MISMATCH", path, path, [path], "{} não é a revisão r{:04d} "
+                          "que o coordenador publicou — editado por fora do motor".format(
+                              path, rev), path, document_level=True))
+            continue
+        prev = None
+        for k in range(1, rev + 1):
+            hk = eng / "{}.r{:04d}.json".format(stem, k)
+            try:
+                dk = json.loads(hk.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                out.append(_f("HISTORY_MISMATCH", path, hk.relative_to(eng).as_posix(), [path],
+                              "revisão r{:04d} em falta ou ilegível no histórico".format(k),
+                              path, document_level=True))
+                break
+            if prev is not None:
+                recs = [r for r in dk.get("revalidations") or []
+                        if isinstance(r, dict) and r.get("revision") == k]
+                refs = {m.get("ref") for r in recs for m in r.get("moved") or []}
+                itens = {i for r in recs for i in (r.get("items") or {})}
+                for m in moved_pins(path, prev, dk):
+                    if m["ref"] not in refs or not set(m["dependents"]) <= itens:
+                        out.append(_f("PIN_UNREVALIDATED", path, m["ref"], [m["ref"], path],
+                                      "r{:04d}: `{}` mudou de impressão sem avaliação "
+                                      "registada".format(k, m["ref"]), path,
+                                      document_level=True))
+            prev = dk
+    return out
 
 
 # ------------------------------------------------------------------ CLI
