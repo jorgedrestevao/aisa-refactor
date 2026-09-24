@@ -1,0 +1,16 @@
+{
+  "operation_id": "publish-3556a22ae59d4ba8",
+  "request_hash": "a7bc7ccdb716fc2fdd71a32ae3eabc2ef98e8d9581cef4f735076af2ffcb4412",
+  "result": "committed",
+  "revision": {
+    "_state.json": "9a49c5557aaffe40e242448c1984b95a8192e6edec930a56255dcddf60be39a4"
+  },
+  "expected": {
+    "_state.json": "b4ea06adb7afc32523a00616c73dc6b27a676533ffe295787234a6c6d8da3c0d"
+  },
+  "read_set": null,
+  "published": [
+    "_state.json"
+  ],
+  "committed_at": "2026-09-24T10:35:25Z"
+}
