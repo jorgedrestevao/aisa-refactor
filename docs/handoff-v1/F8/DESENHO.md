@@ -4,7 +4,7 @@ Plano: `../plan/05_FASES.md` F8; `../plan/06_VALIDACAO.md` (protocolo de piloto,
 
 Objectivo: demonstrar utilidade, continuidade e custo do perfil `handoff-v1` executado por uma sessão de agente, para além de schemas válidos.
 
-Estado: **proposta** — Q1–Q5 por decidir pelo mantenedor. Nenhum código da F8 antes das decisões.
+Estado: **decidido** — Q1, Q2, Q4 e Q5 decididas pelo mantenedor (2026-09-24), na opção recomendada. Q3 decidida a seguir, a pedido de sugestão: o mantenedor, que tem experiência em Power Platform, é o destinatário real do T46; T45 fica fora.
 
 ## Ponto de partida (levantamento, 2026-09-24)
 
@@ -28,11 +28,11 @@ Achados menores, fora do gate: `CLAUDE.md` → *Key paths* nomeia `_graph/`, `_o
 
 ## Decisões para o mantenedor
 
-| # | Decisão | Recomendação | Alternativas |
+| # | Decisão | Escolha (decidida) | Alternativas rejeitadas |
 | --- | --- | --- | --- |
 | Q1 | Veículo de execução e papel do cliente | **A — executor = subagente novo por segmento; o orquestrador (esta sessão) faz de relé literal das perguntas ao cliente e dos revisores; cliente simulado** por fixture (ficha congelada antes da execução, só o que as fontes sustentam; o resto é «não sei»). Todas as aprovações ficam rotuladas como simuladas | **B** — sessões remotas independentes (`create_session`), o mantenedor responde a cada pergunta como cliente; estado dos engagements em branches de piloto. **C** — A nas execuções todas + uma execução B de realismo |
 | Q2 | Matriz de execuções | **7 execuções**: solution-choice ×2 (fx-01, duas vezes com os mesmos inputs), platform-constrained ×3 (fx-02, fx-04 headless, fx-05 migração), change-impact ×2 (fx-03 sobre duas cópias da baseline aprovada produzida pela execução de fx-02) | 6 execuções (headless ou migração como extensão parcial de outra execução); fixture nova de solution-choice em vez da repetição |
-| Q3 | Recursos reais | Nenhum conhecido: **T45 e T46 `not-run`, declarados**; o destinatário é simulado (subagente só com o pacote) | Equipa destinatária real para pelo menos um pacote (T46); sandbox autorizada para um slice (T45) |
+| Q3 | Recursos reais | **O mantenedor é o destinatário real do T46**: revê um pacote congelado, só o pacote, com as seis perguntas de 08, e aceita ou recusa explicitamente (versão, âmbito, condições). Pacote de uma fixture sem ensaios anteriores (fx-01 ou fx-05), no fim do F8.3. Limite declarado: aceitação pelo mantenedor-autor do método, não por uma equipa externa. **T45 `not-run`**, declarado. Os restantes destinatários são simulados (subagente só com o pacote) | T46 sobre o pacote da fx-02 no fim do F8.2 (já leu a fixture em três ensaios); T45 com um ambiente do mantenedor; T45 e T46 ambos `not-run` |
 | Q4 | Avaliação da qualidade (T44) | **Avaliação assistida documentada**: código confere o que é estrutural e o canário de contaminação; um avaliador independente (subagente com o `expected` e o estado final, sem o histórico do executor) dá veredicto por E-item com locators que o código verifica; o mantenedor valida a tabela | O mantenedor avalia tudo |
 | Q5 | Orçamento e paragem | **Por etapas**: primeiro uma execução completa (fx-02), com o custo real medido; o mantenedor confirma as restantes com esse número | Correr as sete sem paragem; tecto de tokens fixado já |
 
@@ -106,8 +106,8 @@ Change-impact (fx-03): parte de uma cópia da baseline aprovada da execução de
 | --- | --- | --- |
 | T43 | relatórios dos destinatários, antes e depois da ronda de correcção, por execução | simulado |
 | T44 | tabelas de avaliação validadas pelo mantenedor | avaliação assistida |
-| T45 | slice numa sandbox autorizada | `not-run` sem recurso (Q3) |
-| T46 | bloco de aceitação real (`release.py acceptance-block`, sem `**Simulated**`) de uma equipa com autoridade | `not-run` sem equipa (Q3) |
+| T45 | slice numa sandbox autorizada | `not-run`, por decisão (Q3) |
+| T46 | bloco de aceitação real (`release.py acceptance-block`, sem `**Simulated**`) do mantenedor, sobre um pacote da fx-01 ou da fx-05 | real, com o limite de Q3 |
 | Quantitativos de 06 | agregado das sete execuções | exploratório, não estatístico |
 
 Causa sistémica → corrigir → repetir os cenários afectados; os resultados falhados ficam guardados.
