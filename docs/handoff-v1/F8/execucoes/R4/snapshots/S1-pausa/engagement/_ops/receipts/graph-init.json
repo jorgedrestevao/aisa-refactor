@@ -1,0 +1,16 @@
+{
+  "operation_id": "graph-init",
+  "request_hash": "62fc3f4907ef3cbfb1d4a6ca73adc77d37d3db0b7ef697fa9f0ce1cc2a5b1900",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "_graph/meta.json": "3a4797edca135bd4fbd89154f20113c2cfef92da14e8a15fa71163fda57134e5"
+  },
+  "expected": null,
+  "read_set": null,
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json"
+  ],
+  "committed_at": "2026-09-24T16:44:44Z"
+}

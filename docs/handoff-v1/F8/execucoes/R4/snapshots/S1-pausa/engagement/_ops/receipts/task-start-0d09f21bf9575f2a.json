@@ -1,0 +1,16 @@
+{
+  "operation_id": "task-start-0d09f21bf9575f2a",
+  "request_hash": "492c61d8bdfea3e4bdf47601a6385f3439df9c4b943ea16055d5b2797d61cc5c",
+  "result": "committed",
+  "revision": {
+    "_work/checkpoint.json": "eba9ae26d9d3a375c0eec1e549c129deea0c84d15fc6e7e039c9b37fce08635a"
+  },
+  "expected": {
+    "_work/checkpoint.json": "904c650fa9eb32149e33205b7a9fccf39fcf17967f60cca445368d63a61b66b0"
+  },
+  "read_set": null,
+  "published": [
+    "_work/checkpoint.json"
+  ],
+  "committed_at": "2026-09-24T16:51:53Z"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-65a8a05a0bcd",
+  "files": {
+    "_state.json": "ee97efb2c6611482d2629d011232a32cf2c3b32c2ce73e8cca6ffcd918a92de6"
+  },
+  "reads": {},
+  "task": null,
+  "published": "publish-fc3be12d6a338938",
+  "created_at": "2026-09-24T16:51:24Z"
+}

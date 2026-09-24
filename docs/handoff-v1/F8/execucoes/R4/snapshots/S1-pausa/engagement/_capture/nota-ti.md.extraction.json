@@ -1,0 +1,32 @@
+{
+ "artefact": "aisa.capture.text-extraction",
+ "tool": {
+  "name": "text_extract.py",
+  "version": "1.1.0",
+  "library": "stdlib",
+  "python": "3.11.15"
+ },
+ "extracted_at": "2026-09-24T16:46:54",
+ "identity": {
+  "filename": "nota-ti.md",
+  "source_path": "projects/f8-r4-fx01/inputs/nota-ti.md",
+  "format": ".md",
+  "size_bytes": 659,
+  "sha256": "ae4ab795ee45156880718e2e54f02611ed3dbe1e8509dfbeac4b8a315d06c8b6",
+  "modified": "2026-09-24T16:44:40"
+ },
+ "status": "ok",
+ "reason": null,
+ "units": {
+  "unit": "paragraph",
+  "paragraphs": 4,
+  "headings": 1,
+  "table_lines": 0
+ },
+ "provenance": {
+  "cite_as": "<file> · §<heading> ¶NN"
+ },
+ "output": {
+  "text_md": "nota-ti.md.text.md"
+ }
+}

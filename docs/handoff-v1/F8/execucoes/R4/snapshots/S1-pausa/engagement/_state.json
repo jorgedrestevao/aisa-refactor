@@ -1,0 +1,21 @@
+{
+  "engagement": "f8-r4-fx01",
+  "pack": "pp",
+  "phase": "discovery",
+  "round": "R-00",
+  "round_in_progress": "R-01",
+  "aisa_version": "0.1.0",
+  "created": "2026-09-24",
+  "workflow": {
+    "profile": "handoff-v1",
+    "schema_version": "handoff-state/1",
+    "route": "solution-choice",
+    "route_revision": 1,
+    "route_basis": {
+      "justification": "Perfil handoff-v1 e rota solution-choice fixados pela execução deste segmento-piloto (R4, engagement f8-r4-fx01, handoff-v1 F8) — não perguntados ao dono do processo nesta execução. Corroborado pelo próprio pedido: a plataforma ainda não foi decidida (pedido.md#P1 — «Quero saber o que devemos fazer: melhorar o que temos, comprar uma ferramenta ou construir alguma coisa»).",
+      "source_refs": ["answers.md#ROTA"],
+      "authority_ref": null
+    },
+    "route_history": []
+  }
+}
