@@ -33,3 +33,5 @@
 {"seq": 33, "ts": "2026-09-24T18:28:39Z", "run": "R4", "segment": "S2", "type": "segment_start", "data": {"executor_agent_id": "adee0340b0259d752"}}
 {"seq": 34, "ts": "2026-09-24T18:34:00Z", "run": "R4", "segment": "S2", "type": "note", "data": {"checkpoint": "RETOMA F8: reconstrucao limpa. 4 Critical abertos (X-001,U-003,U-008,U-009), esgotados no cliente. A aguardar CONTINUA."}}
 {"seq": 35, "ts": "2026-09-24T18:34:05Z", "run": "R4", "segment": "S2", "type": "usage", "data": {"role": "executor", "agent_id": "adee0340b0259d752", "call": "S2 arranque (retoma)", "tokens": 135716, "tool_uses": 16, "duration_ms": 295244}}
+{"seq": 36, "ts": "2026-09-24T18:44:22Z", "run": "R4", "segment": "S2", "type": "usage", "data": {"role": "executor", "agent_id": "adee0340b0259d752", "call": "S2 /frame ate pedido de revisor (frame-reviewer)", "tokens": 283325, "tool_uses": 41, "duration_ms": 512005}}
+{"seq": 37, "ts": "2026-09-24T18:44:22Z", "run": "R4", "segment": "S2", "type": "relay_request", "data": {"kind": "subagente", "texto": "PEDIDO F8: subagente frame-reviewer sobre F-01-analyst.md (aisa-frame passo 5b)."}}
