@@ -1,0 +1,20 @@
+{
+  "operation_id": "publish-bbc688d078dc2abe",
+  "request_hash": "2cf506521fe2fd1171f2a8314a60f21128bfcff12065a911dab99dcf07e59fd4",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "9422c3388be44a430cc906806fc69871cc348a76a67fca9de8bdf04e6de93245"
+  },
+  "expected": {
+    "council-log.md": "3f33ce31ac6342c0a79228da638288157812b494847ab528c9673c4f04f968d7"
+  },
+  "read_set": {
+    "_capture/process-model.md": "48bb342347c36a3d83439b2b37b3a9437ee1c3fc99eaaffa178a9dbedb477fbc",
+    "_coverage/coverage_v11.json": "e4460f24e1b680236f0ccc147ceefab44302da10b79b9634fb65079f84c78957",
+    "shared-understanding.md": "25b24d19af8e37f420f1c0d79453be5980f14a159863259b1fa74c14af145689"
+  },
+  "published": [
+    "council-log.md"
+  ],
+  "committed_at": "2026-09-24T13:51:20Z"
+}

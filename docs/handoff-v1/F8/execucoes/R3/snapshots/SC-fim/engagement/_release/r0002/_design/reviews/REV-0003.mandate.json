@@ -1,0 +1,76 @@
+{
+ "schema_version": "aisa-review-mandate/1",
+ "task_id": "REV-0003",
+ "role": "security-operation",
+ "objective": "Rever o plano de imposição de permissões, o mecanismo de auditoria (M-3) e a dependência de X-001 (caminho de urgência) em cada candidato.",
+ "route": "platform-constrained",
+ "scope_ids": [
+  "U-006",
+  "X-001",
+  "M-3",
+  "C-006",
+  "M-2"
+ ],
+ "questions": [
+  "O mecanismo de auditoria (M-3, ainda por desenhar — U-006) fica coberto por cada candidato de forma verificável (quem aprovou o quê e quando)? Fecha com: veredicto por candidato — coberto / parcialmente coberto / não coberto, com a lacuna nomeada.",
+  "O caminho de urgência que salta a aprovação prévia (X-001, ainda Conflicted) foi pressuposto por algum candidato, ou fica dependente da decisão do dono como os candidatos declaram? Fecha com: confirmação de que nenhum candidato pressupõe resposta a X-001, ou o apontamento do que pressupõe.",
+  "A segurança de papel (Dataverse em O-001/O-002; listas em O-003, sem segurança de coluna) é suficiente para segregar quem pode aprovar acima do limiar (C-006, M-2)? Fecha com: veredicto por candidato."
+ ],
+ "input_refs": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  }
+ ],
+ "candidate_revision": 1,
+ "knowledge_refs": [
+  {
+   "ref": "library/packs/pp/domain-knowledge/security/security-controls.md",
+   "sha256": "6063cd524edccbf953439e8ad1ca9798b5f3b4007bae54b317993e266b0e6218",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md",
+   "sha256": "9826aef31c4719ec94c33894a68ff90f2217b3d5a04919d13f54afa11fa32ab4",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  }
+ ],
+ "output_contract": [
+  "task_id",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "stop_conditions": [
+  "todas as perguntas com cobertura ou em `unanswered`"
+ ],
+ "budget": "uma leitura; sem rondas próprias",
+ "prohibited_actions": [
+  "escrever numa autoridade",
+  "autorizar pelo cliente",
+  "confirmar um facto por constar de outra resposta",
+  "ler o parecer de outro revisor",
+  "rever um candidato ainda em construção"
+ ],
+ "created_at": "2026-09-24T12:07:36Z"
+}

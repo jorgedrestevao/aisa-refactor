@@ -1,0 +1,24 @@
+{
+  "operation_id": "publish-e12f9575be90e276",
+  "request_hash": "fd9e8de2a4e62d7365382d18342f7bc2104f90dfbd749f5fcf9417eec3209727",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "ce19e657e002f2e393cf73019f3a7c703281781f29a235e5911f6f5d35683c02",
+    "_graph/meta.json": "6cbf1bcdc39e7a5563edc501fa62edf45a7e1daf58da53041002746099654ab9",
+    "shared-understanding.md": "25b24d19af8e37f420f1c0d79453be5980f14a159863259b1fa74c14af145689"
+  },
+  "expected": {
+    "shared-understanding.md": "6c71366d0ee1d87d835865a4612829b51c6107bd62b0aaee1623c46dbf4671f9",
+    "_graph/graph.jsonl": "461e8b95552be2148907ea6dc04fd5762f9d29dae21a81c24cc289d8a1e225e5",
+    "_graph/meta.json": "c5a86c152df6238e101cf4444c84f6939a628efbca1a65a45eaccf2e5f5bf267"
+  },
+  "read_set": {
+    "_capture/process-model.md": "48bb342347c36a3d83439b2b37b3a9437ee1c3fc99eaaffa178a9dbedb477fbc"
+  },
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T13:50:49Z"
+}

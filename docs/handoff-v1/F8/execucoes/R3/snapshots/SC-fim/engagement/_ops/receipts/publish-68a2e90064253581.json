@@ -1,0 +1,27 @@
+{
+  "operation_id": "publish-68a2e90064253581",
+  "request_hash": "0a13d8e2f54f6a9c1e2ac3b1e24cf6c5fdfaf2c8d4e5dcf56971b2421a051712",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "0a1526ed26ac78563e40db241645f68de2f6ae373a3828145a379a145c153a06",
+    "shared-understanding.md": "78b8e21ca86aa3e4fc0fe48527c3f20d92175a48d0b5a9ff149fd348fd130dbf"
+  },
+  "expected": {
+    "council-log.md": "76d0c6c1bd3757c3910a3b6383f6860957c61811a4bcd2787088a51076d44448",
+    "shared-understanding.md": "e5f2e5148f3ae1bba9f4482d47f261955b8cc3e13830fde3901daa10bc7fadff"
+  },
+  "read_set": {
+    "_capture/process-model.md": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "lens-outputs/business.md": "7b159568000239edb3e0d0379ce8480072374405a279e059a100f4f3838ece64",
+    "lens-outputs/data.md": "e9609e67bbbd39abce07c677691b0286f20de94a7c1a589a6633fbc5abbb68bd",
+    "lens-outputs/financial.md": "0c29cc56611d1d1e63227491d34b9d5ce80c209b526b307fc9867b13f519783f",
+    "lens-outputs/governance.md": "b9b13d1db82eefff8e5d4fffc492a569926ffa3f6f043b1b412e43911d96a8c6",
+    "lens-outputs/operations.md": "a440e74275eafe27b5311973651bc5058a86c7b56f64b1e34bd5831a973b42fc",
+    "lens-outputs/user.md": "15915ccdc059b9133da957135294f5dc876288f2241c7c6b0cffd3b8258e7311"
+  },
+  "published": [
+    "council-log.md",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T11:26:16Z"
+}

@@ -1,0 +1,56 @@
+{
+  "operation_id": "publish-c45120bd059fc3b9",
+  "request_hash": "150f8d23eefd057d130e9518645ae808576337eddd8a920279150f32e9caa8cc",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "14f17f19a6473e701abcd76c1fcc95e479cd482628acf6154107eba8549ea307",
+    "_graph/meta.json": "4d4341ff4ac959d7304af136f1297396809957e7d6a540f3a0915408f9a43c0a",
+    "council-log.md": "d115cb9acdc78ae23d9e721fd617230e9b0b321ea0a2f2d8cc4eb0f866b052cd",
+    "shared-understanding.md": "82058a90c62ec46e7c79def6918f0260234da4a95b737068f618955edd266539"
+  },
+  "expected": {
+    "council-log.md": "8f181415979e9b5c788e2c419e02e5f15893f159ee91c02b09ed43df1d551236",
+    "shared-understanding.md": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+    "_graph/graph.jsonl": "6f2e5456ae3f579aae0c469e132f69da67280ca487f097bdf0c5ade7d6698fd5",
+    "_graph/meta.json": "e8b017ae0eb38ec50a315dd6e5ac49f28ce66ca73dc130afa1318c5580736336"
+  },
+  "read_set": {
+    "_capture/_capture-log.md": "f7b720b97369ee6f7c024965a4f6eff80f0ccb4eb39eedaaa67f275b56212900",
+    "_capture/entrevista-processo.md.extraction.json": "cfb9d5075c8c77cc4e2f6e36c8e6ef9eda282d09e95f874e6b7afeb3246c531f",
+    "_capture/entrevista-processo.md.text.md": "524031c1a5af5efe90c8df143a475b495a55b8001c8793a6b69bba86a77c5813",
+    "_capture/evidence-index.md": "057f8691d4eede2b6ef0ae5b3419deab4c3b4eed3c3692d7f2990e5dff237adb",
+    "_capture/matriz-papeis.md.extraction.json": "c8d2ba0dabba894059e18dd00926513fac48c5d8e40e4627e9ac6d88e1bca89c",
+    "_capture/matriz-papeis.md.text.md": "8b7394f6dab553e100cfd263e43e1e05d13024c76f08f4cf3670ca00d601ef41",
+    "_capture/nota-dados.md.extraction.json": "d1a6f0f43745a3d05a5172d93208f9be15ee45d1bc13fb0d93b1c51eeea87826",
+    "_capture/nota-dados.md.text.md": "63592b3b7f3fa717f0767f3733977fae40cd2e93695a37ffaf074446b2809f2a",
+    "_capture/pedido.md.extraction.json": "901b61521d2c3b82b5e0c06cb9a324621d2e2499d51b49a5091de0137d9acd50",
+    "_capture/pedido.md.text.md": "6da7190fea68694ed0b2cab1d2140a3d0590d0f46246e05ae7e28ed1edb7de3a",
+    "_capture/process-model.md": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "_design/candidates.json": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "answers.md": "4dd48d08924970fa2cd9fb0cb80379210be0a90fb99534be825f2566c80482c8",
+    "context.json": "79d90f675b6dd4b87dfce978290cdd748585828157071a840c88d05096504074",
+    "decisions.md": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+    "enquadramento.md": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "inputs/entrevista-processo.md": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55",
+    "inputs/matriz-papeis.md": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204",
+    "inputs/nota-dados.md": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc",
+    "inputs/pedido.md": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d",
+    "lens-outputs/business.md": "7b159568000239edb3e0d0379ce8480072374405a279e059a100f4f3838ece64",
+    "lens-outputs/chairman-synthesis-F-01.md": "742da858ca541e2e67abe75392fb814e92a22731fbf5539e4f6cb3bcbad586be",
+    "lens-outputs/data.md": "e9609e67bbbd39abce07c677691b0286f20de94a7c1a589a6633fbc5abbb68bd",
+    "lens-outputs/financial.md": "0c29cc56611d1d1e63227491d34b9d5ce80c209b526b307fc9867b13f519783f",
+    "lens-outputs/governance.md": "b9b13d1db82eefff8e5d4fffc492a569926ffa3f6f043b1b412e43911d96a8c6",
+    "lens-outputs/operations.md": "a440e74275eafe27b5311973651bc5058a86c7b56f64b1e34bd5831a973b42fc",
+    "lens-outputs/user.md": "15915ccdc059b9133da957135294f5dc876288f2241c7c6b0cffd3b8258e7311",
+    "options.md": "",
+    "_state.json": "fad1934b260dce38ca6dea4fe1a68fbb0792e6dbc4f0963ffb6106d8a59049e7"
+  },
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json",
+    "council-log.md",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T12:40:37Z"
+}

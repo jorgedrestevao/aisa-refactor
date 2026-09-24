@@ -1,0 +1,37 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-21af014fe08f",
+  "files": {
+    "lens-outputs/business.md": "",
+    "lens-outputs/data.md": "",
+    "lens-outputs/financial.md": "",
+    "lens-outputs/governance.md": "",
+    "lens-outputs/operations.md": "",
+    "lens-outputs/user.md": "",
+    "shared-understanding.md": "63a415d73be5cdf944205c6f7966ff7739f70bacb4a997312a601d6fd5658eb3"
+  },
+  "reads": {
+    "_capture/_capture-log.md": "f7b720b97369ee6f7c024965a4f6eff80f0ccb4eb39eedaaa67f275b56212900",
+    "_capture/entrevista-processo.md.extraction.json": "cfb9d5075c8c77cc4e2f6e36c8e6ef9eda282d09e95f874e6b7afeb3246c531f",
+    "_capture/entrevista-processo.md.text.md": "524031c1a5af5efe90c8df143a475b495a55b8001c8793a6b69bba86a77c5813",
+    "_capture/evidence-index.md": "057f8691d4eede2b6ef0ae5b3419deab4c3b4eed3c3692d7f2990e5dff237adb",
+    "_capture/matriz-papeis.md.extraction.json": "c8d2ba0dabba894059e18dd00926513fac48c5d8e40e4627e9ac6d88e1bca89c",
+    "_capture/matriz-papeis.md.text.md": "8b7394f6dab553e100cfd263e43e1e05d13024c76f08f4cf3670ca00d601ef41",
+    "_capture/nota-dados.md.extraction.json": "d1a6f0f43745a3d05a5172d93208f9be15ee45d1bc13fb0d93b1c51eeea87826",
+    "_capture/nota-dados.md.text.md": "63592b3b7f3fa717f0767f3733977fae40cd2e93695a37ffaf074446b2809f2a",
+    "_capture/pedido.md.extraction.json": "901b61521d2c3b82b5e0c06cb9a324621d2e2499d51b49a5091de0137d9acd50",
+    "_capture/pedido.md.text.md": "6da7190fea68694ed0b2cab1d2140a3d0590d0f46246e05ae7e28ed1edb7de3a",
+    "_capture/process-model.md": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "answers.md": "4467ea70af4b42b3cf211b3a701083483bdd5ec80e45296f737bd51b1716372d",
+    "context.json": "79d90f675b6dd4b87dfce978290cdd748585828157071a840c88d05096504074",
+    "decisions.md": "5d772f9d9987cf5bfaf12678cfa43a5de9a277ac401c9e457af5b8655ce7452c",
+    "enquadramento.md": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "inputs/entrevista-processo.md": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55",
+    "inputs/matriz-papeis.md": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204",
+    "inputs/nota-dados.md": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc",
+    "inputs/pedido.md": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d"
+  },
+  "task": "TASK-001",
+  "published": "publish-980e7f78a460fbff",
+  "created_at": "2026-09-24T10:38:12Z"
+}

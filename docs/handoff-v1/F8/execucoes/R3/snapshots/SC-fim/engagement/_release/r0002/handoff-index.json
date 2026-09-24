@@ -1,0 +1,373 @@
+{
+ "schema_version": "handoff-index/1",
+ "engagement_id": "f8-r3-fx02",
+ "revision": 2,
+ "based_on": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+   "revision": 1
+  }
+ ],
+ "scope_refs": [],
+ "exclusions": [],
+ "code_version": "f2abb6a",
+ "pack_version": "pp 1.10.0",
+ "files": [
+  {
+   "path": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "path": "_design/reviews/REV-0001.json",
+   "sha256": "9560ab41858529366d32bd2bcb1d12a61ca916a13d8b59561d48862e32bfeede"
+  },
+  {
+   "path": "_design/reviews/REV-0001.mandate.json",
+   "sha256": "e38f8d449b7de2f3059ec443292a6ecd6033e90c29a475e1de6af0e4946003b4"
+  },
+  {
+   "path": "_design/reviews/REV-0002.json",
+   "sha256": "dcfa33e5c0e29d586ae90c64f502fb1dc204bf6d5a5ff08b725f67f75e61a7b5"
+  },
+  {
+   "path": "_design/reviews/REV-0002.mandate.json",
+   "sha256": "06fd43bc68c1135b3e0e0062dea49488f0bb6a13516aa1954a8dffc7ba1a12bb"
+  },
+  {
+   "path": "_design/reviews/REV-0003.json",
+   "sha256": "4d63a3f289539ca23bf95c06b3319259e922d31a3c33ad4633b376e277a4b731"
+  },
+  {
+   "path": "_design/reviews/REV-0003.mandate.json",
+   "sha256": "8fdc28930bcf2ab6cfd4b35268290cc98b1443d2ff3de63e1edab90b6a133764"
+  },
+  {
+   "path": "_design/reviews/REV-0004.json",
+   "sha256": "a7641ed75192354bec604dd6a94de84c547b8803e5eac6752fc64d4037796c36"
+  },
+  {
+   "path": "_design/reviews/REV-0004.mandate.json",
+   "sha256": "70e74cb660e6e25ef271512e3f1bc37bed53106968bcf76d0556e8c76caed5eb"
+  },
+  {
+   "path": "_design/reviews/REV-0005.json",
+   "sha256": "1403c513dfa04741302a4ce1af6f226145ac8602c7c7f15b68eccf7dbea4df14"
+  },
+  {
+   "path": "_design/reviews/REV-0005.mandate.json",
+   "sha256": "ae8f23b5f4859b50f7555a0df1f3c1eeda7551cf914a4a28bd77930803b645c3"
+  },
+  {
+   "path": "_design/reviews/ledger.json",
+   "sha256": "97b504d56bf5a75a70839853facd72b6291decee28905c0c3a596073e08c7f62"
+  },
+  {
+   "path": "_state.json",
+   "sha256": "9ea54e791be98b932f195488326bec023a70ba95be75f398a563921020e29483"
+  },
+  {
+   "path": "answers.md",
+   "sha256": "472f214b8e3c7bd2ca413d15887ca2470a701942c73f4362d3fad7ce60da49d3"
+  },
+  {
+   "path": "context.json",
+   "sha256": "79d90f675b6dd4b87dfce978290cdd748585828157071a840c88d05096504074"
+  },
+  {
+   "path": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  },
+  {
+   "path": "enquadramento.md",
+   "sha256": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9"
+  },
+  {
+   "path": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "path": "functional-state.json",
+   "sha256": "0e6df89bdb59f4ea396369a9bc35d65922d39843ad14d00031483f3457928354"
+  },
+  {
+   "path": "inputs/entrevista-processo.md",
+   "sha256": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55"
+  },
+  {
+   "path": "inputs/matriz-papeis.md",
+   "sha256": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204"
+  },
+  {
+   "path": "inputs/nota-dados.md",
+   "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc"
+  },
+  {
+   "path": "inputs/nota-urgentes.md",
+   "sha256": "44e9eab96ff96d4f405699d42bd2fe5ff3f56f80f500c7f7b2c9abc7ede15a21"
+  },
+  {
+   "path": "inputs/pedido.md",
+   "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d"
+  },
+  {
+   "path": "library/kernel/handoff-contract.md",
+   "sha256": "0e7ff7d11cd165e076611ffb0362d95a8dc2b292d3c876030244c7b6ed0de29f"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-candidates.schema.json",
+   "sha256": "06fe3ffbc4087a7d948c4a5280d875e27eee824fbdd2713b490252939c393ba7"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-functional.schema.json",
+   "sha256": "5bb14fabc3d5d8dd20de67c27629cb6c146dd9a153f1f43302beada1bd1440cf"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-index.schema.json",
+   "sha256": "c1e5472df370b4a08c87fe16802e35d2354eeef90da0f5b7d445acf689a23677"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-pack.schema.json",
+   "sha256": "a0ecdfa7d17f15026d1f885b970957c7d26ec11e4f81142426d805b607eb9464"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-response.schema.json",
+   "sha256": "0275a2e3027474343c79c300a1d7a3dc750e1c7f61fc4d2856501e9f3b254997"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-review.schema.json",
+   "sha256": "e1b0749946ab4e9c86d6c954831e2c895cb70e79f50974ed139eecae76647cc2"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-scope.schema.json",
+   "sha256": "665b5d8af8b730caf0459f70f27cc64fe7f669f2e86ba670acd84bbe06f59b06"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-state.schema.json",
+   "sha256": "9d250e55ddbff533ef760d839c8766efeea1ec73ebd8d7a65a6f22ddfe63c62d"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-work-packages.schema.json",
+   "sha256": "2586e5c27ccb0f9b5bc182a2d67a222109618f42dbf4e4d1d216535085a347fd"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-work.schema.json",
+   "sha256": "1f0e9c13c1ae938ff1c1349b30961533f37018d8820b9398e87ce8dfccb77152"
+  },
+  {
+   "path": "library/kernel/specialists.md",
+   "sha256": "d4865dbb0c544254b23b61db267a98b1bd77e5551eb7a17e60672fffa7d51fe8"
+  },
+  {
+   "path": "library/kernel/states.md",
+   "sha256": "a469c58423ed047e2e56a4d62230b946b2d2ee456224df49f26e85df7898a8f0"
+  },
+  {
+   "path": "library/packs/pp/decision-model/alternatives-register.md",
+   "sha256": "98eaa1c200adb070704538715527ef917af9210e632014fde4f29018473f8fee"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/application/application-surfaces.md",
+   "sha256": "c07cfac5b5e569bcf9cb67fade410f9e8a4c3a519f0f1c73a7449a43d33cb891"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/architecture/patterns.md",
+   "sha256": "e539e8cda314f7e59e6a9d98876ecbded22c7be254e9df92d4bba90c3181195f"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+   "sha256": "a2aa0669f0c1bbc33a5f7a974ebcdbf08ac4e855c7a665cb49f40ff07c11697f"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/craft/screen-patterns.md",
+   "sha256": "c54d38972807210d3e6c912c0cddee61fdc273e18ec1e63ba6c373319783ae75"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/data/dataverse.md",
+   "sha256": "597f240fa0becfeb74332c50884a321922b32242178565e72364637f04ba6b6a"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/data/store-boundaries.md",
+   "sha256": "bec39c3d133eddc2f21a787372b8da42027dabcc6d3c17dda0a9398c421ec3e5"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/economics/licensing-and-cost-drivers.md",
+   "sha256": "c4c5bc28ff97ee61b8cf78c626fb9c21128b871f25e0de185d098b70a8ffd59f"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md",
+   "sha256": "9826aef31c4719ec94c33894a68ff90f2217b3d5a04919d13f54afa11fa32ab4"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/integration/integration-mechanisms.md",
+   "sha256": "23e4fbd0d9b37ceaeb0f7d1d10e312d726d8ce98605a36eac3d830d449cefa51"
+  },
+  {
+   "path": "library/packs/pp/domain-knowledge/security/security-controls.md",
+   "sha256": "6063cd524edccbf953439e8ad1ca9798b5f3b4007bae54b317993e266b0e6218"
+  },
+  {
+   "path": "options.md",
+   "sha256": "e7323e956e0dc09453561e9355ee4fd1f89fe47f48013aa796b6eba80c236558"
+  },
+  {
+   "path": "scope-gate.json",
+   "sha256": "6805eebe255d8337f06bf8072871646179eb7e89dd2ccbbda77f817e15efb3d0"
+  },
+  {
+   "path": "shared-understanding.md",
+   "sha256": "25b24d19af8e37f420f1c0d79453be5980f14a159863259b1fa74c14af145689"
+  },
+  {
+   "path": "trace.json",
+   "sha256": "a3b97f4851518ec283244d55a46177eecaa086b84051faeed06d6811b190537f"
+  }
+ ],
+ "authorization_refs": [
+  "decisions.md#D-002"
+ ],
+ "reviews_basis": {
+  "REV-0001": {
+   "role": "architecture-review",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+     "now": "changed since the review"
+    },
+    "frame.md": {
+     "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0002": {
+   "role": "data-integration",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+     "now": "changed since the review"
+    },
+    "frame.md": {
+     "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0003": {
+   "role": "security-operation",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+     "now": "changed since the review"
+    },
+    "frame.md": {
+     "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0004": {
+   "role": "ux-process",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+     "now": "changed since the review"
+    },
+    "frame.md": {
+     "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0005": {
+   "role": "cost-estimate",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+     "now": "changed since the review"
+    },
+    "frame.md": {
+     "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+     "now": "changed since the review"
+    }
+   }
+  }
+ },
+ "readiness": {
+  "delivery": "blocked",
+  "ready": false,
+  "reasons": [
+   "1 achado(s) de rastreabilidade",
+   "gate de âmbito bloqueado (6 bloqueio(s), 0 incoerência(s))",
+   "bloqueios do gate: BLOCKS_ALL_OPEN ×1, PROOF_WITHOUT_WORK ×1, UNLINKED_BLOCKING_QUESTION ×4",
+   "implementation-spec não renderizada",
+   "estimativa não renderizada",
+   "aprovação do desenho missing"
+  ],
+  "render_checks": {},
+  "blueprint_approval": "missing"
+ },
+ "proofs": {
+  "performed": [],
+  "pending": [
+   "viabilidade do mecanismo de duplicados e da base de segurança/auditoria de O-002 (sem WP)"
+  ]
+ },
+ "receiver_acceptance": null,
+ "delivery_level": "preliminary",
+ "scope_definition": {},
+ "limitations": [
+  "1 achado(s) de rastreabilidade",
+  "gate de âmbito bloqueado (6 bloqueio(s), 0 incoerência(s))",
+  "bloqueios do gate: BLOCKS_ALL_OPEN ×1, PROOF_WITHOUT_WORK ×1, UNLINKED_BLOCKING_QUESTION ×4",
+  "implementation-spec não renderizada",
+  "estimativa não renderizada",
+  "aprovação do desenho missing"
+ ],
+ "built_at": "2026-09-24T14:44:24Z"
+}
