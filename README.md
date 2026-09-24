@@ -42,6 +42,7 @@ Two limits are stated rather than papered over: atomicity is **observable to sup
 
 - Using it: [`docs/COMO-USAR.md`](docs/COMO-USAR.md) — one page, in business language.
 - Setting it up or extending it: [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
+- Operating it (setup, maintenance, recovery, access, backup): [`docs/OPERACAO.md`](docs/OPERACAO.md).
 
 ## Documents
 
@@ -52,6 +53,7 @@ Two limits are stated rather than papered over: atomicity is **observable to sup
 | [`docs/PHILOSOPHY.md`](docs/PHILOSOPHY.md) | Why aisa exists; for non-technical audiences |
 | [`docs/COMO-USAR.md`](docs/COMO-USAR.md) | One page for whoever runs an engagement |
 | [`docs/ONBOARDING.md`](docs/ONBOARDING.md) | Setup + first engagement walkthrough (consultant / developer) |
+| [`docs/OPERACAO.md`](docs/OPERACAO.md) | Setup, maintenance, recovery, access and backup (who operates it) |
 | [`library/kernel/`](library/kernel/) | The contracts themselves — phases, states, orchestration, render, blueprint, coverage, glossary |
 | [`docs/PACK_AUTHORING.md`](docs/PACK_AUTHORING.md) · [`docs/LENS_AUTHORING.md`](docs/LENS_AUTHORING.md) | Writing a technology pack or a perspective |
 | [`docs/evolution/`](docs/evolution/) | How it got here: one report per phase, P0–P8 |

@@ -1021,6 +1021,10 @@
     {
      "file": "library/kernel/tools/workflow.py",
      "reason": "Docstring names `graph.py`/`resolve.py` and `_graph/` to say what the module does NOT do (workflow.py:17, :22); it never reads the SU or the graph."
+    },
+    {
+     "file": "docs/OPERACAO.md",
+     "reason": "Operations guide (handoff-v1 F7.4): names the authority in the access/backup and recovery tables; not read at runtime."
     }
    ],
    "handoff_v1_impact": [
@@ -6464,6 +6468,10 @@
     {
      "file": "docs/runtime-hardening/**",
      "reason": "Historical hardening reports and acceptance/repro scripts (accept_phase*.py, repro-coverage-*.py) not invoked by runtime or CI; includes tracked intake-scenarios/_runs/*/_state.json snapshots in the older 6-key shape (no round_in_progress)."
+    },
+    {
+     "file": "docs/OPERACAO.md",
+     "reason": "Operations guide (handoff-v1 F7.4): names the authority in the access/backup and recovery tables; not read at runtime."
     }
    ],
    "handoff_v1_impact": [

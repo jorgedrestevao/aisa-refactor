@@ -8,6 +8,7 @@
 > **Full architecture**: `docs/ARCHITECTURE.md`
 > **Philosophy**: `docs/PHILOSOPHY.md`
 > **Onboarding**: `docs/ONBOARDING.md`
+> **Operação** (setup, manutenção, recuperação, backup): `docs/OPERACAO.md`
 
 ## Operating principles (inviolable)
 
