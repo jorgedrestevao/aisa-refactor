@@ -1,0 +1,32 @@
+{
+ "artefact": "aisa.capture.text-extraction",
+ "tool": {
+  "name": "text_extract.py",
+  "version": "1.1.0",
+  "library": "stdlib",
+  "python": "3.11.15"
+ },
+ "extracted_at": "2026-09-24T10:32:47",
+ "identity": {
+  "filename": "nota-dados.md",
+  "source_path": "projects/f8-r3-fx02/inputs/nota-dados.md",
+  "format": ".md",
+  "size_bytes": 330,
+  "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc",
+  "modified": "2026-09-24T10:28:13"
+ },
+ "status": "ok",
+ "reason": null,
+ "units": {
+  "unit": "paragraph",
+  "paragraphs": 3,
+  "headings": 1,
+  "table_lines": 0
+ },
+ "provenance": {
+  "cite_as": "<file> · §<heading> ¶NN"
+ },
+ "output": {
+  "text_md": "nota-dados.md.text.md"
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "operation_id": "publish-e9b3dd9697867b44",
+  "request_hash": "a9a41f8403c0e9260bede671f90ed6112606a44d97c15e7a095001d05d479c6a",
+  "result": "committed",
+  "revision": {
+    "_state.json": "fad1934b260dce38ca6dea4fe1a68fbb0792e6dbc4f0963ffb6106d8a59049e7",
+    "shared-understanding.md": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  "expected": {
+    "_state.json": "3b7111cd8e0c72ca4f0ac40c5445e985736e63c865d0668b9c0095d9914d243d",
+    "shared-understanding.md": "3909be1cc614264ceb94bcb7b95e7bf5577acb6ddca1cde0fc4e90ffa28d7038"
+  },
+  "read_set": {
+    "council-log.md": "8f181415979e9b5c788e2c419e02e5f15893f159ee91c02b09ed43df1d551236",
+    "story.md": "9a2645f5289b222f02cf4780ac17baae8e4578595cda328fcc00338dc3ca3465"
+  },
+  "published": [
+    "_state.json",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T11:56:57Z"
+}

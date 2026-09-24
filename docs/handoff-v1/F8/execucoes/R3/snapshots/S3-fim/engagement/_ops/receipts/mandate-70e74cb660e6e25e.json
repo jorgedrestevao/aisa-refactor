@@ -1,0 +1,21 @@
+{
+  "operation_id": "mandate-70e74cb660e6e25e",
+  "request_hash": "5012837ff269a3ba00e37caa6075fb6aa127fe965127b9e24097a86755143032",
+  "result": "committed",
+  "revision": {
+    "_design/reviews/REV-0004.mandate.json": "70e74cb660e6e25ef271512e3f1bc37bed53106968bcf76d0556e8c76caed5eb"
+  },
+  "expected": {
+    "_design/reviews/REV-0004.mandate.json": ""
+  },
+  "read_set": {
+    "_design/candidates.json": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "shared-understanding.md": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "decisions.md": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  "published": [
+    "_design/reviews/REV-0004.mandate.json"
+  ],
+  "committed_at": "2026-09-24T12:07:47Z"
+}

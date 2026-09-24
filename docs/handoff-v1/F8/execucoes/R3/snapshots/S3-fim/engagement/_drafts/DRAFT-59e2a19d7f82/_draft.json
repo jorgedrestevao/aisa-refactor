@@ -1,0 +1,12 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-59e2a19d7f82",
+  "files": {
+    "_state.json": "afe600d6d230fb9a17401d94f972afd6e3a4b69bacc4ef956e715d576e8cb3f4",
+    "shared-understanding.md": "78b8e21ca86aa3e4fc0fe48527c3f20d92175a48d0b5a9ff149fd348fd130dbf"
+  },
+  "reads": {},
+  "task": null,
+  "published": "publish-6d5ce3f12e99e530",
+  "created_at": "2026-09-24T11:42:06Z"
+}

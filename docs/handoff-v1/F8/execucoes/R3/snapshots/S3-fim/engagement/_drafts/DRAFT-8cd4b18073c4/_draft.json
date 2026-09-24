@@ -1,0 +1,12 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-8cd4b18073c4",
+  "files": {
+    "council-log.md": "76d0c6c1bd3757c3910a3b6383f6860957c61811a4bcd2787088a51076d44448",
+    "shared-understanding.md": "e5f2e5148f3ae1bba9f4482d47f261955b8cc3e13830fde3901daa10bc7fadff"
+  },
+  "reads": {},
+  "task": null,
+  "published": null,
+  "created_at": "2026-09-24T11:24:57Z"
+}

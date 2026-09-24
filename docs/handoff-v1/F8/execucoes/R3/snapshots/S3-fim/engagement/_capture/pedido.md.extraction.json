@@ -1,0 +1,32 @@
+{
+ "artefact": "aisa.capture.text-extraction",
+ "tool": {
+  "name": "text_extract.py",
+  "version": "1.1.0",
+  "library": "stdlib",
+  "python": "3.11.15"
+ },
+ "extracted_at": "2026-09-24T10:32:47",
+ "identity": {
+  "filename": "pedido.md",
+  "source_path": "projects/f8-r3-fx02/inputs/pedido.md",
+  "format": ".md",
+  "size_bytes": 530,
+  "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d",
+  "modified": "2026-09-24T10:28:13"
+ },
+ "status": "ok",
+ "reason": null,
+ "units": {
+  "unit": "paragraph",
+  "paragraphs": 5,
+  "headings": 1,
+  "table_lines": 0
+ },
+ "provenance": {
+  "cite_as": "<file> · §<heading> ¶NN"
+ },
+ "output": {
+  "text_md": "pedido.md.text.md"
+ }
+}

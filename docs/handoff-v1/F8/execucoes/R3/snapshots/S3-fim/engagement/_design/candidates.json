@@ -1,0 +1,453 @@
+{
+ "schema_version": "handoff-candidates/1",
+ "engagement_id": "f8-r3-fx02",
+ "revision": 1,
+ "route": "platform-constrained",
+ "based_on": [
+  {
+   "ref": "frame.md#D-001"
+  },
+  {
+   "ref": "decisions.md#D-001"
+  },
+  {
+   "ref": "shared-understanding.md#A-001",
+   "sha256": "dd46bf5718fede0c5e6dd76bbff6bcc495362903d750ebd56519be9927cedf3a",
+   "row": {
+    "state": "Assumed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#A-002",
+   "sha256": "dd46bf5718fede0c5e6dd76bbff6bcc495362903d750ebd56519be9927cedf3a",
+   "row": {
+    "state": "Assumed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#A-004",
+   "sha256": "dd46bf5718fede0c5e6dd76bbff6bcc495362903d750ebd56519be9927cedf3a",
+   "row": {
+    "state": "Assumed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#A-005",
+   "sha256": "dd46bf5718fede0c5e6dd76bbff6bcc495362903d750ebd56519be9927cedf3a",
+   "row": {
+    "state": "Assumed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-001",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-002",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-004",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-005",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-006",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-007",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#C-008",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#M-1",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#M-2",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#M-3",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#M-4",
+   "sha256": "9417ca560b55da2e93288e1b30d642195e79f16e5d933953deb685dfc92c063f",
+   "row": {
+    "state": "Confirmed",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#R-001",
+   "sha256": "f76781d21ea95e5952792a15ca1e60f3be51303b6c7ddeaa20c7a86390d5321a",
+   "row": {
+    "state": "Risky",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#R-002",
+   "sha256": "f76781d21ea95e5952792a15ca1e60f3be51303b6c7ddeaa20c7a86390d5321a",
+   "row": {
+    "state": "Risky",
+    "criticidade": "",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-001",
+   "sha256": "3f7354744973aa6d3d4651d2f2a4823613b46f7687e1e3d30d8da2d14a71d1c5",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Low",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-002",
+   "sha256": "4ec359d31e483232a2d02affa88614893f82dd6d88c5744ba2b783e6449712d1",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Med",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-004",
+   "sha256": "4ec359d31e483232a2d02affa88614893f82dd6d88c5744ba2b783e6449712d1",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Med",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-006",
+   "sha256": "4ec359d31e483232a2d02affa88614893f82dd6d88c5744ba2b783e6449712d1",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Med",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-009",
+   "sha256": "3f7354744973aa6d3d4651d2f2a4823613b46f7687e1e3d30d8da2d14a71d1c5",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Low",
+    "resolved": false,
+    "retired": false
+   }
+  },
+  {
+   "ref": "shared-understanding.md#U-010",
+   "sha256": "3f7354744973aa6d3d4651d2f2a4823613b46f7687e1e3d30d8da2d14a71d1c5",
+   "row": {
+    "state": "Unknown",
+    "criticidade": "Low",
+    "resolved": false,
+    "retired": false
+   }
+  }
+ ],
+ "retired_ids": [],
+ "imposed_platform": "Power Platform",
+ "imposition_ref": "C-001",
+ "criteria": [
+  "Plataforma imposta por decisão corporativa: Power Platform (C-001, route platform-constrained) — candidatos gerados dentro dessa fronteira, nunca fora dela.",
+  "População de utilizadores só interna (requerente, chefia, compras, direcção financeira, auditoria interna — matriz-papeis.md) — sem identidade externa, sem entitlement externo.",
+  "Dados sem classificação de sensibilidade especial além de custo e identidade do requerente (lente de dados, R-01) — nenhum mandato de residência ou controlo adicional declarado.",
+  "Duas obrigações de negócio confirmadas que qualquer candidato construído tem de satisfazer: o limiar de aprovação financeira (M-2, C-006 = 5 000 €) e o rasto de auditoria de quem aprovou o quê e quando (M-3, mecanismo ainda por desenhar — U-006).",
+  "Volume/frequência do processo ainda não apurado (U-001, Low) — nenhum sinal de escala elevada; ordem de grandeza construída em banda larga, não em ponto.",
+  "ALT-002 (mudar o processo, sem construir nada) e ALT-010 (não fazer nada) gerados como membros condicionais obrigatórios (decision-tree.md §1.1) — nunca eliminados por um achado sobre a plataforma, só pela sua própria evidência.",
+  "X-001 (o caminho de urgência salta também a aprovação financeira?) continua Conflicted — nenhum candidato pressupõe uma resposta; o desenho do fluxo de urgência fica marcado como dependente dessa decisão do dono."
+ ],
+ "exclusions": [
+  {
+   "what": "Outras plataformas como candidatos ordinários (desenvolvimento à medida, serviços cloud-native, outro produto low-code, comprar produto)",
+   "reason": "Plataforma imposta por decisão corporativa (C-001) — só entrariam como classe «viável se a regra mudar» (outcome-classes.md classe 15); ninguém pediu essa reabertura (decision-tree.md §6.2)."
+  },
+  {
+   "what": "Estender o ERP-X (a capacidade já existir no sistema incumbente)",
+   "reason": "Sem evidência de que o ERP-X hoje suporta pedido/aprovação/registo de equipamento — só o catálogo de preços vive lá (C-004). Sem gatilho da tabela de geração de candidatos para 'capacidade já existe na estate' (alternatives-register.md §2, linha 1)."
+  },
+  {
+   "what": "Capacidade nativa da ferramenta de colaboração (ex.: lista + fluxo simples, sem app dedicada)",
+   "reason": "Nenhum dos quatro gatilhos documentados para suficiência da capacidade nativa se aplica (outcome-classes.md §3, forma (a)) — há cálculo condicional, aprovação em dois níveis e obrigação de auditoria (M-2, M-3), não um documento que é o próprio registo."
+  }
+ ],
+ "items": [
+  {
+   "id": "O-001",
+   "name": "Pedido, aprovação e encomenda — app de ecrãs (canvas) sobre o Dataverse",
+   "option_class": "Esta plataforma — forma: app de ecrãs (canvas) sobre loja governada",
+   "platform": "Power Platform",
+   "technology": "Power Apps (canvas) + Dataverse + Power Automate",
+   "form": {
+    "surface": "Canvas app",
+    "store": "Dataverse (loja governada)"
+   },
+   "architecture": "Tabelas Dataverse: Pedido, Linha de pedido, Registo de aprovação, Catálogo (cópia local, condicional a U-004). Regras de negócio: cálculo do valor (C-005), arredondamento (C-007), verificação do limiar (M-2/C-006). Fluxos: aprovação com routing condicional chefia→direcção financeira, confirmação de recepção ao requerente (mitiga R-001), detecção de duplicados (mesmo requerente + conteúdo semelhante + janela curta, mitiga R-001), integração com o ERP-X (leitura de preços — forma depende de U-004). Ecrãs canvas: pedido, aprovação, vista de compras, consulta de auditoria. Segurança por papel Dataverse (4 papéis). Tudo dentro da fronteira do Power Platform (nenhum componente fora dela).",
+   "order_of_magnitude": {
+    "value": "40–50 dias de desenvolvimento (~8–10 semanas, 1 developer Power Platform)",
+    "source": "PACK MODEL — domain-knowledge/craft/estimation-model.md aplicado à forma do candidato antes do blueprint (4 tabelas com regras, 4 fluxos incl. 1 integração ERP-X, 4 ecrãs canvas complexos, 4 papéis de segurança; multiplicador 1.2×; buffer +20% pelas incertezas em aberto: U-001, U-004, U-006, U-009, U-010). Banda deste candidato apenas — o modelo é só do lado da plataforma, sem equivalente calculado para O-004/O-005; a ausência de um número comparável não é evidência de que sejam mais baratos ou mais caros."
+   },
+   "risks": [
+    "R-001 (pedidos duplicados) — mitigado por regra de detecção + confirmação de recepção, mas a regra em si é nova e por afinar em UAT.",
+    "R-002 (catálogo desactualizado) — resolve-se só se U-004 optar por leitura em tempo real; uma cópia local herda o mesmo risco se a cadência de sincronização não for definida.",
+    "Entitlement/licenciamento das 5 populações para Power Apps/Dataverse não verificado nesta engagement (emergent concern, sem linha SU própria ainda) — pode mover o custo, não a viabilidade."
+   ],
+   "reversibility": "Alta entre formas sobre a mesma loja (Dataverse) — mudar de canvas para model-driven mais tarde é redesenho de ecrãs, os dados e o modelo ficam. Baixa para sair da plataforma — fora de causa, imposta por C-001.",
+   "premise_refs": [
+    "C-001",
+    "C-002",
+    "C-004",
+    "C-005",
+    "C-006",
+    "C-007",
+    "C-008",
+    "M-1",
+    "M-2",
+    "M-3",
+    "M-4",
+    "A-001",
+    "A-002",
+    "R-001",
+    "R-002",
+    "U-001",
+    "U-004",
+    "U-006",
+    "U-009",
+    "U-010"
+   ]
+  },
+  {
+   "id": "O-002",
+   "name": "Pedido, aprovação e encomenda — app orientada a registos (model-driven) sobre o Dataverse",
+   "option_class": "Esta plataforma — forma: app orientada a registos (model-driven) sobre loja governada",
+   "platform": "Power Platform",
+   "technology": "Power Apps (model-driven) + Dataverse + Power Automate",
+   "form": {
+    "surface": "Model-driven app (record-centric)",
+    "store": "Dataverse (loja governada)"
+   },
+   "architecture": "Mesmo modelo de dados e fluxos de O-001 (Pedido, Linha de pedido, Registo de aprovação, Catálogo condicional a U-004; mesmas regras e mesmos fluxos de aprovação/duplicados/integração ERP-X). Ecrãs gerados automaticamente pela shell orientada a registos em vez de ecrãs canvas desenhados — segurança de linha/coluna e auditoria vêm herdadas da shell, não construídas.",
+   "order_of_magnitude": {
+    "value": "30–38 dias de desenvolvimento (~6–8 semanas, 1 developer Power Platform)",
+    "source": "PACK MODEL — mesmo ficheiro, mesma forma de base que O-001, com os 4 ecrãs a custarem 1d cada em vez de 3–4d (shell orientada a registos gera o ecrã em vez de o desenhar); multiplicador e buffer iguais aos de O-001. Banda deste candidato apenas, sem equivalente calculado para os outros."
+   },
+   "risks": [
+    "Mesmos riscos de dados de O-001 (R-001, R-002, entitlement por verificar).",
+    "Forfeit documentado da forma: o browser de telemóvel não é suportado pela shell orientada a registos — se algum requerente pedir a partir do telemóvel (U-002 ainda em aberto), este forfeit tem de ser aceite ou o candidato reavaliado."
+   ],
+   "reversibility": "Alta entre formas sobre a mesma loja (Dataverse) — trocar para canvas mais tarde é redesenho de ecrãs, os dados ficam. Baixa para sair da plataforma — fora de causa (C-001).",
+   "premise_refs": [
+    "C-001",
+    "C-002",
+    "C-004",
+    "C-005",
+    "C-006",
+    "C-007",
+    "C-008",
+    "M-1",
+    "M-2",
+    "M-3",
+    "M-4",
+    "A-001",
+    "A-002",
+    "R-001",
+    "R-002",
+    "U-001",
+    "U-002",
+    "U-004",
+    "U-006",
+    "U-009",
+    "U-010"
+   ]
+  },
+  {
+   "id": "O-003",
+   "name": "Pedido, aprovação e encomenda — app de ecrãs (canvas) sobre listas da ferramenta de colaboração",
+   "option_class": "Esta plataforma — forma: app de ecrãs (canvas) sobre listas da ferramenta de colaboração",
+   "platform": "Power Platform",
+   "technology": "Power Apps (canvas) + listas + Power Automate",
+   "form": {
+    "surface": "Canvas app",
+    "store": "Listas da ferramenta de colaboração"
+   },
+   "architecture": "Mesmas entidades e fluxos de O-001, guardados em listas em vez de tabelas Dataverse. As regras de cálculo (C-005, C-007) passam para dentro do fluxo/canvas em vez de regras de negócio da loja (a loja de listas não as suporta nativamente). Ecrãs canvas iguais aos de O-001.",
+   "order_of_magnitude": {
+    "value": "28–35 dias de desenvolvimento (~6–7 semanas, 1 developer Power Platform)",
+    "source": "PACK MODEL — mesmo ficheiro; tabelas e permissões mais baratas sobre listas (0.25–0.5d vs 0.5–1d), ecrãs canvas mais baratos sobre listas (3d vs 4d o complexo), fluxos ligeiramente mais baratos; sem o componente 'regra de negócio' da Dataverse, absorvido nos fluxos. Banda deste candidato apenas."
+   },
+   "risks": [
+    "Sem segurança ao nível da coluna e com tectos de delegação/âmbito de linha nas listas — a obrigação de auditoria (M-3) e o controlo de acesso por papel ficam mais fracos de origem do que em O-001/O-002; mitigável com histórico de versões + um mecanismo de registo próprio, mas não vem incluído.",
+    "Mesmos riscos de dados de O-001 (R-001, R-002, entitlement por verificar)."
+   ],
+   "reversibility": "Média — mudar de listas para Dataverse mais tarde é migração de dados, não reconfiguração de ecrã.",
+   "premise_refs": [
+    "C-001",
+    "C-002",
+    "C-004",
+    "C-005",
+    "C-006",
+    "C-007",
+    "C-008",
+    "M-1",
+    "M-2",
+    "M-3",
+    "M-4",
+    "A-001",
+    "A-002",
+    "R-001",
+    "R-002",
+    "U-001",
+    "U-004",
+    "U-006",
+    "U-009",
+    "U-010"
+   ]
+  },
+  {
+   "id": "O-004",
+   "name": "Mudar o processo — sem construir nada",
+   "option_class": "Mudar o processo; construir nada",
+   "platform": "Power Platform",
+   "technology": "sem tecnologia — disciplina de processo (numeração de pedidos, confirmação por email, cadência de actualização do catálogo)",
+   "architecture": "Sem componentes de plataforma. O trabalho é de processo: numerar pedidos para permitir detectar reenvios; chefia confirma recepção por resposta ao email (mitiga parte de R-001); designar um responsável e uma cadência para actualizar a cópia do catálogo (mitiga R-002); documentar o critério de arredondamento (C-007) e o limiar (C-006) num procedimento escrito.",
+   "order_of_magnitude": {
+    "unavailable": "O modelo do pacote conta componentes de construção em plataforma; esta opção não constrói nada. O esforço aqui é de gestão de mudança (redigir o procedimento, formar as quatro equipas envolvidas) — sem componente para contar neste modelo."
+   },
+   "risks": [
+    "Não resolve a obrigação de auditoria fiável (M-3) além do que o email já (fracamente) oferece — continua sem um mecanismo de registo verificável de quem aprovou o quê e quando.",
+    "Depende de disciplina humana continuada (numerar, confirmar, actualizar o catálogo) — o mesmo tipo de falha que gerou R-001/R-002 fica sem uma barreira estrutural."
+   ],
+   "reversibility": "Alta — não há sistema para desfazer; se não resultar, o passo seguinte é um dos candidatos O-001/O-002/O-003 sem nada a desmontar primeiro.",
+   "premise_refs": [
+    "A-001",
+    "A-004",
+    "A-005",
+    "R-001",
+    "R-002",
+    "M-2",
+    "M-3",
+    "C-006",
+    "C-007"
+   ]
+  },
+  {
+   "id": "O-005",
+   "name": "Não fazer nada, por agora",
+   "option_class": "Não fazer nada / adiar",
+   "platform": "Power Platform",
+   "technology": "sem tecnologia",
+   "architecture": "Sem alteração ao que existe hoje: pedido por email, aprovação por email, registo em folha de cálculo (C-002).",
+   "order_of_magnitude": {
+    "unavailable": "Não há construção; o custo de continuar é o custo do processo actual (A-004, A-005 — envelope ainda por quantificar, U-001/U-009/U-010 em aberto), não uma ordem de grandeza de entrega."
+   },
+   "risks": [
+    "R-001 e R-002 continuam sem mitigação nenhuma.",
+    "M-3 (auditoria) continua sem mecanismo fiável — o email e a folha de cálculo não garantem o rasto que o dono exige."
+   ],
+   "reversibility": "Alta — não há compromisso a desfazer.",
+   "premise_refs": [
+    "A-004",
+    "A-005",
+    "R-001",
+    "R-002",
+    "M-3"
+   ]
+  }
+ ]
+}

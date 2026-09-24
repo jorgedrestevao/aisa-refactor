@@ -1,0 +1,19 @@
+{
+  "operation_id": "publish-6d5ce3f12e99e530",
+  "request_hash": "e6aaaf5d499b0ba8d9bf034e3c54f19033b6f61b0ae45947ed3fcd294910bd2e",
+  "result": "committed",
+  "revision": {
+    "_state.json": "3b7111cd8e0c72ca4f0ac40c5445e985736e63c865d0668b9c0095d9914d243d",
+    "shared-understanding.md": "37c71c1e48b9113e2c3a73e8b4812ffa32a6494afc8ebc940c4c29e517210cde"
+  },
+  "expected": {
+    "_state.json": "afe600d6d230fb9a17401d94f972afd6e3a4b69bacc4ef956e715d576e8cb3f4",
+    "shared-understanding.md": "78b8e21ca86aa3e4fc0fe48527c3f20d92175a48d0b5a9ff149fd348fd130dbf"
+  },
+  "read_set": null,
+  "published": [
+    "_state.json",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T11:42:22Z"
+}

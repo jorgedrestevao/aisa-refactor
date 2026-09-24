@@ -1,0 +1,22 @@
+{
+  "operation_id": "review-1403c513dfa04741",
+  "request_hash": "545f7b3331d4ff4005e6d75fea432e3c3e7cca2ddcae38a9e2f668ab5f9e82b2",
+  "result": "committed",
+  "revision": {
+    "_design/reviews/REV-0005.json": "1403c513dfa04741302a4ce1af6f226145ac8602c7c7f15b68eccf7dbea4df14"
+  },
+  "expected": {
+    "_design/reviews/REV-0005.json": ""
+  },
+  "read_set": {
+    "_design/candidates.json": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "shared-understanding.md": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "decisions.md": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff",
+    "_design/reviews/REV-0005.mandate.json": "ae8f23b5f4859b50f7555a0df1f3c1eeda7551cf914a4a28bd77930803b645c3"
+  },
+  "published": [
+    "_design/reviews/REV-0005.json"
+  ],
+  "committed_at": "2026-09-24T12:35:28Z"
+}

@@ -1,0 +1,416 @@
+version: v01
+blueprint_id: bp-v01
+engagement: f8-r3-fx02
+concretizes_decision: D-002
+
+architecture:
+  scope: "whole solution"
+  authorization: authorized
+  authorization_basis: >
+    intervenção tecnológica viável dentro da plataforma imposta (C-001), condicional ao
+    mesmo trio de O-001 (U-006, U-011, U-012) mais o forfeit de acesso móvel (U-002/U-013)
+  architectability_basis: >
+    A solução escolhida (D-002, O-002) é uma aplicação da plataforma imposta — app orientada
+    a registos (model-driven) sobre a loja de dados governada — arquitectável por este
+    pacote em qualquer modo de experiência (architecture-templates/README.md §4: "A PP
+    application (any experience mode)").
+
+  experience:
+    mode: owned-internal
+    primary_surface: "Record-centric app (model-driven)"
+
+  record_authority:
+    - domain: "Pedido, Linha de Pedido, Registo de Aprovação"
+      authority: "governed relational store"
+      access_mode: owned
+      su_refs: [C-002, C-005, C-006, C-007, M-1, M-2, M-3, M-4, D-002]
+      key: pedido-aprovacao
+      grain:
+        row: "uma linha de pedido; um pedido; ou um registo de aprovação — três grãos dentro do mesmo domínio governado"
+        dims: ["pedido", "linha de pedido", "aprovação"]
+      volume:
+        rows: "Unknown — volume mensal de pedidos por confirmar"
+        cadence: "evento (por pedido submetido)"
+        state: Unknown
+        source: U-001
+      schema_owner:
+        value: "director de sistemas de informação (papel)"
+        state: Assumed
+        su_ref: C-008
+        open: null
+      fields:
+        - name: "Pedido.requerente"
+          name_basis: design
+          type: reference
+          required: true
+          default: null
+          index: candidate
+          set_by: ["requerente"]
+          rules: ["preenchido automaticamente pelo utilizador autenticado"]
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (D-002, C-008)"
+          disposition: ADOPT
+        - name: "Pedido.data_pedido"
+          name_basis: design
+          type: datetime
+          required: true
+          default: "agora"
+          index: none
+          set_by: ["requerente"]
+          rules: []
+          computed: true
+          lineage: []
+          state: Assumed
+          source: "design (C-002)"
+          disposition: ADOPT
+        - name: "Pedido.urgente"
+          name_basis: design
+          type: boolean
+          required: true
+          default: false
+          index: none
+          set_by: ["requerente"]
+          rules: ["quando true, activa o caminho de urgência (C-003) — regra ainda por fechar acima do limiar financeiro, ver X-001"]
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (C-003)"
+          disposition: ADOPT
+        - name: "Pedido.justificacao_urgencia"
+          name_basis: design
+          type: text
+          required: false
+          default: null
+          index: none
+          set_by: ["requerente"]
+          rules: ["obrigatório quando Pedido.urgente = true"]
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (C-003)"
+          disposition: ADOPT
+        - name: "Pedido.estado"
+          name_basis: design
+          type: choice
+          values: ["Rascunho", "Submetido", "Aprovado chefia", "Aprovado direcção financeira", "Rejeitado", "Encomendado"]
+          required: true
+          default: "Rascunho"
+          index: candidate
+          set_by: ["sistema (transições por acção de aprovação)"]
+          rules:
+            - "Aprovado direcção financeira só alcançável quando Pedido.valor_total > limiar (C-006); regra do caminho de urgência face a este estado ainda por fechar — X-001"
+            - "transição Rascunho→Submetido bloqueada por verificação atómica de duplicado (mesmo requerente + conteúdo semelhante + janela curta), num plug-in síncrono/custom API dentro de transacção — nunca reencomendar cegamente em erro de servidor (mitigação R-003)"
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-1, M-2, C-006)"
+          disposition: ADOPT
+        - name: "Pedido.valor_total"
+          name_basis: design
+          type: number
+          required: false
+          default: null
+          index: none
+          set_by: ["sistema"]
+          rules: ["soma de LinhaPedido.valor_linha, com IVA à taxa normal, arredondado só no total ao cêntimo, meio-para-cima (C-005, C-007)"]
+          computed: true
+          lineage: ["LinhaPedido.valor_linha"]
+          state: Confirmed
+          source: "C-005, C-007"
+          disposition: ADOPT
+        - name: "LinhaPedido.pedido"
+          name_basis: design
+          type: reference
+          required: true
+          default: null
+          index: candidate
+          set_by: ["requerente"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (C-002)"
+          disposition: ADOPT
+        - name: "LinhaPedido.item_catalogo"
+          name_basis: design
+          type: reference
+          required: true
+          default: null
+          index: none
+          set_by: ["requerente"]
+          rules: ["a proveniência do catálogo (ItemCatalogo) fica em aberto — ver open_architecture_choices"]
+          computed: false
+          lineage: []
+          state: Unknown
+          source: "design — depende de U-004/U-012"
+          disposition: ADOPT
+        - name: "LinhaPedido.quantidade"
+          name_basis: design
+          type: number
+          required: true
+          default: 1
+          index: none
+          set_by: ["requerente"]
+          rules: ["> 0"]
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (C-005)"
+          disposition: ADOPT
+        - name: "LinhaPedido.preco_unitario"
+          name_basis: design
+          type: number
+          required: true
+          default: null
+          index: none
+          set_by: ["sistema (cópia do preço vigente no momento do pedido)"]
+          rules: ["snapshot no momento do pedido — não sincroniza com alterações posteriores do catálogo"]
+          computed: false
+          lineage: ["ItemCatalogo.preco_unitario_vigente"]
+          state: Assumed
+          source: "design (C-004, C-005) — depende de U-004/U-012 para o mecanismo de cópia"
+          disposition: ADOPT
+        - name: "LinhaPedido.valor_linha"
+          name_basis: design
+          type: number
+          required: false
+          default: null
+          index: none
+          set_by: ["sistema"]
+          rules: ["quantidade × preço_unitario"]
+          computed: true
+          lineage: ["LinhaPedido.quantidade", "LinhaPedido.preco_unitario"]
+          state: Confirmed
+          source: "C-005"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.pedido"
+          name_basis: design
+          type: reference
+          required: true
+          default: null
+          index: candidate
+          set_by: ["sistema"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-3)"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.aprovador"
+          name_basis: design
+          type: reference
+          required: true
+          default: null
+          index: none
+          set_by: ["sistema (utilizador autenticado que executa a acção)"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-3)"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.papel"
+          name_basis: design
+          type: choice
+          values: ["chefia", "direcção financeira"]
+          required: true
+          default: null
+          index: none
+          set_by: ["sistema"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-1, M-2)"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.decisao"
+          name_basis: design
+          type: choice
+          values: ["aprovado", "rejeitado"]
+          required: true
+          default: null
+          index: none
+          set_by: ["chefia", "direcção financeira"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-3)"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.data_hora"
+          name_basis: design
+          type: datetime
+          required: true
+          default: "agora"
+          index: none
+          set_by: ["sistema"]
+          rules: []
+          computed: true
+          lineage: []
+          state: Confirmed
+          source: "M-3 (auditoria exige quando)"
+          disposition: ADOPT
+        - name: "RegistoAprovacao.comentario"
+          name_basis: design
+          type: text
+          required: false
+          default: null
+          index: none
+          set_by: ["chefia", "direcção financeira"]
+          rules: []
+          computed: false
+          lineage: []
+          state: Assumed
+          source: "design (M-3)"
+          disposition: ADOPT
+
+  compositions: []
+
+  relocated_responsibilities: []
+
+  proof_obligations:
+    - claim: "viabilidade do mecanismo de duplicados e da base de segurança/auditoria de O-002"
+      level: V3
+      method: "bounded pilot (mesma UAT de O-001), com submissão concorrente do mesmo conteúdo"
+      owner: "role: director de sistemas de informação"
+      funded: "não avaliado"
+
+  open_architecture_choices:
+    - choice: >
+        Autoridade de registo e mecanismo de integração para o Item de Catálogo (ler o
+        ERP-X em tempo real, por connector, vs manter cópia própria replicada) — o preço
+        é copiado (snapshot) para LinhaPedido.preco_unitario em qualquer dos dois casos,
+        mas o Item de Catálogo em si não tem autoridade de registo decidida.
+      structural: true
+      would_be_settled_by: >
+        confirmação técnica de que o ERP-X expõe interface programável (U-012) + decisão
+        do director de SI sobre tempo real vs cópia própria (U-004)
+      su_ref: U-004
+    - choice: >
+        Dimensionamento de entitlement/licenciamento das 5 populações para o ambiente
+        governado — pode mudar a viabilidade económica do candidato, não só o custo.
+      structural: false
+      would_be_settled_by: "verificação VC-05 (licensing-and-cost-drivers.md) e resposta do director de SI (U-011)"
+      su_ref: U-011
+
+app:
+  name: "Pedido de Equipamento Informático"
+  device_targets: ["desktop browser", "tablet browser"]
+  language: "pt-PT"
+  # nota: "Running it in a phone browser is not supported" para app orientada a registos
+  # (application-surfaces.md §3) — forfeit já aceite em D-002 (accepted risk U-013, TW-1).
+
+personas:
+  - id: requerente
+    label: "Requerente"
+    rbac_group: "Requerentes (âmbito: próprios registos)"
+    su_refs: [C-002, U-002]
+  - id: chefia
+    label: "Chefia"
+    rbac_group: "Chefias (âmbito: equipa/departamento; aprovação limitada ao limiar)"
+    su_refs: [M-1, C-002]
+  - id: compras
+    label: "Compras"
+    rbac_group: "Compras (âmbito: organização; regista encomenda)"
+    su_refs: [C-002, C-004]
+  - id: direcao_financeira
+    label: "Direcção Financeira"
+    rbac_group: "Direcção Financeira (âmbito: organização; aprovação acima do limiar)"
+    su_refs: [M-2, C-006]
+  - id: auditoria_interna
+    label: "Auditoria Interna"
+    rbac_group: "Auditoria Interna (âmbito: organização; leitura apenas, sem escrita)"
+    su_refs: [M-3]
+
+entities:
+  - name: Pedido
+    expected_volume: "Unknown (U-001)"
+    state_machine: ["Rascunho", "Submetido", "Aprovado chefia", "Aprovado direcção financeira", "Rejeitado", "Encomendado"]
+    su_refs: [C-002, C-003, M-1, M-2, C-006, C-008]
+    authority: pedido-aprovacao
+  - name: LinhaPedido
+    expected_volume: "Unknown (U-001) — depende do nº de linhas por pedido, não medido"
+    state_machine: []
+    su_refs: [C-005, C-007]
+    authority: pedido-aprovacao
+  - name: RegistoAprovacao
+    expected_volume: "Unknown (U-001) — um registo por decisão de aprovação"
+    state_machine: []
+    su_refs: [M-3, U-006]
+    authority: pedido-aprovacao
+  - name: ItemCatalogo
+    expected_volume: "Unknown"
+    state_machine: []
+    su_refs: [C-004, U-004, U-012]
+    authority: "none — pendente da escolha estrutural em open_architecture_choices (U-004/U-012)"
+
+navigation:
+  home:
+    requerente: PedidoListScreen  # filtrado a "os meus pedidos"
+    chefia: PedidoListScreen      # filtrado a "pendentes da minha aprovação"
+    compras: PedidoListScreen     # filtrado a "aprovados, por encomendar"
+    direcao_financeira: PedidoListScreen  # filtrado a "pendentes acima do limiar"
+    auditoria_interna: RegistoAprovacaoListScreen
+  screen_map:
+    - PedidoListScreen -> PedidoFormScreen
+    - PedidoFormScreen -> RegistoAprovacaoListScreen  # subgrid/relacionado, mesmo pedido
+
+screens:
+  - name: PedidoListScreen
+    pattern: "Gallery/List"
+    purpose: "Listar pedidos, filtrados por papel (próprios, pendentes de aprovação, aprovados por encomendar)"
+    primary_persona: [requerente, chefia, compras, direcao_financeira]
+    density: standard
+    data:
+      entity: Pedido
+      primary_columns: ["requerente", "data_pedido", "estado", "valor_total", "urgente"]
+      secondary_columns: []
+    actions:
+      primary: ["Novo pedido (requerente)"]
+      secondary: ["Filtrar", "Exportar"]
+    rbac_visibility: "por papel — ver navigation.home"
+    ui_states: ["loading", "empty (sem pedidos)", "error"]
+    su_refs: [C-002, C-008]
+  - name: PedidoFormScreen
+    pattern: "Form (com subgrid de LinhaPedido e RegistoAprovacao)"
+    purpose: "Criar/editar pedido, ver linhas, aprovar ou rejeitar (acção no formulário, nunca ecrã dedicado)"
+    primary_persona: [requerente, chefia, direcao_financeira, compras]
+    density: standard
+    data:
+      entity: Pedido
+      primary_columns: ["requerente", "data_pedido", "urgente", "justificacao_urgencia", "estado", "valor_total"]
+      secondary_columns: ["LinhaPedido (subgrid)", "RegistoAprovacao (subgrid, só leitura)"]
+    actions:
+      primary: ["Submeter (requerente)", "Aprovar (chefia | direcção financeira, conforme estado/limiar)", "Rejeitar (chefia | direcção financeira)"]
+      secondary: ["Adicionar linha", "Marcar como encomendado (compras)"]
+    rbac_visibility: "campos de aprovação visíveis só para chefia/direcção financeira quando o estado o pede; acção de encomenda só para compras"
+    ui_states: ["loading", "empty (pedido novo, sem linhas)", "error"]
+    su_refs: [C-002, C-003, M-1, M-2, C-006, C-005, C-007, X-001]
+  - name: RegistoAprovacaoListScreen
+    pattern: "Gallery/List (read-only)"
+    purpose: "Rasto de auditoria — quem aprovou o quê e quando (M-3)"
+    primary_persona: [auditoria_interna, compras]
+    density: dense
+    data:
+      entity: RegistoAprovacao
+      primary_columns: ["pedido", "aprovador", "papel", "decisao", "data_hora"]
+      secondary_columns: ["comentario"]
+    actions:
+      primary: []
+      secondary: ["Filtrar", "Exportar"]
+    rbac_visibility: "leitura apenas — sem acções de escrita"
+    ui_states: ["loading", "empty", "error"]
+    su_refs: [M-3, M-4]
+
+excluded_from_ui: []
+
+open_questions:
+  - U-004  # fonte dos preços — condiciona LinhaPedido.item_catalogo e o record_authority do catálogo
+  - U-012  # interface do ERP-X — mesma condição
+  - U-011  # entitlement/licenciamento — condiciona a viabilidade económica, não a forma
+
+validation:
+  hard_caps_checked: true
+  violations: []
