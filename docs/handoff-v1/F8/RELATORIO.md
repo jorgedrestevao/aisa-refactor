@@ -3,7 +3,7 @@
 Estado: **in_progress** — F8.0 e F8.1 integrados; a correcção da auditoria (A1–A5) está integrada e os gates da F6/F7 foram aceites de novo (2026-09-24). **Próximo: F8.2, numa sessão nova** (decisão do mantenedor). Desenho e decisões Q1–Q5: [DESENHO.md](DESENHO.md).
 
 - Data e responsável: 2026-09-24 · Claude Code, sessão `session_012oqQ6tbYUsoyZT1RPUfpcH`.
-- Repositório e branch: `jorgedrestevao/aisa-refactor`, `claude/continua-com-o-plano-xaeq46`. SHA inicial: `1dcdb61` (fim da F7, trazido de `claude/clone-repo-awui-7mmi37` por fast-forward; `main` não tem as fases F0–F7).
+- Repositório e branch: `jorgedrestevao/aisa-refactor`, `claude/continua-com-o-plano-xaeq46`. SHA inicial: `1dcdb61` (fim da F7, trazido de `claude/clone-repo-awui-7mmi37` por fast-forward; na altura, `main` não tinha as fases F0–F7 — entraram pelo PR #2, merge `188af41`, 2026-09-24).
 - Plano e fase: handoff-v1 v1.2, F8. Autorização: mensagem do mantenedor «Continua com o plano» (2026-09-24), lida como autorização para arrancar a F8 pelo desenho, como a Retoma da F7 prescreve.
 - Perfil/schema/pack afectados: F8.1 muda a skill `aisa-blueprint` (passos 15b e 17) e o `CLAUDE.md`; nenhum schema nem pack.
 
@@ -52,8 +52,8 @@ Consequência para esta fase: o passo 15b do `/blueprint` afirma que um âmbito 
 
 ## 6. Retoma (para uma sessão nova)
 
-- **Branch**: `claude/continua-com-o-plano-xaeq46` tem todo o programa (F0–F8.1 e a correcção A1–A5); `main` só tem o clone inicial. Uma sessão nova começa por `git fetch origin claude/continua-com-o-plano-xaeq46` e avança a sua branch por fast-forward a partir dela (`git merge --ff-only origin/claude/continua-com-o-plano-xaeq46`), antes de ler qualquer coisa.
-- **Última operação integrada**: registo da nova aceitação dos gates F6/F7 (2026-09-24), depois do CI #93 verde sobre `c93ff75`.
+- **Branch**: `main` tem todo o programa (F0–F8.1 e a correcção A1–A5) desde o merge do PR #2 (`188af41`, 2026-09-24). Uma sessão nova parte de `main`.
+- **Última operação integrada**: merge do PR #2 em `main` (`188af41`, 2026-09-24), com o registo da nova aceitação dos gates F6/F7 (CI #94 verde em `22c0291`).
 - **Ambiente**: `pip install -r requirements-dev.txt`; se `test_text_extract.py` falhar com `_cffi_backend`, `pip install cffi`. Regressão: `python .github/run_tests.py` (esperado 114/114, 3096) e `--list .github/stdlib-tests.txt` (95/95, 2298).
 - **Inputs necessários**: `../plan/` (v1.2), [DESENHO.md](DESENHO.md), [protocolo/](protocolo/README.md), fixtures `.claude/tests/fixtures/handoff-v1/`.
 - **Resultados recebidos e não integrados**: nenhum. Nenhuma execução-piloto começou; `projects/` não tem engagements (só `.gitkeep`).
