@@ -2146,15 +2146,26 @@ def _check_coverage(rec: dict, ctx: dict, eng: Path | None, readers, sr: dict,
                                "item sem `requirement_refs` (§4.4 exige ≥1)", item=where))
             ok = False
             refs = []
+        disposition = item.get("disposition")
         for ref in refs:
             if ctx["su_ids"] or ctx["decision_ids"]:
                 if str(ref) not in ctx["su_ids"] and str(ref) not in ctx["decision_ids"]:
-                    diags.append(_diag(COV_DEAD_REF, "error",
-                                       "requisito que não existe na Shared Understanding "
-                                       "nem nas decisões: {}".format(ref),
-                                       locator=str(ref), item=where,
-                                       resolves="corrigir o id ou escrever a linha"))
-                    ok = False
+                    # `retire` fecha uma identidade (§4.4.4 exige-a citada em toda a
+                    # revisão seguinte, para sempre); se a identidade nasceu de uma
+                    # referência que nunca chegou a resolver, a única saída doutro modo
+                    # seria reescrever a própria identidade -- o que reabre a mesma
+                    # obrigação como "desaparecida" na versão que a corrigiu. `retire`
+                    # dispensa aqui a mesma referência viva que já não dispensa a
+                    # obrigatoriedade de a citar (§4.4.1 já trata `retire`/`change` à
+                    # parte para a autoridade de âmbito, pela mesma razão).
+                    if disposition != "retire":
+                        diags.append(_diag(COV_DEAD_REF, "error",
+                                           "requisito que não existe na Shared "
+                                           "Understanding nem nas decisões: {}"
+                                           .format(ref),
+                                           locator=str(ref), item=where,
+                                           resolves="corrigir o id ou escrever a linha"))
+                        ok = False
         if item.get("source_unit_refs") is not None \
                 and not isinstance(item.get("source_unit_refs"), list):
             diags.append(_diag(COV_SCHEMA, "error",
@@ -2169,7 +2180,6 @@ def _check_coverage(rec: dict, ctx: dict, eng: Path | None, readers, sr: dict,
                                    .format(ref), locator=str(ref), item=where,
                                    resolves="corrigir a chave da unidade"))
                 ok = False
-        disposition = item.get("disposition")
         if disposition not in DISPOSITIONS:
             diags.append(_diag(COV_SCHEMA, "error",
                                "`disposition: {!r}` fora de {} (§4.4)"

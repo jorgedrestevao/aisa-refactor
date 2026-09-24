@@ -793,6 +793,35 @@ class ObligationsDoNotVanish(Harness):
         res = self.state("reconciliation")
         self.assertNoCode(res, "COV-UNREVIEWED")
 
+    def test_a_retired_obligation_with_a_dead_reference_does_not_block(self):
+        """O impasse real (F8.2, R3): uma `requirement_refs` que nunca chegou a
+        resolver (id doutro motor, escrito por engano) fica presa para sempre se
+        `retire` também exigir que ela resolva — mantê-la dá `COV-DEAD-REF`; largá-la
+        dá `COV-UNREVIEWED` (esta mesma classe, acima). `retire` tem de dispensar a
+        própria referência que está a fechar; é a saída que este disposition existe
+        para dar."""
+        rec = hydrate(self.eng, load(RECON))
+        item = rec["coverage"][1]
+        item["requirement_refs"] = ["PM-U-007"]
+        item["disposition"] = "retire"
+        item["assessment"]["status"] = "excluded"
+        item["scope_basis_refs"] = ["D-002"]
+        item["required_action"] = "—"
+        item["responsible_role"] = "arquitetura"
+        self.write(rec)
+        res = self.state("reconciliation")
+        self.assertNoCode(res, "COV-DEAD-REF")
+
+    def test_a_preserved_obligation_still_needs_a_reference_that_resolves(self):
+        """O controlo do teste acima: a dispensa é só de `retire` — qualquer outro
+        `disposition` sobre a mesma referência morta continua a dar `COV-DEAD-REF`."""
+        rec = hydrate(self.eng, load(RECON))
+        item = rec["coverage"][1]
+        item["requirement_refs"] = ["PM-U-007"]
+        self.write(rec)
+        res = self.state("reconciliation")
+        self.assertCode(res, "COV-DEAD-REF")
+
     def test_a_merge_across_versions_counts_as_treatment(self):
         self.install(RECON)
         v02 = hydrate(self.eng, load(RECON))
