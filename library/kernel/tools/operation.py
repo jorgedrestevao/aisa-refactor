@@ -78,6 +78,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -529,6 +530,31 @@ def response_from_error(exc: "OperationError", input_revision=None) -> dict:
                               "reason": str(exc)}]}
 
 
+# ------------------------------------------------------------------- segredos (T40)
+
+# handoff-v1 F6.5 (DESENHO Q4): conteúdo com um segredo não se publica. Padrões fechados e
+# estritos — um falso positivo em texto de negócio bloqueava trabalho legítimo. Uma
+# referência segura (cofre, variável, marcador) não é segredo e passa.
+SECRET_PATTERNS = (
+    ("private_key", re.compile(
+        r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")),
+    ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("github_token", re.compile(
+        r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    ("api_key_sk", re.compile(r"\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}\b")),
+    ("bearer_token", re.compile(r"\bBearer\s+[A-Za-z0-9._~+/-]{30,}=*")),
+    ("connection_password", re.compile(
+        r"(?i)\b(?:password|pwd|passwd)\s*=\s*(?![<{$%`]|@Microsoft\.KeyVault|vault:|ref:)"
+        r"[^;\s'\"]{4,}")),
+)
+
+
+def find_secrets(text: str) -> list:
+    """Os NOMES dos padrões de segredo encontrados — nunca o valor."""
+    return sorted({nome for nome, rx in SECRET_PATTERNS if rx.search(text or "")})
+
+
 # ------------------------------------------------------------------- operação
 
 _WF: dict = {}
@@ -576,6 +602,13 @@ def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = N
         raise OperationError(
             "caminho no read-set e no conjunto de escrita — a base de um ficheiro escrito "
             "declara-se em `expected`", "READ_SET_OVERLAP", {"paths": sobrepostos})
+    segredos = {rel: find_secrets(c) for rel, c in write_set.items()
+                if isinstance(c, str) and find_secrets(c)}
+    if segredos:
+        raise OperationError(
+            "conteúdo com segredo em {} — guardar a referência (cofre, variável), nunca o valor"
+            .format(", ".join(sorted(segredos))), "SECRET_IN_CONTENT",
+            {"paths": sorted(segredos), "patterns": segredos})
     rq = request_hash(write_set, read_set)
 
     prior = read_receipt(eng, operation_id)

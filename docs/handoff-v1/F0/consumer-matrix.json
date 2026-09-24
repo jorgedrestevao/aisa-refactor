@@ -963,6 +963,16 @@
      "source": "handoff-v1 F6.2",
      "mechanism": "Reads SU rows (dashboard.parse_su) to find open Unknowns of tipo proof_obligation (T34 viability blockers). Read-only.",
      "evidence": "trace.py trace (viability)"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.5",
+     "mechanism": "Copies the SU into the release package (sha256 in the index) and reads it through trace.py for readiness. Never writes it.",
+     "evidence": "release.py build, readiness"
     }
    ],
    "mention_only": [
@@ -2071,6 +2081,16 @@
      "source": "handoff-v1 F6.1",
      "via": "",
      "evidence": "handoff-scope.schema.json excludes[].authorization_ref"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.5",
+     "mechanism": "Copies decisions.md into the package; authorisation and approval blocks become authorization_refs; reads the receiver acceptance block (release sha256) for status. Writes nothing — the acceptance block text is published by the skill through resolve.py.",
+     "evidence": "release.py build, status, acceptance_block"
     }
    ],
    "mention_only": [
@@ -4603,6 +4623,16 @@
      "source": "handoff-v1 F6.3",
      "mechanism": "`estimate-check --spec` reads the rendered implementation-spec's inventory rows (WP-NNNN) for durations (EFFORT_IN_SPEC, T32). Read-only.",
      "evidence": "trace.py spec_effort_check"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.5",
+     "mechanism": "Copies the latest rendered implementation-spec into the package and checks it against the inventory (trace.derived_check spec, spec_effort_check) for the computed delivery level.",
+     "evidence": "release.py readiness, _latest_render"
     }
    ],
    "mention_only": [
@@ -6380,6 +6410,16 @@
      "source": "handoff-v1 F5.1–F5.2",
      "mechanism": "Reads _state.json.workflow (route, route_basis.authority_ref) for the route rules; in the read-set. Never writes _state.json. F5.2: `mandate` reads `pack` to confine knowledge_refs to the active pack, and the route.",
      "evidence": "review.py candidate_integrity, _reads, _workflow, mandate"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "handoff-v1 F6.5",
+     "mechanism": "Reads _state.json (workflow profile via workflow.profile_of; pack for pack_version) and copies it into the package. Never writes it.",
+     "evidence": "release.py build, _pack_version"
     }
    ],
    "mention_only": [
