@@ -11,7 +11,7 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 | Relatório da fase F2 (**concluída**; continuidade transacional: read-set, rascunho e publicação, checkpoint, retoma a frio) | [F2/RELATORIO.md](F2/RELATORIO.md) · [desenho](F2/DESENHO.md) |
 | Relatório da fase F3 (**concluída**; análise integrada, cobertura das seis perspectivas, `/frame` com revisor independente) | [F3/RELATORIO.md](F3/RELATORIO.md) · [desenho](F3/DESENHO.md) |
 | Relatório da fase F4 (**concluída**; contratos funcionais, autorização, coerência com o desenho, render) | [F4/RELATORIO.md](F4/RELATORIO.md) · [desenho](F4/DESENHO.md) |
-| Fase corrente | **F6** (autorizada em 2026-09-23) — [desenho](F6/DESENHO.md) (Q1–Q8); [relatório](F6/RELATORIO.md). F5 concluída: [relatório](F5/RELATORIO.md), [ensaios T43](F5/T43-ENSAIO.md) |
+| Fase corrente | **F6** (autorizada em 2026-09-23) — gate avaliado, aguarda aceitação — [desenho](F6/DESENHO.md) (Q1–Q8); [relatório](F6/RELATORIO.md); [ensaio T43](F6/T43-ENSAIO.md). F5 concluída: [relatório](F5/RELATORIO.md), [ensaios T43](F5/T43-ENSAIO.md) |
 | Artefactos de F0 | [F0/](F0/) |
 | Fixtures sintéticas do programa | `.claude/tests/fixtures/handoff-v1/` |
 | Teste de F0 (T02 + fixtures) | `.claude/tests/test_handoff_f0.py` |
