@@ -39,6 +39,13 @@ def _decisao(eng, bloco):
     R["publish"](eng, d["draft"])
 
 
+def _hora_do_build(pkg):
+    """A hora do build do pacote. A aceitação não pode ser anterior a ela (A1): uma hora fixa
+    no teste passa enquanto o relógio não a ultrapassa, e depois falha — ou passa pela razão
+    errada."""
+    return json.loads((Path(pkg) / REL["INDEX"]).read_text(encoding="utf-8"))["built_at"]
+
+
 def pronto(tmp, render=True, revalidar=True):
     """O pacote pronto. `revalidar=False` deixa os FC no sha do desenho anterior à mudança
     que a fixture faz — é o caso A5 da auditoria (`test_audit_f6f7.py`)."""
@@ -188,18 +195,18 @@ class Aceitacao(unittest.TestCase):
     def test_q6_acceptance_is_its_own_block_and_simulation_is_labelled(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = pronto(tmp)
-            REL["build"](eng)
+            pkg = Path(REL["build"](eng)["path"])
             with self.assertRaises(REL["ReleaseError"]):
                 REL["acceptance_block"](eng, 1, "claude", "SCOPE-0001", "")
             sim = REL["acceptance_block"](eng, 1, AU["OWNER"], "SCOPE-0001", "nenhuma",
-                                          simulated=True, timestamp="2026-09-24T10:00:00Z")
+                                          simulated=True, timestamp=_hora_do_build(pkg))
             _decisao(eng, sim)
             s = REL["status"](eng, 1)
             self.assertEqual(s["delivery_level"], "ready_for_receiver_review")
             self.assertTrue(s["acceptance"]["simulated"])
             real = REL["acceptance_block"](eng, 1, AU["OWNER"], "SCOPE-0001",
                                            "provas V2 antes do go-live",
-                                           timestamp="2026-09-24T11:00:00Z")
+                                           timestamp=_hora_do_build(pkg))
             _decisao(eng, real)
             self.assertEqual(REL["status"](eng, 1)["delivery_level"], "accepted_by_receiver")
 
@@ -208,7 +215,8 @@ class Aceitacao(unittest.TestCase):
             eng = pronto(tmp)
             pkg = Path(REL["build"](eng)["path"])
             _decisao(eng, REL["acceptance_block"](eng, 1, AU["OWNER"], "SCOPE-0001", "",
-                                                  timestamp="2026-09-24T11:00:00Z"))
+                                                  timestamp=_hora_do_build(pkg)))
+            self.assertEqual(REL["status"](eng, 1)["delivery_level"], "accepted_by_receiver")
             (pkg / "decisions.md").write_text("alterado", encoding="utf-8")
             self.assertEqual(REL["status"](eng, 1)["delivery_level"], "preliminary")
             with self.assertRaises(REL["ReleaseError"]):

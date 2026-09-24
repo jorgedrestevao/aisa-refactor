@@ -54,6 +54,9 @@ Also invoked programmatically by `aisa-start` (step 11) and `aisa-round` (step 3
    python library/kernel/tools/xlsx_extract.py --replay "<engagement>/inputs/<file>" "<engagement>/_capture/<file>.extraction.json" "<engagement>/_capture/<file>.replay.md" --log "<engagement>/_capture/_capture-log.md"
    ```
    Exit 3 = stale/failed extraction → re-run L1 once, then retry; still failing → record and continue (degradation table below).
+
+**Execution boundary — process-model authoring.** Create and update `_capture/process-model.md` inline in the main session. Its detailed output feeds subsequent analysis, so it does not meet the subagent eligibility rule in `CLAUDE.md` (→ *Delegação a subagentes*), even when the result is written to a file. Consume the required extraction, replay and normalized text outputs before authoring; explicitly record unavailable inputs. Independent extraction jobs may run in parallel. An independent review may use a subagent only after the model version to be reviewed has been written.
+
 5. **L2 — process model** (single LLM pass, only after ALL structured files did L1+L3 **and** all text files did LT — run step 5b before this step):
    a. Read every `_capture/*.extraction.json`, every `_capture/*.replay.md`, and `context.json`.
    a2. **Cross-source comprehension — source-complete in coverage, not source-total in context.** Inspect `_capture/evidence-index.md`; identify the sources and sections materially relevant to reconstructing the process; read compact process documents (`*.text.md` of a flowchart, an inputs/calculations/outputs note) **in full** where appropriate; pull **targeted** transcript passages where they suffice (a `[HH:MM:SS]` range, not the whole recording); and give **every** process-bearing source a disposition, recorded in the model header and the `_capture-log.md` L2 line:

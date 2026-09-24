@@ -349,6 +349,8 @@ Os deliverables consomem os summaries narrativos para preencher slots de prose (
 
 > **handoff-v1 (F3, F5):** o council de seis personas em paralelo foi retirado. Em vigor: Discovery = uma análise integrada das seis perspectivas, inline, + um revisor independente da cobertura (`lens-coverage-reviewer`); Framing = análise integrada + um revisor independente (`frame-reviewer`); Options = o autor técnico (`solution-architect`, inline) publica os candidatos e o router chama um `specialist-reviewer` por mandato publicado; contratos funcionais revistos pelo `fc-reviewer`. Um subagente só existe quando não precisa do contexto de quem o lança e só o veredicto volta (`library/kernel/orchestration.md` → *When a subagent is justified*). O texto abaixo é o desenho anterior, mantido como registo.
 
+O resto desta secção é **histórico** (v3, antes do handoff-v1) e não é instrução de execução: os 6/7 agentes em paralelo já não correm em nenhuma fase. Em vigor: a regra de delegação, `CLAUDE.md` → *Delegação a subagentes*; os modos por fase, `library/kernel/orchestration.md` → *Mode declaration*.
+
 Duas formas de invocar uma lens, **declaradas pela fase**:
 
 - **`mode: inline`** — A lens corre como skill no thread actual. Vê context.json + SU acumulado + lens-outputs anteriores. Sequencial, na ordem habitual (business → operations → user → data → governance → financial) — obrigatória em `/round`, livre em `/round <lens>`. Contexto partilhado entre lenses. Usado em **Discovery**.

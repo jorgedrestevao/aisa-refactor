@@ -27,6 +27,7 @@
 .claude/tests/test_coverage_phase5.py
 .claude/tests/test_dashboard_kernel_state.py
 .claude/tests/test_dashboard_memory_tab.py
+.claude/tests/test_delegation_boundary.py
 .claude/tests/test_dependents.py
 .claude/tests/test_drift_authority.py
 .claude/tests/test_extraction_limits.py
