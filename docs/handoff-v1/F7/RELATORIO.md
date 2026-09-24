@@ -32,3 +32,18 @@ Estado: **in progress** (2026-09-24). Desenho e decisões Q1–Q4: [DESENHO.md](
 - Os nós do desenho não têm impressão (o desenho é escrito pelo autor, a aprovação fixa o `sha256` do ficheiro): só resolvida, retirada e inexistente.
 - `KNOWLEDGE_CHANGED` compara o `sha256` gravado no mandato com o ficheiro actual do repositório; a prova simula a mudança editando o mandato (nenhum teste escreve em `library/`).
 - Uma linha `Confirmed` não se retira (P-21 é só para perguntas; `dashboard.parse_su` ignora o marcador): mudar uma premissa confirmada faz-se por transição nova, e a antiga só fica desactualizada para os dependentes quando o conteúdo passa a outra linha (resolvida/movida).
+
+## 5. Retoma (para uma sessão nova)
+
+Estado em 2026-09-24, depois de `6804ef2`: F7.1 e F7.2 integrados e com push; árvore limpa; full 110/110 e stdlib 91/91 verdes.
+
+Próxima acção segura: **F7.3** ([DESENHO.md](DESENHO.md) §2, decisão Q4 — sem migração nova):
+
+1. `workflow.SUPPORTED`: tabela única `artefacto → schema_version`. Todos os leitores dos artefactos handoff (estado, FC, âmbito, inventário, candidatos, pareceres, mandatos, registo `ledger.json`, índice do release) recusam uma versão fora da tabela com `SCHEMA_UNSUPPORTED`, sem tocar no ficheiro. Hoje só `workflow`, `functional`, `inventory` e `review` (candidatos) verificam.
+2. **D10** (F0): `migrate.restore` perde o `--force`. Com trabalho posterior à migração: `WORK_AFTER`, lista o que mudou, nada se escreve. Actualizar testes que usam `force=True`.
+3. Prova de rollback de código: extrair o código do fim da F5 (`56cb4e1`) para uma árvore de trabalho e correr as suas escritas (publicação da SU e das decisões) num engagement com artefactos da F6; `_design/scope.json`, `_design/work-packages.json` e `_release/` ficam byte a byte.
+4. T36 alargado nos testes; T35 fica não aplicável por decisão (opção A).
+
+Depois: F7.4 (docs — confirmar Q5 com o mantenedor antes: `docs/OPERACAO.md` novo + actualizar `ARCHITECTURE.md`/`ONBOARDING.md`) e F7.5 (relatório e gate T35/T36/T41/T42).
+
+Regras que continuam: decisões de contrato vão ao mantenedor por `AskUserQuestion` antes de código; subagentes só pela regra do README; suites completas antes de cada push.
