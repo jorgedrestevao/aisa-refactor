@@ -1,0 +1,902 @@
+<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>aisa &middot; f8-r5-fx01</title><style>
+:root{
+  --bg:#EDE9DF; --panel:#FFFFFF; --surface:#F5F2EC; --hover:#EDE9DF; --hover-warm:#F9F6F1;
+  --line:#D7CEC5; --line-soft:#E7E3DB; --deco:#B5AEA4;
+  --ink:#39383A; --ink2:#6B635B; --ink3:#7A736B; --ink-strong:#5C554D;
+  --accent:#FF5A00; --a-soft:#FFD6BC; --a-tint:#FFE7D8; --a-tint2:#FFF1E8; --a-mid:#FFB183;
+  --brand:#7A1400; --brand-press:#5C0F00; --on-a:#2B1200; --on-brand:#FFFFFF;
+  --hero:#39383A; --hero-ink:#FFFFFF; --hero-dim:rgba(255,255,255,.55);
+  --hero-txt:rgba(255,255,255,.7); --hero-rule:rgba(255,255,255,.16);
+  --hero-track:rgba(255,255,255,.12); --hero-zero:rgba(255,255,255,.35);
+  --bad:#7A1400; --warn:#8F3200;
+  --f-ui:'Montserrat','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --f-txt:'Roboto','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  --f-mono:'Roboto Mono',ui-monospace,Consolas,'Courier New',monospace;
+  --st-Confirmed-fg:#7A1400; --st-Confirmed-bg:#FFD6BC; --st-Confirmed-dot:#FF5A00;
+  --st-Assumed-fg:#8F3200; --st-Assumed-bg:#FFE7D8; --st-Assumed-dot:#FFB183;
+  --st-Unknown-fg:#7A1400; --st-Unknown-bg:#FFF1E8; --st-Unknown-dot:#FFD6BC;
+  --st-Conflicted-fg:#7A1400; --st-Conflicted-bg:#F6E2DB; --st-Conflicted-dot:#7A1400;
+  --st-Risky-fg:#5C554D; --st-Risky-bg:#E7E3DB; --st-Risky-dot:#D7CEC5;
+  --rowpad:11px 16px; --fs:13px; --clamp:3;
+  --shadow:0 1px 3px rgba(0,0,0,.05); --shadow-lift:0 2px 8px rgba(122,20,0,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191A1C; --panel:#232427; --surface:#2B2C30; --hover:#2E2F33; --hover-warm:#2E2F33;
+    --line:#3B3C42; --line-soft:#313237; --deco:#6B635B;
+    --ink:#EDE9DF; --ink2:#B5AEA4; --ink3:#9C958C; --ink-strong:#D7CEC5;
+    --a-soft:#5A2000; --a-tint:#431800; --a-tint2:#341200; --a-mid:#B85A20;
+    --brand:#FFB183; --brand-press:#FFD6BC; --on-brand:#2B1200;
+    --hero:#101113;
+    --bad:#FF8A5C; --warn:#E0A33A;
+    --st-Confirmed-fg:#FFD6BC; --st-Confirmed-bg:#5A2000; --st-Confirmed-dot:#FF5A00;
+    --st-Assumed-fg:#FFC9A5; --st-Assumed-bg:#431800; --st-Assumed-dot:#FFB183;
+    --st-Unknown-fg:#FFD6BC; --st-Unknown-bg:#341200; --st-Unknown-dot:#FFD6BC;
+    --st-Conflicted-fg:#FFC0AE; --st-Conflicted-bg:#4A1A10; --st-Conflicted-dot:#FF8A5C;
+    --st-Risky-fg:#D7CEC5; --st-Risky-bg:#33343A; --st-Risky-dot:#6B635B;
+    --shadow:0 1px 3px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191A1C; --panel:#232427; --surface:#2B2C30; --hover:#2E2F33; --hover-warm:#2E2F33;
+  --line:#3B3C42; --line-soft:#313237; --deco:#6B635B;
+  --ink:#EDE9DF; --ink2:#B5AEA4; --ink3:#9C958C; --ink-strong:#D7CEC5;
+  --a-soft:#5A2000; --a-tint:#431800; --a-tint2:#341200; --a-mid:#B85A20;
+  --brand:#FFB183; --brand-press:#FFD6BC; --on-brand:#2B1200;
+  --hero:#101113;
+  --bad:#FF8A5C; --warn:#E0A33A;
+  --st-Confirmed-fg:#FFD6BC; --st-Confirmed-bg:#5A2000; --st-Confirmed-dot:#FF5A00;
+  --st-Assumed-fg:#FFC9A5; --st-Assumed-bg:#431800; --st-Assumed-dot:#FFB183;
+  --st-Unknown-fg:#FFD6BC; --st-Unknown-bg:#341200; --st-Unknown-dot:#FFD6BC;
+  --st-Conflicted-fg:#FFC0AE; --st-Conflicted-bg:#4A1A10; --st-Conflicted-dot:#FF8A5C;
+  --st-Risky-fg:#D7CEC5; --st-Risky-bg:#33343A; --st-Risky-dot:#6B635B;
+  --shadow:0 1px 3px rgba(0,0,0,.5);
+}
+:root[data-density="compact"]{ --rowpad:6px 16px; --fs:12.5px; --clamp:2 }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:400 14px/1.55 var(--f-ui);
+     -webkit-font-smoothing:antialiased}
+a{color:var(--brand);text-underline-offset:2px}
+::selection{background:var(--brand);color:var(--on-brand)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--deco)}
+[hidden]{display:none!important}
+:where(a,button,summary,input,[tabindex]):focus-visible{outline:2px solid var(--accent);
+   outline-offset:2px;border-radius:5px}
+tr[data-id]:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition-duration:.01ms!important}}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- shell */
+.app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header.top{flex:none;min-height:64px;background:var(--panel);border-bottom:1px solid var(--line);
+   display:flex;align-items:center;gap:14px;padding:0 24px;flex-wrap:wrap}
+.wordmark{font:700 18px/1 var(--f-ui);color:var(--ink);white-space:nowrap}
+.wordmark span{font-weight:400;color:var(--ink2);margin-left:6px}
+.idblock{display:flex;align-items:center;gap:10px;padding-left:24px;
+   border-left:1px solid var(--line);margin-left:4px;flex-wrap:wrap}
+.slug{font:500 13px/1 var(--f-mono);color:var(--ink)}
+.dot4{width:4px;height:4px;border-radius:50%;background:var(--deco);flex:none}
+.phasepill{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;
+   border:1px solid var(--line);border-radius:6px;font:500 13px/1 var(--f-ui);color:var(--ink)}
+.spacer{flex:1}
+.hpill{display:inline-flex;align-items:center;gap:6px;font:700 12px/16px var(--f-txt);
+   background:var(--line-soft);color:var(--ink);padding:3px 10px;border-radius:999px;
+   border:0;white-space:nowrap}
+.hpill i{width:6px;height:6px;border-radius:50%;background:var(--ink);display:inline-block}
+.hpill.hot{background:var(--a-soft);color:var(--brand);cursor:pointer}
+.hpill.hot:hover{background:var(--brand);color:var(--on-brand)}
+.stamp{font:400 12px/1 var(--f-txt);color:var(--ink2);white-space:nowrap;
+   font-variant-numeric:tabular-nums}
+.btn{font:600 12px/1 var(--f-ui);color:var(--brand);background:var(--panel);
+   border:1px solid var(--brand);border-radius:5px;padding:8px 14px;cursor:pointer;
+   white-space:nowrap}
+.btn:hover{background:var(--a-tint)}
+.btn.solid{background:var(--brand);color:var(--on-brand)}
+.btn.solid:hover{background:var(--brand-press)}
+.btn.quiet{border-color:var(--line);color:var(--ink2)}
+.btn.quiet:hover{background:var(--surface);color:var(--ink)}
+.btn.mini{font-size:11px;padding:6px 10px;background:var(--a-soft);color:var(--brand);border:0}
+.btn.mini:hover{background:var(--brand);color:var(--on-brand)}
+.btn[aria-pressed="true"]{background:var(--a-tint);color:var(--brand);border-color:var(--brand)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg .btn{border:0;border-radius:0;padding:8px 11px;color:var(--ink2)}
+.seg .btn+.btn{border-left:1px solid var(--line)}
+.seg .btn[aria-pressed="true"]{background:var(--brand);color:var(--on-brand)}
+
+.mid{flex:1;display:flex;min-height:0}
+nav.side{flex:none;width:240px;background:var(--panel);border-right:1px solid var(--line);
+   display:flex;flex-direction:column;padding:16px 10px;gap:2px;overflow:auto}
+.navhead{font:600 10px/16px var(--f-ui);letter-spacing:.09em;text-transform:uppercase;
+   color:var(--ink2);padding:6px 10px 8px}
+.nav{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;
+   cursor:pointer;padding:10px 12px;border-radius:6px;font:500 14px/20px var(--f-ui);
+   background:transparent;color:var(--ink)}
+.nav:hover{background:var(--surface)}
+.nav[aria-selected="true"]{background:var(--brand);color:var(--on-brand);font-weight:600}
+.nav .cnt{margin-left:auto;font:700 11px/16px var(--f-txt);padding:1px 7px;border-radius:999px;
+   background:var(--line-soft);color:var(--ink-strong);font-variant-numeric:tabular-nums}
+.nav[aria-selected="true"] .cnt{background:rgba(255,255,255,.22);color:var(--on-brand)}
+.navfoot{border-top:1px solid var(--line);padding:14px 10px 4px;display:flex;
+   flex-direction:column;gap:8px;margin-top:auto}
+.navfoot .lg{display:flex;align-items:center;gap:8px}
+.navfoot .lg b{font:700 13px/1 var(--f-txt);min-width:26px;font-variant-numeric:tabular-nums}
+.navfoot .lg span{font:400 12px/1 var(--f-ui);color:var(--ink2)}
+.build{font:400 10px/14px var(--f-txt);color:var(--ink2);margin-top:4px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;background:var(--deco)}
+.sq{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none;background:var(--deco)}
+main.pane{flex:1;min-width:0;overflow:auto}
+.panel{padding:28px 32px 56px;max-width:1500px;display:flex;flex-direction:column;gap:20px}
+.panel.reg{padding:0;max-width:none;gap:0;min-height:100%}
+@media (max-width:900px){
+  nav.side{width:180px}
+  .panel{padding:20px 18px 48px}
+}
+
+/* ---------- headings */
+.eyebrow{font:600 10px/16px var(--f-ui);letter-spacing:.09em;text-transform:uppercase;
+   color:var(--ink2)}
+h1.pt{font:700 26px/1.2 var(--f-ui);letter-spacing:-.02em;margin:0;color:var(--ink)}
+.panel h1.big{font-size:32px;line-height:40px;margin:2px 0 6px}
+p.lead{font:400 15px/1.6 var(--f-txt);color:var(--ink2);margin:0;max-width:70ch}
+p.sub{font:400 13px/1.6 var(--f-txt);color:var(--ink2);margin:0;max-width:80ch}
+h2.sec{font:700 13px/1 var(--f-ui);color:var(--ink);margin:0;display:flex;
+   align-items:baseline;gap:10px;flex-wrap:wrap}
+h2.sec .n{font:700 13px/1 var(--f-txt);color:var(--ink2);font-variant-numeric:tabular-nums}
+h2.sec .x{font:400 11px/1 var(--f-ui);color:var(--ink2)}
+.blk{display:flex;flex-direction:column;gap:8px}
+
+/* ---------- cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+   box-shadow:var(--shadow)}
+.card>.hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;
+   align-items:center;justify-content:space-between;gap:10px}
+.card>.bd{padding:16px 20px}
+.pad{padding:20px}
+
+/* ---------- panorama */
+.pantop{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step{font:500 12px/1 var(--f-ui);padding:8px 14px;border-radius:999px;background:var(--panel);
+   color:var(--ink2);border:1px solid var(--line)}
+.step.on{background:var(--accent);color:var(--on-a);border-color:var(--accent);font-weight:700}
+.hero{background:var(--hero);border-radius:10px;padding:26px 28px;display:grid;
+   grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:center}
+.hero .eyebrow{color:var(--hero-dim)}
+.hero .col{display:flex;flex-direction:column;gap:14px}
+.bar{display:flex;height:18px;border-radius:9px;overflow:hidden;background:var(--hero-track)}
+.bar span{display:block}
+.stats{display:flex;gap:26px;flex-wrap:wrap}
+.stats>div{display:flex;flex-direction:column;gap:2px}
+.stats .v{font:700 26px/1 var(--f-ui);letter-spacing:-.02em;color:var(--hero-ink);
+   font-variant-numeric:tabular-nums}
+.stats .v.zero{color:var(--hero-zero)}
+.stats .l{display:flex;align-items:center;gap:6px;font:500 11px/16px var(--f-ui);
+   color:var(--hero-txt)}
+.metrics{display:flex;flex-direction:column;gap:16px;min-width:260px}
+.metric{display:flex;align-items:center;gap:16px}
+.metric+.metric{border-top:1px solid var(--hero-rule);padding-top:16px}
+.metric .v{font:700 44px/1 var(--f-ui);letter-spacing:-.03em;color:var(--hero-ink);
+   font-variant-numeric:tabular-nums}
+.metric .v.hi{color:var(--a-soft)}
+.metric .u{font:400 12px/1.5 var(--f-txt);color:var(--hero-txt);max-width:38ch}
+.cards2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:20px;
+   align-items:start}
+.todo{list-style:none;margin:0;padding:6px 20px 18px;counter-reset:t}
+.todo li{counter-increment:t;padding:14px 0;border-bottom:1px solid var(--line-soft);
+   display:flex;gap:14px;align-items:flex-start}
+.todo li:last-child{border-bottom:0}
+.todo li::before{content:counter(t,decimal-leading-zero);font:700 12px/20px var(--f-mono);
+   color:var(--ink2);min-width:18px}
+.todo .t{font:400 14px/22px var(--f-txt)}
+.todo .m{font:400 12px/18px var(--f-txt);color:var(--ink2);margin-top:6px}
+.quote{border-left:3px solid var(--a-soft);padding-left:16px;font:400 14px/1.7 var(--f-txt);
+   color:var(--ink)}
+.quote .src{display:block;margin-top:10px;font:400 11px/1 var(--f-ui);color:var(--ink3)}
+.sentence{font:400 15px/1.65 var(--f-txt);max-width:80ch}
+.sentence strong{color:var(--brand);background:var(--a-tint);padding:0 3px;border-radius:3px}
+.caret{display:inline-block;font-size:11px;color:var(--ink3);
+   transition:transform 180ms cubic-bezier(.4,0,.2,1)}
+[aria-expanded="true"]>.caret,details[open]>summary .caret{transform:rotate(90deg)}
+.gloss{padding:0 20px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+   gap:18px}
+.gloss>div{display:flex;flex-direction:column;gap:4px}
+.gloss .k{font:700 11px/16px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;
+   color:var(--brand)}
+.gloss .v{font:400 13px/1.6 var(--f-txt);color:var(--ink)}
+.rowbtn{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;
+   padding:16px 20px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+.rowbtn h3,.rowbtn .ttl{margin:0;font:700 14px/24px var(--f-ui);color:var(--ink)}
+.rowbtn .m{font:400 12px/24px var(--f-txt);color:var(--ink2)}
+
+/* ---------- toolbar (registo) */
+.toolbar{position:sticky;top:0;z-index:5;background:var(--panel);
+   border-bottom:1px solid var(--line);padding:16px 32px 12px;display:flex;
+   flex-direction:column;gap:10px}
+.trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.trow.r1{gap:14px}
+.counts{font:400 12px/1 var(--f-txt);color:var(--ink2);font-variant-numeric:tabular-nums}
+.hint{font:400 12px/1 var(--f-txt);color:var(--brand)}
+.flabel{font:600 10px/16px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;
+   color:var(--ink2);margin-right:2px}
+.vr{width:1px;height:18px;background:var(--line);margin:0 4px}
+input[type=search]{font:400 13px/1 var(--f-txt);color:var(--ink);background:var(--panel);
+   border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-width:260px;outline:none}
+input[type=search]:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(255,90,0,.28)}
+.chip{font:600 12px/1 var(--f-ui);padding:7px 12px;border-radius:999px;cursor:pointer;
+   border:1px solid var(--line);background:var(--panel);color:var(--ink2)}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.chip[aria-pressed="true"][data-tint="accent"]{background:var(--accent);color:var(--on-a);
+   border-color:var(--accent)}
+.regbody{padding:20px 32px 60px;display:flex;flex-direction:column;gap:26px}
+
+/* ---------- tables */
+.tw{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tw.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:var(--fs);font-family:var(--f-txt)}
+thead th{text-align:left;background:var(--surface);border-bottom:1px solid var(--line);
+   padding:6px 16px;font:600 11px/16px var(--f-ui);letter-spacing:.04em;text-transform:uppercase;
+   color:var(--ink2);white-space:nowrap}
+tbody td{padding:var(--rowpad);border-bottom:1px solid var(--line-soft);vertical-align:top;
+   text-align:left}
+tbody tr:last-child td{border-bottom:0}
+tbody tr[data-id]{cursor:pointer}
+tbody tr[data-id]:hover{background:var(--hover)}
+tbody tr.res .prov.idchip{text-decoration:line-through;opacity:.6}
+tbody tr.hit{background:var(--a-tint)!important;transition:background .3s}
+table.reg{table-layout:fixed}
+table.reg th.c-id,table.reg td.c-id{width:96px}
+table.reg th.c-crit,table.reg td.c-crit{width:104px}
+table.reg th.c-lens,table.reg td.c-lens{width:124px}
+table.reg th.c-verif,table.reg td.c-verif{width:116px}
+table.reg th.c-ronda,table.reg td.c-ronda{width:74px}
+td.c-lens,td.c-verif,td.c-meta{font:400 13px/20px var(--f-txt);color:var(--ink2)}
+td.c-ronda{font:400 13px/20px var(--f-mono);color:var(--ink2)}
+td.c-claim{overflow-wrap:anywhere}
+td.c-claim>div{font:400 13px/20px var(--f-txt);color:var(--ink);padding-right:16px}
+.sortb{display:flex;align-items:center;gap:5px;background:transparent;border:0;padding:0;
+   cursor:pointer;font:600 11px/16px var(--f-ui);letter-spacing:.04em;text-transform:uppercase;
+   color:var(--ink2)}
+.sortb:hover{color:var(--brand)}
+th[aria-sort] .sortb{font-weight:700;color:var(--brand)}
+h2.sec.hasdot::before{content:"";width:10px;height:10px;border-radius:3px;flex:none;
+   align-self:center;display:inline-block;background:var(--st-dot,var(--deco))}
+td.c-file{font:400 13px/20px var(--f-mono);overflow-wrap:anywhere}
+.s-Confirmed{--st-fg:var(--st-Confirmed-fg);--st-bg:var(--st-Confirmed-bg);--st-dot:var(--st-Confirmed-dot)}
+.s-Assumed{--st-fg:var(--st-Assumed-fg);--st-bg:var(--st-Assumed-bg);--st-dot:var(--st-Assumed-dot)}
+.s-Unknown{--st-fg:var(--st-Unknown-fg);--st-bg:var(--st-Unknown-bg);--st-dot:var(--st-Unknown-dot)}
+.s-Conflicted{--st-fg:var(--st-Conflicted-fg);--st-bg:var(--st-Conflicted-bg);--st-dot:var(--st-Conflicted-dot)}
+.s-Risky{--st-fg:var(--st-Risky-fg);--st-bg:var(--st-Risky-bg);--st-dot:var(--st-Risky-dot)}
+.s-Confirmed .dot,.s-Confirmed .sq,.s-Confirmed.dot,.s-Confirmed.sq{background:var(--st-Confirmed-dot)}
+.s-Assumed .dot,.s-Assumed .sq,.s-Assumed.dot,.s-Assumed.sq{background:var(--st-Assumed-dot)}
+.s-Unknown .dot,.s-Unknown .sq,.s-Unknown.dot,.s-Unknown.sq{background:var(--st-Unknown-dot)}
+.s-Conflicted .dot,.s-Conflicted .sq,.s-Conflicted.dot,.s-Conflicted.sq{background:var(--st-Conflicted-dot)}
+.s-Risky .dot,.s-Risky .sq,.s-Risky.dot,.s-Risky.sq{background:var(--st-Risky-dot)}
+.critpill{font:700 11px/16px var(--f-txt);border-radius:999px;padding:2px 8px;
+   display:inline-block;color:var(--ink3);background:transparent}
+.critpill.k-Critical{color:var(--brand);background:var(--a-soft)}
+.critpill.k-Med{color:var(--ink-strong);background:var(--line-soft)}
+.statepill{font:700 12px/16px var(--f-txt);color:var(--st-fg,var(--brand));
+   background:var(--st-bg,var(--a-tint));border-radius:999px;padding:3px 10px;
+   display:inline-block;white-space:nowrap}
+.clamp{display:-webkit-box;-webkit-line-clamp:var(--clamp);-webkit-box-orient:vertical;
+   overflow:hidden}
+.empty{font:400 13px/20px var(--f-txt);color:var(--ink2);padding:14px 16px}
+.emptycard{background:var(--panel);border:1px dashed var(--line);border-radius:8px;
+   padding:40px 24px;text-align:center;display:flex;flex-direction:column;gap:10px;
+   align-items:center}
+.emptycard .t{font:700 16px/24px var(--f-ui);color:var(--ink)}
+.emptycard .m{font:400 13px/20px var(--f-txt);color:var(--ink2)}
+.badge{font:400 10px/16px var(--f-ui);letter-spacing:.02em;border:1px solid var(--line);
+   border-radius:5px;padding:0 5px;color:var(--ink2);margin-left:5px;white-space:nowrap}
+.badge.exp{color:var(--bad);border-color:var(--bad)}
+.badge.inf,.badge.mal{color:var(--warn);border-color:var(--warn)}
+.tag{font:600 11px/16px var(--f-txt);color:var(--ink2);background:var(--line-soft);
+   padding:1px 8px;border-radius:999px;white-space:nowrap}
+.sw{font:600 11px/16px var(--f-txt);color:var(--brand);background:var(--a-tint2);
+   padding:1px 8px;border-radius:999px;white-space:nowrap}
+.sw.decisivo{background:var(--a-soft);color:var(--brand)}
+.sw.cosmetico{background:transparent;color:var(--ink3);font-weight:400}
+.cmd{font:400 12px/1.6 var(--f-mono);background:var(--hero);color:var(--a-soft);
+   padding:2px 8px;border-radius:4px;display:inline-block}
+.prov{font:500 11.5px/1.6 var(--f-mono);background:var(--a-soft);color:var(--brand);
+   padding:1px 6px;border-radius:4px;cursor:pointer;white-space:nowrap}
+.prov:hover{background:var(--brand);color:var(--on-brand)}
+.prov.idchip{font-size:12px;line-height:20px;background:var(--st-bg,var(--a-soft));
+   color:var(--st-fg,var(--brand))}
+.prov.idchip:hover{background:var(--brand);color:var(--on-brand)}
+.prov-exp{box-shadow:inset 0 -2px 0 var(--bad)}
+.prov-res{background:var(--line-soft);color:var(--ink3);text-decoration:line-through}
+
+/* ---------- notes / agenda */
+.note{background:var(--a-soft);border:1px solid var(--a-mid);border-radius:8px;
+   padding:16px 20px;display:flex;flex-direction:column;gap:6px;max-width:90ch}
+.note .eyebrow{color:var(--brand)}
+.note .bdy{font:400 14px/22px var(--f-txt);color:var(--ink)}
+.note.quiet{background:var(--panel);border-color:var(--line)}
+.note.watch{background:var(--a-tint);border-color:var(--a-mid)}
+.tally{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+   overflow:hidden;flex-wrap:wrap}
+.tally>div{flex:1;min-width:150px;padding:16px 18px;display:flex;flex-direction:column;gap:2px}
+.tally>div+div{border-left:1px solid var(--line)}
+.tally .v{font:700 30px/1.1 var(--f-ui);letter-spacing:-.02em;color:var(--ink);
+   font-variant-numeric:tabular-nums}
+.tally .l{font:500 11px/16px var(--f-ui);color:var(--ink2)}
+.tally .hot{background:var(--a-tint)}
+.tally .hot .v{color:var(--brand)}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+   display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;font:inherit;
+   color:inherit}
+.q:hover{border-color:var(--brand);box-shadow:var(--shadow-lift)}
+.q .qh{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.q .qt{font:500 13px/1.5 var(--f-ui);color:var(--ink)}
+.q .qm{display:flex;gap:8px;font:400 12px/1.5 var(--f-txt);color:var(--ink2)}
+.q .qm b{font:700 10px/18px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;
+   color:var(--ink2);min-width:42px;flex:none}
+tbody tr.agrow:hover{background:var(--hover-warm)}
+
+/* ---------- narrativa */
+.ev{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);
+   border-radius:8px;padding:20px 24px}
+.ev.story{border-left-color:var(--accent)}
+.ev.council{border-left-color:var(--hero)}
+.ev.decision{border-left-color:var(--brand)}
+.ev .k{font:700 10px/16px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;
+   padding:2px 8px;border-radius:999px;background:var(--line-soft);color:var(--ink-strong)}
+.ev.story .k{background:var(--a-soft);color:var(--brand)}
+.ev.council .k{background:var(--line-soft);color:var(--ink)}
+.ev .meta{font:400 11px/16px var(--f-txt);color:var(--ink2)}
+.ev h2{font:700 18px/26px var(--f-ui);margin:0 0 10px;color:var(--ink)}
+.ev .top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+
+/* ---------- etapas (phase documents) */
+.doc{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.doc>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;
+   flex-direction:column;gap:4px;border-bottom:1px solid var(--line-soft)}
+.doc>summary::-webkit-details-marker{display:none}
+.doc>summary:hover{background:var(--surface)}
+.doc>summary .t{display:flex;align-items:center;gap:10px}
+.doc>summary h3{margin:0;font:700 16px/24px var(--f-ui);color:var(--ink)}
+.doc>summary .m{font:400 11px/18px var(--f-txt);color:var(--ink3);padding-left:22px}
+.docbody{padding:18px 24px 24px}
+.trunc{margin-top:18px;background:var(--a-tint);border:1px solid var(--a-mid);border-radius:6px;
+   padding:12px 16px;font:400 13px/1.6 var(--f-txt);color:var(--brand)}
+
+/* ---------- rich text (markdown bodies) */
+.rich{font:400 14px/1.65 var(--f-txt);color:var(--ink)}
+.rich p{margin:0 0 12px}
+.rich h3.md-h,.rich h4.md-h,.rich h5.md-h{font-family:var(--f-ui);margin:22px 0 8px;
+   color:var(--ink2);font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700}
+.rich code{font:400 12px/1.5 var(--f-mono);background:var(--line-soft);padding:1px 5px;
+   border-radius:4px}
+.rich pre{background:var(--line-soft);padding:12px;border-radius:6px;overflow-x:auto;
+   font:400 12px/1.5 var(--f-mono)}
+.rich blockquote{margin:12px 0;padding:12px 16px;background:var(--a-tint);
+   border-left:3px solid var(--brand);border-radius:0 6px 6px 0;font-size:13px}
+.rich hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.rich ul,.rich ol{margin:0 0 12px;padding-left:20px}
+.rich li{margin:3px 0}
+.rich table{margin:10px 0;font-size:13px;border:1px solid var(--line);border-radius:6px}
+.rich th{background:var(--surface);white-space:normal;vertical-align:bottom}
+.rich td{border-bottom:1px solid var(--line-soft);padding:6px 10px;vertical-align:top;
+   overflow-wrap:anywhere}
+.rich .tw{margin:10px 0}
+.rich>p,.rich>ul,.rich>ol,.rich>blockquote{max-width:82ch}
+del{opacity:.55}
+
+/* ---------- drawer / popover / blocker */
+#dwbg{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.4);opacity:0;
+   pointer-events:none;transition:opacity .18s ease-out}
+#dwbg.on{opacity:1;pointer-events:auto}
+#dw{position:fixed;top:0;right:0;bottom:0;width:min(560px,92vw);background:var(--panel);
+   border-left:1px solid var(--line);box-shadow:-20px 0 40px rgba(0,0,0,.15);z-index:41;
+   display:flex;flex-direction:column;transform:translateX(102%);visibility:hidden;
+   transition:transform .18s ease-out}
+#dw.on{transform:none;visibility:visible}
+#dw .dwh{flex:none;padding:18px 24px;border-bottom:1px solid var(--line);display:flex;
+   align-items:center;gap:12px;flex-wrap:wrap}
+#dw .dwh .did{font:500 14px/22px var(--f-mono);color:var(--ink)}
+#dw .dwh .lens{font:400 12px/1 var(--f-ui);color:var(--ink2)}
+#dw .dwb{flex:1;overflow:auto;padding:22px 24px 40px;display:flex;flex-direction:column;gap:20px}
+#dw .claim{font:400 15px/1.65 var(--f-txt);color:var(--ink)}
+#dw .lbl{font:600 10px/16px var(--f-ui);letter-spacing:.09em;text-transform:uppercase;
+   color:var(--ink2);margin-bottom:6px}
+#dw .prosev{font:400 13px/1.6 var(--f-txt);color:var(--ink2)}
+#dw .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#dw .tile{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+   padding:10px 12px}
+#dw .tile .k{font:600 10px/16px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;
+   color:var(--ink2)}
+#dw .tile .v{font:500 13px/20px var(--f-txt);color:var(--ink);overflow-wrap:anywhere}
+#dw .alert{background:var(--a-tint);border:1px solid var(--a-mid);border-radius:6px;
+   padding:12px 14px;font:400 13px/1.6 var(--f-txt);color:var(--brand)}
+#pop{position:fixed;z-index:60;max-width:440px;background:var(--panel);border:1px solid var(--line);
+   border-radius:8px;padding:10px 13px;box-shadow:var(--shadow);font:400 12.5px/1.5 var(--f-txt);
+   display:none;color:var(--ink)}
+#pop b{display:block;margin-bottom:3px}
+#blk{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--brand);
+   color:var(--on-brand);padding:9px 16px;font:400 13px/1.5 var(--f-txt);display:none;
+   text-align:center}
+
+/* ---------- error page shell (error_page reuses .wrap/.note/.foot) */
+.wrap{max-width:1000px;margin:0 auto;padding:24px 22px 80px}
+.foot{font:400 11.5px/1.6 var(--f-txt);color:var(--ink2);margin-top:34px;
+   border-top:1px solid var(--line);padding-top:12px;max-width:90ch;
+   font-variant-numeric:tabular-nums}
+pre{background:var(--line-soft);padding:12px;border-radius:8px;overflow-x:auto;
+    font:400 12px/1.5 var(--f-mono)}
+
+@media print{
+  .noprint{display:none!important}
+  html,body{background:#fff}
+  .app{height:auto!important;overflow:visible!important;display:block!important}
+  .mid{display:block!important}
+  main.pane{overflow:visible!important;height:auto!important}
+  .panel{padding:0 0 12px!important;max-width:none!important;display:block!important}
+  .panel::before{content:attr(data-title);display:block;font:700 20px/1.3 var(--f-ui);
+     margin:16px 0 10px}
+  .toolbar{position:static!important}
+  .clamp{display:block;-webkit-line-clamp:none;overflow:visible}
+  .card,.tw,.q,.ev,.doc{box-shadow:none;break-inside:avoid}
+  tr,.ev,.q{break-inside:avoid}
+  .hero{background:#fff;color:#000;border:1px solid var(--line)}
+  .hero .eyebrow,.hero .u,.hero .l{color:#333}
+  .hero .v{color:#000}
+  a[href]::after{content:""}
+}
+
+.kstate{margin:0 0 14px;padding:12px 14px;border-radius:8px;
+  border:1px solid #c2410c;background:#fff7ed;color:#7c2d12;font-size:13px;line-height:1.5}
+.kstate b{color:#9a3412}
+.kstate ul{margin:8px 0 0;padding-left:18px}
+.kstate code{background:#ffedd5;padding:1px 5px;border-radius:4px;font-size:12px}
+@media(prefers-color-scheme:dark){.kstate{background:#2a1408;border-color:#9a3412;color:#fed7aa}
+  .kstate b{color:#fdba74}.kstate code{background:#431407}}
+</style></head><body><!-- aisa-dashboard v1.18.0 build 360084ea2796 2026-09-24T16:46:58 --><div class="app"><header class="top"><span class="wordmark">aisa<span>discovery</span></span><span class="idblock"><span class="slug">f8-r5-fx01</span><span class="dot4"></span><span class="phasepill" title="phase discovery · round R-00">Ouvir e perguntar (R-01)</span></span><span class="spacer"></span><span class="hpill" title="Percentagem de linhas dentro do prazo de revalidação"><i></i>registo fresco 100%</span><button class="hpill hot" data-tab="agenda">0 graves em aberto</button><span class="stamp">2026-09-24 16:46 &middot; <b id="cd">5s</b></span><button class="btn quiet noprint" id="pause">pausar</button><span class="seg noprint" title="Densidade da página"><button class="btn" data-dens="cosy">confortável</button><button class="btn" data-dens="compact">compacto</button></span><button class="btn quiet noprint" id="theme">tema auto</button><button class="btn noprint" id="printtab">Imprimir separador</button><button class="btn quiet noprint" id="printall">tudo</button></header><div class="mid"><nav class="side noprint" role="tablist" aria-orientation="vertical" aria-label="Separadores do relatório"><div class="navhead">O projecto</div><button class="nav" role="tab" id="tab-panorama" data-tab="panorama" aria-controls="panel-panorama" aria-selected="true" aria-label="Panorama">Panorama</button><button class="nav" role="tab" id="tab-outputs" data-tab="outputs" aria-controls="panel-outputs" aria-selected="false" aria-label="Etapas, 1 linhas" title="Outputs de fase: frame.md, options.md, premortem, síntese, blueprint">Etapas <span class="cnt">1</span></button><button class="nav" role="tab" id="tab-agenda" data-tab="agenda" aria-controls="panel-agenda" aria-selected="false" aria-label="Agenda, 0 linhas" title="Meeting agenda: Unknown por custo e swing">Agenda <span class="cnt">0</span></button><button class="nav" role="tab" id="tab-estado" data-tab="estado" aria-controls="panel-estado" aria-selected="false" aria-label="Registo, 4 linhas" title="Shared Understanding: Confirmed · Assumed · Unknown · Conflicted · Risky">Registo <span class="cnt">4</span></button><button class="nav" role="tab" id="tab-memoria" data-tab="memoria" aria-controls="panel-memoria" aria-selected="false" aria-label="Memória" title="De que pergunta veio cada facto, e se a memória do projecto bate certo com o registo">Memória</button><button class="nav" role="tab" id="tab-narrativa" data-tab="narrativa" aria-controls="panel-narrativa" aria-selected="false" aria-label="Narrativa, 2 linhas" title="story.md, council-log.md, decisions.md">Narrativa <span class="cnt">2</span></button><button class="nav" role="tab" id="tab-artefactos" data-tab="artefactos" aria-controls="panel-artefactos" aria-selected="false" aria-label="Ficheiros, 21 linhas" title="Artefactos do engagement">Ficheiros <span class="cnt">21</span></button><div class="navfoot"><div class="navhead" style="padding:0">Registo por estado</div><div class="lg s-Confirmed"><span class="dot"></span><b>4</b><span>confirmado</span></div><div class="lg s-Assumed"><span class="dot"></span><b>0</b><span>assumido</span></div><div class="lg s-Unknown"><span class="dot"></span><b>0</b><span>por saber</span></div><div class="lg s-Conflicted"><span class="dot"></span><b>0</b><span>em conflito</span></div><div class="lg s-Risky"><span class="dot"></span><b>0</b><span>risco</span></div><div class="build">build 360084ea2796</div></div></nav><main class="pane" id="pane"><section class="panel" role="tabpanel" id="panel-panorama" aria-labelledby="tab-panorama" tabindex="0" data-tab="panorama" data-title="Panorama"><div class="pantop"><div><div class="eyebrow">Panorama</div><h1 class="pt big">Onde estamos</h1><p class="lead">Estamos a ouvir e a perguntar. 1 passagem até agora (R-00). O registo tem 4 afirmações vivas e nenhum tema grave em aberto.</p></div><div class="stepper"><span class="step on" title="discovery">Ouvir e perguntar</span><span class="step" title="framing">A frase do problema</span><span class="step" title="options">As alternativas</span><span class="step" title="decision">A escolha</span></div></div><div class="hero"><div class="col"><div class="eyebrow">O registo do que sabemos &middot; linhas vivas</div><div class="bar"><span class="s-Confirmed" style="width:100.000%;background:var(--st-Confirmed-dot)" title="Confirmado: 4"></span></div><div class="stats"><div><span class="v">4</span><span class="l"><span class="dot s-Confirmed"></span>confirmado</span></div><div><span class="v zero">0</span><span class="l"><span class="dot s-Assumed"></span>assumido</span></div><div><span class="v zero">0</span><span class="l"><span class="dot s-Unknown"></span>por saber</span></div><div><span class="v zero">0</span><span class="l"><span class="dot s-Conflicted"></span>em conflito</span></div><div><span class="v zero">0</span><span class="l"><span class="dot s-Risky"></span>risco</span></div></div></div><div class="metrics"><div class="metric"><div class="v hi">0</div><div><div class="eyebrow">Graves em aberto</div><div class="u">Nada grave em aberto neste momento.</div></div></div><div class="metric" title="Percentagem de linhas dentro do prazo de revalidação (saúde epistémica) — não é uma medida de saúde do projecto"><div class="v">100%</div><div><div class="eyebrow">Frescura do registo</div><div class="u">4 em prazo &middot; 0 por reconfirmar, de 4</div></div></div></div></div><div class="cards2"><div class="card"><div class="hd"><span class="eyebrow">A fazer a seguir</span><button class="btn mini" data-tab="agenda">Ver agenda</button></div><ol class="todo"><li><div><div class="t">Sem itens Critical abertos.</div><div class="m"><span class="cmd">/frame</span></div></div></li></ol></div><div class="card pad"><div class="eyebrow" style="margin-bottom:12px">Último capítulo &middot; -</div><div class="quote">A directora administrativa da Organização Exemplo pediu ajuda: os reembolsos de despesas de deslocação demoram semanas e há queixas todos os meses. Não sabe se deve melhorar o que já existe, comprar uma ferramenta pronta ou construir algo de raiz — e precisa de uma recomendação com custos para levar à administração. Não aprova orçamento sozinha: a decisão de avançar depende da aprovação da administração, e o limiar&hellip;<span class="src">Episódio 1 — O pedido</span></div><button class="btn quiet" data-tab="narrativa" style="margin-top:16px">Ler o resto na Narrativa</button></div></div><div class="card"><button class="rowbtn" id="glossbtn" aria-expanded="false" aria-controls="gloss"><span class="caret" aria-hidden="true">&#9656;</span><span class="ttl">Como ler este relatório</span><span class="m">termos, estados e contagens</span></button><div class="gloss" id="gloss" hidden><div><span class="k">Registo (shared understanding)</span><span class="v">A lista de tudo o que se sabe sobre o processo. Cada linha é uma afirmação com identificador, evidência e data de verificação. A fonte de verdade é <code>shared-understanding.md</code>.</span></div><div><span class="k">Confirmado</span><span class="v">Afirmação verificada com evidência citada (ficheiro, passagem de reunião ou declaração do dono do processo).</span></div><div><span class="k">Assumido</span><span class="v">Hipótese aceite para avançar, ainda sem evidência que a feche.</span></div><div><span class="k">Por saber</span><span class="v">Pergunta em aberto. É o que a Agenda organiza por custo de obter a resposta.</span></div><div><span class="k">Em conflito</span><span class="v">Duas evidências dizem coisas diferentes; precisa de arbitragem antes de ser usada.</span></div><div><span class="k">Risco</span><span class="v">Afirmação que, a confirmar-se, muda o custo ou a viabilidade do que se está a desenhar.</span></div><div><span class="k">Passagem (R-00)</span><span class="v">Cada passagem das perspectivas pelo material. A primeira (R-00) é o enquadramento declarado pelo dono do processo.</span></div><div><span class="k">Perspectiva</span><span class="v">O ângulo com que a passagem olhou: enquadramento.</span></div><div><span class="k">Grave</span><span class="v">Item por saber ou em conflito que bloqueia a passagem à etapa seguinte.</span></div><div><span class="k">Contagens</span><span class="v">O registo tem 4 linhas no total: as 4 vivas contam para os números do topo, as 0 resolvidas ficam escondidas até activares «mostrar resolvidas». As contagens da Agenda sobrepõem-se — o mesmo item pode ser grave e pedir reunião; o separador conta 0 perguntas em aberto.</span></div><div><span class="k"><code>/answer</code>, <code>/frame</code></span><span class="v">Comandos do processo: <code>/answer</code> registra a resposta a uma pergunta em aberto, <code>/frame</code> fecha o enquadramento e passa à etapa seguinte.</span></div><div><span class="k">Frescura do registo</span><span class="v">Percentagem de afirmações dentro do prazo de revalidação. Não é uma medida de saúde do projecto: 4 afirmações vivas e 0 temas graves em aberto podem coexistir com 100%.</span></div></div></div></section><section class="panel" role="tabpanel" id="panel-outputs" aria-labelledby="tab-outputs" tabindex="0" data-tab="outputs" data-title="Etapas" hidden><div><div class="eyebrow">O que cada etapa produziu</div><h1 class="pt">Etapas</h1></div><p class="sub">Por extenso. Os documentos da etapa actual abrem expandidos; os anteriores ficam recolhidos. Os identificadores do registo são clicáveis.</p><div class="eyebrow" style="margin-top:14px">Ouvir e perguntar</div><details class="doc" open><summary><div class="t"><span class="caret" aria-hidden="true">&#9656;</span><h3>Modelo de processo</h3></div><div class="m">R-01 &middot; 14241 caracteres &middot; render truncado &middot; 0 identificadores do registo &middot; <a href="_capture/process-model.md">_capture/process-model.md</a></div></summary><div class="docbody rich"><blockquote>Sources: pedido.md (740e9e0c), entrevista-financas.md (b9e311ac), politica-rh.md (58b8ff72), nota-ti.md (ae4ab795)  |  Generated: 2026-09-24T16:40:00Z  |  Capture run: 1 Source dispositions: pedido.md USED · entrevista-financas.md USED · politica-rh.md USED · nota-ti.md USED</blockquote><h4 class="md-h">1. File map</h4><ul><li><code>pedido.md</code> — o pedido síntetico da directora administrativa (quem pediu, o quê, âmbito). Todo o ficheiro é material (<code>USED</code>): 4 parágrafos, sem secções a descartar.</li><li><code>entrevista-financas.md</code> — notas de entrevista com o responsável de contabilidade: descreve o fluxo actual, o volume, o limiar de aprovação (versão oral), o esforço da contabilidade, os problemas do dia-a-dia e uma preferência pessoal por uma ferramenta pronta. Todo o ficheiro é material (<code>USED</code>): 6 parágrafos.</li><li><code>politica-rh.md</code> — excerto da política interna de deslocações (versão 3): quatro regras escritas (limiar de aprovação, recibo obrigatório, taxa por km, retenção de comprovativos). Todo o ficheiro é material (<code>USED</code>): 4 parágrafos.</li><li><code>nota-ti.md</code> — nota do responsável de sistemas: o ERP-X e o seu alcance actual, uma suspeita de licenciamento low-code por confirmar, a ausência de orçamento aprovado, e três alternativas ouvidas informalmente na casa. Todo o ficheiro é material (<code>USED</code>): 4 parágrafos.</li></ul><p>Nenhuma fonte estruturada (<code>.xlsx</code>/<code>.xlsm</code>) nesta captura.</p><h4 class="md-h">2. Column classification</h4><p>Sem fonte estruturada nesta captura — não há colunas a classificar.</p><h4 class="md-h">3. Business rules (PM-NNN)</h4><p>Sem fonte estruturada nesta captura — nenhuma regra <code>PM-NNN</code> extraída de fórmula, validação ou formatação condicional. As regras de negócio detectadas nas fontes de texto entram na síntese (§4) e já estão registadas como invariantes do dono em <code>enquadramento.md</code> (M-1..M-4) e na Shared Understanding (Confirmed); não são duplicadas aqui.</p><h4 class="md-h">4. Process synopsis (cross-source)</h4><p><strong>Purpose</strong></p><p><code>OBSERVED</code> O processo existe para processar o reembolso de despesas de deslocação de colaboradores — submissão, aprovação e pagamento. (<code>pedido.md · §Pedido (sintético) ¶4</code>)</p><p><strong>End-to-end flow</strong></p><p><code>OBSERVED</code> Começa quando o colaborador preenche uma folha de cálculo por deslocação e a envia por email com fotografias dos recibos. (<code>entrevista-financas.md · §Notas de entrevista — responsável de contabilidade (sintético) ¶1</code>) <code>OBSERVED</code> A contabilidade copia os valores da folha do colaborador para outra folha, e depois para o ERP-X. (<code>entrevista-financas.md ¶1</code>) <code>OBSERVED</code> A aprovação acontece nalgum ponto desse percurso, condicionada pelo valor do pedido — a chefia directa abaixo do limiar, a direcção financeira acima. (<code>entrevista-financas.md ¶3</code>; <code>enquadramento.md#T3</code>) <code>UNKNOWN</code> <code>chain: ponto de aprovação</code> Em que ponto exacto do percurso a aprovação é registada — antes ou depois da cópia para o ERP-X — e se bloqueia o passo seguinte antes de ser dada: nenhuma fonte descreve o mecanismo. (o que resolveria: PM-U-004) <code>OBSERVED</code> Frequência: cerca de 300 pedidos por mês, valor dito de memória pela contabilidade, sem registo mostrado. (<code>entrevista-financas.md ¶2</code>)</p><p><strong>Actors</strong></p><p><code>OBSERVED</code> O colaborador que se desloca preenche e envia o pedido. (<code>enquadramento.md#T1</code>) <code>OBSERVED</code> A chefia directa aprova pedidos abaixo do limiar. (<code>enquadramento.md#T1</code>; <code>entrevista-financas.md ¶3</code>) <code>OBSERVED</code> A direcção financeira/o director financeiro aprova pedidos acima do limiar. (<code>enquadramento.md#T1</code>; <code>entrevista-financas.md ¶3</code>; <code>politica-rh.md ¶1</code>) <code>OBSERVED</code> A contabilidade processa e paga, e faz as duas cópias manuais (folha → folha → ERP-X). (<code>enquadramento.md#T1</code>; <code>entrevista-financas.md ¶1</code>) <code>UNKNOWN</code> <code>actor: autoridade formal por saber</code> Quem manda formalmente no processo — o próprio dono declara não saber dizer. (<code>enquadramento.md#T1</code>; PM-U-005)</p><p><strong>Inputs</strong></p><p><code>OBSERVED</code> A folha de cálculo por deslocação preenchida manualmente pelo colaborador, com fotografias dos recibos anexadas por email — manual, por pedido. (<code>entrevista-financas.md ¶1</code>) <code>UNKNOWN</code> A &quot;outra folha&quot; para onde a contabilidade copia os valores antes do ERP-X — ficheiro não entregue nesta captura. (RESPOSTA F8 ao pedido de artefacto nomeado, piloto) <code>UNKNOWN</code> A taxa por quilómetro em vigor — fixada em deliberação da administração não entregue nesta captura. (<code>enquadramento.md#M-3</code>; <code>politica-rh.md ¶3</code>; PM-U-002)</p><p><strong>Transformation / calculation stages</strong></p><p><code>OBSERVED</code> <code>chain: reembolso completo</code> colaborador preenche folha → envia por email com recibos → contabilidade copia valores para segunda folha → contabilidade copia para ERP-X → aprovação (chefia directa ou director financeiro, por valor) → pagamento ao colaborador. (<code>entrevista-financas.md ¶1, ¶3</code>; <code>enquadramento.md#T3, #T4</code>) <code>HYPOTHESIS</code> <code>chain: ordem aprovação vs ERP-X</code> A ordem exacta entre &quot;aprovação&quot; e &quot;registo no ERP-X&quot; não está fixada pelas fontes — pode ser em qualquer sentido. (o que resolveria: PM-U-004)</p><p><strong>Intermediate state</strong></p><p><code>OBSERVED</code> Existe um estado intermédio: uma segunda folha interna da contabilidade, entre a folha do colaborador e o ERP-X. (<code>entrevista-financas.md ¶1</code>)</p><p><strong>Decisions</strong></p><p><code>OBSERVED</code> Decisão de aprovar/rejeitar um pedido, por valor: chefia directa abaixo do limiar, direcção financeira acima. (<code>entrevista-financas.md ¶3</code>; <code>politica-rh.md ¶1</code>) <code>OBSERVED</code> (conflito) <code>conflict: limiar de aprovação</code> O valor do limiar diverge entre fontes: a entrevista e a declaração do dono dizem 500€ (<code>entrevista-financas.md ¶3</code>), a política escrita diz 250€ (<code>politica-rh.md ¶1</code>). O próprio dono já sinalizou não saber qual vale (<code>enquadramento.md#M-2</code>). Isto é uma linha Conflicted candidata para a SU, não uma escolha desta captura.</p><p><strong>Outputs and consumers</strong></p><p><code>OBSERVED</code> <code>Outputs pagamento</code> Output = pagamento ao colaborador; consumidor = o colaborador. (<code>enquadramento.md#T4</code>) <code>UNKNOWN</code> <code>outputs: critério de sucesso do pagamento</code> Critério de sucesso do pagamento — o dono não sabe dizer como se confirma que &quot;correu bem&quot;. (<code>enquadramento.md#T4</code>)</p><p><strong>Exceptions and workarounds</strong></p><p><code>OBSERVED</code> <code>exception: duplicados</code> Pedidos em duplicado quando o colaborador reenvia o email. (<code>entrevista-financas.md ¶5</code>) <code>OBSERVED</code> <code>exception: recibo ilegível</code> Recibo ilegível bloqueia o reembolso — recibo obrigatório é invariante. (<code>politica-rh.md ¶2</code>; <code>enquadramento.md#M-1</code>) <code>OBSERVED</code> <code>exception: email perdido</code> Pagamentos atrasados quando o email se perde. (<code>entrevista-financas.md ¶5</code>)</p><p><strong>Business invariants</strong></p><p><code>OBSERVED</code> <code>invariant: recibo obrigatório</code> Sem recibo digitalizado legível não há reembolso. (<code>enquadramento.md#M-1</code>; <code>politica-rh.md ¶2</code>) <code>OBSERVED</code> <code>invariant: limiar por valor (conflituoso)</code> Existe um limiar de valor que determina quem aprova; o número diverge entre fontes (500€ vs 250€) — ver conflito acima. (<code>enquadramento.md#M-2</code>; <code>entrevista-financas.md ¶3</code>; <code>politica-rh.md ¶1</code>) <code>UNKNOWN</code> <code>invariant: taxa-km</code> A taxa por quilómetro é fixada por deliberação da administração; não disponível nesta captura. (<code>enquadramento.md#M-3</code>; <code>politica-rh.md ¶3</code>) <code>UNKNOWN</code> <code>invariant: retenção</code> Os comprovativos são conservados pelo prazo legal aplicável; o número de anos não está declarado. (<code>enquadramento.md#M-4</code>; <code>politica-rh.md ¶4</code>)</p><p><strong>Structural constraints</strong></p><p><code>OBSERVED</code> <code>constraint: ERP-X existente</code> Existe um sistema ERP-X com uma interface para registar pagamentos a colaboradores, nunca usada para reembolsos. (<code>nota-ti.md ¶1</code>) <code>HYPOTHESIS</code> <code>constraint: licenciamento por confirmar</code> Pode já existir licenciamento de uma plataforma low-code no contrato corporativo — TI acredita que sim, mas não confirma; compras teria de confirmar. Entidade e mecanismo tratados de forma neutra — nenhum fornecedor ou produto nomeado (facto sobre um contrato já existente, não uma solução proposta). (<code>nota-ti.md ¶2</code>; PM-U-007) <code>OBSERVED</code> <code>constraint: sem orçamento aprovado</code> Não existe orçamento aprovado para este projecto; qualquer custo recorrente precisa de aprovação da administração. (<code>nota-ti.md ¶3</code>; <code>context.json.funding_gate</code>)</p><p><strong>Material user tasks</strong></p><p><code>OBSERVED</code> <code>task: preenchimento manual</code> O colaborador preenche manualmente uma folha de cálculo por deslocação e anexa fotografias de recibos por email. (<code>entrevista-financas.md ¶1</code>) <code>OBSERVED</code> <code>task: dupla transcrição manual</code> A contabilidade transcreve manualmente os valores da folha do colaborador para uma segunda folha, e depois para o ERP-X — duas cópias manuais antes do sistema final. (<code>entrevista-financas.md ¶1</code>)</p><p><strong>Genuine vs accidental complexity</strong></p><p><code>HYPOTHESIS</code> A dupla cópia manual (folha do colaborador → segunda folha → ERP-X) parece decorrer da falta de integração entre a folha e o ERP-X, não de uma necessidade de negócio — isto não está directamente evidenciado pelas fontes, fica hipótese a confirmar em Discovery. (<code>entrevista-financas.md ¶1</code>)</p><p><strong>Material unresolved semantics</strong></p><p><code>UNKNOWN</code> <code>conflict: limiar de aprovação</code> Qual o limiar de aprovação que vale — 500€ ou 250€ — e qual a fonte autorizada para o corrigir. (<code>entrevista-financas.md ¶3</code> vs <code>politica-rh.md ¶1</code>; <code>enquadramento.md#M-2</code>) <code>UNKNOWN</code> <code>actor: autoridade formal por saber</code> Quem manda formalmente no processo. (<code>enquadramento.md#T1</code>) <code>UNKNOWN</code> <code>outputs: critério de sucesso do pagamento</code> Como se confirma que um pagamento &quot;correu bem&quot;. (<code>enquadramento.md#T4</code>) <code>UNKNOWN</code> <code>custo actual: horas e valor</code> Quantas horas por semana a contabilidade gasta neste processo, e qual o custo total actual. (<code>entrevista-financas.md ¶4</code>) <code>OBSERVED</code> <code>sinal: preferência por ferramenta pronta</code> A responsável de contabilidade manifestou preferência pessoal por comprar uma ferramenta pronta, já vista numa feira — não é requisito nem invariante do dono do pedido (a directora administrativa); sinal a pesar pelas perspectivas de negócio/financeira antes das Options, para não estreitar alternativas prematuramente. (<code>entrevista-financas.md ¶6</code>)</p><h4 class="md-h">4bis. Cadeia de cálculo (por saída)</h4><p>calc-chain: absent (sem fonte estruturada nesta captura)</p><h4 class="md-h">5. Anomalies &amp; silent failures</h4><p>Sem fonte estruturada nesta captura — não há replay nem anomalias de fórmula a reportar.</p><h4 class="md-h">6. Interrogation list (PM-U-NNN)</h4><div class="tw"><table><thead><tr><th>id</th><th>question</th><th>why it matters</th><th>suggested respondent (role)</th><th>criticidade</th><th>custo</th><th>swing</th><th>classe</th><th>tipo</th><th>impacto</th></tr></thead><tbody><tr><td>PM-U-001</td><td>Qual o limiar de aprovação correcto — 500€ (entrevista/dono) ou 250€ (política escrita)?</td><td>Determina quem aprova cada pedido e a rota de aprovação que qualquer solução tem de implementar; sem isto o desenho da regra de aprovação fica indeterminado.</td><td><code>role: direcção financeira</code> | <code>fonte: política interna de deslocações actualizada</code></td><td>Critical</td><td>documento</td><td>dimensionante — muda a regra de aprovação (quem aprova cada pedido, por valor) que qualquer solução tem de codificar</td><td>processo</td><td>conflict</td><td>funcional, aceitacao: regra e critério de aceitação de &quot;quem tinha de aprovar este pedido&quot;</td></tr><tr><td>PM-U-002</td><td>Qual a taxa por quilómetro em vigor (deliberação da administração)?</td><td>Necessária para calcular correctamente o reembolso em viatura própria; sem ela não se valida nem constrói a regra de cálculo.</td><td><code>role: administração</code> | <code>fonte: deliberação da administração sobre taxa por km</code></td><td>Critical</td><td>documento</td><td>dimensionante — muda o valor usado na fórmula de cálculo do reembolso por km</td><td>processo</td><td>fact_gap</td><td>funcional: fórmula de cálculo do reembolso por quilómetro</td></tr><tr><td>PM-U-003</td><td>Por quantos anos se conservam os comprovativos de despesa (prazo legal aplicável)?</td><td>Define o requisito de retenção/arquivo que a solução tem de implementar.</td><td><code>role: direcção financeira / jurídico</code> | <code>fonte: enquadramento legal aplicável à retenção de comprovativos</code></td><td>Med</td><td>documento</td><td>dimensionante — muda o prazo de retenção/arquivo a implementar</td><td>processo</td><td>fact_gap</td><td>operacao: prazo de retenção/arquivo dos comprovativos</td></tr><tr><td>PM-U-004</td><td>Em que ponto exacto do percurso a aprovação é registada — antes ou depois da cópia para o ERP-X — e bloqueia o passo seguinte?</td><td>Define se a solução tem de impedir o pagamento antes da aprovação ou apenas registá-la depois — afecta o desenho do controlo de fluxo.</td><td><code>role: contabilidade</code> | <code>fonte: observação directa do processo actual</code></td><td>Critical</td><td>reuniao</td><td>dimensionante — muda o desenho do gate de aprovação no fluxo</td><td>processo</td><td>fact_gap</td><td>funcional: onde o controlo de aprovação bloqueia o passo seguinte</td></tr><tr><td>PM-U-005</td><td>Quem manda formalmente no processo, além dos papéis de aprovação por valor?</td><td>Relevante para a governação do processo e para quem autoriza excepções não previstas nas regras de valor.</td><td><code>role: administração</code> | <code>fonte: organograma / regulamento interno</code></td><td>Low</td><td>email</td><td>dimensionante — define papéis/permissões de governação no desenho futuro</td><td>processo</td><td>fact_gap</td><td>operacao: papéis e permissões de governação do processo</td></tr><tr><td>PM-U-006</td><td>Quantas horas por semana a contabilidade gasta neste processo, e qual o custo total actual?</td><td>Necessário para quantificar o caso de negócio (poupança esperada) e o retorno de qualquer opção.</td><td><code>role: contabilidade / direcção financeira</code> | <code>fonte: medição de tempos (não existe registo hoje)</code></td><td>High</td><td>spike</td><td>dimensionante — muda a quantificação do caso de negócio/poupança de qualquer opção</td><td>processo</td><td>fact_gap</td><td>viabilidade: quantificação do custo actual / caso de negócio</td></tr><tr><td>PM-U-007</td><td>Existem já licenças de uma plataforma low-code no contrato corporativo?</td><td>Pode alterar o custo incremental de qualquer opção que dependa de licenciamento — entitlement já existente muda o cálculo de viabilidade.</td><td><code>role: compras</code> | <code>fonte: contrato corporativo de licenciamento</code></td><td>Med</td><td>email</td><td>decisivo — pode tornar mais barata qualquer opção que dependa desse licenciamento, mudando qual sobrevive em Options</td><td>processo</td><td>fact_gap</td><td>viabilidade: custo incremental de licenciamento por opção</td></tr></tbody></table></div><h4 class="md-h">7. Not captured</h4><p>Nenhuma fonte estruturada nesta captura — não há VBA, folhas protegidas, fórmulas por ler nem intervalos nomeados. As 4 fontes de texto extraíram todas com estado <code>ok</code>; nenhuma falhou, foi saltada ou ficou vazia. Ficheiros nomeados na entrevista mas não entregues (a folha de cálculo do colaborador, a segunda folha da contabilidade, um export/documentação do ERP-X, a deliberação da administração sobre a taxa por km) ficam registados como <code>UNKNOWN</code>/<code>TO-READ</code> acima (PM-U-002, PM-U-004) e no pedido de artefacto nomeado deste piloto — nenhum foi entregue até esta captura.</p><div class="trunc">O que está acima é um render parcial do documento (14241 caracteres no total). O texto integral está em <a href="_capture/process-model.md">_capture/process-model.md</a>.</div></div></details></section><section class="panel" role="tabpanel" id="panel-agenda" aria-labelledby="tab-agenda" tabindex="0" data-tab="agenda" data-title="Agenda" hidden><div><div class="eyebrow">O que vale o tempo de uma reunião</div><h1 class="pt">Agenda</h1></div><div class="note"><span class="eyebrow">Próxima acção</span><div class="bdy">Sem itens Critical abertos. <span class="cmd">/frame</span></div></div><div class="tally"><div class="hot"><span class="v">0</span><span class="l">mudam o caminho</span></div><div><span class="v">0</span><span class="l">graves</span></div><div><span class="v">0</span><span class="l">pedem reunião</span></div><div><span class="v">0</span><span class="l">por outro canal</span></div><div><span class="v">0</span><span class="l">não mudam nada</span></div></div><p class="sub">As contagens acima sobrepõem-se: o mesmo item pode ser grave e pedir reunião. O separador conta 0 perguntas em aberto.</p><p class="sub">Cada pergunta em aberto diz <b>o que custa obter a resposta</b> e <b>o que muda quando ela chega</b>. Ordenadas pelo que muda: primeiro as que mudam o caminho.</p><div class="blk"><h2 class="sec">Reunião <span class="n">0</span><span class="x">Justificam a hora síncrona do sponsor.</span></h2><div class="tw"><div class="empty">Nada aqui.</div></div></div><div class="blk"><h2 class="sec">Por outro canal <span class="n">0</span><span class="x">Email, documento ou trabalho técnico. Não ocupam a reunião.</span></h2><div class="tw"><div class="empty">Nada aqui.</div></div></div><div class="blk"><h2 class="sec">Não gastes tempo com isto <span class="n">0</span><span class="x">Não mudam nada material: legítimas, mas não valem reunião.</span></h2><div class="tw"><div class="empty">Nada aqui.</div></div></div><div class="blk"><h2 class="sec" title="tripwires">Condições de revisão <span class="n">0</span></h2><div class="tw"><div class="empty">Sem escolha final registada, ou sem condições de revisão na decisão.</div></div></div></section><section class="panel reg" role="tabpanel" id="panel-estado" aria-labelledby="tab-estado" tabindex="0" data-tab="estado" data-title="Registo" hidden><div class="toolbar noprint"><div class="trow r1"><h1 class="pt" style="font-size:20px" title="Shared Understanding: Confirmed · Assumed · Unknown · Conflicted · Risky">Registo</h1><span class="counts" id="regcount" aria-live="polite">4 visíveis &middot; 4 vivos &middot; 0 resolvidos &middot; 4 no total</span><span class="hint">Clicar numa linha abre o detalhe</span><span class="spacer"></span><input type="search" id="f-q" placeholder="Procurar identificador ou texto…    /" aria-label="Procurar no registo"><button class="btn" id="csv">Exportar CSV</button></div><div class="trow"><span class="flabel">estado</span><button class="chip" data-facet="states" data-value="Confirmed" aria-pressed="false">Confirmado</button><button class="chip" data-facet="states" data-value="Assumed" aria-pressed="false">Assumido</button><button class="chip" data-facet="states" data-value="Unknown" aria-pressed="false">Por saber</button><button class="chip" data-facet="states" data-value="Conflicted" aria-pressed="false">Em conflito</button><button class="chip" data-facet="states" data-value="Risky" aria-pressed="false">Risco</button><span class="vr"></span><span class="flabel">gravidade</span><button class="chip" data-facet="crits" data-value="—" aria-pressed="false">sem classificação</button><span class="vr"></span><button class="chip" id="f-exp" aria-pressed="false">só a reconfirmar</button><button class="chip" id="f-res" aria-pressed="false">mostrar resolvidas</button><button class="chip" id="f-clear">limpar filtros</button></div><div class="trow"><span class="flabel">perspectiva</span><button class="chip" data-facet="lenses" data-value="enquadramento" data-tint="accent" aria-pressed="false">enquadramento (dono)</button><span class="vr"></span><span class="flabel">passagem</span><button class="chip" data-facet="rondas" data-value="R-00" data-tint="accent" aria-pressed="false">R-00 · enquadramento</button></div></div><div class="regbody"><p class="sub">O registo completo. Clicar numa linha abre o detalhe: texto integral, evidência, proveniência e transições. O preço e o impacto de cada pergunta em aberto estão na Agenda. A fonte de verdade continua a ser <code>shared-understanding.md</code>.</p><section class="regblock blk" data-state="Confirmed"><h2 class="sec hasdot s-Confirmed" title="Confirmed">Confirmado <span class="n" data-count-state="Confirmed">4</span><span class="x">visíveis</span></h2><div class="tw"><table class="reg"><thead><tr><th class="c-id" scope="col"><button class="sortb" data-sort="id">id<span class="ar" aria-hidden="true"></span></button></th><th class="c-crit" scope="col"><button class="sortb" data-sort="crit">gravidade<span class="ar" aria-hidden="true"></span></button></th><th class="c-lens" scope="col"><button class="sortb" data-sort="lens">perspectiva<span class="ar" aria-hidden="true"></span></button></th><th class="c-claim" scope="col"><button class="sortb" data-sort="claim">afirmação<span class="ar" aria-hidden="true"></span></button></th><th class="c-verif" scope="col"><button class="sortb" data-sort="verif">verificado em<span class="ar" aria-hidden="true"></span></button></th><th class="c-ronda" scope="col"><button class="sortb" data-sort="ronda">passagem<span class="ar" aria-hidden="true"></span></button></th></tr></thead><tbody><tr tabindex="0" role="button" class="s-Confirmed" data-id="M-1" data-lens="enquadramento" data-state="Confirmed" data-crit="" data-ronda="R-00" data-verif="2026-09-24" data-resolved="0" data-expired="0" data-su="1" data-text="m-1 enquadramento recibo digitalizado legível obrigatório — sem recibo, não há reembolso. declaração do dono do processo, 2026-09-24 — enquadramento.md#m-1 "><td class="c-id"><span class="prov idchip" data-id="M-1" title="Confirmed · enquadramento · verificado 2026-09-24 (organizacional) · R-00" tabindex="0">M-1</span></td><td class="c-crit"><span class="critpill">&mdash;</span></td><td class="c-lens">enquadramento</td><td class="c-claim"><div>Recibo digitalizado legível obrigatório — sem recibo, não há reembolso.</div></td><td class="c-verif" title="validade organizacional &middot; ha 0d">2026-09-24</td><td class="c-ronda">R-00</td></tr><tr tabindex="0" role="button" class="s-Confirmed" data-id="M-2" data-lens="enquadramento" data-state="Confirmed" data-crit="" data-ronda="R-00" data-verif="2026-09-24" data-resolved="0" data-expired="0" data-su="1" data-text="m-2 enquadramento limiar de aprovação: a entrevista diz 500€, a política escrita diz 250€ — não sei qual vale, alguém tem de decidir. declaração do dono do processo, 2026-09-24 — enquadramento.md#m-2 "><td class="c-id"><span class="prov idchip" data-id="M-2" title="Confirmed · enquadramento · verificado 2026-09-24 (organizacional) · R-00" tabindex="0">M-2</span></td><td class="c-crit"><span class="critpill">&mdash;</span></td><td class="c-lens">enquadramento</td><td class="c-claim"><div>Limiar de aprovação: a entrevista diz 500€, a política escrita diz 250€ — não sei qual vale, alguém tem de decidir.</div></td><td class="c-verif" title="validade organizacional &middot; ha 0d">2026-09-24</td><td class="c-ronda">R-00</td></tr><tr tabindex="0" role="button" class="s-Confirmed" data-id="M-3" data-lens="enquadramento" data-state="Confirmed" data-crit="" data-ronda="R-00" data-verif="2026-09-24" data-resolved="0" data-expired="0" data-su="1" data-text="m-3 enquadramento taxa por quilómetro: fixada em deliberação da administração que não foi entregue, não a tenho. declaração do dono do processo, 2026-09-24 — enquadramento.md#m-3 "><td class="c-id"><span class="prov idchip" data-id="M-3" title="Confirmed · enquadramento · verificado 2026-09-24 (organizacional) · R-00" tabindex="0">M-3</span></td><td class="c-crit"><span class="critpill">&mdash;</span></td><td class="c-lens">enquadramento</td><td class="c-claim"><div>Taxa por quilómetro: fixada em deliberação da administração que não foi entregue, não a tenho.</div></td><td class="c-verif" title="validade organizacional &middot; ha 0d">2026-09-24</td><td class="c-ronda">R-00</td></tr><tr tabindex="0" role="button" class="s-Confirmed" data-id="M-4" data-lens="enquadramento" data-state="Confirmed" data-crit="" data-ronda="R-00" data-verif="2026-09-24" data-resolved="0" data-expired="0" data-su="1" data-text="m-4 enquadramento comprovativos: conservados pelo prazo legal aplicável, não sei o número de anos. declaração do dono do processo, 2026-09-24 — enquadramento.md#m-4 "><td class="c-id"><span class="prov idchip" data-id="M-4" title="Confirmed · enquadramento · verificado 2026-09-24 (organizacional) · R-00" tabindex="0">M-4</span></td><td class="c-crit"><span class="critpill">&mdash;</span></td><td class="c-lens">enquadramento</td><td class="c-claim"><div>Comprovativos: conservados pelo prazo legal aplicável, não sei o número de anos.</div></td><td class="c-verif" title="validade organizacional &middot; ha 0d">2026-09-24</td><td class="c-ronda">R-00</td></tr></tbody></table></div></section><section class="regblock blk" data-state="Assumed"><h2 class="sec hasdot s-Assumed" title="Assumed">Assumido <span class="n" data-count-state="Assumed">0</span><span class="x">visíveis</span></h2><div class="tw"><div class="empty">Sem linhas nesta secção.</div></div></section><section class="regblock blk" data-state="Unknown"><h2 class="sec hasdot s-Unknown" title="Unknown">Por saber <span class="n" data-count-state="Unknown">0</span><span class="x">visíveis</span></h2><div class="tw"><div class="empty">Sem linhas nesta secção.</div></div></section><section class="regblock blk" data-state="Conflicted"><h2 class="sec hasdot s-Conflicted" title="Conflicted">Em conflito <span class="n" data-count-state="Conflicted">0</span><span class="x">visíveis</span></h2><div class="tw"><div class="empty">Sem linhas nesta secção.</div></div></section><section class="regblock blk" data-state="Risky"><h2 class="sec hasdot s-Risky" title="Risky">Risco <span class="n" data-count-state="Risky">0</span><span class="x">visíveis</span></h2><div class="tw"><div class="empty">Sem linhas nesta secção.</div></div></section><div class="emptycard" id="regempty" hidden><span class="t">Nenhum registo corresponde aos filtros</span><span class="m">Há 4 linhas vivas. Tenta remover um filtro ou limpar a pesquisa.</span><button class="btn solid" data-clear="1">Limpar filtros</button></div></div></section><section class="panel" role="tabpanel" id="panel-memoria" aria-labelledby="tab-memoria" tabindex="0" data-tab="memoria" data-title="Memória" hidden><div><div class="eyebrow">De onde veio o que sabemos</div><h1 class="pt">Memória</h1></div><div class="blk"><p class="stamp">O registo e a memória batem certo.</p></div><div class="blk"><p class="stamp">Ainda não foi respondida nenhuma pergunta — quando for, o percurso aparece aqui.</p></div><div class="blk"><p class="stamp">Memória na versão <code>9ecededef3f3</code> · 5 alteração(ões) registada(s).</p></div></section><section class="panel" role="tabpanel" id="panel-narrativa" aria-labelledby="tab-narrativa" tabindex="0" data-tab="narrativa" data-title="Narrativa" hidden><div><div class="eyebrow">A leitura corrida do que aconteceu</div><h1 class="pt">Narrativa</h1></div><p class="sub">Os episódios são a leitura corrida do que aconteceu. Os registos técnicos de cada passagem trazem as transições de cada identificador.</p><div class="trow noprint"><button class="chip" data-narr="todos" aria-pressed="true">Tudo</button><button class="chip" data-narr="story" aria-pressed="false">Episódios</button><button class="chip" data-narr="council" aria-pressed="false">Registos técnicos</button></div><div class="ev story" data-kind="story"><div class="top"><span class="k">episódio &middot; voz do sponsor</span><span class="meta">sem data</span></div><h2>Episódio 1 — O pedido</h2><div class="rich"><p>A directora administrativa da Organização Exemplo pediu ajuda: os reembolsos de despesas de deslocação demoram semanas e há queixas todos os meses. Não sabe se deve melhorar o que já existe, comprar uma ferramenta pronta ou construir algo de raiz — e precisa de uma recomendação com custos para levar à administração. Não aprova orçamento sozinha: a decisão de avançar depende da aprovação da administração, e o limiar de aprovação acima de determinado valor passa pelo director financeiro. O âmbito pedido cobre submissão, aprovação e pagamento de despesas de deslocação dos colaboradores; ficam de fora despesas de representação e adiantamentos.</p></div></div><div class="ev artefacto" data-kind="artefacto"><div class="top"><span class="k">documento de etapa</span><span class="meta">sem data &middot; R-01</span></div><h2>Modelo de processo</h2><div class="rich"><p><code>_capture/process-model.md</code> -- 14241 caracteres, 0 ids do SU citados. Texto integral no separador <strong>Outputs</strong>.</p></div></div></section><section class="panel" role="tabpanel" id="panel-artefactos" aria-labelledby="tab-artefactos" tabindex="0" data-tab="artefactos" data-title="Ficheiros" hidden><div><div class="eyebrow">O que existe em disco</div><h1 class="pt">Ficheiros</h1></div><div class="blk"><h2 class="sec" title="raiz">Raiz do projecto <span class="n">6</span></h2><div class="tw"><table><thead><tr><th scope="col">ficheiro</th><th scope="col">tamanho</th><th scope="col">alterado</th><th scope="col">nota</th></tr></thead><tbody><tr><td class="c-file"><a href="context.json">context.json</a></td><td class="c-meta">810 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="shared-understanding.md">shared-understanding.md</a></td><td class="c-meta">2 KB</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="story.md">story.md</a></td><td class="c-meta">733 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="answers.md">answers.md</a></td><td class="c-meta">329 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="council-log.md">council-log.md</a></td><td class="c-meta">84 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="decisions.md">decisions.md</a></td><td class="c-meta">27 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr></tbody></table></div></div><div class="blk"><h2 class="sec" title="inputs">Ficheiros de entrada <span class="n">4</span></h2><div class="tw"><table><thead><tr><th scope="col">ficheiro</th><th scope="col">tamanho</th><th scope="col">alterado</th><th scope="col">nota</th></tr></thead><tbody><tr><td class="c-file"><a href="inputs/entrevista-financas.md">inputs/entrevista-financas.md</a></td><td class="c-meta">808 B</td><td class="c-meta">2026-09-24 16:36</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="inputs/nota-ti.md">inputs/nota-ti.md</a></td><td class="c-meta">659 B</td><td class="c-meta">2026-09-24 16:36</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="inputs/pedido.md">inputs/pedido.md</a></td><td class="c-meta">521 B</td><td class="c-meta">2026-09-24 16:36</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="inputs/politica-rh.md">inputs/politica-rh.md</a></td><td class="c-meta">596 B</td><td class="c-meta">2026-09-24 16:36</td><td class="c-meta"></td></tr></tbody></table></div></div><div class="blk"><h2 class="sec" title="_capture">Leitura dos ficheiros <span class="n">11</span></h2><div class="tw"><table><thead><tr><th scope="col">ficheiro</th><th scope="col">tamanho</th><th scope="col">alterado</th><th scope="col">nota</th></tr></thead><tbody><tr><td class="c-file"><a href="_capture/_capture-log.md">_capture/_capture-log.md</a></td><td class="c-meta">821 B</td><td class="c-meta">2026-09-24 16:42</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/entrevista-financas.md.extraction.json">_capture/entrevista-financas.md.extraction.json</a></td><td class="c-meta">738 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/entrevista-financas.md.text.md">_capture/entrevista-financas.md.text.md</a></td><td class="c-meta">1 KB</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/evidence-index.md">_capture/evidence-index.md</a></td><td class="c-meta">1 KB</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/nota-ti.md.extraction.json">_capture/nota-ti.md.extraction.json</a></td><td class="c-meta">702 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/nota-ti.md.text.md">_capture/nota-ti.md.text.md</a></td><td class="c-meta">1 KB</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/pedido.md.extraction.json">_capture/pedido.md.extraction.json</a></td><td class="c-meta">699 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/pedido.md.text.md">_capture/pedido.md.text.md</a></td><td class="c-meta">897 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/politica-rh.md.extraction.json">_capture/politica-rh.md.extraction.json</a></td><td class="c-meta">714 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/politica-rh.md.text.md">_capture/politica-rh.md.text.md</a></td><td class="c-meta">981 B</td><td class="c-meta">2026-09-24 16:39</td><td class="c-meta"></td></tr><tr><td class="c-file"><a href="_capture/process-model.md">_capture/process-model.md</a></td><td class="c-meta">14 KB</td><td class="c-meta">2026-09-24 16:46</td><td class="c-meta"></td></tr></tbody></table></div></div><div class="blk"><h2 class="sec" title="parser diagnostics">Avisos de leitura do registo <span class="n">0</span></h2><div class="tw"><div class="empty">Nenhum.</div></div></div></section></main></div></div><div id="pop" role="tooltip"></div><div id="dwbg" class="noprint" hidden></div><div id="blk" role="status">O browser recusou o auto-reload neste contexto (<code>file://</code> em sandbox, ou preview embebido). O ficheiro em disco <b>está actualizado</b> &mdash; carrega <b>F5</b> para ver o build novo.</div><aside id="dw" class="noprint" role="dialog" aria-modal="true" aria-label="Detalhe da linha do registo" tabindex="-1"></aside><script type="application/json" id="aisa-data">{"slug":"f8-r5-fx01","reload":5,"build":"360084ea2796","tabs":["panorama","outputs","agenda","estado","memoria","narrativa","artefactos"],"counts":{"live":4,"resolved":0,"total":4},"stlabel":{"Confirmed":"Confirmado","Assumed":"Assumido","Unknown":"Por saber","Conflicted":"Em conflito","Risky":"Risco"},"support":{"Confirmed":"evidência","Assumed":"base do que assumimos","Unknown":"quem responde","Conflicted":"partes","Risky":"impacto"},"custo":{"email":"email","documento":"documento","reuniao":"reunião","spike":"trabalho técnico"},"swing":{"decisivo":"muda o caminho","dimensionante":"muda o tamanho","cosmetico":"não muda nada"},"ids":{"M-1":{"s":"Confirmed","l":"enquadramento","c":"Recibo digitalizado legível obrigatório — sem recibo, não há reembolso.","r":"R-00","ln":13,"su":"declaração do dono do processo, 2026-09-24 — enquadramento.md#M-1","v":"2026-09-24","va":"organizacional","vi":false,"x":"2027-03-24"},"M-2":{"s":"Confirmed","l":"enquadramento","c":"Limiar de aprovação: a entrevista diz 500€, a política escrita diz 250€ — não sei qual vale, alguém tem de decidir.","r":"R-00","ln":14,"su":"declaração do dono do processo, 2026-09-24 — enquadramento.md#M-2","v":"2026-09-24","va":"organizacional","vi":false,"x":"2027-03-24"},"M-3":{"s":"Confirmed","l":"enquadramento","c":"Taxa por quilómetro: fixada em deliberação da administração que não foi entregue, não a tenho.","r":"R-00","ln":15,"su":"declaração do dono do processo, 2026-09-24 — enquadramento.md#M-3","v":"2026-09-24","va":"organizacional","vi":false,"x":"2027-03-24"},"M-4":{"s":"Confirmed","l":"enquadramento","c":"Comprovativos: conservados pelo prazo legal aplicável, não sei o número de anos.","r":"R-00","ln":16,"su":"declaração do dono do processo, 2026-09-24 — enquadramento.md#M-4","v":"2026-09-24","va":"organizacional","vi":false,"x":"2027-03-24"}}}</script><script>
+(function(){
+  var D = JSON.parse(document.getElementById("aisa-data").textContent);
+  var KEY = "aisa.dash." + D.slug;
+  var TABS = D.tabs || ["panorama"];
+  // The URL carries what is worth sharing -- the open separator and the open row.
+  // Everything else (filters, sort, theme, density) is a per-reader preference and
+  // lives in localStorage, so a pasted link never arrives pre-filtered by accident.
+  var S = {tab:TABS[0], drawer:null, q:"", states:[], lenses:[], crits:[], rondas:[],
+           resolved:false, exponly:false, sortKey:null, sortDir:"asc", narr:"todos",
+           theme:"auto", density:"cosy", paused:false, gloss:false, scroll:0};
+  var PREFS = ["q","states","lenses","crits","rondas","resolved","exponly","sortKey",
+               "sortDir","narr","theme","density","paused","gloss","scroll"];
+
+  function $(s,r){ return (r||document).querySelector(s); }
+  function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+  function esc(s){ var d=document.createElement("i"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+  var pane = $("#pane");
+
+  function loadPrefs(){
+    var raw = null;
+    // file:// partitions localStorage to the opaque null origin: it can be missing, and
+    // where it exists it is shared by every local dashboard -> key per slug.
+    try{ raw = JSON.parse(localStorage.getItem(KEY) || "null"); }catch(e){}
+    if(raw) PREFS.forEach(function(k){ if(k in raw) S[k] = raw[k]; });
+  }
+  function savePrefs(){
+    var blob = {};
+    PREFS.forEach(function(k){ blob[k] = S[k]; });
+    try{ localStorage.setItem(KEY, JSON.stringify(blob)); }catch(e){}
+  }
+  function readHash(){
+    var h = (location.hash || "").replace(/^#/, "").split("/");
+    if(h[0] && TABS.indexOf(h[0]) >= 0) S.tab = h[0];
+    if(h[1] && D.ids[h[1]]) S.drawer = h[1];
+  }
+  function writeHash(){
+    var h = "#" + S.tab + (S.drawer ? "/" + S.drawer : "");
+    if(location.hash !== h){ try{ history.replaceState(null, "", h); }catch(e){} }
+  }
+  function save(){ savePrefs(); writeHash(); }
+
+  // ---- chrome
+  function applyTheme(){
+    var el = document.documentElement;
+    if(S.theme === "auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme", S.theme);
+    var b = $("#theme"); if(b) b.textContent = {auto:"tema auto",light:"claro",dark:"escuro"}[S.theme];
+    el.setAttribute("data-density", S.density);
+    $$("[data-dens]").forEach(function(x){
+      x.setAttribute("aria-pressed", x.dataset.dens === S.density ? "true" : "false"); });
+  }
+  function applyTab(){
+    $$(".nav").forEach(function(n){
+      var on = n.dataset.tab === S.tab;
+      n.setAttribute("aria-selected", on ? "true" : "false");
+      n.tabIndex = on ? 0 : -1;
+    });
+    $$(".panel").forEach(function(p){ p.hidden = p.dataset.tab !== S.tab; });
+  }
+
+  // ---- registo: filter, sort, count
+  function tokens(v){ return (v||"").split(/[+,\/&]| e /).map(function(s){return s.trim();}).filter(Boolean); }
+  var CRIT_RANK = {Critical:0, Med:1, Low:2, "":3};
+  function rowMatch(tr, q){
+    if(S.states.length && S.states.indexOf(tr.dataset.state) < 0) return false;
+    if(S.lenses.length && !tokens(tr.dataset.lens).some(function(l){ return S.lenses.indexOf(l) >= 0; })) return false;
+    if(S.crits.length && S.crits.indexOf(tr.dataset.crit || "\u2014") < 0) return false;
+    if(S.rondas.length && S.rondas.indexOf(tr.dataset.ronda) < 0) return false;
+    if(!S.resolved && tr.dataset.resolved === "1") return false;
+    if(S.exponly && tr.dataset.expired !== "1") return false;
+    if(q && (tr.dataset.text || "").indexOf(q) < 0) return false;
+    return true;
+  }
+  function sortVal(tr){
+    if(S.sortKey === "crit") return CRIT_RANK[tr.dataset.crit || ""];
+    if(S.sortKey === "lens") return tr.dataset.lens || "";
+    if(S.sortKey === "claim") return tr.dataset.text || "";
+    if(S.sortKey === "verif") return tr.dataset.verif || "";
+    if(S.sortKey === "ronda") return tr.dataset.ronda || "";
+    return tr.dataset.id || "";
+  }
+  function applySort(){
+    var dir = S.sortDir === "desc" ? -1 : 1;
+    $$("table.reg tbody").forEach(function(tb){
+      if(!tb._orig) tb._orig = $$("tr", tb);
+      var rows = tb._orig.slice();
+      if(S.sortKey){
+        rows.sort(function(a,b){ var x=sortVal(a), y=sortVal(b);
+          return (x>y?1:x<y?-1:0) * dir || (a.dataset.id > b.dataset.id ? 1 : -1); });
+      }
+      rows.forEach(function(r){ tb.appendChild(r); });
+    });
+    $$(".sortb").forEach(function(sb){
+      var on = sb.dataset.sort === S.sortKey, th = sb.closest("th");
+      if(th){
+        if(on) th.setAttribute("aria-sort", S.sortDir === "desc" ? "descending" : "ascending");
+        else th.removeAttribute("aria-sort");
+      }
+      var ar = $(".ar", sb);
+      if(ar) ar.textContent = on ? (S.sortDir === "desc" ? "\u2193" : "\u2191") : "";
+    });
+  }
+  function applyFilters(){
+    var q = S.q.trim().toLowerCase();
+    $$("tr[data-id]").forEach(function(tr){ tr.hidden = !rowMatch(tr, q); });
+    var shown = 0;
+    $$(".regblock").forEach(function(b){
+      var vis = $$("tr[data-id]", b).filter(function(r){ return !r.hidden; }).length;
+      // .aux blocks (the reconfirm list) repeat ids that already live in a state block --
+      // counting them would inflate "visiveis" and export the same row twice.
+      if(!b.classList.contains("aux")) shown += vis;
+      b.hidden = vis === 0;
+      var c = $("[data-count-state]", b);
+      if(c) c.textContent = vis;
+    });
+    var reg = $("#regempty"); if(reg) reg.hidden = shown > 0;
+    var cnt = $("#regcount");
+    if(cnt) cnt.textContent = shown + " vis\u00edveis \u00b7 " + D.counts.live + " vivos \u00b7 "
+        + D.counts.resolved + " resolvidos \u00b7 " + D.counts.total + " no total";
+    // the agenda cards carry the same ids, so the same filters apply there
+    $$(".q[data-id]").forEach(function(el){
+      var r = D.ids[el.dataset.id] || {}, ok = true;
+      if(S.lenses.length) ok = tokens(r.l).some(function(l){ return S.lenses.indexOf(l) >= 0; });
+      if(ok && S.crits.length && S.crits.indexOf(r.k || "\u2014") < 0) ok = false;
+      if(ok && S.rondas.length && S.rondas.indexOf(r.r || "") < 0) ok = false;
+      if(ok && q && (el.dataset.text || "").indexOf(q) < 0) ok = false;
+      el.hidden = !ok;
+    });
+  }
+  function syncControls(){
+    $$(".chip[data-facet]").forEach(function(c){
+      c.setAttribute("aria-pressed", (S[c.dataset.facet] || []).indexOf(c.dataset.value) >= 0 ? "true":"false"); });
+    var x;
+    if((x = $("#f-res"))) x.setAttribute("aria-pressed", S.resolved ? "true":"false");
+    if((x = $("#f-exp"))) x.setAttribute("aria-pressed", S.exponly ? "true":"false");
+    if((x = $("#f-q"))) x.value = S.q;
+    $$(".chip[data-narr]").forEach(function(c){
+      c.setAttribute("aria-pressed", c.dataset.narr === S.narr ? "true":"false"); });
+    $$(".ev").forEach(function(e){
+      e.hidden = !(S.narr === "todos"
+        || (S.narr === "story" ? e.dataset.kind === "story" : e.dataset.kind !== "story")); });
+    var g = $("#gloss"), gb = $("#glossbtn");
+    if(g){ g.hidden = !S.gloss; gb.setAttribute("aria-expanded", S.gloss ? "true":"false"); }
+  }
+  function clearFilters(){
+    S.states=[]; S.lenses=[]; S.crits=[]; S.rondas=[]; S.q=""; S.resolved=false; S.exponly=false;
+    syncControls(); applyFilters(); save();
+  }
+
+  // ---- CSV of exactly what is on screen, in the order it is on screen
+  function exportCsv(){
+    var head = ["id","estado","criticidade","perspectiva","afirmacao","verificado","ronda","resolvida"];
+    var lines = [head.join(",")];
+    $$("table.reg tbody tr[data-id]").forEach(function(tr){
+      if(tr.hidden) return;
+      var r = D.ids[tr.dataset.id] || {};
+      var claim = (r.c || "").replace(/\s+/g, " ").trim();
+      var cells = [tr.dataset.id, D.stlabel[tr.dataset.state] || tr.dataset.state,
+                   tr.dataset.crit || "", tr.dataset.lens || "", claim, r.v || "",
+                   tr.dataset.ronda || "", tr.dataset.resolved === "1" ? "sim" : "nao"];
+      lines.push(cells.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","));
+    });
+    var blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = D.slug + "-registo.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // ---- drawer + hover popover
+  var pop = $("#pop"), dw = $("#dw"), dwbg = $("#dwbg"), lastFocus = null;
+  function md(t){
+    return esc(t == null ? "" : t)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+  function tile(k, v){
+    return '<div class="tile"><div class="k">' + k + '</div><div class="v">' + v + "</div></div>";
+  }
+  function drawerHtml(id){
+    var r = D.ids[id]; if(!r) return null;
+    var o = [];
+    o.push('<div class="dwh s-' + esc(r.s) + '"><span class="did">' + esc(id) + "</span>"
+      + '<span class="statepill">' + esc(D.stlabel[r.s] || r.s) + "</span>"
+      + '<span class="lens">' + esc(r.l || "-") + "</span><span class=\"spacer\"></span>"
+      + '<button class="btn quiet" id="dw-x">Fechar</button></div>');
+    o.push('<div class="dwb">');
+    o.push('<div class="claim">' + md(r.c) + "</div>");
+    if(r.e){
+      o.push('<div class="alert">Esta linha precisa de reconfirmar \u2014 passou o prazo h\u00e1 '
+        + r.d + ' dias. <span class="cmd">/answer --revalidate ' + esc(id) + "</span></div>");
+    }
+    if(r.dp){
+      var extra = (r.dups || []).map(function(x){
+        return "linha " + x.ln + " \u00b7 " + esc(D.stlabel[x.s] || x.s) + " \u00b7 "
+             + esc(x.l || "-") + ": " + esc(x.c); }).join("<br>");
+      o.push('<div class="alert"><b>Este identificador aparece em mais do que uma linha.</b>'
+        + (extra ? "<br>" + extra : "")
+        + "<br>Renomear uma delas no shared-understanding.md \u2014 at\u00e9 l\u00e1, citar este "
+        + "identificador \u00e9 amb\u00edguo.</div>");
+    }
+    if(r.su){
+      o.push('<div><div class="lbl">' + esc(D.support[r.s] || "proveni\u00eancia")
+        + '</div><div class="prosev">' + md(r.su) + "</div></div>");
+    }
+    if(r.ex){
+      o.push('<div><div class="lbl">mitiga\u00e7\u00e3o proposta</div><div class="prosev">'
+        + md(r.ex) + "</div></div>");
+    }
+    var tiles = [];
+    tiles.push(tile("passagem", esc(r.r || "\u2014")));
+    tiles.push(tile("verificado", esc(r.v || "\u2014") + (r.vi ? ' <span class="badge inf">da passagem</span>' : "")));
+    tiles.push(tile("validade", esc(r.va || "\u2014")));
+    tiles.push(tile("expira", esc(r.x || "\u2014")));
+    if(r.k) tiles.push(tile("gravidade", '<span class="critpill k-' + esc(r.k) + '">' + esc(r.k) + "</span>"
+        + (r.kr && r.kr !== r.k ? ' <span class="badge">no registo: ' + esc(r.kr) + "</span>" : "")));
+    if(r.cu) tiles.push(tile("custo da resposta", esc(D.custo[r.cu] || r.cu)
+        + (r.ci ? ' <span class="badge inf">por omiss\u00e3o</span>' : "")));
+    if(r.sc) tiles.push(tile("o que muda", '<span class="sw ' + esc(r.sc) + '">'
+        + esc(D.swing[r.sc] || r.sc) + "</span>"));
+    tiles.push(tile("linha no ficheiro", esc(r.ln) + (r.ml ? ' <span class="badge mal">reparada</span>' : "")));
+    if(r.w && r.w.length) tiles.push(tile("veio de", r.w.map(esc).join(", ")));
+    if(r.rt && r.rt.length) tiles.push(tile("resolvida para", r.rt.map(esc).join(", ")));
+    o.push('<div class="tiles">' + tiles.join("") + "</div>");
+    o.push('<div class="prosev">Fonte de verdade: <code>shared-understanding.md</code>, linha '
+      + esc(r.ln) + ".</div>");
+    o.push("</div>");
+    return o.join("");
+  }
+  function focusables(){
+    return $$('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])', dw)
+      .filter(function(el){ return !el.disabled && el.offsetParent !== null; });
+  }
+  function openDrawer(id){
+    var html = drawerHtml(id); if(!html) return;
+    dw.innerHTML = html;
+    if(document.activeElement && document.activeElement !== document.body
+       && !dw.contains(document.activeElement)) lastFocus = document.activeElement;
+    dwbg.hidden = false; dwbg.classList.add("on"); dw.classList.add("on");
+    S.drawer = id; writeHash();
+    var f = focusables();
+    (f[0] || dw).focus();
+    hidePop();
+  }
+  function closeDrawer(){
+    if(!dw.classList.contains("on")) return;
+    dw.classList.remove("on"); dwbg.classList.remove("on");
+    setTimeout(function(){ if(!dw.classList.contains("on")) dwbg.hidden = true; }, 220);
+    S.drawer = null; writeHash();
+    if(lastFocus && lastFocus.focus){ lastFocus.focus(); lastFocus = null; }
+  }
+  function showPop(el){
+    var r = D.ids[el.dataset.id]; if(!r) return;
+    var b = ["<b>" + esc(el.dataset.id) + " \u00b7 " + esc(D.stlabel[r.s] || r.s) + "</b>", esc(r.c)];
+    if(r.v) b.push("verificado " + esc(r.v) + (r.va ? " (" + esc(r.va) + ")" : ""));
+    if(r.e) b.push("<b>precisa de reconfirmar</b> \u2014 h\u00e1 " + r.d + " dias");
+    if(r.dp) b.push("<b>identificador repetido</b> \u2014 " + (1 + (r.dups ? r.dups.length : 0)) + " linhas");
+    b.push("clicar para ver o detalhe");
+    pop.innerHTML = b.join("<br>");
+    pop.style.display = "block";
+    var q = el.getBoundingClientRect();
+    pop.style.top = Math.min(q.bottom + 7, window.innerHeight - pop.offsetHeight - 10) + "px";
+    pop.style.left = Math.max(8, Math.min(q.left, window.innerWidth - pop.offsetWidth - 16)) + "px";
+  }
+  function hidePop(){ pop.style.display = "none"; }
+
+  function goTab(tab){
+    S.tab = tab; applyTab(); if(pane) pane.scrollTop = 0; save();
+  }
+
+  // ---- refresh. Served over HTTP the page asks /__build whether anything changed and
+  // reloads only then. Opened as file:// it cannot fetch, so it falls back to the blind
+  // timed reload and says so when even that is refused.
+  var served = location.protocol.indexOf("http") === 0;
+  var secs = D.reload|0, left = secs, checking = false, wrongServer = false;
+
+  function doReload(){ S.scroll = pane ? pane.scrollTop : 0; savePrefs(); location.reload(); }
+
+  // The server answers with its identity, not only a build hash. A port is not an
+  // identity: server A can die, B take its port, and a reattach then serve B's
+  // engagement under A's URL. If page and server disagree, stop polling and say so.
+  function checkBuild(){
+    if(checking || wrongServer) return;
+    checking = true;
+    fetch("__build", {cache:"no-store"})
+      .then(function(r){ return r.ok ? r.text() : null; })
+      .then(function(t){
+        checking = false;
+        if(!t || !t.trim()) return;
+        var doc = null;
+        try{ doc = JSON.parse(t); }catch(e){ doc = null; }
+        if(!doc || typeof doc !== "object") return;      // pre-1.5.2 server: do nothing
+        if(doc.slug && D.slug && doc.slug !== D.slug){
+          wrongServer = true;
+          var el = $("#cd");
+          if(el) el.textContent = "servidor de outro projecto (" + doc.slug + ")";
+          var b = $("#blk");
+          if(b){
+            b.textContent = "Esta p\u00e1gina \u00e9 do projecto " + D.slug + ", mas quem responde"
+              + " neste endere\u00e7o serve " + doc.slug + ". Nada foi actualizado. Fechar o"
+              + " servidor e correr /dashboard --serve no projecto certo.";
+            b.style.display = "block";
+          }
+          return;
+        }
+        if(doc.build && doc.build !== D.build) doReload();
+      })
+      .catch(function(){ checking = false; });
+  }
+  function maybeRefresh(){
+    var ae = document.activeElement;
+    if(dw.classList.contains("on")
+       || (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA"))) return;
+    if(served){ checkBuild(); return; }
+    if(document.hidden) return;
+    doReload();
+    setTimeout(function(){ var b = $("#blk"); if(b) b.style.display = "block"; }, 1200);
+  }
+  function tick(){
+    var el = $("#cd");
+    if(wrongServer) return;
+    if(S.paused){ if(el) el.textContent = "em pausa"; return; }
+    left--;
+    if(el) el.textContent = served ? "a vigiar" : (Math.max(0, left) + "s");
+    if(left > 0) return;
+    left = secs;
+    maybeRefresh();
+  }
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden && !S.paused){ left = secs; maybeRefresh(); }
+  });
+
+  // ---- boot
+  loadPrefs(); readHash(); applyTheme(); applyTab(); syncControls(); applySort(); applyFilters();
+  if(pane && S.scroll) pane.scrollTop = S.scroll;
+  if(S.drawer) openDrawer(S.drawer);
+  writeHash();
+
+  document.addEventListener("click", function(e){
+    var t = e.target, b = t.closest ? t.closest("button,a,.q,tr[data-id],.prov") : null;
+    if(t.closest && t.closest(".prov")){
+      var p = t.closest(".prov");
+      e.preventDefault(); e.stopPropagation(); openDrawer(p.dataset.id); return;
+    }
+    if(!b) { if(!t.closest || !t.closest("#dw")){ hidePop(); closeDrawer(); } return; }
+    if(b.id === "dw-x"){ closeDrawer(); return; }
+    if(b.dataset && b.dataset.tab){ goTab(b.dataset.tab); return; }
+    if(b.classList.contains("chip") && b.dataset.facet){
+      var arr = S[b.dataset.facet], i = arr.indexOf(b.dataset.value);
+      if(i < 0) arr.push(b.dataset.value); else arr.splice(i, 1);
+      syncControls(); applyFilters(); save(); return;
+    }
+    if(b.dataset && b.dataset.narr){ S.narr = b.dataset.narr; syncControls(); save(); return; }
+    if(b.id === "f-res"){ S.resolved = !S.resolved; syncControls(); applyFilters(); save(); return; }
+    if(b.id === "f-exp"){ S.exponly = !S.exponly; syncControls(); applyFilters(); save(); return; }
+    if(b.id === "f-clear" || (b.dataset && b.dataset.clear)){ clearFilters(); return; }
+    if(b.id === "csv"){ exportCsv(); return; }
+    if(b.id === "glossbtn"){ S.gloss = !S.gloss; syncControls(); save(); return; }
+    if(b.id === "theme"){ S.theme = {auto:"light",light:"dark",dark:"auto"}[S.theme]; applyTheme(); save(); return; }
+    if(b.dataset && b.dataset.dens){ S.density = b.dataset.dens; applyTheme(); save(); return; }
+    if(b.id === "pause"){
+      S.paused = !S.paused;
+      b.setAttribute("aria-pressed", S.paused ? "true":"false");
+      b.textContent = S.paused ? "retomar" : "pausar";
+      left = secs; save(); return;
+    }
+    if(b.id === "printtab"){ window.print(); return; }
+    if(b.id === "printall"){
+      $$(".panel").forEach(function(p){ p.hidden = false; });
+      window.print(); return;
+    }
+    if(b.dataset && b.dataset.sort){
+      S.sortDir = (S.sortKey === b.dataset.sort && S.sortDir === "asc") ? "desc" : "asc";
+      S.sortKey = b.dataset.sort;
+      applySort(); save(); return;
+    }
+    if(b.classList.contains("q") && b.dataset.id){ openDrawer(b.dataset.id); return; }
+    var row = t.closest && t.closest("tr[data-id]");
+    if(row){ openDrawer(row.dataset.id); return; }
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){ closeDrawer(); hidePop(); return; }
+    var ae = document.activeElement;
+    var typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
+    if(dw.classList.contains("on") && e.key === "Tab"){
+      var f = focusables(); if(!f.length) return;
+      var first = f[0], last = f[f.length-1];
+      if(e.shiftKey && (ae === first || !dw.contains(ae))){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && ae === last){ e.preventDefault(); first.focus(); }
+      return;
+    }
+    if(e.key === "/" && !typing){
+      e.preventDefault();
+      if(S.tab !== "estado") goTab("estado");
+      var q = $("#f-q"); if(q) q.focus();
+      return;
+    }
+    if((e.key === "Enter" || e.key === " ") && ae && ae.matches
+       && (ae.matches("tr[data-id]") || ae.matches(".prov")
+           || ae.matches(".q[data-id]"))){
+      e.preventDefault(); openDrawer(ae.dataset.id); return;
+    }
+    if(ae && ae.classList && ae.classList.contains("nav")){
+      var navs = $$(".nav"), i = navs.indexOf(ae), d = 0;
+      if(e.key === "ArrowDown" || e.key === "ArrowRight") d = 1;
+      else if(e.key === "ArrowUp" || e.key === "ArrowLeft") d = -1;
+      else if(e.key === "Home") d = -i;
+      else if(e.key === "End") d = navs.length - 1 - i;
+      else return;
+      e.preventDefault();
+      var n = navs[(i + d + navs.length) % navs.length];
+      goTab(n.dataset.tab); n.focus();
+    }
+  });
+
+  document.addEventListener("mouseover", function(e){
+    if(e.target.classList && e.target.classList.contains("prov")) showPop(e.target); });
+  document.addEventListener("mouseout", function(e){
+    if(e.target.classList && e.target.classList.contains("prov")) hidePop(); });
+  window.addEventListener("afterprint", applyTab);
+  window.addEventListener("hashchange", function(){
+    readHash(); applyTab();
+    if(S.drawer) openDrawer(S.drawer); else closeDrawer();
+  });
+  var qd, qi = $("#f-q");
+  if(qi) qi.addEventListener("input", function(e){
+    S.q = e.target.value;
+    clearTimeout(qd); qd = setTimeout(function(){ applyFilters(); save(); }, 120);
+  });
+  if(pane) pane.addEventListener("scroll", function(){
+    clearTimeout(pane._t);
+    pane._t = setTimeout(function(){ S.scroll = pane.scrollTop; savePrefs(); }, 400);
+  });
+  var pb = $("#pause");
+  if(pb){ pb.setAttribute("aria-pressed", S.paused ? "true":"false");
+          pb.textContent = S.paused ? "retomar" : "pausar"; }
+  if(secs > 0) setInterval(tick, 1000);
+})();
+</script></body></html>

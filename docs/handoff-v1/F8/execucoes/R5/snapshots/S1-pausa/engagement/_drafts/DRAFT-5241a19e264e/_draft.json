@@ -1,0 +1,37 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-5241a19e264e",
+  "files": {
+    "lens-outputs/business.md": "",
+    "lens-outputs/data.md": "",
+    "lens-outputs/financial.md": "",
+    "lens-outputs/governance.md": "",
+    "lens-outputs/operations.md": "",
+    "lens-outputs/user.md": "",
+    "shared-understanding.md": "caf660ded0714a50861d87f2615fb5e111783205173966285060327947d20429"
+  },
+  "reads": {
+    "_capture/_capture-log.md": "90a50b231ece47b1942b52f5d03d9359c9c88ec4232557e41e7c381728e91988",
+    "_capture/entrevista-financas.md.extraction.json": "8ab5f1181ae983611871ca608098247ece90b5a032dfe3dbf16122d277378746",
+    "_capture/entrevista-financas.md.text.md": "7e1f230014677e8c98afc815cfa943800c031f02802501f69d56f6a3906afdbc",
+    "_capture/evidence-index.md": "d27c380fbf10a53a52124b0650b9753e14e33d076bb0b2b87d7f6eef4ba54f1d",
+    "_capture/nota-ti.md.extraction.json": "1794e8b27b150a2dd1e052bd2e11057514bfa6a4af36ae225f87656ac371c237",
+    "_capture/nota-ti.md.text.md": "ebf5593c1f2509dc31506a7c2fd00301fcf8123ff9976ea944502a079822084d",
+    "_capture/pedido.md.extraction.json": "9182d8b6f5c2aadd948f1899ec51a0789d1e75abc8ed1c0a109ea93a507de9f7",
+    "_capture/pedido.md.text.md": "7691fa2a21dcff1404d261da70f0250386a46fd923893a45699a2867f67181ac",
+    "_capture/politica-rh.md.extraction.json": "dc7fbd95c3da1bf060d06bb471985d365d491ad4f78d53622a1c80806257ea59",
+    "_capture/politica-rh.md.text.md": "73022c43f4da1757d41a9c799164a22256667358257d78476531abb0e36809bc",
+    "_capture/process-model.md": "6e88c68b0eba393eb911d5c9094817868467412219201835987eaaa50feb4878",
+    "answers.md": "72339f96712be1486f2697095d2ee124386263f5583cf2a246021fd05b3ff6c6",
+    "context.json": "5f04bcb334c29385c7eee7ce42b27bde9522552ef2f6ea7c50445d4ecc55d48e",
+    "decisions.md": "42ec148d89f664a7fe97cc94decb1be0ef4fd0a641351cc2ec8b1bf376d22ed9",
+    "enquadramento.md": "c48f20f30205a3a481136557edbf47d48d2de46bcdebfe3085b865305259db6c",
+    "inputs/entrevista-financas.md": "b9e311aca50c9e58e4c266a353ee5bd162c80ac0b1102a3264d7db68a7404923",
+    "inputs/nota-ti.md": "ae4ab795ee45156880718e2e54f02611ed3dbe1e8509dfbeac4b8a315d06c8b6",
+    "inputs/pedido.md": "740e9e0cde72ff6f5fd20831ded65ec45c4d63a2f3ea44f959e4c70fa157ee54",
+    "inputs/politica-rh.md": "58b8ff7278e98f696e4b6d6cb20e07fc235959927b37a3a50e9f22d30111fa0f"
+  },
+  "task": "TASK-001",
+  "published": null,
+  "created_at": "2026-09-24T16:44:49Z"
+}

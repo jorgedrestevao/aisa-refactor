@@ -1,0 +1,43 @@
+{
+  "operation_id": "publish-22d78d0ea3f49414",
+  "request_hash": "5ebbf7ac5d92729b549489f4d1a383fbc91ef5287f9bb96f9c58f905b565cfd3",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "617e119edcd47d6a2d9887039359a163d9ccc8cbda4c24b5a5b9527f83c2b89d",
+    "_graph/meta.json": "b10d18f221ed6a10b20fdc010c272849831c0ff8d50874aab430e349f9e92435",
+    "_state.json": "94c2e485b0493b935dfd2bd35be1f2a98afe837d7f83773d1ee606c27363e31f",
+    "answers.md": "72339f96712be1486f2697095d2ee124386263f5583cf2a246021fd05b3ff6c6",
+    "context.json": "5f04bcb334c29385c7eee7ce42b27bde9522552ef2f6ea7c50445d4ecc55d48e",
+    "council-log.md": "ea4033d467cad66515a9f09c8789e0384a9d6cf86859c683e813ca5e41e8400d",
+    "decisions.md": "42ec148d89f664a7fe97cc94decb1be0ef4fd0a641351cc2ec8b1bf376d22ed9",
+    "enquadramento.md": "c48f20f30205a3a481136557edbf47d48d2de46bcdebfe3085b865305259db6c",
+    "shared-understanding.md": "caf660ded0714a50861d87f2615fb5e111783205173966285060327947d20429",
+    "story.md": "5c251c8ee005287f5bdc4906fca423840dcf5e09ec8cadd3a91e796e31a82ab6"
+  },
+  "expected": {
+    "_state.json": "",
+    "answers.md": "",
+    "context.json": "",
+    "council-log.md": "",
+    "decisions.md": "",
+    "enquadramento.md": "",
+    "shared-understanding.md": "",
+    "story.md": "",
+    "_graph/graph.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "_graph/meta.json": "3a4797edca135bd4fbd89154f20113c2cfef92da14e8a15fa71163fda57134e5"
+  },
+  "read_set": null,
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json",
+    "_state.json",
+    "answers.md",
+    "context.json",
+    "council-log.md",
+    "decisions.md",
+    "enquadramento.md",
+    "shared-understanding.md",
+    "story.md"
+  ],
+  "committed_at": "2026-09-24T16:39:00Z"
+}

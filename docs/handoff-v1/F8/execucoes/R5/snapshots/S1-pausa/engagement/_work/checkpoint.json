@@ -1,0 +1,55 @@
+{
+ "schema_version": "handoff-work/1",
+ "engagement_id": "f8-r5-fx01",
+ "revision": 3,
+ "profile": "handoff-v1",
+ "route": "solution-choice",
+ "objective": "context.json#literal_request",
+ "scope_refs": [
+  "enquadramento.md"
+ ],
+ "authorization_refs": [],
+ "last_integrated_operation": "publish-57f5be20e2e3112e",
+ "active_task": null,
+ "tasks": [
+  {
+   "id": "TASK-001",
+   "role": "analista-integrado",
+   "state": "completed",
+   "input_refs": [
+    {
+     "ref": "shared-understanding.md",
+     "sha256": "caf660ded0714a50861d87f2615fb5e111783205173966285060327947d20429"
+    },
+    {
+     "ref": "answers.md",
+     "sha256": "72339f96712be1486f2697095d2ee124386263f5583cf2a246021fd05b3ff6c6"
+    },
+    {
+     "ref": "enquadramento.md",
+     "sha256": "c48f20f30205a3a481136557edbf47d48d2de46bcdebfe3085b865305259db6c"
+    }
+   ],
+   "dependencies": [],
+   "blocker_refs": [],
+   "completion_criteria": [
+    "linhas das perspectivas as seis publicadas na SU para R-01"
+   ],
+   "output_refs": [
+    "publish-57f5be20e2e3112e"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "RES-001",
+   "task_id": "TASK-001",
+   "ref": "_drafts/DRAFT-d16637bb2a65",
+   "input_revision": "95e4f11fce7d78563b59d35ca8c6fb032dd486867379ed24bf6a0d1d98c023a7",
+   "status": "integrated",
+   "freshness": "current",
+   "sha256": "7ca8da9dd02d17151974a9f507ad40aca2e3602ba1d96f535b0f60c6502b4112"
+  }
+ ],
+ "next_actions": []
+}
