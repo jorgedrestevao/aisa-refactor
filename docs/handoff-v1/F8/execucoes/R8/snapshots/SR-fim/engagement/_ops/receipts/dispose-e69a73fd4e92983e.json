@@ -1,0 +1,22 @@
+{
+  "operation_id": "dispose-e69a73fd4e92983e",
+  "request_hash": "15fb6e481627549c4b6c2d60bb1a8013ebc8374f175d93c633d0547e4067ada0",
+  "result": "committed",
+  "revision": {
+    "_design/history/review-ledger.r0022.json": "9dc8d3e6f9cc9b4b2bf8a396d88edd6324cc917a87de161cb5524b8993772f0f",
+    "_design/reviews/ledger.json": "9dc8d3e6f9cc9b4b2bf8a396d88edd6324cc917a87de161cb5524b8993772f0f"
+  },
+  "expected": {
+    "_design/reviews/ledger.json": "3024815d709e4d682a450f0c1e29e679a81f3e071d502545a6b02133fc98f87f",
+    "_design/history/review-ledger.r0022.json": ""
+  },
+  "read_set": {
+    "_design/reviews/REV-0006.json": "a8674ccf551a3c25e09611283247ad7dbe748f13f3c661d9a9d62ad6ecd58af9",
+    "_design/candidates.json": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136"
+  },
+  "published": [
+    "_design/history/review-ledger.r0022.json",
+    "_design/reviews/ledger.json"
+  ],
+  "committed_at": "2026-09-24T17:16:18Z"
+}

@@ -1,0 +1,84 @@
+{
+ "task_id": "REV-0005",
+ "role": "cost-estimate",
+ "input_revision": 1,
+ "coverage": [
+  {
+   "question": "A ordem de grandeza de O-001/O-002/O-003 (banda + fonte PACK MODEL, buffer +20%) é consistente com o método do pacote e cobre o inventário completo (incl. entitlement/licenciamento das 5 populações, ainda por verificar)? Fecha com: ajuste à banda, se algum, com a razão.",
+   "checked": "Recontei os componentes descritos em O-001 contra a tabela de esforço de estimation-model.md (tabelas, regras de negócio, fluxos, ecrãs canvas, papéis de segurança); verifiquei a banda de complexidade contra a tabela de entidades/folhas; verifiquei a característica de buffer contra as Unknowns citadas (U-001, U-004, U-006, U-009, U-010); e verifiquei o tratamento do risco de entitlement/licenciamento contra licensing-and-cost-drivers.md (mecanismos §3–§6, armadilha de licenciamento §9, itens de verificação §15). Repeti a checagem de multiplicador e buffer para O-002/O-003 por reutilizarem 'mesma forma de base' que O-001."
+  },
+  {
+   "question": "A ausência de ordem de grandeza em O-004 e O-005 (ORDER OF MAGNITUDE UNAVAILABLE) está correctamente justificada, ou existe um número que o método permitiria estimar? Fecha com: veredicto — ausência justificada / número em falta, nomeado.",
+   "checked": "Confirmei que estimation-model.md só sabe contar componentes de construção em plataforma (tabelas, fluxos, ecrãs, regras, papéis) — não tem linha para esforço de gestão de mudança/disciplina de processo (O-004) nem para custo de continuar o processo actual (O-005). Verifiquei se A-004/A-005 (a estrutura de custo do as-is) oferecem um número que o método do pacote — e não outro — permitiria calcular hoje, e confirmei que ficam bloqueados por U-001/U-009/U-010, já nomeados no próprio candidato."
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-001 (propaga a O-002, O-003 — 'mesma forma de base... multiplicador e buffer iguais')",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json#O-001.order_of_magnitude.source ('4 tabelas com regras... multiplicador 1.2×') vs library/packs/pp/domain-knowledge/craft/estimation-model.md → COMPLEXITY MULTIPLIER ('Simple (<10 sheets, <5 entities): 1.0× · Medium (10–25 sheets, 5–20 entities): 1.2×')",
+   "failure_scenario": "O candidato declara 4 tabelas (=4 entidades) — cai na banda Simple (1.0×) da própria tabela do pacote, não Medium (1.2×), e o texto não dá razão para a subir de banda (nem invoca o qualificador 'financial/statistical' da banda Complex, que aliás pediria 1.5×, não 1.2×). Recontagem a partir dos componentes descritos (4 tabelas 1d + 3 regras de negócio 0.5d + fluxos ~8.5d + 4 ecrãs complexos 16d + 4 papéis 2d = 32d bruto) dá: com 1.2× e buffer +20% → ~46d (dentro da banda anunciada '40–50 dias'); com 1.0× (a banda que a contagem de entidades manda) e o mesmo buffer → ~38.4d, abaixo da banda anunciada. A banda que o leitor lê como saída do 'PACK MODEL' depende de uma escolha de multiplicador não justificada pelo próprio pacote — e essa escolha propaga-se, sem nova justificação, a O-002 e O-003.",
+   "closing_condition": "Justificar explicitamente porque a banda de complexidade é Medium e não Simple (p.ex. invocar o qualificador financeiro da tabela, com a banda certa — Complex/1.5×, se for esse o caso — ou fundamentar Medium por outro critério declarado), ou recalcular com 1.0× e actualizar as três bandas (O-001/O-002/O-003) e a frase de fonte.",
+   "id": "REV-0005.F01"
+  },
+  {
+   "target": "O-001.risks[3] (entitlement/licenciamento) — mesma lacuna em O-002/O-003",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json#O-001.risks ('Entitlement/licenciamento das 5 populações... não verificado... pode mover o custo, não a viabilidade') vs library/packs/pp/domain-knowledge/economics/licensing-and-cost-drivers.md §6 ('mandated control → required entitlement → affected population → gap... este é uma questão de inviabilidade económica, não um trade-off... nunca remover um controlo obrigatório para o candidato parecer mais barato') e §15 (VC-05: 'se uma capacidade premium obriga entitlement premium para TODOS os utilizadores de um artefacto').",
+   "failure_scenario": "O engagement tem M-3 (auditoria — Confirmed) e M-4 (retenção 10 anos — Confirmed), exactamente o par de obrigações que o pacote nomeia como gatilho da cadeia controlo-mandatado→entitlement→população inteira (§5–§6). O candidato afirma categoricamente que este risco 'pode mover o custo, não a viabilidade' sem ter feito a verificação que o próprio pacote exige (VC-05) antes de excluir o cenário de inviabilidade. Um leitor de decisão lê 'não a viabilidade' como veredicto fechado e desconta a linha como risco menor; se a verificação vier a mostrar que a classe de ambiente gerido obriga entitlement para toda a população do ambiente (não só os 4 papéis de utilizador da app), o achado muda de categoria (linha de custo grande, potencialmente inviabilidade) depois da arquitectura já fixada — o próprio modo de falha que o pacote descreve em §13.",
+   "closing_condition": "Rebaixar a afirmação a 'por verificar' sem juízo de viabilidade implícito, e admitir a linha como pergunta em aberto na SU (Unknown/Risky) com as três declarações do P-26 — M-n servido (M-3/M-4), ≥2 respostas, eixo custo/risco técnico — em vez de nota de risco em prosa dentro do candidato sem linha SU própria; verificar VC-05 antes do /decide.",
+   "id": "REV-0005.F02"
+  },
+  {
+   "target": "O-001.order_of_magnitude.source / buffer",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "candidates.json#O-001.architecture ('Catálogo (cópia local, condicional a U-004)') e #O-001.order_of_magnitude.source (buffer +20% lista U-004 entre as incertezas cobertas) — sem locator que mostre se o fluxo extra de sincronização da cópia local (variante de U-004) está dentro da contagem de 4 fluxos ou só coberto pelo buffer genérico.",
+   "failure_scenario": "Se U-004 resolver para 'cópia local com sincronização agendada', pode faltar um fluxo distinto (ingestão agendada, ~1.5d) que a contagem actual de '4 fluxos' não nomeia separadamente — o buffer cobre-o só implicitamente, sem dizer que o cobre.",
+   "closing_condition": "Ao resolver U-004, confirmar explicitamente se a variante escolhida cabe nos 4 fluxos já contados ou exige linha adicional, e ajustar a banda nesse momento.",
+   "id": "REV-0005.F03"
+  }
+ ],
+ "assumptions": [
+  "Recontagem de O-001 (32d brutos) é reconstrução minha a partir da narrativa do candidato — candidates.json não expõe tabela de componentes linha a linha como no worked example do pacote. Usei-a só para testar se a banda '40–50 dias' sobrevive à correcção do multiplicador; a contagem de entidades (4 tabelas) em si é dado explícito do texto, não assumido.",
+  "Assumi que 'papel de segurança Dataverse' em O-001 mapeia para a linha 'Security role (Dataverse) — 0.5d' da tabela de esforço (única linha correspondente no ficheiro)."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Chairman/analista financeiro: justificar ou corrigir o multiplicador de complexidade em O-001/O-002/O-003 antes do /decide (banda Simple vs Medium/Complex, com razão nomeada).",
+  "Chairman/lente de governance: admitir a lacuna de entitlement/licenciamento (M-3/M-4) como Unknown/Risky própria na SU, com as três declarações do P-26, em vez de nota de risco só em candidates.json.",
+  "Antes de /decide: correr a verificação VC-05 (licensing-and-cost-drivers.md §15) contra o desenho de ambiente Dataverse candidato, dado M-3/M-4 confirmados."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/estimation-model.md",
+   "sha256": "a2aa0669f0c1bbc33a5f7a974ebcdbf08ac4e855c7a665cb49f40ff07c11697f"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/economics/licensing-and-cost-drivers.md",
+   "sha256": "c4c5bc28ff97ee61b8cf78c626fb9c21128b871f25e0de185d098b70a8ffd59f"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 1,
+ "mandate_sha256": "ae8f23b5f4859b50f7555a0df1f3c1eeda7551cf914a4a28bd77930803b645c3",
+ "received_at": "2026-09-24T12:35:28Z"
+}

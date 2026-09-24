@@ -1,0 +1,20 @@
+{
+  "operation_id": "publish-b7bd423753265929",
+  "request_hash": "43445274618b13016e9d836ae51485cdc4e2b0d9056ed0f211adb89dbad7b5a5",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "5674597ffa53380675a676e519b43bf509bf25f8e28ca0eea36406233bc4d8ce"
+  },
+  "expected": {
+    "council-log.md": "03acf50ea836026ed3fef5ff63d40e472406c189accd418f831e7c6186bba2a4"
+  },
+  "read_set": {
+    "decisions.md": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e",
+    "options.md": "e7323e956e0dc09453561e9355ee4fd1f89fe47f48013aa796b6eba80c236558",
+    "shared-understanding.md": "ac8ba1f6e91ea85cc2333b7bc375caac706565f7c5bd67e922963533e2c54be2"
+  },
+  "published": [
+    "council-log.md"
+  ],
+  "committed_at": "2026-09-24T13:29:15Z"
+}

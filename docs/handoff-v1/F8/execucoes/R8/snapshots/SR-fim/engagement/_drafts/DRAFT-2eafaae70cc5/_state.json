@@ -1,0 +1,37 @@
+{
+ "engagement": "f8-r8-fx03",
+ "pack": "pp",
+ "phase": "options",
+ "round": "O-02",
+ "round_in_progress": "",
+ "aisa_version": "0.1.0",
+ "created": "2026-09-24T10:28:58Z",
+ "workflow": {
+  "profile": "handoff-v1",
+  "schema_version": "handoff-state/1",
+  "route": "change-impact",
+  "route_revision": 2,
+  "route_basis": {
+   "justification": "Reabertura R8 (O-02): três mudanças de negócio pós-aprovação do handoff (mudancas.md) incidem sobre a arquitectura já decidida (D-002/O-002, _blueprint/ux-blueprint_v01.yaml) — o que está em avaliação é o delta e o raio de impacto sobre essa base, não uma nova escolha de forma dentro da Power Platform.",
+   "source_refs": [
+    "inputs/mudancas.md",
+    "council-log.md#O-02"
+   ],
+   "authority_ref": "D-002"
+  },
+  "route_history": [
+   {
+    "route_revision": 1,
+    "route": "platform-constrained",
+    "route_basis": {
+     "justification": "A plataforma é Power Platform: foi a decisão corporativa da direcção de SI (deliberação interna DSI-SINT-07, sintética) e não está em discussão.",
+     "source_refs": [
+      "answers.md#ROTA"
+     ],
+     "authority_ref": "C-001"
+    },
+    "superseded_reason": "Reabertura R8 (O-02) avalia o impacto de mudanças de negócio pós-aprovação sobre a arquitectura já decidida — rota muda para `change-impact`; a imposição de plataforma (C-001) mantém-se válida e não é reaberta."
+   }
+  ]
+ }
+}

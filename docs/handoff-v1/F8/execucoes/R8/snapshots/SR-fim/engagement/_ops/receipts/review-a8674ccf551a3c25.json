@@ -1,0 +1,18 @@
+{
+  "operation_id": "review-a8674ccf551a3c25",
+  "request_hash": "eaffef9bb884477f5eb0bc42630596d2f61a223ebfd58c9699265c4046c3dd6d",
+  "result": "committed",
+  "revision": {
+    "_design/reviews/REV-0006.json": "a8674ccf551a3c25e09611283247ad7dbe748f13f3c661d9a9d62ad6ecd58af9"
+  },
+  "expected": {
+    "_design/reviews/REV-0006.json": ""
+  },
+  "read_set": {
+    "_design/reviews/REV-0006.mandate.json": "67d4d8ec87c651ea4c476526bb60d0c764e339a08faded68468eebeca5c98994"
+  },
+  "published": [
+    "_design/reviews/REV-0006.json"
+  ],
+  "committed_at": "2026-09-24T17:05:45Z"
+}

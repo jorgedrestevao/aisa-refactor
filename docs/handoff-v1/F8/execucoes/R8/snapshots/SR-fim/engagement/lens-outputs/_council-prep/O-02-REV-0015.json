@@ -1,0 +1,100 @@
+{
+ "task_id": "REV-0015",
+ "role": "ux-process",
+ "input_revision": 2,
+ "coverage": [
+  {
+   "question": "Alguma das duas mudanças de negócio (arredondamento por linha, novo limiar de 3 000€) precisa de ficar visível ou accionável num ecrã (p.ex. valor por linha já arredondado; aviso quando o pedido cruza o limiar)? O candidato O-006 não altera ecrãs. Fecha com: critério de aceitação em falta nomeado, ou confirmação de que nenhum ecrã precisa de mudar.",
+   "checked": "Cruzei a arquitectura/delta de candidates.json#O-006 contra screen-patterns.md e contra C-006/C-007/A-002. Resultado: nenhum ecrã muda de estrutura, mas falta critério de aceitação nomeado em três pontos. Não tive ux-blueprint_v01.yaml nem inputs/mudancas.md no mandato — apoiei-me na caracterização que o próprio candidato faz desses ficheiros."
+  },
+  {
+   "question": "A jornada de excepção do caminho de urgência (ainda dependente de X-001) muda de alguma forma observável pelo utilizador com o limiar mais baixo? Fecha com: confirmação ou o que muda.",
+   "checked": "Cruzei X-001 e TW-4 (condição literal '5 000€') com o delta [X3] de candidates.json e com A-006. Resposta: muda — a faixa 3 000–5 000€ passa a cair na zona de conflito — mas a jornada tem dois furos: condição numérica presa a 5 000€, e nenhum estado/ecrã nomeado para a paragem."
+  }
+ ],
+ "findings": [
+  {
+   "target": "C-006",
+   "severity": "blocking",
+   "kind": "fact",
+   "evidence": "shared-understanding.md#C-006 ('limiar... 5 000€... R-01', ainda sem linha sucessora) vs candidates.json#O-006 delta ('desce de 5 000€ para 3 000€'); C-006 consta em impact_refs mas sem obrigação/dono/prazo nomeados.",
+   "failure_scenario": "Pedido.estado lê C-006 por referência (desenho correcto); mas C-006 continua Confirmed a 5 000€. Um pedido de 3 500€ não atinge o limiar que a regra lê — não vai à direcção financeira, contra o despacho. Falha só aparece em auditoria ou reclamação — o que M-3 devia apanhar e não apanha.",
+   "closing_condition": "Nova linha Confirmed (ou 'was C-006') na SU com 3 000€, locator ao despacho, dono e prazo nomeados antes do /blueprint --refresh; critério de aceitação: pedido em [3 000€, 5 000€) mostra estado 'Aprovado direcção financeira' pendente."
+  },
+  {
+   "target": "X-001 / TW-4 (decisions.md#D-002)",
+   "severity": "blocking",
+   "kind": "fact",
+   "evidence": "decisions.md#D-002 TW-4 ('acima do limiar de 5 000€ (M-2/C-006)... travar processamento automático, forçar aprovação manual') vs candidates.json criteria ('limiar mais baixo cobre mais pedidos, nunca menos material'); TW-4 consta em impact_refs sem reescrita nomeada.",
+   "failure_scenario": "Se implementado ao pé da letra (número fixo, não a linha C-006), um pedido urgente de 4 000€ — já dentro do novo limiar — não dispara a paragem. A jornada de urgência continua a saltar o controlo financeiro exactamente na faixa que o despacho quis apanhar, sem decisão de ninguém.",
+   "closing_condition": "Reescrever a condição do TW-4 para referenciar C-006 por valor, não '5 000€' fixo — mesma disciplina já usada na regra de Pedido.estado. Nomear dono e prazo, não deixar só em impact_refs."
+  },
+  {
+   "target": "X-001 / TW-4 (decisions.md#D-002)",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "screen-patterns.md §3, §5 ('Surface state'), §6.1 (visibilidade role-gated) — nenhum citado ou mapeado por decisions.md#D-002 ou candidates.json#O-006 para a acção do TW-4.",
+   "failure_scenario": "TW-4 dispara em produção; ninguém desenhou que estado/badge o requerente, chefia ou compras vêem, nem que botão desbloqueia a aprovação manual. A máquina-padrão não tem lugar óbvio para 'suspenso por conflito de política' — comportamento fica indefinido até alguém o inventar ad-hoc na construção.",
+   "closing_condition": "Nomear, antes do /blueprint --refresh: valor de Pedido.estado (ou estado novo) para a paragem do TW-4, quem o vê e a acção que o desbloqueia — mapeado a screen-patterns.md §5."
+  },
+  {
+   "target": "C-007 / O-006 (arredondamento por linha)",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "candidates.json#O-006 architecture ('valor_linha... meio-para-par, por linha'; 'valor_total... soma de linhas já arredondadas') vs screen-patterns.md §2.2 ('calculated fields read-only') e §9 (âncoras familiares/nota de transição).",
+   "failure_scenario": "Valor por linha e total mudam de dígito em casos de fronteira (ex.: ,xx5) ao passar de meio-para-cima para meio-para-par; total deixa de bater com a soma manual do utilizador habituado ao Excel. Sem critério de aceitação nem nota de transição, primeiro sintoma é reclamação 'total errado'.",
+   "closing_condition": "Nomear critério de aceitação com casos de fronteira (linha e total); decidir/registar se o ecrã precisa de nota de transição (§9) quando o total não bate com a soma ingénua — antes do UAT."
+  },
+  {
+   "target": "C-006 / O-006 (aviso pré-submissão do limiar)",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "candidates.json#O-006 não nomeia ecrã/aviso pré-submissão para o limiar — só a mecânica pós-submissão de Pedido.estado; o próprio mandato nomeia o exemplo (aviso quando o pedido cruza o limiar) sem confirmação nem obrigação no candidato.",
+   "failure_scenario": "Com limiar mais baixo, mais requerentes só descobrem pós-submissão que o pedido precisa de aprovação extra — mais frequente que antes.",
+   "closing_condition": "Perguntar ao dono, por AskUserQuestion: aviso pré-submissão necessário, ou estado pós-submissão chega? Fechar com confirmação explícita registada na SU."
+  },
+  {
+   "target": "A-002 / R-003 (risco de reenvio por dúvida)",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "shared-understanding.md#A-002 ('confirmação visível... para não reenviar por dúvida') e #R-003 — candidates.json#O-006 não menciona interacção entre a mudança de arredondamento e este risco já aceite.",
+   "failure_scenario": "O mesmo padrão que causa reenvio hoje pode repetir-se por dúvida se o total 'está certo' após a mudança de arredondamento.",
+   "closing_condition": "No /synthesize seguinte à decisão, confirmar se a mitigação já prevista para R-003 cobre a dúvida sobre o total arredondado."
+  }
+ ],
+ "assumptions": [
+  "Sem ux-blueprint_v01.yaml, inputs/mudancas.md ou options.md no mandato — assumi a caracterização que candidates.json#O-006 faz desses ficheiros.",
+  "Sem ferramenta de verificação de hash disponível.",
+  "Tratei impact_refs como lista de itens a rever, não obrigação já fechada — não encontrei reescrita efectiva de C-006 nem do TW-4."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Actualizar C-006 na SU para 3 000€ antes do /blueprint --refresh — dono: director de sistemas de informação, via /answer.",
+  "Reescrever a condição do TW-4 para referenciar C-006 por valor, nomear o estado/ecrã visível da paragem — dono: autor técnico.",
+  "Nomear critério de aceitação para o arredondamento por linha (casos de fronteira, nota de transição) — antes do UAT.",
+  "Perguntar ao dono se o limiar mais baixo exige aviso pré-submissão — AskUserQuestion, fechar com confirmação explícita.",
+  "No /synthesize pós-decisão, verificar se a mitigação de R-003 cobre a dúvida sobre o total arredondado."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "9965b3e6be61370a30e92a5c558b22bf6c8d70751f87a353481f1bef4e6ea7d3"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/screen-patterns.md",
+   "sha256": "c54d38972807210d3e6c912c0cddee61fdc273e18ec1e63ba6c373319783ae75"
+  }
+ ]
+}

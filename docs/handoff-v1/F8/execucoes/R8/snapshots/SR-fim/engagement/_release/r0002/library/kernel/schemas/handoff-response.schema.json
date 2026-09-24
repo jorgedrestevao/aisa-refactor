@@ -1,0 +1,91 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "handoff-response/1",
+ "title": "Resposta estruturada das funções de workflow",
+ "description": "ok=true traz code=null; ok=false traz um dos códigos estáveis. reasons[].source_code preserva o código original do motor que recusou.",
+ "type": "object",
+ "required": [
+  "ok",
+  "code",
+  "reasons",
+  "affected_ids",
+  "input_revision",
+  "next_actions"
+ ],
+ "properties": {
+  "ok": {
+   "type": "boolean"
+  },
+  "code": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "enum": [
+    "UNSUPPORTED_PROFILE",
+    "STALE_INPUT",
+    "INCOMPLETE_READ_SET",
+    "AUTHORIZATION_REQUIRED",
+    "INTEGRITY_FAILURE",
+    "SCHEMA_UNSUPPORTED",
+    "BLOCKING_GAP",
+    "RECOVERY_REQUIRED",
+    null
+   ]
+  },
+  "reasons": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "detail"
+    ],
+    "properties": {
+     "detail": {
+      "type": "string",
+      "minLength": 1
+     },
+     "source": {
+      "type": "string"
+     },
+     "source_code": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "affected_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "input_revision": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "next_actions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "action",
+     "reason"
+    ],
+    "properties": {
+     "action": {
+      "type": "string",
+      "minLength": 1
+     },
+     "reason": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  }
+ }
+}

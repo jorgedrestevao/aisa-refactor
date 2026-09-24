@@ -1,0 +1,22 @@
+{
+  "operation_id": "publish-93f23d93bd1cb695",
+  "request_hash": "68d771deef5cc0a4e0c38c30eaff6fa79d24c60d259d6778bbf5d370cafab980",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "68d3061e953616de1037d17e346ac04ad1e60706e7ad2be87b9ac1f375654c35",
+    "shared-understanding.md": "6c71366d0ee1d87d835865a4612829b51c6107bd62b0aaee1623c46dbf4671f9"
+  },
+  "expected": {
+    "council-log.md": "5674597ffa53380675a676e519b43bf509bf25f8e28ca0eea36406233bc4d8ce",
+    "shared-understanding.md": "7b3513979b4e46465f9f8bc14f4d33b9928ceffd4151b877981a20ffb4039971"
+  },
+  "read_set": {
+    "_capture/process-model.md": "48bb342347c36a3d83439b2b37b3a9437ee1c3fc99eaaffa178a9dbedb477fbc",
+    "_coverage/coverage_v04.json": "7cb1d5e705d272472e4d95efc688fccb2780ff296ac726de33e479604f3857fc"
+  },
+  "published": [
+    "council-log.md",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T13:40:48Z"
+}

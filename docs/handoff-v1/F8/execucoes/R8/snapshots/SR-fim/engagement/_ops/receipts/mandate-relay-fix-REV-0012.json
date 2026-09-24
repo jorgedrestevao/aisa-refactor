@@ -1,0 +1,16 @@
+{
+  "operation_id": "mandate-relay-fix-REV-0012",
+  "request_hash": "f44fa2c24dd0bc4e26bdd045a50fcd727f02b5e598f0137369edaa40a20f6211",
+  "result": "committed",
+  "revision": {
+    "_design/reviews/REV-0012.mandate.json": "448f4deb30ce352982ebc5368612ac215dcb8b7780ffb96cd6e85b6fba157af3"
+  },
+  "expected": {
+    "_design/reviews/REV-0012.mandate.json": ""
+  },
+  "read_set": null,
+  "published": [
+    "_design/reviews/REV-0012.mandate.json"
+  ],
+  "committed_at": "2026-09-24T17:20:24Z"
+}

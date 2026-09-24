@@ -1,0 +1,24 @@
+{
+  "operation_id": "candidates-eb968a44106b4dc5",
+  "request_hash": "ecca16fc0c0b74bcec3990d0cfd20dc3b1b4eac3dd1ef65e88fe31b8b0de7cc7",
+  "result": "committed",
+  "revision": {
+    "_design/candidates.json": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136",
+    "_design/history/candidates.r0002.json": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136"
+  },
+  "expected": {
+    "_design/candidates.json": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2",
+    "_design/history/candidates.r0002.json": ""
+  },
+  "read_set": {
+    "shared-understanding.md": "9965b3e6be61370a30e92a5c558b22bf6c8d70751f87a353481f1bef4e6ea7d3",
+    "decisions.md": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "_state.json": "51bf10b899bb43bcd4b14fc9a1ae5782b1c27e5526ea1f5d50c02c3e879e1de8"
+  },
+  "published": [
+    "_design/candidates.json",
+    "_design/history/candidates.r0002.json"
+  ],
+  "committed_at": "2026-09-24T16:42:13Z"
+}

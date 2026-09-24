@@ -1,0 +1,141 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "handoff-work-packages/1",
+ "title": "Inventário de trabalho (_design/work-packages.json)",
+ "description": "Cada WP-NNNN: o que realiza (FC, nós do desenho, linhas), o que prova, de que depende, a aceitação e a definição de feito. Sem esforço — o esforço é só da estimativa (Q2). Publicado só por inventory.py; a implementation-spec projecta-o (handoff-v1 F6, Q1).",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "engagement_id",
+  "revision",
+  "based_on",
+  "items"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": "handoff-work-packages/1"
+  },
+  "engagement_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "revision": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "based_on": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "ref"
+    ],
+    "properties": {
+     "ref": {
+      "type": "string",
+      "minLength": 1
+     },
+     "revision": {
+      "type": [
+       "integer",
+       "string"
+      ]
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "retired_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "scope_id",
+     "purpose",
+     "realizes",
+     "proves",
+     "depends_on",
+     "acceptance"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^WP-\\d{4}$"
+     },
+     "scope_id": {
+      "type": "string",
+      "pattern": "^SCOPE-\\d{4}$"
+     },
+     "purpose": {
+      "type": "string",
+      "minLength": 1
+     },
+     "realizes": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "proves": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "depends_on": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^WP-\\d{4}$"
+      }
+     },
+     "acceptance": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "condition"
+       ],
+       "properties": {
+        "condition": {
+         "type": "string",
+         "minLength": 1
+        },
+        "fc": {
+         "type": "string",
+         "pattern": "^FC-\\d{4}$"
+        }
+       }
+      }
+     },
+     "skills": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "definition_of_done": {
+      "type": "string"
+     },
+     "not_applicable": {
+      "type": "object"
+     }
+    }
+   }
+  }
+ }
+}

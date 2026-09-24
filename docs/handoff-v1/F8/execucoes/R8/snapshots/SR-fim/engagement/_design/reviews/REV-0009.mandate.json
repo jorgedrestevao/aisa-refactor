@@ -1,0 +1,67 @@
+{
+ "schema_version": "aisa-review-mandate/1",
+ "task_id": "REV-0009",
+ "role": "ux-process",
+ "objective": "Rever se o delta desta reabertura (arredondamento por linha; novo limiar) é observável ou accionável para os utilizadores nos ecrãs já desenhados, sem O-006 os alterar.",
+ "route": "platform-constrained",
+ "scope_ids": [
+  "C-006",
+  "C-007",
+  "A-002",
+  "U-002"
+ ],
+ "questions": [
+  "Alguma das duas mudanças de negócio (arredondamento por linha, novo limiar de 3 000€) precisa de ficar visível ou accionável num ecrã (p.ex. valor por linha já arredondado; aviso quando o pedido cruza o limiar)? O candidato O-006 não altera ecrãs. Fecha com: critério de aceitação em falta nomeado, ou confirmação de que nenhum ecrã precisa de mudar.",
+  "A jornada de excepção do caminho de urgência (ainda dependente de X-001) muda de alguma forma observável pelo utilizador com o limiar mais baixo? Fecha com: confirmação ou o que muda."
+ ],
+ "input_refs": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "9965b3e6be61370a30e92a5c558b22bf6c8d70751f87a353481f1bef4e6ea7d3"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  }
+ ],
+ "candidate_revision": 2,
+ "knowledge_refs": [
+  {
+   "ref": "library/packs/pp/domain-knowledge/craft/screen-patterns.md",
+   "sha256": "c54d38972807210d3e6c912c0cddee61fdc273e18ec1e63ba6c373319783ae75",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  }
+ ],
+ "output_contract": [
+  "task_id",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "stop_conditions": [
+  "todas as perguntas com cobertura ou em `unanswered`"
+ ],
+ "budget": "uma leitura; sem rondas próprias",
+ "prohibited_actions": [
+  "escrever numa autoridade",
+  "autorizar pelo cliente",
+  "confirmar um facto por constar de outra resposta",
+  "ler o parecer de outro revisor",
+  "rever um candidato ainda em construção"
+ ],
+ "created_at": "2026-09-24T16:44:43Z"
+}

@@ -1,0 +1,218 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "handoff-candidates/1",
+ "title": "Candidatos de Options (_design/candidates.json)",
+ "description": "Conjunto de candidatos com revisão, publicado só por review.py (coordenador); cada revisão fica imutável em _design/history/. Um parecer é preso à revisão que leu (handoff-v1 F5). Regras por rota em review.candidate_integrity. IDs nunca reutilizados: retired_ids.",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "engagement_id",
+  "revision",
+  "route",
+  "based_on",
+  "items"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": "handoff-candidates/1"
+  },
+  "engagement_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "revision": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "route": {
+   "enum": [
+    "solution-choice",
+    "platform-constrained",
+    "change-impact"
+   ]
+  },
+  "based_on": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "ref"
+    ],
+    "properties": {
+     "ref": {
+      "type": "string",
+      "minLength": 1
+     },
+     "revision": {
+      "type": [
+       "integer",
+       "string"
+      ]
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "retired_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "pattern": "^O-[0-9]{3}$"
+   }
+  },
+  "criteria": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "exclusions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "what",
+     "reason"
+    ],
+    "properties": {
+     "what": {
+      "type": "string",
+      "minLength": 1
+     },
+     "reason": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "imposed_platform": {
+   "type": "string"
+  },
+  "imposition_ref": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "reduction_reason": {
+   "type": "string"
+  },
+  "baseline_ref": {
+   "type": "string"
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "option_class",
+     "platform"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^O-[0-9]{3}$"
+     },
+     "name": {
+      "type": "string",
+      "minLength": 1
+     },
+     "option_class": {
+      "type": "string",
+      "minLength": 1
+     },
+     "platform": {
+      "type": "string",
+      "minLength": 1
+     },
+     "technology": {
+      "type": "string"
+     },
+     "form": {
+      "type": "object",
+      "properties": {
+       "surface": {
+        "type": "string"
+       },
+       "store": {
+        "type": "string"
+       }
+      }
+     },
+     "architecture": {
+      "type": "string"
+     },
+     "order_of_magnitude": {
+      "type": "object",
+      "properties": {
+       "value": {
+        "type": "string"
+       },
+       "source": {
+        "type": "string"
+       },
+       "unavailable": {
+        "type": "string"
+       }
+      }
+     },
+     "risks": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "reversibility": {
+      "type": "string"
+     },
+     "blockers": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "premise_refs": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "source_refs": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "delta": {
+      "type": "string"
+     },
+     "impact_refs": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "minLength": 1
+      }
+     },
+     "not_applicable": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "string",
+       "minLength": 1
+      }
+     }
+    }
+   }
+  }
+ }
+}

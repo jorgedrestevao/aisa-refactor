@@ -1,0 +1,88 @@
+{
+ "task_id": "REV-0001",
+ "role": "architecture-review",
+ "input_revision": 1,
+ "coverage": [
+  {
+   "question": "O-001/O-002/O-003 respeitam a fronteira imposta (C-001, rota platform-constrained) sem nenhum componente fora dela? Fecha com: lista de componentes verificados por candidato, ou o desvio apontado.",
+   "checked": "Componentes de arquitectura de cada candidato (candidates.json) contra a fronteira C-001 (Power Platform) e contra as formas válidas de ALT-004 em library/packs/pp/decision-model/alternatives-register.md §1.2. O-001: Power Apps (canvas), tabelas Dataverse (Pedido/Linha de pedido/Registo de aprovação/Catálogo condicional), Power Automate (routing, confirmação, detecção de duplicados, leitura ERP-X via connector), segurança por papel Dataverse — todos dentro da fronteira; ERP-X é sistema externo já existente, alcançado por connector directo (composição 'Direct integration'), não um componente novo fora da plataforma. O-002: mesmos componentes de dados/fluxo que O-001, superfície model-driven em vez de canvas (shell gerada) — dentro da fronteira. O-003: Power Apps (canvas), Power Automate, store = listas da ferramenta de colaboração — corresponde exactamente à forma tabelada 'Canvas app + collaboration-platform lists' no register (linha 90), que o próprio pack trata como forma de ALT-004 (esta plataforma), distinta da exclusão de ALT-003 ('capacidade nativa... sem app dedicada', já excluída em candidates.json#exclusions) precisamente porque há app canvas dedicada. Nenhum desvio encontrado nos três candidatos."
+  },
+  {
+   "question": "A reversibilidade declarada (alta entre formas sobre Dataverse, baixa para sair da plataforma; média para O-003 sobre listas) resiste a exame — o que a inverteria? Fecha com: confirmação ou correcção da reversibilidade, por candidato.",
+   "checked": "Reversibilidade de O-001 e O-002 contra as linhas do register para 'Record-centric app + governed store' e 'Canvas app + governed store' (patterns.md, ambas herdam segurança/auditoria da mesma loja Dataverse) — confirmado sem correcção: trocar de forma é redesenho de ecrãs, dados e segurança ficam. Reversibilidade de O-003 ('média... migração de dados, não reconfiguração de ecrã') contra o mesmo register — encontrada incompleta: um canvas app liga-se por fórmula/vinculação directa ao esquema da loja subjacente (colunas/lookups da lista); mudar de listas para Dataverse implica também reapontar fontes de dados e rever fórmulas ecrã a ecrã, não só migrar registos. O register não documenta explicitamente o custo desta transição concreta (lista→Dataverse) — a correcção fica sem locator de autoridade directo, por isso é recomendação, não facto corrigido."
+  },
+  {
+   "question": "Que achado mudaria a recomendação entre O-001, O-002 e O-003? Fecha com: o(s) factor(es) que decidem entre as três formas, nomeados.",
+   "checked": "Riscos e forfeits declarados por candidato em candidates.json cruzados com shared-understanding.md (U-002, M-3) e patterns.md (exclusion list do record-centric shell). Dois factores nomeados decidem entre as três formas: (1) U-002 (contexto/dispositivo do pedido, ainda Unknown) — se o requerente pede a partir de telemóvel, O-002 (model-driven) fica com forfeit documentado (browser de telemóvel não suportado pela shell), o que empurra para O-001 ou O-003 (ambos canvas); (2) força exigida da obrigação de auditoria M-3 (Confirmed) — O-003 declara auditoria e controlo de acesso 'mais fracos de origem' por correr sobre listas (sem segurança de coluna, tectos de delegação/âmbito), o que empurra para O-001/O-002 (Dataverse) se a auditoria tiver de ser robusta sem mecanismo adicional a construir. Nenhum artefacto lido consolida estes dois factores explicitamente como os decisores entre as três formas — ficam dispersos pelos campos 'risks' de cada item; ver finding sobre isto."
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-003 (candidates.json#items[2].reversibility)",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "candidates.json — \"reversibility\": \"Média — mudar de listas para Dataverse mais tarde é migração de dados, não reconfiguração de ecrã.\"; cruzado com library/packs/pp/decision-model/alternatives-register.md §1.2, linha \"Canvas app + collaboration-platform lists\" (não documenta custo de migração de loja para este form) — sem locator de autoridade directo para a correcção proposta",
+   "failure_scenario": "Se O-003 for escolhido e mais tarde migrado para Dataverse por sub-dimensionamento da auditoria/segurança (ver M-3 abaixo), a estimativa de esforço da migração assume só 'migração de dados'; ecrãs canvas vinculam directamente ao esquema da lista (colunas, fórmulas, lookups) e têm de ser revistos por ecrã — o esforço real fica subestimado no ponto em que a decisão de reversibilidade for invocada para justificar O-003 como aposta segura.",
+   "closing_condition": "Reformular a reversibilidade de O-003 para nomear também o custo de reapontar fontes de dados e rever fórmulas por ecrã, não só a migração de registos; ou, se o autor tiver uma razão para excluir esse custo (ex.: abstracção de dados desenhada desde o início), declarar essa razão explicitamente.",
+   "id": "REV-0001.F01"
+  },
+  {
+   "target": "O-001, O-002, O-003 (candidates.json risks — entitlement/licenciamento)",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json#items[0].risks[2]: \"Entitlement/licenciamento das 5 populações para Power Apps/Dataverse não verificado nesta engagement (emergent concern, sem linha SU própria ainda)\" — repetido por referência em O-002 e O-003 (\"Mesmos riscos de dados de O-001... entitlement por verificar\"); confirmado ausente em shared-understanding.md (nenhuma linha Unknown/Assumed cobre entitlement/licenciamento). CLAUDE.md — regra de admissão de Unknown (P-26): pergunta em aberto exige M-n/marcador, ≥2 respostas e eixo nomeado antes de ser escrita.",
+   "failure_scenario": "O achado circula nos três candidatos como texto de risco solto, nunca promovido a Unknown formal — pode ressurgir tarde (blueprint ou decide) como surpresa de custo sem histórico de decisão nem eixo declarado, e sem que o dono tenha sido questionado por AskUserQuestion sobre isso.",
+   "closing_condition": "Promover a uma linha Unknown em shared-understanding.md com M-n/marcador, ≥2 respostas possíveis (ex.: 'entitlement suficiente' vs 'requer licenças adicionais') e eixo (custo) antes de /decide — aplica-se por igual aos três candidatos, não decide entre eles, mas falta de rasto é uma lacuna de processo em todos.",
+   "id": "REV-0001.F02"
+  },
+  {
+   "target": "O-001 / O-002 / O-003 — factores decisivos entre formas",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "shared-understanding.md#U-002 (swing: dimensionante); shared-understanding.md#M-3 (Confirmed); candidates.json#items[1].risks[1] (forfeit telemóvel, O-002); candidates.json#items[2].risks[0] (auditoria/segurança mais fraca, O-003) — nenhum artefacto lido consolida os dois como os factores que decidem entre as três formas",
+   "failure_scenario": "Sem um lugar único que nomeie U-002 e a força exigida de M-3 como os decisores de forma, quem lê os três candidatos em separado (ex.: o dono, em /decide) tem de reconstruir a comparação a partir de texto de risco disperso — risco de decisão por impressão em vez de pelo par de factores nomeados.",
+   "closing_condition": "No próximo artefacto de síntese (options.md ou /decide --consult), nomear explicitamente: U-002 decide O-002 vs. formas canvas (O-001/O-003); força exigida de M-3 decide formas Dataverse (O-001/O-002) vs. forma sobre listas (O-003).",
+   "id": "REV-0001.F03"
+  }
+ ],
+ "assumptions": [
+  "Assumi que 'fronteira imposta por C-001' inclui as formas que o pack (alternatives-register.md §1.2) já reconhece como ALT-004 — incluindo canvas sobre listas da ferramenta de colaboração — por não haver, nos ficheiros lidos, nenhuma declaração do dono a restringir C-001 só a Dataverse.",
+  "Não li options.md (fora do mandato) — a ausência de consolidação dos factores decisivos (finding 3) é lida só a partir de candidates.json + shared-understanding.md; pode já existir noutro artefacto não listado no mandato."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Autor de candidates.json: reformular reversibilidade de O-003 para nomear custo de rebinding de ecrãs, não só migração de dados.",
+  "Chairman/próxima lente: promover entitlement/licenciamento a Unknown formal em shared-understanding.md (M-n + eixo + ≥2 respostas) antes de /decide.",
+  "Responsável por /options ou /decide --consult: consolidar num só lugar os dois factores nomeados (U-002; força exigida de M-3) como os que decidem entre O-001/O-002/O-003."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/architecture/patterns.md",
+   "sha256": "e539e8cda314f7e59e6a9d98876ecbded22c7be254e9df92d4bba90c3181195f"
+  },
+  {
+   "ref": "library/packs/pp/decision-model/alternatives-register.md",
+   "sha256": "98eaa1c200adb070704538715527ef917af9210e632014fde4f29018473f8fee"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 1,
+ "mandate_sha256": "e38f8d449b7de2f3059ec443292a6ecd6033e90c29a475e1de6af0e4946003b4",
+ "received_at": "2026-09-24T12:15:01Z"
+}

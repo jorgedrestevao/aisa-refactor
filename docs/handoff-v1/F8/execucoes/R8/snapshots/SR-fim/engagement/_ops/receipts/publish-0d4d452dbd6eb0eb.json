@@ -1,0 +1,21 @@
+{
+  "operation_id": "publish-0d4d452dbd6eb0eb",
+  "request_hash": "48a62daf2a1d3cc0c201a62b1d90f93726ccaaf2a5ef248fce5b19593629d593",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "76d0c6c1bd3757c3910a3b6383f6860957c61811a4bcd2787088a51076d44448",
+    "shared-understanding.md": "e5f2e5148f3ae1bba9f4482d47f261955b8cc3e13830fde3901daa10bc7fadff"
+  },
+  "expected": {
+    "council-log.md": "74eacc49ac39640af93b66dda08ceaec20ba2fdcd835574e57c21efcb303032d",
+    "shared-understanding.md": "c26d20992589b4d1ee5623bfa69e847685b131cc57ef677b2ec49b7ccbaacdd4"
+  },
+  "read_set": {
+    "answers.md": "4dd48d08924970fa2cd9fb0cb80379210be0a90fb99534be825f2566c80482c8"
+  },
+  "published": [
+    "council-log.md",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T11:13:59Z"
+}

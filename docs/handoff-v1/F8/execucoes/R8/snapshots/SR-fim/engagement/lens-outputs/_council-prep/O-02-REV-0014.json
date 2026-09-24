@@ -1,0 +1,90 @@
+{
+ "task_id": "REV-0014",
+ "role": "security-operation",
+ "input_revision": 2,
+ "coverage": [
+  {
+   "question": "O limiar mais baixo (3 000€, antes 5 000€) muda a leitura de severidade/urgência de X-001 (o caminho de urgência salta também a aprovação financeira?) — mais pedidos passam a cair na zona de conflito. Fecha com: parecer sobre se isto sobe a prioridade de fechar X-001 antes do build, com a tua leitura de segregação de aprovação.",
+   "checked": "X-001 (Conflicted, Critical, blocks_scope) e M-1/M-2; A-006 como precedente já resolvido da mesma ambiguidade (chefia valida depois, não salta); TW-4 como único controlo compensatório já decidido, referência textual desactualizada. Confrontei com security-controls.md §4 (lowest-plane rule)."
+  },
+  {
+   "question": "O mecanismo de auditoria (M-3, RegistoAprovacao) precisa de um campo próprio para o valor do limiar em vigor no momento de cada aprovação (rastreabilidade de uma regra que muda no tempo), ou basta o valor_total e o estado já desenhados? Fecha com: obrigação nomeada, ou confirmação de que chega o que já está desenhado.",
+   "checked": "M-3 e U-006 (ainda Unknown); campos citados em candidates.json impact_refs (Pedido.valor_total, Pedido.estado — nenhum campo de RegistoAprovacao citado); C-006 na SU nunca actualizado quando o limiar mudou (ver finding C-006) demonstra a lacuna já dentro do próprio engagement; security-controls.md §11 (audit retention stamped at write time)."
+  }
+ ],
+ "findings": [
+  {
+   "target": "X-001",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "shared-understanding.md#X-001; #M-2; #A-006; candidates.json#criteria[3] ('X-001... tornando o conflito por resolver mais exposto'); candidates.json#items[0].risks[1]",
+   "failure_scenario": "Pedido urgente de 4 000€ chega antes de X-001 fechar. Limiar antigo (5 000€): abaixo, sem dúvida. Limiar novo (3 000€): acima, exige direcção financeira. Caminho de urgência (A-006) vai direto a compras, chefia valida depois — não nomeia a direcção financeira. Se o gate 'valor_total > limiar' não for invocado nesse caminho, o pedido despacha sem a direcção financeira alguma vez ver — não é atraso, é ausência. Viola M-2 por construção do caminho de excepção.",
+   "closing_condition": "Dono decide X-001 via /answer antes de /blueprint fechar. Arquitecto confirma no blueprint que o plano técnico aplica o gate 'valor_total > C-006' e se o caminho de urgência o invoca ou contorna. TW-4 reescrito para referenciar C-006 e traduzido em critério de aceitação testável."
+  },
+  {
+   "target": "TW-4 (decisions.md#D-002)",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "decisions.md#D-002 TW-4 (5 000€); candidates.json#risks[2] cita _synthesis/risks-and-assumptions.md (TW-4, '5 000€') como texto por rever, não corrigido neste candidato.",
+   "failure_scenario": "TW-4 fica frase no log de decisão, nunca vira critério de build — candidates.json não o traduz em elemento de arquitectura do O-006. Sistema entra em produção sem o controlo compensatório que TW-4 promete.",
+   "closing_condition": "TW-4 referencia C-006 por id (não '5 000€' literal), entra no blueprint como regra/condição de fluxo nomeada, com teste de aceitação."
+  },
+  {
+   "target": "C-006",
+   "severity": "blocking",
+   "kind": "fact",
+   "evidence": "shared-understanding.md#C-006 ('5 000 €', Confirmed, sem linha superseding); candidates.json#delta ('desce de 5 000€ para 3 000€', citando só mudancas.md, fora do meu input_refs).",
+   "failure_scenario": "Leitor confia em shared-understanding.md (fonte de verdade por regra do projecto) e usa 5 000€. candidates.json, e o que dele derivar, assume 3 000€. Duas fontes discordam sem que a SU tenha sido corrigida; o valor do limiar fica indeterminado até reconciliação manual. Bloqueia também a leitura correcta desta revisão.",
+   "closing_condition": "Nova linha Confirmed publicada na SU (was C-006) com o valor 3 000€ e o locator do despacho, antes de /decide fechar esta reabertura."
+  },
+  {
+   "target": "M-3",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "shared-understanding.md#M-3; #U-006 (design_choice, Unknown); candidates.json impact_refs (campos de Pedido, não de RegistoAprovacao); security-controls.md §11.",
+   "failure_scenario": "Pedido urgente de 4 000€, aprovado hoje sob limiar 3 000€, é revisto por auditoria daqui a dois anos após novo despacho (ex. 6 000€). RegistoAprovacao/Pedido mostra só valor_total=4000, estado=Aprovado — nada regista qual limiar estava em vigor. Auditor não confirma sem ir ao despacho arquivado. Já falhou uma vez dentro deste próprio engagement (C-006 nunca actualizado).",
+   "closing_condition": "Obrigação nomeada no fecho de U-006: o registo de aprovação grava o limiar aplicável no momento da aprovação (não só valor_total/estado, mutáveis). Testável: consulta de auditoria que atravesse a fronteira da mudança de limiar, respondível só com dados do sistema."
+  }
+ ],
+ "assumptions": [
+  "Tratei o valor mais baixo (3 000€) como premissa operativa desta revisão, mesmo a SU ainda não o reflectir.",
+  "Não li ux-blueprint_v01.yaml, inputs/mudancas.md nem options.md nem _synthesis/* — fora do input_refs do mandato.",
+  "Assumi que 'valor_total e o estado já desenhados' se refere aos campos citados em impact_refs — não há citação equivalente para campos de RegistoAprovacao, o que é o próprio ponto do finding M-3."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Dono: decidir X-001 via /answer, antes de /blueprint fechar.",
+  "Arquitecto: confirmar em blueprint o plano técnico que aplica o gate valor_total > C-006, e se o caminho de urgência o invoca ou contorna.",
+  "Arquitecto: reescrever TW-4 para referenciar C-006 por id, traduzi-lo em critério de aceitação testável.",
+  "Analista/chairman: publicar nova linha Confirmed na SU (was C-006) com 3 000€ e locator do despacho, antes de /decide fechar esta reabertura.",
+  "Arquitecto, no fecho de U-006: nomear obrigação — o registo grava o limiar aplicável no momento da aprovação.",
+  "Antes do build: UAT com pedido urgente entre 3 000€ e 5 000€.",
+  "Antes de fechar U-006: prova de auditoria atravessando a fronteira da mudança de limiar."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "fa67b1fde7319388f98e787f700104bada7230ce5522d8f25bd5e13014ebb136"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "9965b3e6be61370a30e92a5c558b22bf6c8d70751f87a353481f1bef4e6ea7d3"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "f12b114093201455420e3912bd3a667f51a1213c9d06e11b139644f8f9559b4e"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md",
+   "sha256": "9826aef31c4719ec94c33894a68ff90f2217b3d5a04919d13f54afa11fa32ab4"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/security/security-controls.md",
+   "sha256": "6063cd524edccbf953439e8ad1ca9798b5f3b4007bae54b317993e266b0e6218"
+  }
+ ]
+}
