@@ -40,7 +40,7 @@
 - `.claude/agents/` — the independent reviewers (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer`) and the author/chairman mandates (`solution-architect`, `chairman`). The six Discovery personas are retired (handoff-v1 F5.4).
 - `.claude/hooks/` — programmatic enforcement.
 - `projects/<slug>/` — engagement state (mount point to private repo).
-- `projects/<slug>/_graph/` · `_ops/` · `_migration/` — **estado coordenado. Nunca editar à mão.** O grafo é autoridade operacional (o contexto é construído dele); `_ops/` é a barreira (marcador de pendência + recibos). Quem lá escreve é `operation.py`, em Python. O hook `pre-authority-guard.py` recusa `Write`/`Edit` nestes caminhos — uma escrita por ferramenta aqui é, por construção, edição à mão de estado coordenado.
+- `projects/<slug>/_graph/` · `_ops/` · `_migration/` · `_work/` · `_design/` — **estado coordenado. Nunca editar à mão.** O grafo é autoridade operacional (o contexto é construído dele); `_ops/` é a barreira (marcador de pendência + recibos); `_work/` é o checkpoint do trabalho em curso; `_design/` guarda contratos funcionais, candidatos, pareceres, âmbito e inventário (handoff-v1). Quem lá escreve é `operation.py`, em Python, através dos motores. O hook `pre-authority-guard.py` recusa `Write`/`Edit` nestes caminhos — uma escrita por ferramenta aqui é, por construção, edição à mão de estado coordenado.
 - `projects/<slug>/dashboard.html` — generated living page. Never hand-edit: `shared-understanding.md` stays the source of truth.
 
 ## Slash commands
@@ -95,7 +95,7 @@ Uma mensagem que descreve um processo, um problema ou uma intenção de começar
 - Editing `library/` at runtime (hook will reject).
 - Inventing claim states without evidence (use Unknown instead).
 - Bypassing `/synthesize` between `/decide` and `/render`.
-- Editar `_graph/`, `_ops/` ou `_migration/` à mão (o guarda recusa, e com razão: apaga a prova de que uma operação aconteceu, ou inventa uma que não aconteceu).
+- Editar `_graph/`, `_ops/`, `_migration/`, `_work/` ou `_design/` à mão (o guarda recusa, e com razão: apaga a prova de que uma operação aconteceu, ou inventa uma que não aconteceu).
 - Concluir antes de apresentar limitações. Um leitor que responde sobre estado por reconstruir apresenta estado misto como estado — as contagens ficam certas e a conclusão errada, e a diferença não aparece em contagem nenhuma.
 
 ## Where things live

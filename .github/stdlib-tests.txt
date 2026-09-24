@@ -29,6 +29,7 @@
 .claude/tests/test_dependents.py
 .claude/tests/test_drift_authority.py
 .claude/tests/test_extraction_limits.py
+.claude/tests/test_f8_tools.py
 .claude/tests/test_frame_identity.py
 .claude/tests/test_graph_birth.py
 .claude/tests/test_graph_inspection.py
@@ -47,6 +48,7 @@
 .claude/tests/test_locator_resolution.py
 .claude/tests/test_migration.py
 .claude/tests/test_motor_identity.py
+.claude/tests/test_motor_skill_wiring.py
 .claude/tests/test_operation_concurrency.py
 .claude/tests/test_operation_recovery.py
 .claude/tests/test_options_artefact.py

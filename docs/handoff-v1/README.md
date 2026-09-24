@@ -15,7 +15,7 @@ Este directório acompanha a refatorização "handoff-v1" do AISA. Uma sessão n
 | Relatório da fase F6 (**concluída**; âmbito e inventário, rastreabilidade, gate de âmbito, release com índice, segredos, aceitação do destinatário) | [F6/RELATORIO.md](F6/RELATORIO.md) · [desenho](F6/DESENHO.md) · [ensaio T43](F6/T43-ENSAIO.md) |
 | Relatório da fase F7 (**concluída**; raio de impacto e stale derivado, versões suportadas, restore sem força, rollback, docs de operação) | [F7/RELATORIO.md](F7/RELATORIO.md) · [desenho](F7/DESENHO.md) |
 | Relatório da fase F8 (**em curso**; pilotos adversariais e aceitação do destinatário) | [F8/RELATORIO.md](F8/RELATORIO.md) · [desenho](F8/DESENHO.md) |
-| Fase corrente | **F8**, iniciada a 2026-09-24 na branch `claude/continua-com-o-plano-xaeq46`. Desenho decidido (Q1–Q5); em curso o F8.1 (preparação dos pilotos) |
+| Fase corrente | **F8**, iniciada a 2026-09-24 na branch `claude/continua-com-o-plano-xaeq46`: desenho decidido (Q1–Q5) e preparação dos pilotos (F8.1) integrados. **Gates da F6 e da F7 reabertos** pela auditoria externa de 2026-09-24 (A1–A5, reproduzidos): correcção em curso em [F7/CORRECAO-AUDITORIA.md](F7/CORRECAO-AUDITORIA.md); o F8.2 (primeiro piloto) espera por ela |
 | Artefactos de F0 | [F0/](F0/) |
 | Fixtures sintéticas do programa | `.claude/tests/fixtures/handoff-v1/` |
 | Teste de F0 (T02 + fixtures) | `.claude/tests/test_handoff_f0.py` |
