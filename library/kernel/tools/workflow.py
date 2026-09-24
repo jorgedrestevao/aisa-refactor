@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import runpy
 import sys
@@ -68,6 +69,56 @@ BLOCKING_GAP = "BLOCKING_GAP"
 RECOVERY_REQUIRED = "RECOVERY_REQUIRED"
 CODES = (UNSUPPORTED_PROFILE, STALE_INPUT, INCOMPLETE_READ_SET, AUTHORIZATION_REQUIRED,
          INTEGRITY_FAILURE, SCHEMA_UNSUPPORTED, BLOCKING_GAP, RECOVERY_REQUIRED)
+
+# F7 (Q4): a tabela ÚNICA do que esta versão lê, por artefacto. Um leitor que encontra outra
+# versão (futura, ou sem `schema_version`) recusa com `SCHEMA_UNSUPPORTED` e não toca no
+# ficheiro — nunca lê à sorte nem trunca campos que não conhece (T36). A ordem conta: o
+# primeiro padrão que casa decide (o mandato antes do parecer). Os rascunhos (`_drafts/`)
+# não são artefactos publicados e não entram.
+SUPPORTED = (
+    ("_state.json#workflow", "handoff-state/1"),
+    ("_work/checkpoint.json", "handoff-work/1"),
+    ("_design/functional-contracts.json", "handoff-functional/1"),
+    ("_design/scope.json", "handoff-scope/1"),
+    ("_design/work-packages.json", "handoff-work-packages/1"),
+    ("_design/candidates.json", "handoff-candidates/1"),
+    ("_design/reviews/ledger.json", "aisa-review-ledger/1"),
+    ("_design/reviews/REV-*.mandate.json", "aisa-review-mandate/1"),
+    ("_design/reviews/REV-*.json", "handoff-review/1"),
+    ("_release/r*/handoff-index.json", "handoff-index/1"),
+)
+
+
+def supported_schema(path) -> str:
+    """A versão que esta versão do código lê para `path` (relativo ao engagement, ou absoluto:
+    casa pelo fim do caminho); vazio quando o caminho não é um artefacto versionado."""
+    import fnmatch
+    s = str(path).replace(os.sep, "/")
+    for pat, schema in SUPPORTED:
+        if fnmatch.fnmatchcase(s, pat) or fnmatch.fnmatchcase(s, "*/" + pat):
+            return schema
+    return ""
+
+
+def schema_problem(path, data) -> str:
+    """Vazio se `data` é da versão suportada para `path`; senão a razão, pronta a dizer."""
+    want = supported_schema(path)
+    if not want or not isinstance(data, dict):
+        return ""
+    got = data.get("schema_version")
+    if got == want:
+        return ""
+    return "`{}` tem schema `{}`; esta versão lê `{}` — nada se lê nem escreve por " \
+           "cima".format(Path(str(path)).name, got, want)
+
+
+class SchemaError(Exception):
+    """Recusa de versão para os leitores só-de-leitura (`impact`, `trace`)."""
+
+    def __init__(self, message: str, path: str = ""):
+        super().__init__(message)
+        self.code = SCHEMA_UNSUPPORTED
+        self.detail = {"path": path}
 
 # O que `profile_of` devolve em `kind`.
 HANDOFF = "handoff"

@@ -86,10 +86,14 @@ def _digest(p: Path) -> str:
 
 def _load(p: Path, what: str):
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise ReviewError("{} ilegível — nada se escreve por cima".format(what),
                           _W()["INTEGRITY_FAILURE"], {"path": str(p), "detail": str(exc)})
+    prob = _W()["schema_problem"](p, data)                  # F7: candidatos, pareceres,
+    if prob:                                                # mandatos, registo
+        raise ReviewError(prob, _W()["SCHEMA_UNSUPPORTED"], {"path": str(p)})
+    return data
 
 
 def _workflow(eng: Path) -> dict:

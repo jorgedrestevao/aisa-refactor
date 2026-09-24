@@ -70,9 +70,13 @@ def _mod(name: str) -> dict:
 
 def _load(p: Path) -> dict:
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
+    prob = _mod("workflow")["schema_problem"](p, data)       # F7: versão fora da tabela
+    if prob:
+        raise _mod("workflow")["SchemaError"](prob, str(p))
+    return data
 
 
 def _digest(p: Path) -> str:

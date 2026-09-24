@@ -397,8 +397,13 @@ def read_manifest(eng):
 
 # ---------------------------------------------------------------------- restore
 
-def restore(eng, force=False):
-    """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2)."""
+def restore(eng):
+    """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2).
+
+    Sem `force` (F7, D10): forcar escrevia o backup por cima de trabalho posterior a
+    migracao — `D-NNN` novos incluidos — e apagava-o. Com trabalho posterior recusa-se sempre
+    e diz o que mudou; reconciliar e roll-forward, nunca restore sobre engagement activo
+    (plano 07 -> *Rollback sem perda de conhecimento*)."""
     eng = Path(eng)
     _refuse_legacy(eng)
     man = read_manifest(eng)
@@ -412,7 +417,7 @@ def restore(eng, force=False):
     now = _digests(eng)
     drifted = {rel: {"expected": man["after"].get(rel, ""), "actual": now.get(rel, "")}
                for rel in man["after"] if now.get(rel, "") != man["after"].get(rel, "")}
-    if drifted and not force:
+    if drifted:
         raise MigrationError(
             "houve trabalho depois da migracao — restore cego recusado", "WORK_AFTER",
             {"changed": drifted,
@@ -521,7 +526,6 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="migracao legacy -> memoria persistente")
     ap.add_argument("command", choices=["dry-run", "apply", "restore", "init"])
     ap.add_argument("--engagement", required=True)
-    ap.add_argument("--force", action="store_true")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     eng = Path(a.engagement)
@@ -535,7 +539,7 @@ def main(argv=None):
         elif a.command == "init":
             out = init(eng)
         else:
-            out = restore(eng, force=a.force)
+            out = restore(eng)
     except (MigrationError, _O["OperationError"], _G["GraphError"]) as exc:
         print(json.dumps(exc.as_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
         return 1

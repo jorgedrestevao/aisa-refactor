@@ -323,6 +323,9 @@ def verify(pkg) -> dict:
         index = json.loads((pkg / INDEX).read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         return {"ok": False, "code": "INDEX_UNREADABLE", "detail": str(exc)}
+    prob = _mod("workflow")["schema_problem"](pkg / INDEX, index)
+    if prob:                                   # F7: um índice de outra versão não se confere
+        return {"ok": False, "code": "SCHEMA_UNSUPPORTED", "detail": prob}
     listed = {f["path"]: f["sha256"] for f in index.get("files") or []}
     mismatch = sorted(p for p, h in listed.items() if (pkg / p).is_file() and _sha(pkg / p) != h)
     missing = sorted(p for p in listed if not (pkg / p).is_file())
