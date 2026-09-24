@@ -15,13 +15,24 @@
 1. **Discovery before solution, always.** Lenses do not mention vendor/product before the Options phase.
 2. **Shared Understanding as process artefact; deliverables as transition artefacts.** SU is the source of truth during the engagement; the 6 deliverables are rendered at the end.
 3. **5 knowledge states**: Confirmed / Assumed / Unknown / Conflicted / Risky. No state×tag combinatorics. Confirmed/Assumed carregam validade — conhecimento expira e revalida-se (`library/kernel/states.md` → *Epistemic half-lives*).
-4. **Orquestração por fase, subagente só com benefício**: Discovery = uma análise integrada das seis perspectivas (inline) + um revisor independente da cobertura; Framing = análise integrada + um revisor independente; Options = o autor técnico escreve e publica os candidatos por rota (inline) + os revisores especialistas que o router escolhe, um subagente por mandato publicado. Decision is interactive (user-driven; optional `/decide --consult` technology review). Um subagente só se define quando não precisa do contexto de quem o lança e só o veredicto volta (`library/kernel/orchestration.md` → *When a subagent is justified*).
+4. **Orquestração por fase, subagente só com benefício**: Discovery = uma análise integrada das seis perspectivas (inline) + um revisor independente da cobertura; Framing = análise integrada + um revisor independente; Options = o autor técnico escreve e publica os candidatos por rota (inline) + os revisores especialistas que o router escolhe, um subagente por mandato publicado. Decision is interactive (user-driven; optional `/decide --consult` technology review). Um subagente só se define ou lança nas condições de *Delegação a subagentes* (abaixo).
 5. **Soft gates, hard integrity**: phase gates are warnings, overrideable with justification. Integrity fails closed: `library/` is read-only at runtime, coordinated state is written only by the coordinator, an engagement of the historical version is read-only, and a `Confirmed` row needs a locator (hooks `pre-write-guard`, `pre-authority-guard`, `pre-profile-check`).
 6. **Native Claude Code primitives**: skills, agents, hooks, commands. No reinvention.
 7. **Pack activo per-engagement**: declared in `projects/<slug>/_state.json.pack`. Not global.
 8. **Authorities are published by the coordinator** (`handoff-v1` F2): the six authorities (`_state.json`, SU, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md`) are written by draft → `resolve.py publish` — one atomic, receipted operation with base and read-set as precondition; never a `.tmp` renamed over a file (`library/kernel/orchestration.md` → *Writing an authority*).
 9. **Knowledge expires; questions have prices; decisions keep their counterfactuals.** (kernel v0.2.0: half-lives, question economics, tripwires/multiverso, diários por papel.)
 10. **Reason deeply → persist selectively → claim conservatively → rehydrate selectively → revalidate when premises change.** Determinism governs what must survive compression, who owns it (SU), what may not be silently promoted or dropped (disposition `MAP`/`ADOPT`/`DISMISS`; fact ≠ fit), what is revalidated when a premise changes, and what a fresh session reloads (phase ≠ session). Never the internal reasoning sequence. (`library/kernel/orchestration.md` → *Comprehension survival*.)
+
+## Delegação a subagentes (regra geral)
+
+Vale para qualquer subagente — definido em `.claude/agents/` ou lançado na hora (`general-purpose`, `Explore`, `Plan`), em primeiro plano ou em background — em qualquer passo, com ou sem fase (`/capture` incluído). Prevalece sobre as sugestões por defeito do harness para delegar ou paralelizar (o fluxo do modo plano, «delegar leituras de vários ficheiros»).
+
+- **Só se delega quando as duas condições se cumprem**: a tarefa não precisa do contexto de quem a lança, **e** o seu detalhe não tem de voltar — só o veredicto. Caso típico: a revisão independente de um artefacto já escrito, onde a independência é o próprio benefício (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer`).
+- **Escrever o resultado num ficheiro não torna uma tarefa elegível.** Se o detalhe alimenta a análise seguinte — o process-model da captura, a análise integrada, os candidatos do autor técnico, a síntese do chairman — corre na sessão (inline).
+- **Na dúvida, na sessão.**
+- **Paralelismo é outra escolha**: só entre trabalhos independentes entre si (extracções deterministas, revisores do mesmo artefacto publicado) e com ganho real. Um revisor corre depois de o que revê estar escrito — nunca ao lado.
+
+Aplicação por fase: `library/kernel/orchestration.md` (*Mode declaration*, *When a subagent is justified*). Aplicações concretas ficam nas skills — p. ex. a L2 da captura corre inline (`aisa-capture` → *Execution boundary — process-model authoring*). Origem: `docs/handoff-v1/README.md` → *Regras de execução*, que documenta o refactor; a regra do runtime é esta.
 
 ## Key paths
 
