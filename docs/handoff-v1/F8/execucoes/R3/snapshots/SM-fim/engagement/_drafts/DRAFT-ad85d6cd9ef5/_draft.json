@@ -1,0 +1,13 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-ad85d6cd9ef5",
+  "files": {
+    "story.md": "7e68bf1503fc4becbc4ee57942d3867dc1e5a175bbc380104d69f79ed776572c"
+  },
+  "reads": {
+    "shared-understanding.md": "3909be1cc614264ceb94bcb7b95e7bf5577acb6ddca1cde0fc4e90ffa28d7038"
+  },
+  "task": null,
+  "published": "publish-f1b22f8e2998113b",
+  "created_at": "2026-09-24T11:56:24Z"
+}

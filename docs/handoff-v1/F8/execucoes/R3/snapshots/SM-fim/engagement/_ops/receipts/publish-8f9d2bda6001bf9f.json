@@ -1,0 +1,23 @@
+{
+  "operation_id": "publish-8f9d2bda6001bf9f",
+  "request_hash": "c8416893fb2706af9bfc48555716ef871de8302afa0ee1742e69cbf26f1ed59e",
+  "result": "committed",
+  "revision": {
+    "council-log.md": "8f181415979e9b5c788e2c419e02e5f15893f159ee91c02b09ed43df1d551236",
+    "decisions.md": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  "expected": {
+    "council-log.md": "a042457b2aacfb72d946617eddb7e36600aad1bc3de1a31da1c5c853ea879792",
+    "decisions.md": "5d772f9d9987cf5bfaf12678cfa43a5de9a277ac401c9e457af5b8655ce7452c"
+  },
+  "read_set": {
+    "enquadramento.md": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "frame.md": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8",
+    "shared-understanding.md": "3909be1cc614264ceb94bcb7b95e7bf5577acb6ddca1cde0fc4e90ffa28d7038"
+  },
+  "published": [
+    "council-log.md",
+    "decisions.md"
+  ],
+  "committed_at": "2026-09-24T11:56:07Z"
+}
