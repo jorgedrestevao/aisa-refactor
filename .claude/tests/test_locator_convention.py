@@ -17,7 +17,7 @@ FIX = ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
 CIT = re.compile(r"\b([\w-]+\.md)#¶(\d+)")
 TESTES = ["test_hv1_02_discovery.py", "test_functional_authorization.py",
           "test_hv1_design_path.py", "test_hv1_vertical.py", "test_review_candidates.py",
-          "test_trace.py"]
+          "test_trace.py", "test_hv1_release_paths.py"]
 
 
 def paragrafos(path):
