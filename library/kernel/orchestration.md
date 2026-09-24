@@ -8,7 +8,7 @@ Each phase declares its mode in [`phases.md`](phases.md):
 - **`analyst + reviewer`** (handoff-v1 F3): the integrated analyst proposes inline; one independent reviewer, a subagent with fresh context, contests; the chairman's evidence rules settle the synthesis. Used in Framing (*Framing mode* below).
 - **`author + specialist reviewers`** (handoff-v1 F5): the technical author writes the candidates inline and publishes them; an explainable router selects the specialists the risk calls for; each reviews the published revision as a subagent, on its published mandate; the chairman disposes the findings. Used in Options (*Options mode* below). Decision is interactive (user-driven). The persona council is retired (F5.4).
 
-**When a subagent is justified** (handoff-v1; README → *Regras de execução*). A subagent is defined only when both hold: the task does **not** need the context of whoever launches it, and its detail does **not** have to come back — only its verdict. Independence between an author and a reviewer is the typical case, and the subagent is the only way to get it. Everything else runs inline; in doubt, inline. Parallelism is a further choice, taken only when the subagents are independent of each other and the gain is real; a reviewer runs after what it reviews, never beside it.
+**When a subagent is justified** — the rule is central: `CLAUDE.md` → *Delegação a subagentes*. It covers every subagent, defined in `.claude/agents/` or launched ad hoc, foreground or background, in any step (capture included). In short: a subagent runs only when the task does **not** need the context of whoever launches it and its detail does **not** have to come back — only its verdict; writing the result to a file does not make a task eligible; in doubt, inline. Applied here per phase (the modes above): the independent reviews are the subagents; the integrated analysis, the technical author, the chairman and the capture process model (`aisa-capture` → *Execution boundary — process-model authoring*) run inline. Parallelism is a further choice, taken only when the subagents are independent of each other and the gain is real; a reviewer runs after what it reviews, never beside it.
 
 ## Evidence contract — parse once, reason many
 
@@ -97,6 +97,8 @@ No new state, no new field, no register, no matrix: these are existing SU semant
 ## Orchestrator boundaries
 
 `aisa-round`, `aisa-frame`, `aisa-options`, `aisa-capture`, `aisa-status` and `aisa-start` are execution machinery. **Orchestrator = context provisioning + execution coordination, not domain reasoning.**
+
+Coordinating execution is not delegating it: which work may run in a subagent is the central rule's (`CLAUDE.md` → *Delegação a subagentes*); `aisa-capture`'s process model is authored inline.
 
 An orchestrator **may**:
 
