@@ -1,0 +1,39 @@
+{
+  "schema": "f8-cliente/1",
+  "fixture": "fx-hv1-04-headless",
+  "synthetic": true,
+  "nota": "Dados 100% sintéticos. Cada resposta cita a fonte que a sustenta: um documento entregue (<ficheiro>#<âncora>). Nada aqui vem do `expected` da fixture. Plataforma herdada da fx-hv1-02 (imposta, sintética) — a rota é platform-constrained, sem ecrã próprio (integração/automação).",
+  "papeis": {
+    "responsável de compras": "requerente do pedido; fala pelo que quer automatizar (pedido.md#P1)",
+    "responsável de integração": "fala pelo ERP-X e pelo que se sabe (e não se sabe) sobre a integração (nota-integracao.md)",
+    "suporte aplicacional": "fala pela operação e recuperação de falhas (nota-operacao.md)"
+  },
+  "respostas": [
+    {"id": "R01", "tema": "pedido literal", "papel": "responsável de compras", "resposta": "Quando um pedido de equipamento fica aprovado, compras copia-o à mão para o ERP-X. Queremos que isso aconteça sozinho, todas as noites. Ninguém precisa de ecrã novo: basta que apareça no ERP-X e que alguém seja avisado se falhar.", "fonte": "pedido.md#P1"},
+    {"id": "R02", "tema": "plataforma", "papel": "responsável de compras", "resposta": "A mesma plataforma corporativa já imposta (a mesma decisão da fx-hv1-02, sintética). Não está em discussão.", "fonte": "pedido.md#P2"},
+    {"id": "R03", "tema": "documentos a entregar", "papel": "responsável de integração", "resposta": "Entrego três: pedido.md, nota-integracao.md e nota-operacao.md.", "fonte": "entrega"},
+    {"id": "R04", "tema": "âmbito", "papel": "responsável de compras", "resposta": "Envio dos pedidos aprovados ao ERP-X, alerta e reprocessamento. Fora: ecrãs próprios e qualquer alteração ao processo de aprovação em si.", "fonte": "pedido.md#P1"},
+    {"id": "R05", "tema": "o ERP-X aceita registar isto?", "papel": "responsável de integração", "resposta": "O ERP-X expõe um serviço para criar encomendas a partir de um pedido interno.", "fonte": "nota-integracao.md#I1"},
+    {"id": "R06", "tema": "chave de idempotência no serviço do ERP-X", "papel": "responsável de integração", "resposta": "Acho que o serviço aceita uma chave de idempotência no pedido, mas nunca testámos. Não está confirmado.", "fonte": "nota-integracao.md#I2"},
+    {"id": "R07", "tema": "janela de manutenção", "papel": "responsável de integração", "resposta": "O ERP-X está em manutenção todas as noites entre as 02:00 e as 03:00 e recusa pedidos nesse período.", "fonte": "nota-integracao.md#I3"},
+    {"id": "R08", "tema": "limite de pedidos por minuto", "papel": "responsável de integração", "resposta": "Não se sabe se existe. Não tenho essa informação.", "fonte": "nota-integracao.md#I4"},
+    {"id": "R09", "tema": "volume esperado", "papel": "responsável de integração", "resposta": "À volta de 50 pedidos aprovados por dia — é estimativa da entrevista, não é medição.", "fonte": "nota-integracao.md#I5"},
+    {"id": "R10", "tema": "chave de acesso do fornecedor", "papel": "responsável de integração", "resposta": "O fornecedor enviou por email a chave de acesso do ambiente de testes. Essa chave não pode ir para nenhum documento nem para o pacote de entrega — é para ficar só como segredo configurado.", "fonte": "nota-integracao.md#I6"},
+    {"id": "R11", "tema": "o que acontece quando reenviam o mesmo pedido", "papel": "suporte aplicacional", "resposta": "Se o mesmo pedido for enviado duas vezes, o ERP-X pode criar duas encomendas.", "fonte": "nota-operacao.md#O2"},
+    {"id": "R12", "tema": "alerta e reprocessamento", "papel": "suporte aplicacional", "resposta": "Queremos um alerta por email quando uma sincronização falhar e uma forma de reprocessar só os pedidos que falharam.", "fonte": "nota-operacao.md#O1"},
+    {"id": "R13", "tema": "quem trata alertas fora de horas", "papel": "suporte aplicacional", "resposta": "Ainda não está definido. Não sei dizer quem.", "fonte": "nota-operacao.md#O3"},
+    {"id": "R14", "tema": "há ecrã nesta entrega?", "papel": "responsável de compras", "resposta": "Não, nenhum. É para correr sozinho, sem ninguém a olhar para um ecrã.", "fonte": "pedido.md#P1"},
+    {"id": "R15", "tema": "quem mais tem autoridade para confirmar factos", "papel": "responsável de integração", "resposta": "O fornecedor do ERP-X, para a chave de idempotência e o limite de pedidos por minuto; a equipa de suporte, para quem fica de sobreaviso.", "fonte": "nota-integracao.md#I2, #I4; nota-operacao.md#O3"}
+  ],
+  "decisoes": [
+    {"id": "K01", "tema": "este trabalho segue o método novo, experimental?", "regra": "Sim, método novo (experimental). É o objecto do piloto."},
+    {"id": "K02", "tema": "validação da frase do problema (/frame)", "regra": "Aceita a frase se descrever o problema como o disseste (R01, R04) sem nomear solução. Se o revisor propuser uma frase mais fiel ao que disseste, escolhe essa. Se faltar o essencial, escolhe editar e diz o que falta, numa frase."},
+    {"id": "K03", "tema": "escolha entre candidatos (/decide)", "regra": "Com a plataforma imposta, escolhe o candidato que o consultor recomendar, se cumprir: nenhum ecrã próprio (R14), reenvio sem duplicar encomenda (R11), e alerta + reprocessamento selectivo (R12). Se não cumprir, escolhe o que cumprir e diz porquê. Se o custo não estiver apresentado, escolhe na mesma e diz que o custo fica por confirmar."},
+    {"id": "K04", "tema": "aprovação do desenho", "regra": "Aprova a versão se o consultor a apresentar como pronta para aprovação, com as perguntas em aberto que a condicionam visíveis — sem as dar por resolvidas. N/A de ecrãs/UI é esperado e aceite, desde que o motivo esteja escrito. Não aprova se lhe disserem que há uma escolha estrutural por fechar."},
+    {"id": "K05", "tema": "âmbito da entrega", "regra": "O âmbito é o do pedido: envio dos pedidos aprovados, alerta e reprocessamento (R04). Aceita excluir desta entrega um item bloqueado se o consultor o propuser com o motivo. Não aceita excluir a idempotência do reenvio nem o alerta de falha."},
+    {"id": "K06", "tema": "autorização de contratos funcionais", "regra": "Autoriza os contratos que o consultor apresentar como autorizáveis. Não autoriza um contrato que dependa de a chave de idempotência do ERP-X existir (R06) enquanto isso não estiver confirmado."},
+    {"id": "K07", "tema": "outras escolhas processuais (fechar ou refazer uma passagem, mais passagens, divergências escaladas, disposições)", "regra": "Segue a recomendação do consultor quando ele a der; se não der, escolhe a opção que não dá nada por resolvido."},
+    {"id": "K08", "tema": "reautorização depois da nota nova", "regra": "Autoriza de novo o que o consultor apresentar como afectado pela nota e autorizável; o resto fica como estava."}
+  ],
+  "regra_por_omissao": "Pergunta que não esteja nas respostas nem nos documentos: «Não sei; não tenho essa informação.»"
+}

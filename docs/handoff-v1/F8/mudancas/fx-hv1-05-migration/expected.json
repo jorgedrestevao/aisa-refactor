@@ -1,0 +1,34 @@
+{
+  "schema": "f8-mudanca/1",
+  "fixture": "fx-hv1-05-migration",
+  "synthetic": true,
+  "entregue_depois_de": "S3",
+  "sources": [{"id": "SRC-CAL", "path": "nota-calendario.md", "kind": "note"}],
+  "nota": "Muda a restrição de calendário (N4/constraint da fixture), não o mecanismo de migração.",
+  "expected": [
+    {
+      "id": "M01",
+      "kind": "invalidation",
+      "statement": "A janela do inventário anual mudou de Dezembro para a 1ª semana de Novembro (D1): qualquer contrato, trabalho ou critério de aceitação que fixasse a paragem de um dia contra o calendário antigo (Dezembro livre, Novembro sem restrição) fica desactualizado até se rever — a restrição de não-coincidência (D2) passa a aplicar-se a Novembro. A autorização anterior de uma data de corte dentro dessa semana nova não cobre a regra nova.",
+      "source_refs": ["nota-calendario.md#D1", "nota-calendario.md#D2"],
+      "must_not": ["manter válida uma data de corte que caia na semana nova de Novembro sem reautorização", "reescrever a restrição antiga em vez de uma transição", "repetir a descoberta inteira por causa desta nota"],
+      "scenarios": ["T41", "T24"]
+    },
+    {
+      "id": "M02",
+      "kind": "preservation",
+      "statement": "O mecanismo de migração em si — mapeamento, regra de resolução de duplicados, reconciliação por tipo e estado, rollback, coexistência de leitura — não muda por causa desta nota; só a restrição de calendário muda.",
+      "source_refs": ["nota-calendario.md#D1"],
+      "must_not": ["republicar contratos de mapeamento/duplicados/rollback que não citam calendário", "tratar a regra de duplicados (K04 da ficha) como reaberta por esta nota"],
+      "scenarios": ["T42"]
+    },
+    {
+      "id": "M03",
+      "kind": "exception",
+      "statement": "Se nenhuma data de corte tinha sido fixada ainda (só o requisito de janela ≤1 dia fora de Dezembro), esta nota só actualiza a restrição a cumprir, sem invalidar nenhuma autorização concreta.",
+      "source_refs": ["nota-calendario.md#D2"],
+      "must_not": ["inventar uma data de corte que ninguém escolheu, só para ter algo a invalidar"],
+      "scenarios": ["T20"]
+    }
+  ]
+}

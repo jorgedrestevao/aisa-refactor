@@ -1,0 +1,34 @@
+{
+  "schema": "f8-mudanca/1",
+  "fixture": "fx-hv1-04-headless",
+  "synthetic": true,
+  "entregue_depois_de": "S3",
+  "sources": [{"id": "SRC-ERP-CONF", "path": "nota-erp-confirmacao.md", "kind": "note"}],
+  "nota": "Fecha o proof_obligation da ficha/fixture (R06/E03, chave de idempotência não confirmada) na direcção mais exigente — nega-a — e fecha o fact_gap do limite (R08/E05).",
+  "expected": [
+    {
+      "id": "M01",
+      "kind": "invalidation",
+      "statement": "A chave de idempotência não existe no serviço do ERP-X (C1): qualquer contrato funcional, trabalho ou exemplo de aceitação que assumisse deduplicação nativa do serviço fica desactualizado até se rever — o mecanismo de não duplicar (E02) passa a exigir detecção prévia ao chamar o serviço (reconciliação/pré-verificação), não delegação no ERP-X. A autorização anterior não cobre o mecanismo novo.",
+      "source_refs": ["nota-erp-confirmacao.md#C1"],
+      "must_not": ["manter válido um contrato que assuma chave de idempotência do ERP-X", "assumir deduplicação sem prova depois desta nota", "inventar como é o mecanismo de detecção prévia além do que a nota exige (só diz que tem de existir)"],
+      "scenarios": ["T41", "T24", "T20"]
+    },
+    {
+      "id": "M02",
+      "kind": "preservation",
+      "statement": "O que não depende do mecanismo de idempotência — janela de manutenção (I3), alerta de falha e reprocessamento selectivo (O1) — mantém a sua autorização e não é republicado por causa desta nota.",
+      "source_refs": ["nota-erp-confirmacao.md#C1"],
+      "must_not": ["pedir nova autorização de contratos que não citam a idempotência", "dar por desactualizado o alerta/reprocessamento só por esta nota"],
+      "scenarios": ["T42"]
+    },
+    {
+      "id": "M03",
+      "kind": "exception",
+      "statement": "O limite de 30 pedidos por minuto (C2) fecha o fact_gap de E05: é agora um dado confirmado do desenho, com implicação directa se o volume esperado (~50/dia, ainda Assumed) se concentrar em rajadas — fica como requisito a considerar no trabalho, não como recálculo silencioso do volume diário.",
+      "source_refs": ["nota-erp-confirmacao.md#C2"],
+      "must_not": ["inventar um valor de limite diferente de 30/min", "tratar o volume diário (~50/dia) como confirmado só porque o limite por minuto ficou confirmado"],
+      "scenarios": ["T20"]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "f8-cartao/1",
+  "run": "R7",
+  "fixture": "fx-hv1-05-migration",
+  "rota_esperada": "platform-constrained",
+  "slug": "f8-r7-fx05",
+  "etapa": "F8.3 — execução da fx-05 (migração: dados históricos, reconciliação, cutover, rollback, coexistência)",
+  "ficha": "docs/handoff-v1/F8/fichas/fx-hv1-05.cliente.json",
+  "entrega_inicial": [
+    ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration/sources/pedido.md",
+    ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration/sources/nota-legado.md",
+    ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration/sources/entrevista-inventario.md",
+    ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration/sources/amostra-legado.md"
+  ],
+  "referencia": [
+    ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration/scenario.json",
+    "docs/handoff-v1/F8/mudancas/fx-hv1-05-migration/expected.json"
+  ],
+  "segmentos": [
+    {
+      "id": "S1",
+      "objectivo": "Começar o projecto e fazer a Discovery. Corre `/start {SLUG} pp` — as respostas do cliente vêm por pedido, e as fontes estão na pasta que ele indicar (inclui `amostra-legado.md`, uma amostra de dados, não uma entrevista — trata-a como evidência de dados). Depois, as passagens de Discovery (`/round`) e as respostas às perguntas em aberto que o cliente souber (regra 4), até o aisa indicar `/frame` como próximo passo, até três passagens, ou até o cliente não ter mais respostas úteis. Não corras `/frame`."
+    },
+    {
+      "id": "S2",
+      "objectivo": "Enquadrar e gerar opções. Corre `/frame` (a validação é do cliente) e depois `/options`, até existir `options.md` com os candidatos revistos e a recomendação. Não corras `/decide`, `/premortem` nem `/simulate`."
+    },
+    {
+      "id": "S3",
+      "objectivo": "Decidir e desenhar. Corre `/decide` (a escolha é do cliente) e deixa correr a síntese que ele dispara; depois `/blueprint` até à aprovação do desenho pelo cliente, ao âmbito da entrega (passo 15b), à autorização dos contratos funcionais autorizáveis (passo 16) e ao inventário de trabalho (passo 17). Migração/cutover/rollback/coexistência ficam ligados a trabalho e critérios de aceitação, nunca só em prosa. Não corras `/render`.",
+      "interrupcao": {
+        "modo": "dura",
+        "ponto": "Sem ponto combinado com o executor. Lança-o em segundo plano; o orquestrador chama `TaskStop` a meio deste segmento, depois de `/decide` estar registada e o `/blueprint` já ter começado a escrever a arquitectura (passo 2), sem aviso prévio nem marca no objectivo."
+      }
+    },
+    {
+      "id": "SM",
+      "objectivo": "O cliente entregou uma nota nova na pasta `{ENTREGA_MUDANCA}`. Trata-a como o aisa manda para uma fonte nova que muda o que já foi decidido e desenhado: copia-a para `inputs/`, corre `/capture`, regista o que muda pelo caminho que a skill indicar, vê o raio de impacto, republica o que depende da mudança e pede ao cliente as reautorizações que forem precisas. Não corras `/render`.",
+      "mudanca": {
+        "fonte": "docs/handoff-v1/F8/mudancas/fx-hv1-05-migration/nota-calendario.md",
+        "expected": "docs/handoff-v1/F8/mudancas/fx-hv1-05-migration/expected.json"
+      }
+    },
+    {
+      "id": "S4",
+      "objectivo": "Entregar. Corre `/render --all` até existir um release (`_release/r<NNNN>/`), com o nível que o motor calcular. Não mudes o nível nem preenchas lacunas para o fazer subir."
+    },
+    {
+      "id": "SC",
+      "objectivo": "O destinatário do release `{RELEASE}` devolveu o relatório abaixo. Responde pelo aisa, por revisão canónica: o que for defeito do pacote corrige-se nos artefactos donos, com as perguntas ao cliente que forem precisas; o que for escolha delegada fica como está. Termina com `/render --all` e um release novo.\n\n{RELATORIO_DESTINATARIO}"
+    }
+  ],
+  "t46": false,
+  "baseline_para": []
+}
