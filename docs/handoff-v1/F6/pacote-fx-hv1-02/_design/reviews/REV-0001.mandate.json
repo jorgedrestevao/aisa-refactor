@@ -1,0 +1,59 @@
+{
+ "schema_version": "aisa-review-mandate/1",
+ "task_id": "REV-0001",
+ "role": "architecture-review",
+ "objective": "rever a revisão publicada dos candidatos",
+ "route": "platform-constrained",
+ "scope_ids": [
+  "O-001"
+ ],
+ "questions": [
+  "A forma O-001 aguenta a submissão sem duplicar e a aprovação por papel?"
+ ],
+ "input_refs": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "bef68431429d8c0c2e42b82ccff250bdaffb5ba89ffbc7749f4148349cd2e04e"
+  }
+ ],
+ "candidate_revision": 1,
+ "knowledge_refs": [
+  {
+   "ref": "library/packs/pp/architecture-templates/architecture-core.md",
+   "sha256": "bec7235958c6b465e9576f8a1c5d331c06817737906d7352988a432735fd591b",
+   "kind": "pack",
+   "pack": "pp",
+   "pack_version": "1.10.0"
+  }
+ ],
+ "output_contract": [
+  "task_id",
+  "input_revision",
+  "coverage",
+  "findings",
+  "assumptions",
+  "unanswered",
+  "recommended_actions",
+  "sources_used"
+ ],
+ "stop_conditions": [
+  "todas as perguntas com cobertura ou em `unanswered`"
+ ],
+ "budget": "uma leitura; sem rondas próprias",
+ "prohibited_actions": [
+  "escrever numa autoridade",
+  "autorizar pelo cliente",
+  "confirmar um facto por constar de outra resposta",
+  "ler o parecer de outro revisor",
+  "rever um candidato ainda em construção"
+ ],
+ "created_at": "2026-09-24T00:07:26Z"
+}

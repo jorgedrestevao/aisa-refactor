@@ -1,0 +1,22 @@
+{
+ "delivery": "blocked",
+ "blockers": [
+  {
+   "code": "NO_CONTRACT",
+   "ref": "C-001",
+   "scope": "SCOPE-0001",
+   "detail": "incluído no âmbito sem FC e sem WP que o realize — nem excluído com autorização"
+  }
+ ],
+ "incoherent": [
+  {
+   "code": "REQUIRED_FIELD_WITHOUT_PRODUCER",
+   "ref": "pedidos.valor_total",
+   "scope": "",
+   "detail": "obrigatório em _blueprint/ux-blueprint_v01.yaml e só FC-0002 (excluído) o produz"
+  }
+ ],
+ "excluded": [
+  "FC-0002"
+ ]
+}

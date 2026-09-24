@@ -1,0 +1,43 @@
+{
+ "task_id": "REV-0001",
+ "role": "architecture-review",
+ "input_revision": 1,
+ "coverage": [
+  {
+   "question": "A forma O-001 aguenta a submissão sem duplicar e a aprovação por papel?",
+   "checked": "candidatos r1 e linhas citadas"
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-001",
+   "severity": "material",
+   "kind": "recommendation",
+   "evidence": "entrevista-processo.md#¶3 (valor por linha)",
+   "failure_scenario": "o valor muda conforme a regra de arredondamento escolhida",
+   "closing_condition": "regra escolhida pelo dono e fixada no FC do valor",
+   "id": "REV-0001.F01"
+  }
+ ],
+ "assumptions": [],
+ "unanswered": [],
+ "recommended_actions": [],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2"
+  },
+  {
+   "ref": "library/packs/pp/architecture-templates/architecture-core.md",
+   "sha256": "bec7235958c6b465e9576f8a1c5d331c06817737906d7352988a432735fd591b"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 1,
+ "mandate_sha256": "f172f2eb451373df41515150947bdbe72b711ee6d497ec504a7886e6188d5436",
+ "received_at": "2026-09-24T00:07:26Z"
+}
