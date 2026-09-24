@@ -1,0 +1,16 @@
+{
+  "operation_id": "publish-ccdbc25025235233",
+  "request_hash": "e48cd784d9c342e69402f7d311de76f229fe12e89215313dd0c9b24f2d41eb6e",
+  "result": "committed",
+  "revision": {
+    "shared-understanding.md": "3a90968e7640b13dfd4a1b7c161efc7c3ac1c03e18c22aaf48187d32d717b7b2"
+  },
+  "expected": {
+    "shared-understanding.md": "014fa763f7a24f04523ecb4a34a34fd642a59fee615a1aabf2482befd6298aa3"
+  },
+  "read_set": null,
+  "published": [
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T11:07:53Z"
+}

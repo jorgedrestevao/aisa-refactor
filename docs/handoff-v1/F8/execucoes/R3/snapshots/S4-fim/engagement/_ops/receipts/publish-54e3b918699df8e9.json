@@ -1,0 +1,26 @@
+{
+  "operation_id": "publish-54e3b918699df8e9",
+  "request_hash": "84056a68dc3619937e31f1f5df4f1a9dc1f1a60c206cc53c3ee671ad69bcae08",
+  "result": "committed",
+  "revision": {
+    "_state.json": "ec1258223da5673796c42ecfd020b697d402b1ece31be864c6497d57e6acbc43",
+    "council-log.md": "74eacc49ac39640af93b66dda08ceaec20ba2fdcd835574e57c21efcb303032d",
+    "story.md": "3c2cfaa67c0dcf136e0d4134fbccf9f71c1503a1d2a8a26455876f7ef2ca7ba4"
+  },
+  "expected": {
+    "_state.json": "9a49c5557aaffe40e242448c1984b95a8192e6edec930a56255dcddf60be39a4",
+    "council-log.md": "6da3385288602e2e4e2b0c7ebb50043903f016fbf113876902232daf1752a1a7",
+    "story.md": "122899dc823df89c9d798345f823d4a994352a8f25ac8860fe3bf89b81256d84"
+  },
+  "read_set": {
+    "_coverage/coverage_v01.json": "f8ab5a52e36d68095ebf31dda9a91dc140cc0691def5b2e8c08a0b15ac860d4e",
+    "_coverage/coverage_v01.md": "42bc703db6272430e5f5a80c632e543b083de28fe34215f3f0cdbbe01a108024",
+    "shared-understanding.md": "3a90968e7640b13dfd4a1b7c161efc7c3ac1c03e18c22aaf48187d32d717b7b2"
+  },
+  "published": [
+    "_state.json",
+    "council-log.md",
+    "story.md"
+  ],
+  "committed_at": "2026-09-24T11:10:12Z"
+}

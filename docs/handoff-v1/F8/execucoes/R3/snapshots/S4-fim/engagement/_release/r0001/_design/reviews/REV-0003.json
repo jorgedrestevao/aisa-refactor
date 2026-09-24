@@ -1,0 +1,98 @@
+{
+ "task_id": "REV-0003",
+ "role": "security-operation",
+ "input_revision": 1,
+ "coverage": [
+  {
+   "question": "O mecanismo de auditoria (M-3, ainda por desenhar — U-006) fica coberto por cada candidato de forma verificável (quem aprovou o quê e quando)? Fecha com: veredicto por candidato — coberto / parcialmente coberto / não coberto, com a lacuna nomeada.",
+   "checked": "Arquitectura/riscos de O-001..O-005 em candidates.json contra U-006 (Unknown, mecanismo por desenhar), M-4 (retenção 10 anos), e library/packs/pp/domain-knowledge/security/security-controls.md §7 (grão de autorização por loja), §13 (obrigação de declaração de risco residual), §16 (retenção de auditoria gravada no momento da escrita). Veredicto: O-001 parcialmente coberto (tabela 'Registo de aprovação' + ecrã 'consulta de auditoria' nomeados, mas imutabilidade/retenção/mecanismo concreto por desenhar — U-006 continua aberto); O-002 parcialmente coberto (mesma lacuna, mais uma formulação que sobrestima o que vem 'herdado'); O-003 não coberto (o próprio candidato declara segurança/auditoria mais fracas 'de origem', sem coluna protegida, mitigação não incluída); O-004 não coberto (declarado no próprio risco: 'continua sem mecanismo de registo verificável'); O-005 não coberto (declarado: 'continua sem mecanismo fiável')."
+  },
+  {
+   "question": "O caminho de urgência que salta a aprovação prévia (X-001, ainda Conflicted) foi pressuposto por algum candidato, ou fica dependente da decisão do dono como os candidatos declaram? Fecha com: confirmação de que nenhum candidato pressupõe resposta a X-001, ou o apontamento do que pressupõe.",
+   "checked": "candidates.json §criteria (bullet 7, declaração explícita), §architecture de cada item (nenhum desenha um fluxo de urgência — só 'routing condicional chefia→direcção financeira'), frame.md §Conflicts surfaced, decisions.md D-001 (override de fase, X-001 mantém-se aberto). Confirmado: nenhum candidato pressupõe resposta a X-001 — nenhuma arquitectura inclui um fluxo de urgência de qualquer forma (nem 'salta', nem 'não salta'). Achado colateral: nenhum candidato reserva orçamento/esforço para esse fluxo quando X-001 fechar (ver findings)."
+  },
+  {
+   "question": "A segurança de papel (Dataverse em O-001/O-002; listas em O-003, sem segurança de coluna) é suficiente para segregar quem pode aprovar acima do limiar (C-006, M-2)? Fecha com: veredicto por candidato.",
+   "checked": "Arquitectura de O-001/O-002/O-003 contra security-controls.md §3 (cinco planos), §4 (regra do plano mais baixo — 'um controlo de plano 5 não é um controlo'), §7 (grão por loja — Dataverse coluna: sim; SharePoint/listas coluna: nenhum). Veredicto: O-001/O-002 parcialmente coberto — segurança por papel Dataverse (tabela/linha) nomeada, mas sem segurança de coluna declarada nos campos de aprovação (estado, valor, aprovador); sem ela, o limiar (M-2/C-006) só fica garantido pela lógica do fluxo Power Automate, que é plano 5 e 'não é um controlo' por si. O-003 não coberto — listas não têm segurança de coluna (tecto estrutural da loja), o próprio candidato reconhece a fraqueza; a única imposição possível do limiar fica no fluxo (plano 5), contornável por quem tem acesso de edição à lista."
+  }
+ ],
+ "findings": [
+  {
+   "target": "O-001, O-002",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json#O-001.architecture ('Registo de aprovação' + 'consulta de auditoria'), candidates.json#O-002.architecture; shared-understanding.md#U-006 (mecanismo ainda por desenhar); shared-understanding.md#M-4 (10 anos); library/packs/pp/domain-knowledge/security/security-controls.md §13, §16",
+   "failure_scenario": "Blueprint avança assumindo que a tabela 'Registo de aprovação' + ecrã de consulta já satisfazem M-3; mas nada no candidato diz se o registo é imutável (privilégios Dataverse são aditivos — quem tem direito de escrita na tabela pode editar um registo de aprovação já feito) nem se a retenção está alinhada aos 10 anos de M-4. A auditoria interna encontra isto tarde, como achado de auditoria, não como defeito de desenho.",
+   "closing_condition": "U-006 resolvido (em /answer ou /blueprint) nomeando: mecanismo concreto (auditoria nativa Dataverse vs. tabela própria), quem tem direito de escrita sobre registos de aprovação já fechados (idealmente nenhum), e retenção alinhada a M-4.",
+   "id": "REV-0003.F01"
+  },
+  {
+   "target": "O-002",
+   "severity": "minor",
+   "kind": "fact",
+   "evidence": "candidates.json#O-002.architecture: 'segurança de linha/coluna e auditoria vêm herdadas da shell, não construídas'; security-controls.md §3 (plano 3 é a loja, não a superfície) e §7",
+   "failure_scenario": "Leitor conclui que O-002 'já tem' auditoria configurada sem trabalho adicional, quando a captura de auditoria é uma configuração ao nível da tabela (plano 3, independente da superfície canvas/model-driven) — só o ecrã/vista de histórico é que a shell gera automaticamente. Esforço de configuração de auditoria fica subestimado.",
+   "closing_condition": "Reformular para: 'vista de histórico gerada pela shell; a captura de auditoria em si (activação por tabela, retenção) é igual à de O-001, não vem incluída de origem.'",
+   "id": "REV-0003.F02"
+  },
+  {
+   "target": "O-003",
+   "severity": "blocking",
+   "kind": "fact",
+   "evidence": "candidates.json#O-003.risks ('Sem segurança ao nível da coluna... M-3... ficam mais fracos de origem'); security-controls.md §7 (SharePoint/listas — coluna: nenhum), §4 (regra do plano mais baixo — controlo só em plano 5 'não é um controlo')",
+   "failure_scenario": "Segregação do limiar de 5 000€ (M-2/C-006) só fica imposta no fluxo (plano 5); qualquer papel com direito de edição na lista pode escrever directamente no estado de aprovação, contornando o limiar sem que o fluxo o detecte — a loja não pode expressar a regra, e nenhum controlo de plano inferior a compensa.",
+   "closing_condition": "Antes de /decide: declaração formal de risco residual (pack §13 — plano, respeito parcial, população fora do controlo, controlo compensatório, vector residual, data de reverificação) assinada por um dono, ou reconsiderar O-003 face a M-2 como invariante de negócio Confirmed.",
+   "id": "REV-0003.F03"
+  },
+  {
+   "target": "O-001, O-002, O-003",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "candidates.json#items[*].premise_refs (nenhum lista C-003); candidates.json#items[*].order_of_magnitude.source (4 fluxos contados, nenhum é o caminho de urgência); shared-understanding.md#C-003 (Confirmed); frame.md §What must survive into Options (C-003 ausente da lista 'Process meaning')",
+   "failure_scenario": "X-001 fecha (decisão do dono), e o fluxo de urgência (C-003) tem de ser desenhado e construído em qualquer candidato escolhido — mas nenhuma banda de esforço actual reserva esse trabalho; o esforço é descoberto depois de /decide, fora da estimativa aprovada.",
+   "closing_condition": "Adicionar C-003 aos premise_refs de O-001/O-002/O-003 e nomear, mesmo sem valor, que o fluxo de urgência é adição pendente de X-001 (como O-004 já faz com 'unavailable') — antes de /simulate ou /decide.",
+   "id": "REV-0003.F04"
+  }
+ ],
+ "assumptions": [
+  "Não há ferramenta de hash disponível neste mandato para confirmar os sha256 declarados contra o conteúdo lido; assumi que o conteúdo servido corresponde à revisão 1 nomeada no mandato.",
+  "'Cada candidato' nas perguntas do mandato inclui os cinco itens (O-001..O-005), não só os três construídos sobre plataforma — por isso os vereditos cobrem também O-004/O-005."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Fechar U-006 em /blueprint nomeando mecanismo de auditoria concreto, imutabilidade e retenção alinhada a M-4, para O-001/O-002 — dono: arquitecto/director de sistemas de informação.",
+  "Corrigir a formulação de O-002 sobre auditoria 'herdada' antes de /decide, para não subestimar o esforço de configuração de auditoria.",
+  "Adicionar C-003 aos premise_refs de O-001/O-002/O-003 e reservar um esforço-placeholder para o fluxo de urgência, dependente de X-001, antes de /simulate.",
+  "Nomear segurança de coluna para os campos de aprovação (estado, valor, aprovador) no blueprint de O-001/O-002; para O-003, produzir uma declaração de risco residual completa (pack §13) ou reconsiderar a loja face a M-2 como invariante Confirmed."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/security/security-controls.md",
+   "sha256": "6063cd524edccbf953439e8ad1ca9798b5f3b4007bae54b317993e266b0e6218"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/governance/governance-and-environments.md",
+   "sha256": "9826aef31c4719ec94c33894a68ff90f2217b3d5a04919d13f54afa11fa32ab4"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 1,
+ "mandate_sha256": "8fdc28930bcf2ab6cfd4b35268290cc98b1443d2ff3de63e1edab90b6a133764",
+ "received_at": "2026-09-24T12:25:28Z"
+}

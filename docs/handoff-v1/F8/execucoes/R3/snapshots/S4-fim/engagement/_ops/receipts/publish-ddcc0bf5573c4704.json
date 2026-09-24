@@ -1,0 +1,31 @@
+{
+  "operation_id": "publish-ddcc0bf5573c4704",
+  "request_hash": "8eeac5538e3e71371f593a9368da28313ef2e5c9f9b171f50a4d4f4cf417ab65",
+  "result": "committed",
+  "revision": {
+    "_graph/graph.jsonl": "dfb95941916f450d329bbf6eb3c6ebb97be981a0adec958f457be3923cb70ba5",
+    "_graph/meta.json": "134e0a39f7a6bb04141d8cc872f2e983a8dc692067ae3d961d5e3d197688f93c",
+    "council-log.md": "333592a05c8ec169c2a1ad3c3bf48e25587478aa1c0a37b056eeb676a54ce8d8",
+    "lens-outputs/business.md": "a1ebd01a84f23b03f69daaf508b56c906d40a836793514c8ee870a1e308415ba",
+    "shared-understanding.md": "93d397060001bbfd984d1ac78fb4baf52ad6b9db725825e6b765f48c6e87bb92"
+  },
+  "expected": {
+    "council-log.md": "32c191bc7d06812ba4b2fcbfcc653348483f04c144d1a1d7a5ef409f46e4fc59",
+    "lens-outputs/business.md": "9b4075bfaf0fc4a5036cf9f62a8ed3918a9d0db1a34af09373fe49154408b746",
+    "shared-understanding.md": "3497ae94fabb1048e6ca5c2844f761b1a4d44cf559c4cf41fa589c56ef6f7f6b",
+    "_graph/graph.jsonl": "da32c5b489b3d089209539ef27f969ef8442b42636f588ccb6b907d5a080ec0c",
+    "_graph/meta.json": "b0cbbf3d863215c68b40e0627b366e4ba89f52191b936483213ab0a4e9cd489d"
+  },
+  "read_set": {
+    "_capture/process-model.md": "d2453ba0ff124d10c09fbf4f908471bc15fdd994643e986540d8292e547677b7",
+    "enquadramento.md": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9"
+  },
+  "published": [
+    "_graph/graph.jsonl",
+    "_graph/meta.json",
+    "council-log.md",
+    "lens-outputs/business.md",
+    "shared-understanding.md"
+  ],
+  "committed_at": "2026-09-24T10:56:59Z"
+}
