@@ -4,7 +4,7 @@ Plano: `../plan/05_FASES.md` F7; `../plan/07_MIGRACAO.md`; `../plan/06_VALIDACAO
 
 Objectivo: suportar a evolução real sem refazer tudo nem perder conhecimento.
 
-Estado: **proposta** — as decisões Q1–Q5 vão ao mantenedor antes de qualquer código.
+Estado: **decidido** — Q1–Q4 decididas pelo mantenedor (2026-09-24), todas na opção recomendada. Q5 (docs) não é de contrato: confirma-se no início do F7.4.
 
 ## Ponto de partida (levantamento, 2026-09-24)
 
@@ -19,7 +19,7 @@ Estado: **proposta** — as decisões Q1–Q5 vão ao mantenedor antes de qualqu
 
 ## Decisões para o mantenedor
 
-| # | Decisão | Recomendação | Alternativa |
+| # | Decisão | Escolha (Q1–Q4 decididas; Q5 a confirmar no F7.4) | Alternativa rejeitada |
 | --- | --- | --- | --- |
 | Q1 | Onde vive o «stale» estrutural (T41) | **Derivado em cada leitura** por um motor só de leitura `impact.py`, a partir das dependências que os artefactos já registam e do estado das linhas. Nenhum booleano escrito (como o coverage §10: não diverge das fontes) | Marcar `stale` dentro dos artefactos (escrita nova, pode divergir) |
 | Q2 | O que é mudança semântica de uma linha da SU (T41/T42) | **Os campos que já bloqueiam no grafo**: `state`, `criticidade`, `resolved` (inclui `withdraw` e transição `was X`). Texto editado no sítio = editorial, informa (o contrato já obriga um facto mudado a entrar como linha nova com `was`). `verificado_em` renovado não é mudança | Qualquer mudança de texto conta (reabre de mais: falha T42) |
