@@ -313,6 +313,16 @@ def stale(eng) -> dict:
             "affected": sorted({f["ref"] for f in findings}), "bytes": byte_revisions(eng)}
 
 
+def blocking(eng, refs=None) -> list:
+    """Os achados que bloqueiam a versão final (Q3): FC, âmbito e WP fora das exclusões
+    autorizadas. `refs` restringe a esses dependentes (o render só olha para os FC que cita).
+    Candidatos, pareceres e nós do desenho informam — o `/status` mostra-os, não bloqueiam."""
+    alvo = set(refs) if refs is not None else None
+    return [f for f in stale(eng)["findings"]
+            if f["artefact"] in (FC_PATH, SCOPE_PATH, WP_PATH) and not f.get("excluded")
+            and (alvo is None or f["ref"] in alvo)]
+
+
 def byte_revisions(eng) -> list:
     """A revisão de bytes, exacta, de cada ficheiro que um artefacto registou em `based_on`
     com `sha256`. Informa; nunca abre nada (T42): um byte mudado sem mudança nas linhas

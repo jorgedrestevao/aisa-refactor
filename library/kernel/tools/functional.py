@@ -480,6 +480,11 @@ def render_gate(eng, fc_ids=None, text: str = "") -> dict:
             blocked.append({"code": "AUTHORIZATION_" + auth["state"].upper(), "fc": fc,
                             "detail": auth.get("reason") or "{} sem autorização do dono"
                             .format(fc)})
+    # F7 (Q3): um FC que assenta numa premissa resolvida, retirada ou mudada não sai em
+    # versão final; republicá-lo com a referência de agora é o caminho (DESENHO F7 §1)
+    for f in (_mod("impact")["blocking"](eng, ids) if ids else []):
+        blocked.append({"code": "STALE_PREMISE", "fc": f["ref"],
+                        "detail": "{} ({})".format(f["detail"], " → ".join(f["chain"]))})
     if gaps:
         blocked.append({"code": "FUNCTIONAL_GAP", "fc": "",
                         "detail": "{} lacuna(s) funcionais devolvidas ao autor".format(len(gaps))})

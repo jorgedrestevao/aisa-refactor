@@ -45,6 +45,7 @@ _HERE = Path(__file__).resolve().parent
 _D = runpy.run_path(str(_HERE / "dashboard.py"))
 _G = runpy.run_path(str(_HERE / "graph.py"))
 _B = runpy.run_path(str(_HERE / "bootstrap.py"))
+_I = runpy.run_path(str(_HERE / "impact.py"))
 
 DASHBOARD = "dashboard.html"
 
@@ -115,6 +116,20 @@ def drift_blocker(blocking_drift: list) -> dict:
         "{}: o grafo espelha `{}`, que a SU ja nao tem".format(
             primeiro.get("id"), primeiro.get("mirror_of")),
         action="/status", kind=primeiro["code"])
+
+
+def stale_dependents(eng):
+    """Os dependentes de uma premissa que mudou (`impact.py stale`), um por linha: quem,
+    porquê, a cadeia, e se bloqueia a versão final. Sem artefactos de desenho, lista vazia."""
+    try:
+        r = _I["stale"](Path(eng))
+    except Exception as exc:                                            # noqa: BLE001
+        return [{"ref": "", "detail": "impacto por calcular: {}".format(exc),
+                 "blocks_final": False, "code": "IMPACT_UNREADABLE", "chain": []}]
+    bloqueia = {(f["ref"], f["code"], f["cause"]) for f in _I["blocking"](Path(eng))}
+    return [{"ref": f["ref"], "code": f["code"], "detail": f["detail"], "chain": f["chain"],
+             "blocks_final": (f["ref"], f["code"], f["cause"]) in bloqueia}
+            for f in r["findings"]]
 
 
 def operational_state(eng, today=None):
@@ -222,6 +237,10 @@ def operational_state(eng, today=None):
     if blocking_drift:
         out["blockers"].append(drift_blocker(blocking_drift))
 
+    # F7: o que ficou desactualizado — informa aqui; bloqueia a versão final nos gates de
+    # render, âmbito e release (Q3), não a transição de fase
+    out["stale_dependents"] = stale_dependents(eng)
+
     out["next_action"] = (status_block.get("milestone") or {}).get("next") or {
         "text": "Sem accao pendente identificada.", "command": "/status"}
     return out
@@ -245,6 +264,11 @@ def explain(eng, today=None):
     if st["visible_uncertainty"]:
         lines.append("Continua em aberto, sem bloquear: {} tema(s).".format(
             len(st["visible_uncertainty"])))
+    velhos = st.get("stale_dependents") or []
+    if velhos:
+        lines.append("Assenta em premissas que mudaram: {} peca(s) a rever ({}){}.".format(
+            len(velhos), ", ".join(sorted({v["ref"] for v in velhos}))[:160],
+            " — impede a versao final" if any(v["blocks_final"] for v in velhos) else ""))
     if st["projection"]["stale"]:
         lines.append("Aviso: a pagina de acompanhamento esta desactualizada — "
                      "o que vale e o que esta nos ficheiros.")

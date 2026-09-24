@@ -16,6 +16,9 @@ a partir das autoridades publicadas (`_design/scope.json`,
                            e por isso bloqueia o compromisso do âmbito (T34; `states.md`)
     UI_IN_HEADLESS         WP que realiza um ecrã num desenho headless (T37)
 
+`scope_gate` junta `STALE_PREMISE` (F7, `impact.py`): FC, âmbito ou WP fora das exclusões que
+assenta numa linha resolvida, retirada ou com `state`/`criticidade` diferentes do que registou.
+
 Exclusões autorizadas do âmbito não geram achado. O motor não escreve nada e não decide:
 um achado é um facto de estrutura; se o requisito é material é juízo do dono.
 
@@ -282,6 +285,10 @@ def scope_gate(eng) -> dict:
         elif v["authorization"]["state"] != "current":
             blockers.append(_f("FC_NOT_AUTHORIZED", f, "autorização {}".format(
                 v["authorization"]["state"])))
+    # F7 (Q3): dependente do âmbito entregue sobre premissa resolvida, retirada ou mudada
+    for f in _mod("impact")["blocking"](eng):
+        blockers.append(_f("STALE_PREMISE", f["ref"], "{} ({})".format(
+            f["detail"], " → ".join(f["chain"]))))
     try:
         md = (eng / "shared-understanding.md").read_text(encoding="utf-8")
     except OSError:

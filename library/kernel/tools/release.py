@@ -127,6 +127,10 @@ def readiness(eng) -> dict:
     if gate["delivery"] == "blocked":
         motivos.append("gate de âmbito bloqueado ({} bloqueio(s), {} incoerência(s))".format(
             len(gate["blockers"]), len(gate["incoherent"])))
+    velhos = [b for b in gate["blockers"] if b["code"] == "STALE_PREMISE"]
+    if velhos:
+        motivos.append("{} dependente(s) sobre premissa mudada (STALE_PREMISE)".format(
+            len(velhos)))
     checks = {}
     if not spec:
         motivos.append("implementation-spec não renderizada")

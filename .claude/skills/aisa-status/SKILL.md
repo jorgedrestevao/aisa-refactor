@@ -40,6 +40,8 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
 
     Porquê antes e não depois: `dashboard.py` conta o que está nos ficheiros; não diz se os ficheiros são de uma revisão só. Sobre uma operação pendente, ou sobre um grafo que discorda da SU, as contagens estão certas e a conclusão está errada — e a diferença entre as duas não aparece em contagem nenhuma. Um leitor que emite conclusões antes de apresentar limitações apresenta estado misto como estado.
 
+    `stale_dependents` (handoff-v1 F7, `impact.py`): as peças do desenho que assentam numa premissa que mudou — contrato funcional, âmbito, pacote de trabalho, candidato, parecer, nó do desenho — cada uma com a cadeia e `blocks_final`. Não fecha a transição de fase; `blocks_final: true` impede a versão final do render e do pacote. Não vazio → uma linha no bloco *o que falta*, em linguagem de negócio (*o contrato da submissão assenta numa premissa que mudou (FC-0001, A-001)*), com a acção: republicar a peça com a referência de agora (o contrato funcional volta a pedir autorização ao dono). Nunca dizer que a conclusão anterior ficou falsa: ficou por reler.
+
     **Falhou ou não existe** → dizer `verificação incompleta — kernel não consultado: <razão>` e continuar; nunca apresentar o resultado como se tivesse sido verificado.
 
 2. **Run the motor and read the model.** From the repo root:
