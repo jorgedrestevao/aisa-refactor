@@ -1,0 +1,5 @@
+{"seq": 1, "ts": "2026-09-24T16:17:45Z", "run": "R8", "segment": null, "type": "note", "data": {"cartao": "docs/handoff-v1/F8/cartoes/R8.json", "codigo": "77fc98e747bde30b132468fa011802c4d61ed8c0"}}
+{"seq": 2, "ts": "2026-09-24T16:19:07Z", "run": "R8", "segment": null, "type": "note", "data": {"cliente_agent_id": "a0cdd059498d7cd8a"}}
+{"seq": 3, "ts": "2026-09-24T16:19:39Z", "run": "R8", "segment": null, "type": "note", "data": {"primeira_resposta": "PRONTO"}}
+{"seq": 4, "ts": "2026-09-24T16:19:45Z", "run": "R8", "segment": "SR", "type": "segment_start", "data": {}}
+{"seq": 5, "ts": "2026-09-24T16:21:52Z", "run": "R8", "segment": "SR", "type": "note", "data": {"executor_agent_id": "a8927a017b47935e7"}}
