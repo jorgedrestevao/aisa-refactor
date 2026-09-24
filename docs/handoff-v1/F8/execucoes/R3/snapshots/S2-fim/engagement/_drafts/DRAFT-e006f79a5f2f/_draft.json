@@ -1,0 +1,14 @@
+{
+  "schema_version": "aisa-draft/1",
+  "id": "DRAFT-e006f79a5f2f",
+  "files": {
+    "_state.json": "3b7111cd8e0c72ca4f0ac40c5445e985736e63c865d0668b9c0095d9914d243d",
+    "council-log.md": "8f181415979e9b5c788e2c419e02e5f15893f159ee91c02b09ed43df1d551236",
+    "shared-understanding.md": "3909be1cc614264ceb94bcb7b95e7bf5577acb6ddca1cde0fc4e90ffa28d7038",
+    "story.md": "9a2645f5289b222f02cf4780ac17baae8e4578595cda328fcc00338dc3ca3465"
+  },
+  "reads": {},
+  "task": null,
+  "published": "publish-e9b3dd9697867b44",
+  "created_at": "2026-09-24T11:56:43Z"
+}

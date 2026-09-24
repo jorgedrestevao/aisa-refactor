@@ -1,0 +1,19 @@
+{
+  "operation_id": "publish-438f3d902f1f8333",
+  "request_hash": "a027f87f7cbd8e9b926d826aab97b3abb1a67bbdb4058df1e95afeb5196297f3",
+  "result": "committed",
+  "revision": {
+    "lens-outputs/data.md": "d8deaf2477a1baad6384e4898d3051041c543db3a2a59ee25223046b1de0cfd5"
+  },
+  "expected": {
+    "lens-outputs/data.md": "29ec24c1f04633b8ede516383933787f3ab1b33a57e3a3300c8d4bacbfbd5d8b"
+  },
+  "read_set": {
+    "enquadramento.md": "93db00f6a8792d0c78f8505833ec5f27851a17a95b13690f77c58c151426dca9",
+    "shared-understanding.md": "93d397060001bbfd984d1ac78fb4baf52ad6b9db725825e6b765f48c6e87bb92"
+  },
+  "published": [
+    "lens-outputs/data.md"
+  ],
+  "committed_at": "2026-09-24T11:03:48Z"
+}

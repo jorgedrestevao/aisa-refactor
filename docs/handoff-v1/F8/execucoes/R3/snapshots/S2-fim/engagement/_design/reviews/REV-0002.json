@@ -1,0 +1,101 @@
+{
+ "task_id": "REV-0002",
+ "role": "data-integration",
+ "input_revision": 1,
+ "coverage": [
+  {
+   "question": "A leitura do preço a partir do ERP-X (tempo real vs cópia local, U-004 em aberto) garante consistência com a fonte de verdade em cada candidato construído? Fecha com: o mecanismo de consistência avaliado por candidato, ou a lacuna nomeada.",
+   "checked": "Texto de arquitectura/risks de O-001, O-002, O-003 em candidates.json (todos idênticos: 'Catálogo (cópia local, condicional a U-004)' + 'integração com o ERP-X — forma depende de U-004'); C-004, U-004, R-002 em shared-understanding.md; integration-mechanisms.md §3-4 (dimensões e teste de topologia), §7.1 (registo de risco de sincronização); store-boundaries.md §6-7 e §9 (obrigações de uma cópia, anti-padrão de cache de preço)."
+  },
+  {
+   "question": "A regra de detecção de duplicados (mesmo requerente + conteúdo semelhante + janela curta, mitigação de R-001) é idempotente e recuperável em falha? Fecha com: veredicto sobre idempotência/recuperação, com o cenário de falha considerado.",
+   "checked": "Texto de risks de O-001 ('mitigado por regra de detecção + confirmação de recepção, mas a regra em si é nova e por afinar em UAT') e a mesma mitigação herdada em O-002/O-003; R-001 em shared-understanding.md; dataverse.md §5 (duplicate detection suprimida por omissão em escritas Web API, sem regras por omissão em tabelas custom, falha como erro de servidor); integration-mechanisms.md §7 (at-least-once implica duplicados; chave alternada é o único mecanismo de idempotência server-side em Dataverse)."
+  },
+  {
+   "question": "Uma cópia local do catálogo (alternativa a leitura em tempo real, R-002) sem cadência de sincronização definida herda o mesmo risco de desactualização? Fecha com: confirmação do risco herdado, ou a condição que o resolve.",
+   "checked": "R-002 em shared-understanding.md e o mesmo texto replicado em risks de O-001 ('uma cópia local herda o mesmo risco se a cadência de sincronização não for definida'); store-boundaries.md §6 ('o que uma cópia obriga': dono de reconciliação, cadência, deteção de drift que não seja contagem de linhas) e §9 (modo de falha 'lost updates / silent divergence')."
+  }
+ ],
+ "findings": [
+  {
+   "target": "R-001 / O-001, O-002, O-003 (mitigação de duplicados)",
+   "severity": "blocking",
+   "kind": "fact",
+   "evidence": "library/packs/pp/domain-knowledge/data/dataverse.md §5 ('Duplicate detection is not the mechanism... suppressed by default on Web API updates... no default rules for custom tables... the failure surfaces as a server-error class response, not a validation-class one, so naive retry logic loops on a business rejection') + integration-mechanisms.md §7 ('At-least-once means duplicates. Consumer logic must be idempotent. In Dataverse the idempotency key mechanism is an alternate key with upsert semantics') · candidates.json O-001.risks[0]",
+   "failure_scenario": "A regra descrita (mesmo requerente + conteúdo semelhante + janela curta) não é uma chave alternada — é correspondência difusa, não pode ser expressa como constrangimento de unicidade server-side. Se implementada como regra nativa de deteção de duplicados na tabela, não faz nada por omissão nas escritas por Power Automate/Web API (o próprio caminho de escrita dos três candidatos), e não existe regra por omissão para tabelas customizadas — tem de ser autorizada explicitamente, o que nenhum candidato menciona. Se implementada como verificação prévia num flow (query antes de criar), há corrida verificação-depois-escrita (TOCTOU): dois pedidos quase simultâneos passam ambos a verificação antes de qualquer um ser criado. E se a regra disparar, a resposta chega como erro de servidor, não de validação — uma política de retry ingénua no flow (comum em Power Automate) reencomenda exactamente o pedido que a regra devia bloquear, criando o duplicado por via da própria recuperação de falha.",
+   "closing_condition": "A arquitectura nomeia o mecanismo exacto (regra de deteção de duplicados na tabela, explicitamente activada para escritas Web API/flow, ou uma verificação+criação atómica num plug-in síncrono/custom API dentro de uma transacção) e define o comportamento de idempotência/retry (o flow não pode reencomendar cegamente em erro); testado em UAT com submissão concorrente do mesmo conteúdo.",
+   "id": "REV-0002.F01"
+  },
+  {
+   "target": "C-004 / U-004 (viabilidade da leitura em tempo real)",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "shared-understanding.md#C-004 ('O catálogo de equipamento com preços em vigor vive hoje no ERP-X') e candidates.json exclusions[1] ('Sem evidência de que o ERP-X hoje suporta pedido/aprovação/registo de equipamento — só o catálogo de preços vive lá') · integration-mechanisms.md §3 dimensão 4 ('Capability — what each end can actually do... Unknown here is decision-blocking') e dimensão 11 ('Authority and operation')",
+   "failure_scenario": "Nenhuma linha da SU confirma que o ERP-X expõe uma interface de leitura (API, endpoint OData, base de dados acessível) para o catálogo — só que os preços 'vivem lá'. U-004 assume implicitamente que ambos os ramos (tempo real vs cópia) são tecnicamente exequíveis sem essa evidência. Se o ERP-X não expõe interface programável, a leitura em tempo real cai no fallback de automação de UI (integration-mechanisms.md §11) — mecanismo com fragilidade e custo de licença próprios, não considerado em nenhum candidato — e a resposta a U-004 muda de 'escolha de desenho' para 'constrangimento técnico descoberto tarde'.",
+   "closing_condition": "Nomear como Unknown própria (ou anexar a U-004) a capacidade de integração do ERP-X — que interface existe, quem a detém, que garantia documenta — antes de fechar U-004; sem essa resposta, o mecanismo de consistência por candidato não pode ser avaliado, só a lacuna nomeada.",
+   "id": "REV-0002.F02"
+  },
+  {
+   "target": "R-002 / U-004 (cópia local do catálogo de preços)",
+   "severity": "material",
+   "kind": "fact",
+   "evidence": "library/packs/pp/domain-knowledge/data/store-boundaries.md §9 ('Caching volatile or sensitive values — price, credit limit, balances. A cache-aside pattern does not guarantee consistency; this class of data is always retrieved from the primary source') e §6 ('A reconciliation owner... is mandatory, not optional... A drift-detection method that is not row counts')",
+   "failure_scenario": "Os três candidatos oferecem 'cópia local' do catálogo como alternativa simétrica a 'tempo real', sem nomear que cache de preço é um modo de falha documentado no pack, nem exigir dono de reconciliação, cadência ou método de deteção de drift. Se U-004 resolver para cópia local sem esses três elementos, o risco R-002 (preços desactualizados) não é mitigado — é reproduzido dentro do novo sistema, com o agravante de dar falsa confiança de 'sistema único' enquanto a divergência não é detectada por contagem de linhas.",
+   "closing_condition": "Se U-004 resolver para cópia local, exigir explicitamente (como obrigação de negócio, não como nota de risco): dono nomeado da reconciliação, cadência definida, e método de deteção de drift diferente de contagem de linhas — registado como linha própria na SU, não apenas como frase dentro de risks[].",
+   "id": "REV-0002.F03"
+  },
+  {
+   "target": "R-002 (Q3 — confirmação do risco herdado)",
+   "severity": "minor",
+   "kind": "recommendation",
+   "evidence": "candidates.json O-001.risks[1] confirma textualmente o risco herdado — consistente com store-boundaries.md §6/§9",
+   "failure_scenario": "A confirmação do risco herdado está correcta e citada, mas fica apenas como frase de risco no candidato O-001 e não é repetida em O-002/O-003 (que remetem para 'mesmos riscos de dados de O-001' sem repetir o texto) nem elevada a obrigação/condição fechável — um leitor que só veja O-002/O-003 perde a condição de fecho.",
+   "closing_condition": "Repetir a condição de fecho (cadência + dono + deteção de drift) de forma explícita em cada candidato que oferece a cópia local como forma, não só por remissão a O-001.",
+   "id": "REV-0002.F04"
+  }
+ ],
+ "assumptions": [
+  "Assumi que a 'regra de detecção de duplicados' descrita nos candidatos corre no caminho de escrita via Power Automate/Dataverse Web API (não um lote nocturno) — coerente com a arquitectura declarada (fluxos de aprovação, confirmação de recepção) e com o facto de o store ser Dataverse (O-001/O-002) ou listas (O-003).",
+  "Assumi que 'cópia local' nos candidatos significa uma réplica dentro da loja escolhida (Dataverse ou listas), não uma cópia fora da plataforma — é o que o texto de arquitectura de O-001/O-002/O-003 declara ('Catálogo (cópia local...)')."
+ ],
+ "unanswered": [],
+ "recommended_actions": [
+  "Dono do processo/director de SI: nomear (como Unknown ou anexo a U-004) se o ERP-X expõe interface programável para o catálogo de preços, antes de fechar U-004 — sem isso o mecanismo de consistência não é avaliável em nenhum candidato.",
+  "Autor dos candidatos: nomear o mecanismo exacto da regra de duplicados (regra nativa activada para escritas Web API, ou verificação+criação atómica num plug-in síncrono) e o comportamento de retry, antes do blueprint — o estado actual ('regra nova, por afinar em UAT') não é suficiente para um requisito ligado a R-001.",
+  "Autor dos candidatos: se algum candidato antecipar U-004→cópia local, elevar cadência de sincronização + dono de reconciliação + método de deteção de drift a obrigação registada (não só risco), e repetir a condição de fecho em O-002/O-003, não só em O-001."
+ ],
+ "sources_used": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "12f7b946c596062c8ed64d462aa8db833dfee5652f8bc8ddd282c1e9440751e2"
+  },
+  {
+   "ref": "shared-understanding.md",
+   "sha256": "d9e1efb0bfb27110c17184ca0307732ab4ad32190187280ad5f41ec1a5460e9f"
+  },
+  {
+   "ref": "frame.md",
+   "sha256": "b98266d5530b8e40013008d1a27416f53f749fa089ac019cd080952b1c3331f8"
+  },
+  {
+   "ref": "decisions.md",
+   "sha256": "eddbc0e24b88f365d689cfd85d680e4b8f44078011f1624e4f7c955fe50474ff"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/integration/integration-mechanisms.md",
+   "sha256": "23e4fbd0d9b37ceaeb0f7d1d10e312d726d8ce98605a36eac3d830d449cefa51"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/data/store-boundaries.md",
+   "sha256": "bec39c3d133eddc2f21a787372b8da42027dabcc6d3c17dda0a9398c421ec3e5"
+  },
+  {
+   "ref": "library/packs/pp/domain-knowledge/data/dataverse.md",
+   "sha256": "597f240fa0becfeb74332c50884a321922b32242178565e72364637f04ba6b6a"
+  }
+ ],
+ "schema_version": "handoff-review/1",
+ "candidate_revision": 1,
+ "mandate_sha256": "06fd43bc68c1135b3e0e0062dea49488f0bb6a13516aa1954a8dffc7ba1a12bb",
+ "received_at": "2026-09-24T12:20:06Z"
+}
