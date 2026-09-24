@@ -3,3 +3,5 @@
 {"seq": 3, "ts": "2026-09-24T16:19:44Z", "run": "R9", "segment": null, "type": "note", "data": {"primeira_resposta": "PRONTO"}}
 {"seq": 4, "ts": "2026-09-24T16:19:45Z", "run": "R9", "segment": "SR", "type": "segment_start", "data": {}}
 {"seq": 5, "ts": "2026-09-24T16:21:52Z", "run": "R9", "segment": "SR", "type": "note", "data": {"executor_agent_id": "ab25f71bf62760928"}}
+{"seq": 6, "ts": "2026-09-24T16:51:20Z", "run": "R9", "segment": "SR", "type": "relay_request", "data": {"kind": "subagente", "origem": "aisa-options passo 5a", "subagent_type": "specialist-reviewer", "prompt": "5 mandatos em paralelo: REV-0006..REV-0010 -- cada um so com Engagement: projects/f8-r9-fx03 e Mandato: _design/reviews/REV-NNNN.mandate.json"}}
+{"seq": 7, "ts": "2026-09-24T16:51:20Z", "run": "R9", "segment": "SR", "type": "note", "data": {"confirmacao_independente": "R9 tentou a mesma escrita de rota change-impact que R8 e recebeu a mesma recusa WORKFLOW_CHANGED, sem workflow.py ter comando de escrita. Confirma o achado de R8 como real e reproduzivel, nao um erro de um so executor."}}
