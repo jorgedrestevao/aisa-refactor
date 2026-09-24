@@ -169,7 +169,7 @@ registo de `reconciliation` que `based_on` nomeia.
 | campo | tipo | obrigatório | regra |
 |---|---|---|---|
 | `id` | string | sim | único no registo |
-| `requirement_refs` | lista de ids | sim, ≥1 | ids da SU / decisão / obrigações; todos têm de resolver |
+| `requirement_refs` | lista de ids | sim, ≥1 | ids da SU / decisão / obrigações; todos têm de resolver, excepto `disposition: retire` (ver abaixo) |
 | `source_unit_refs` | lista de unit keys | sim (pode ser vazia) | de onde vem a obrigação |
 | `disposition` | enum | sim | `preserve` · `change` · `retire` · `clarify` |
 | `scope_basis_refs` | lista de ids | sim (pode ser vazia) | §4.4.1 |
@@ -193,6 +193,16 @@ epistémico vem da SU em cada leitura e não se duplica aqui.
 `acceptance_basis_refs` liga ao requisito ou critério **que já existe**. O texto de revisão
 pode explicar como se verifica a cobertura; **não pode inventar limiares nem políticas de
 aceitação do negócio**.
+
+**`disposition: retire` dispensa a própria `requirement_refs` de resolver.** Uma referência
+citada por engano (id doutro motor, nunca escrito na SU nem em decisão) fica presa para
+sempre se `retire` também exigir que ela resolva: mantê-la dá `COV-DEAD-REF`; reescrever a
+identidade para a largar reabre a mesma obrigação como desaparecida na revisão seguinte
+(§4.4.4, `COV-UNREVIEWED`). `retire` é o disposition que fecha uma identidade — tem de o
+fazer mesmo quando a referência que a define nunca chegou a resolver. Qualquer outro
+`disposition` sobre a mesma referência morta continua `COV-DEAD-REF`. Simétrico ao que
+§4.4.1 já faz para `scope_basis_refs`: `retire`/`change` também ali dispensam autoridade de
+âmbito, pela mesma razão.
 
 #### 4.4.1 Quando a exclusão precisa de autoridade de âmbito
 
