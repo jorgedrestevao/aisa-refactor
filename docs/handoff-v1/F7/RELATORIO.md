@@ -1,6 +1,6 @@
 # F7 — Relatório da fase (mudanças, migração e compatibilidade)
 
-Estado: **gate avaliado — aguarda aceitação** (2026-09-24). Desenho e decisões Q1–Q4: [DESENHO.md](DESENHO.md). Gate: T35/T36/T41/T42; o rollback preserva a informação nova e bloqueia o downgrade destrutivo.
+Estado: **concluída — gate aceite pelo mantenedor** (2026-09-24), com os limites declarados (T35 não aplicável por decisão, opção A; rollback provado só com o código do fim da F5; artefactos anteriores ao F7.1 e nós do desenho sem impressão por linha; linha movida de secção lida como inexistente). Desenho e decisões Q1–Q4: [DESENHO.md](DESENHO.md). Gate: T35/T36/T41/T42; o rollback preserva a informação nova e bloqueia o downgrade destrutivo.
 
 ## 1. Incrementos
 
@@ -38,11 +38,9 @@ Estado: **gate avaliado — aguarda aceitação** (2026-09-24). Desenho e decis�
 
 ## 5. Retoma (para uma sessão nova)
 
-Estado depois do F7.5: F7 completa, gate avaliado, **aguarda aceitação do mantenedor**. Full 111/111 e stdlib 92/92 verdes.
+Estado: F7 **concluída e aceite** (2026-09-24). Full 111/111 e stdlib 92/92 verdes.
 
-Próxima acção segura: pedir ao mantenedor, por `AskUserQuestion`, a aceitação do gate da F7 com os limites de §4 e §6. Aceite → marcar *concluída — gate aceite* aqui e no `README.md`, e só com autorização explícita abrir a F8 (desenho primeiro, §0 subagentes, decisões ao mantenedor antes de código).
-
-Regras que continuam: decisões de contrato vão ao mantenedor antes de código; subagentes só pela regra do README; suites completas antes de cada push; avisar quando mudar de sessão.
+Próxima acção segura: nenhuma sem autorização. A F8 (pilotos adversariais e aceitação do destinatário, §8) só começa quando o mantenedor a autorizar; aí, desenho primeiro (`F8/DESENHO.md`, §0 subagentes) e decisões ao mantenedor antes de código.
 
 ## 6. Gate (05_FASES F7: T35/T36/T41/T42; rollback preserva novas informações e bloqueia downgrade destrutivo)
 
