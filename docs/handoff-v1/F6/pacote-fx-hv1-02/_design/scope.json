@@ -1,0 +1,39 @@
+{
+ "schema_version": "handoff-scope/1",
+ "engagement_id": "fx-hv1-02",
+ "revision": 1,
+ "based_on": [
+  {
+   "ref": "shared-understanding.md"
+  }
+ ],
+ "retired_ids": [],
+ "items": [
+  {
+   "id": "SCOPE-0001",
+   "name": "Pedido, aprovação e passagem a compras",
+   "includes": [
+    {
+     "ref": "J-0001",
+     "reason": "submissão"
+    },
+    {
+     "ref": "J-0003",
+     "reason": "aprovação com segregação"
+    },
+    {
+     "ref": "C-001",
+     "reason": "o âmbito declarado: inclui a passagem a compras"
+    }
+   ],
+   "excludes": [
+    {
+     "ref": "FC-0002",
+     "reason": "arredondamento por escolher (U-001)",
+     "authorization_ref": "decisions.md#D-005"
+    }
+   ],
+   "authorized_by": "D-005"
+  }
+ ]
+}

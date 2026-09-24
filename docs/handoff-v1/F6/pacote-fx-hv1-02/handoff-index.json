@@ -1,0 +1,314 @@
+{
+ "schema_version": "handoff-index/1",
+ "engagement_id": "fx-hv1-02",
+ "revision": 1,
+ "based_on": [
+  {
+   "ref": "_design/candidates.json",
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+   "revision": 1
+  },
+  {
+   "ref": "_design/functional-contracts.json",
+   "sha256": "c8a138e3388df895a059cf51f5ac29a185ab2cc7e8ba275116dead7cd740c292",
+   "revision": 1
+  },
+  {
+   "ref": "_design/scope.json",
+   "sha256": "b7fdf19b6bd1b35404b2dbdd9183a09e2e5097fdb47a89b42da544f8530763e5",
+   "revision": 1
+  },
+  {
+   "ref": "_design/work-packages.json",
+   "sha256": "569b53218f20eb815a5f2fc0123c24c659fc2dcbc1e75ae84a29a774bfb1d71c",
+   "revision": 1
+  },
+  {
+   "ref": "_blueprint/ux-blueprint_v01.yaml",
+   "sha256": "294021237e0973a91a983d19f4c35df52e1edebad3ee36051779ddc4f98c240d"
+  }
+ ],
+ "scope_refs": [
+  "SCOPE-0001"
+ ],
+ "exclusions": [
+  {
+   "ref": "FC-0002",
+   "reason": "arredondamento por escolher (U-001) (autorizado: decisions.md#D-005)"
+  }
+ ],
+ "code_version": "70cd22d",
+ "pack_version": "pp 1.10.0",
+ "files": [
+  {
+   "path": "_blueprint/ux-blueprint_v01.yaml",
+   "sha256": "294021237e0973a91a983d19f4c35df52e1edebad3ee36051779ddc4f98c240d"
+  },
+  {
+   "path": "_design/candidates.json",
+   "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce"
+  },
+  {
+   "path": "_design/functional-contracts.json",
+   "sha256": "c8a138e3388df895a059cf51f5ac29a185ab2cc7e8ba275116dead7cd740c292"
+  },
+  {
+   "path": "_design/reviews/REV-0001.json",
+   "sha256": "49e0f1eef3abb5c6a1c325ab35eabcccd89db22f25bfc63822d85b3bd6e68e96"
+  },
+  {
+   "path": "_design/reviews/REV-0001.mandate.json",
+   "sha256": "56a1b90844080ee4fb4d273fa29bcdf58f87723e7a8aee0d9848e976784f8f3c"
+  },
+  {
+   "path": "_design/reviews/REV-0002.json",
+   "sha256": "8a4e37d85c2dcb51bcd518af24d4ca1a4be1f5afa9b9894dbce564bee8a974e7"
+  },
+  {
+   "path": "_design/reviews/REV-0002.mandate.json",
+   "sha256": "2f94954fd6f58271d348a009cc735ac22501434be1fb389a1802abdb676fe8f7"
+  },
+  {
+   "path": "_design/reviews/REV-0003.json",
+   "sha256": "02984efab967362bbf7506b58b2506c7f61f74a7e875f6c89faaa20006fb1917"
+  },
+  {
+   "path": "_design/reviews/REV-0003.mandate.json",
+   "sha256": "f30f54c80b9e61281cfbddf745511c56f2c5b385c3366253296ef7a45837ffbb"
+  },
+  {
+   "path": "_design/reviews/ledger.json",
+   "sha256": "187f7278883b74a8da9f67732c30c81ff2c0daa470cf3b737b4fda9d1429c1a7"
+  },
+  {
+   "path": "_design/scope.json",
+   "sha256": "b7fdf19b6bd1b35404b2dbdd9183a09e2e5097fdb47a89b42da544f8530763e5"
+  },
+  {
+   "path": "_design/work-packages.json",
+   "sha256": "569b53218f20eb815a5f2fc0123c24c659fc2dcbc1e75ae84a29a774bfb1d71c"
+  },
+  {
+   "path": "_render/fx-hv1-02_estimate_v01.md",
+   "sha256": "c9ec00d2b17820b04f85ddd6f27d3e3012a253777fbbddaaa593885f8bea78a4"
+  },
+  {
+   "path": "_render/fx-hv1-02_implementation-spec_v01.md",
+   "sha256": "7517931e7fa863a5ae78679eb837e4c8f908541a66730ad855bf5730f8607071"
+  },
+  {
+   "path": "_state.json",
+   "sha256": "7e1951a901356f923a8b67b6095f8f0957ff3527098b991dd5a3b7ee2f525ab8"
+  },
+  {
+   "path": "answers.md",
+   "sha256": "603a71f0d26e7a4f4e23676b5dbafba79821a51ccc539dd434056a64773f0788"
+  },
+  {
+   "path": "decisions.md",
+   "sha256": "8b52d24731b7aa46231a35dab99eae23b76dc8d539e5833fb73e4c2391a030fe"
+  },
+  {
+   "path": "functional-state.json",
+   "sha256": "62cf39a5e5b451c9de6b31de77d14e63c2030811b2e79c6a661384edc2753030"
+  },
+  {
+   "path": "inputs/entrevista-processo.md",
+   "sha256": "8a70938691852eaf511d8c420ea0b1e6bcd43048fa8681b2c4b674fcd168fa55"
+  },
+  {
+   "path": "inputs/matriz-papeis.md",
+   "sha256": "be7ebaa558a9b686d00f54a4fb357e5e16205422ce63809786497eacfad1b204"
+  },
+  {
+   "path": "inputs/nota-dados.md",
+   "sha256": "990dc5822ebb9904791899307bbe72dc2081041edfcd481f10f3fa8d565f56dc"
+  },
+  {
+   "path": "inputs/pedido.md",
+   "sha256": "a7da932371182b038fe78950b049af1de7ef5f24369673f6a7adb2a651b86b1d"
+  },
+  {
+   "path": "library/kernel/handoff-contract.md",
+   "sha256": "6d1e840a752f57a4b1c69251d9edf824d1930e5f2554e0cfa059440745361496"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-candidates.schema.json",
+   "sha256": "06fe3ffbc4087a7d948c4a5280d875e27eee824fbdd2713b490252939c393ba7"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-functional.schema.json",
+   "sha256": "5bb14fabc3d5d8dd20de67c27629cb6c146dd9a153f1f43302beada1bd1440cf"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-index.schema.json",
+   "sha256": "c1e5472df370b4a08c87fe16802e35d2354eeef90da0f5b7d445acf689a23677"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-pack.schema.json",
+   "sha256": "a0ecdfa7d17f15026d1f885b970957c7d26ec11e4f81142426d805b607eb9464"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-response.schema.json",
+   "sha256": "0275a2e3027474343c79c300a1d7a3dc750e1c7f61fc4d2856501e9f3b254997"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-review.schema.json",
+   "sha256": "e1b0749946ab4e9c86d6c954831e2c895cb70e79f50974ed139eecae76647cc2"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-scope.schema.json",
+   "sha256": "665b5d8af8b730caf0459f70f27cc64fe7f669f2e86ba670acd84bbe06f59b06"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-state.schema.json",
+   "sha256": "9d250e55ddbff533ef760d839c8766efeea1ec73ebd8d7a65a6f22ddfe63c62d"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-work-packages.schema.json",
+   "sha256": "2586e5c27ccb0f9b5bc182a2d67a222109618f42dbf4e4d1d216535085a347fd"
+  },
+  {
+   "path": "library/kernel/schemas/handoff-work.schema.json",
+   "sha256": "1f0e9c13c1ae938ff1c1349b30961533f37018d8820b9398e87ce8dfccb77152"
+  },
+  {
+   "path": "library/kernel/specialists.md",
+   "sha256": "d4865dbb0c544254b23b61db267a98b1bd77e5551eb7a17e60672fffa7d51fe8"
+  },
+  {
+   "path": "library/kernel/states.md",
+   "sha256": "a469c58423ed047e2e56a4d62230b946b2d2ee456224df49f26e85df7898a8f0"
+  },
+  {
+   "path": "library/packs/pp/architecture-templates/architecture-core.md",
+   "sha256": "bec7235958c6b465e9576f8a1c5d331c06817737906d7352988a432735fd591b"
+  },
+  {
+   "path": "scope-gate.json",
+   "sha256": "979c6af77ba7e129ba2267565076f87d58754721ef371544ec88a2b4c2fd41da"
+  },
+  {
+   "path": "shared-understanding.md",
+   "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2"
+  },
+  {
+   "path": "trace.json",
+   "sha256": "194268dda14719ed049929cc2df6b2bad3bcecda90ba67ebdc14d66450ed64bf"
+  }
+ ],
+ "authorization_refs": [
+  "decisions.md#D-001",
+  "decisions.md#D-002",
+  "decisions.md#D-003",
+  "decisions.md#D-004",
+  "decisions.md#D-005"
+ ],
+ "reviews_basis": {
+  "REV-0001": {
+   "role": "architecture-review",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "bef68431429d8c0c2e42b82ccff250bdaffb5ba89ffbc7749f4148349cd2e04e",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0002": {
+   "role": "security-operation",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "bef68431429d8c0c2e42b82ccff250bdaffb5ba89ffbc7749f4148349cd2e04e",
+     "now": "changed since the review"
+    }
+   }
+  },
+  "REV-0003": {
+   "role": "ux-process",
+   "candidate_revision": 1,
+   "inputs": {
+    "_design/candidates.json": {
+     "sha256": "2c1c94f28124ec106d2c5071c5c507be1e8366e5ab33ffaa91f2baf0364fccce",
+     "now": "current"
+    },
+    "shared-understanding.md": {
+     "sha256": "5c040d4a5f16121fdb8d1e93c40ee88bf2afb0df0d36d4eb92d1c0f1874b1bf2",
+     "now": "current"
+    },
+    "decisions.md": {
+     "sha256": "bef68431429d8c0c2e42b82ccff250bdaffb5ba89ffbc7749f4148349cd2e04e",
+     "now": "changed since the review"
+    }
+   }
+  }
+ },
+ "readiness": {
+  "delivery": "blocked",
+  "ready": false,
+  "reasons": [
+   "1 achado(s) de rastreabilidade",
+   "gate de âmbito bloqueado (2 bloqueio(s), 1 incoerência(s))"
+  ],
+  "render_checks": {
+   "implementation-spec": [],
+   "estimate": []
+  },
+  "blueprint_approval": "current"
+ },
+ "proofs": {
+  "performed": [],
+  "pending": []
+ },
+ "receiver_acceptance": null,
+ "delivery_level": "preliminary",
+ "scope_definition": {
+  "SCOPE-0001": {
+   "includes": [
+    {
+     "ref": "J-0001",
+     "reason": "submissão"
+    },
+    {
+     "ref": "J-0003",
+     "reason": "aprovação com segregação"
+    },
+    {
+     "ref": "C-001",
+     "reason": "o âmbito declarado: inclui a passagem a compras"
+    }
+   ],
+   "excludes": [
+    {
+     "ref": "FC-0002",
+     "reason": "arredondamento por escolher (U-001)",
+     "authorization_ref": "decisions.md#D-005"
+    }
+   ],
+   "authorized_by": "D-005"
+  }
+ },
+ "limitations": [
+  "1 achado(s) de rastreabilidade",
+  "gate de âmbito bloqueado (2 bloqueio(s), 1 incoerência(s))",
+  "decisões com data posterior ao build (2026-09-24T00:17:26Z): D-005 (2026-09-24T09:00:00Z)"
+ ],
+ "built_at": "2026-09-24T00:17:26Z"
+}

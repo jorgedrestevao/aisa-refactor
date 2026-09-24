@@ -1,0 +1,80 @@
+{
+ "revision": 1,
+ "digest": "c8a138e3388df895a059cf51f5ac29a185ab2cc7e8ba275116dead7cd740c292",
+ "blueprint": "_blueprint/ux-blueprint_v01.yaml",
+ "items": {
+  "FC-0001": {
+   "purpose": "Submeter um pedido de equipamento sem o duplicar",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "publication_status": "draft",
+   "sha256": "2235b883eb4b66de21dbb3deeebaeb88cf33975403f67e022a10f67862e540c6",
+   "gaps": [],
+   "authorization": {
+    "state": "current",
+    "block": "D-004",
+    "revision": 1
+   },
+   "assumed_premises": [],
+   "conflicts": [],
+   "warnings": [],
+   "authorizable": true
+  },
+  "FC-0002": {
+   "purpose": "Calcular o valor do pedido",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "publication_status": "draft",
+   "sha256": "5ba4d1c34fda2672edc29e2a3831224d2b2549685518a5a85a98595fa4d3dc33",
+   "gaps": [
+    {
+     "code": "MISSING_ROUNDING",
+     "fc": "FC-0002",
+     "detail": "cálculo sem regra de arredondamento — lacuna, nunca um valor escolhido"
+    },
+    {
+     "code": "MISSING_EXAMPLE_BOUNDARY",
+     "fc": "FC-0002",
+     "detail": "cálculo sem exemplo `boundary`"
+    },
+    {
+     "code": "OPEN_BLOCKER",
+     "fc": "FC-0002",
+     "detail": "U-001 está em aberto e bloqueia (blocks_scope)"
+    }
+   ],
+   "authorization": {
+    "state": "missing",
+    "block": null
+   },
+   "assumed_premises": [],
+   "conflicts": [],
+   "warnings": [],
+   "authorizable": false
+  },
+  "FC-0003": {
+   "purpose": "Aprovar ou rejeitar um pedido submetido",
+   "scope_id": "SCOPE-0001",
+   "semantic_origin": "proposed_to_be",
+   "publication_status": "draft",
+   "sha256": "978eec1da5e57ebe68335717d5333384fbcae8b66e0bac5d04594981d0dadc48",
+   "gaps": [],
+   "authorization": {
+    "state": "current",
+    "block": "D-004",
+    "revision": 1
+   },
+   "assumed_premises": [],
+   "conflicts": [],
+   "warnings": [
+    {
+     "fc": "FC-0003",
+     "code": "ACTOR_NOT_IN_DESIGN",
+     "detail": "actor `Chefia` não é persona de _blueprint/ux-blueprint_v01.yaml (Requerente)"
+    }
+   ],
+   "authorizable": true
+  }
+ },
+ "retired_ids": []
+}

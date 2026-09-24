@@ -1,0 +1,163 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "handoff-index/1",
+ "title": "Índice de release do handoff (projecção de uma revisão consistente)",
+ "description": "Não é um sétimo registo de decisões: aponta para revisões e hashes (plano 08).",
+ "type": "object",
+ "required": [
+  "schema_version",
+  "engagement_id",
+  "revision",
+  "based_on",
+  "scope_refs",
+  "exclusions",
+  "code_version",
+  "pack_version",
+  "files",
+  "authorization_refs",
+  "readiness",
+  "proofs",
+  "receiver_acceptance",
+  "delivery_level"
+ ],
+ "properties": {
+  "schema_version": {
+   "const": "handoff-index/1"
+  },
+  "engagement_id": {
+   "type": "string",
+   "minLength": 1
+  },
+  "revision": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "based_on": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "ref"
+    ],
+    "properties": {
+     "ref": {
+      "type": "string",
+      "minLength": 1
+     },
+     "revision": {
+      "type": [
+       "integer",
+       "string"
+      ]
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "scope_refs": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "exclusions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "ref",
+     "reason"
+    ],
+    "properties": {
+     "ref": {
+      "type": "string",
+      "minLength": 1
+     },
+     "reason": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "code_version": {
+   "type": "string",
+   "minLength": 1
+  },
+  "pack_version": {
+   "type": "string",
+   "minLength": 1
+  },
+  "files": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "path",
+     "sha256"
+    ],
+    "properties": {
+     "path": {
+      "type": "string",
+      "minLength": 1
+     },
+     "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+     }
+    }
+   }
+  },
+  "authorization_refs": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1
+   }
+  },
+  "readiness": {
+   "type": "object"
+  },
+  "proofs": {
+   "type": "object",
+   "required": [
+    "performed",
+    "pending"
+   ],
+   "properties": {
+    "performed": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1
+     }
+    },
+    "pending": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "minLength": 1
+     }
+    }
+   }
+  },
+  "receiver_acceptance": {
+   "type": [
+    "object",
+    "null"
+   ]
+  },
+  "delivery_level": {
+   "enum": [
+    "preliminary",
+    "ready_for_receiver_review",
+    "accepted_by_receiver",
+    "implemented_verified"
+   ]
+  }
+ }
+}

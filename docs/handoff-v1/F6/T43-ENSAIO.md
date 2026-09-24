@@ -129,3 +129,7 @@ Mais difícil: a definição das jornadas J-0001 e J-0003 (só existem como jour
 ```
 
 </details>
+
+## 7. Depois do ensaio
+
+R1–R4 foram corrigidas (commit `70cd22d`). O pacote em `docs/handoff-v1/F6/pacote-fx-hv1-02/` foi regenerado com elas. O pacote que o destinatário leu está no histórico (commit `9b6a021`). Não houve 4.º ensaio, por decisão do mantenedor.
