@@ -24,7 +24,7 @@ description: Answer "what is missing for the next step?" for the current engagem
 - the **priority within "A revalidar"** by material dependency;
 - the **prose** of the next action.
 
-Nothing here resolves a row, executes a proof, changes a phase or approves anything. The only write is the SU health header (step 3).
+Nothing here resolves a row, executes a proof, changes a phase or approves anything, and nothing is written: `/status`, `/resume` and `aisa-orient` are reads (handoff-v1 F1, F0 D02).
 
 ## Execution steps (no argument)
 
@@ -40,6 +40,8 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
 
     Porquê antes e não depois: `dashboard.py` conta o que está nos ficheiros; não diz se os ficheiros são de uma revisão só. Sobre uma operação pendente, ou sobre um grafo que discorda da SU, as contagens estão certas e a conclusão está errada — e a diferença entre as duas não aparece em contagem nenhuma. Um leitor que emite conclusões antes de apresentar limitações apresenta estado misto como estado.
 
+    `stale_dependents` (handoff-v1 F7, `impact.py`): as peças do desenho que assentam numa premissa que mudou — contrato funcional, âmbito, pacote de trabalho, candidato, parecer, nó do desenho — cada uma com a cadeia e `blocks_final`. Não fecha a transição de fase; `blocks_final: true` impede a versão final do render e do pacote. Não vazio → uma linha no bloco *o que falta*, em linguagem de negócio (*o contrato da submissão assenta numa premissa que mudou (FC-0001, A-001)*), com a acção: republicar a peça com a referência de agora (o contrato funcional volta a pedir autorização ao dono). Nunca dizer que a conclusão anterior ficou falsa: ficou por reler.
+
     **Falhou ou não existe** → dizer `verificação incompleta — kernel não consultado: <razão>` e continuar; nunca apresentar o resultado como se tivesse sido verificado.
 
 2. **Run the motor and read the model.** From the repo root:
@@ -50,17 +52,18 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    **Motor failed or JSON unreadable → stop and say so**: `verificação incompleta — motor falhou: <first stderr line>`. Do not recompute by hand; do not present partial counts as the view.
    Every `model.diagnostics` entry of level `warn`/`error` is surfaced verbatim in the **Shared Understanding** block.
 
-3. **Write the SU health header** (the one sanctioned write). From `model.health`: update `> Saúde epistémica: NN% (X expiradas) — <today>` in `shared-understanding.md` (create the line if the SU predates it). Half-lives and the compatibility rule for pre-v2.2 SUs are applied by the motor per `library/kernel/states.md` → *Epistemic half-lives*; never migrate the SU.
+2b. **Work in flight** (handoff-v1 F2.4, read-only): `python library/kernel/tools/workflow.py resume --engagement <slug> --json`. It rebuilds from the repository alone what earlier work left half-done — tasks `running` with no proof they still run (`reconcile_proposal`), results received and not integrated with their freshness **recomputed now** (`results_pending`), and whether the context fit the budget (`context.omitted_critical`, `context.expand`). `code: RECOVERY_REQUIRED` → say it first, with its `next_action`, and read nothing else as settled. None of this counts for any gate: a received result is not in the SU (T15). Surfaced in block 2 only when non-empty; never written anywhere.
+3. **Read the epistemic health** from `model.health` — `NN% (X expiradas)`, computed by the motor on every read and reported in block 6; **never written into the SU** (F0 D02: a read that writes changes what it reads, and an engagement of the historical version must stay readable here without a write). Half-lives and the compatibility rule for pre-v2.2 SUs are applied by the motor per `library/kernel/states.md` → *Epistemic half-lives*; never migrate the SU.
 
 4. **Tripwire verdicts** (`status.tripwires`). The motor read them from the **solution decision** (`source_decision`, kind `solution`), never from a later blueprint approval, and gives per tripwire `cited_ids`, `resolvable_ids`, `unresolvable_ids`, `evidence` and `status ∈ {watch, no-evidence}`. Neither value is a verdict — `verdict_owner: "skill"`. For each tripwire decide **one** of:
    - **Disparou** — only when a row in `evidence` *satisfies the condition as written*, not merely touches its subject. State the row and the clause it satisfies. → alert first in the output + `/revisit TW-n`.
    - **Em vigilância** — `status: watch` and the condition is not yet met: name the open Critical/expired rows the tripwire depends on.
    - **Não avaliável nesta fase** — the condition measures something with no source in the SU at this point (build effort, post-handoff volume, production metric). `no-evidence` from the motor is the *trigger to ask this question*, never a green light. Say what would make it evaluable.
    `source_decision` empty → `Tripwires: verificação incompleta — sem decisão-solução em decisions.md`. Never print `Tripwires: OK` unless every tripwire is evaluable and none is disparou/em vigilância.
-   **Only declared tripwires exist.** `unlabelled_notes` holds bullets recorded under the same heading that do not declare a `TW-<n>` id — in `pricing-marinha` D-002 that note says the other premortem candidates were considered and **not** adopted. Never treat one as a tripwire; mention them, if at all, as one line: *a decisão registou N notas sob a rubrica que não são tripwires formais*.
+   **Only declared tripwires exist.** `unlabelled_notes` holds bullets recorded under the same heading that do not declare a `TW-<n>` id — in one pilot's D-002 that note says the other premortem candidates were considered and **not** adopted. Never treat one as a tripwire; mention them, if at all, as one line: *a decisão registou N notas sob a rubrica que não são tripwires formais*.
 
 5. **"O que falta para avançar"** — from `status.milestone` and `status.items`.
-   `items` is one entry per SU id (the grouping key; plan §3), ordered blockers-of-approval → criticidade → swing. **Within a tie, order by impact on the technical decision** (P-26): first the items sitting on one of the seven axes that may block a decision (`library/packs/<pack>/decision-tree.md` §6.1), then the ones that move one of the eight admission axes (`library/kernel/states.md` → *Admission of a question*), then the rest. This is a reading order, not a new state and not a re-ranking of the motor's `items`: the motor's order is the spine, this breaks its ties. It is the whole material set, so read it in three tiers and never collapse them:
+   `items` is one entry per SU id (the grouping key; plan §3), ordered blockers-of-approval → criticidade → swing. **Within a tie, order by what the item stops**: first the items sitting on one of the seven axes that may block a decision (`library/packs/<pack>/decision-tree.md` §6.1), then the questions whose `bloqueio` is `blocks_all` or `blocks_scope` (`library/kernel/states.md` → *Admission of a question*), then the rest. This is a reading order, not a new state and not a re-ranking of the motor's `items`: the motor's order is the spine, this breaks its ties. It is the whole material set, so read it in three tiers and never collapse them:
    - **Develop about three**: `milestone.blocking` first, then the remaining Critical ones.
    - **"Também materiais"**: one line each (id — consequence) for every *other* item that is Critical **or** carries an `obligations` entry. All of them — **never hide a blocker to fit**.
    - **Risk context**: a `Risky` item with no `obligations` is not a thing that is missing; it goes to the risk line in the **Shared Understanding** block. A `cited_by` naming `decisions.md` makes this *more* true, not less — the decision recorded the risk as accepted (label **"pode seguir com risco registado"**), which is the opposite of a blocker. Only an obligation moves a `Risky` row into "o que falta".
@@ -71,7 +74,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    | Tema + referência | `id`, `claim`; `obligations[].source` (blueprint path + key) | — |
    | Bloqueia / Afeta | `blocks_approval` + `obligations[].rule` (cites `blueprint-contract.md` regra 5); `cited_by` (`TW-n (D-NNN)`, `options.md`, `decisions.md`) | "sem ligação registada a decisão/opção/entrega" |
    | Falta | `obligations[].what` (structural choice, proof obligation), else the `claim` (the open question itself) | — |
-   | Quem | `owner.role` and `owner.source` when either is non-empty — the prefix the row carries (`library/kernel/states.md` → *The form of `quem responde`*); otherwise `owner.humans`, which is what rows written before the prefix carry. `obligations[].owner` likewise for the proof executor (may differ from who answers). Show it as what the row carries — a **role** (`Operações`, `dono dos dados`) or a **source to consult** (a system, a document, a team) — never as a demand for a person's identity: the answer is owed by whoever holds the role, and no name is a precondition for the next step (P-21 / P-26; the field's mechanics come with block F) | **"por atribuir"** — when the row names neither role nor source, and also when only a council persona was named (`owner.personas`), a persona is a lens, not somebody to ask |
+   | Quem | `owner.role` and `owner.source` when either is non-empty — the prefix the row carries (`library/kernel/states.md` → *The form of `quem responde`*); otherwise `owner.humans`, which is what rows written before the prefix carry. `obligations[].owner` likewise for the proof executor (may differ from who answers). Show it as what the row carries — a **role** (`Operações`, `dono dos dados`) or a **source to consult** (a system, a document, a team) — never as a demand for a person's identity: the answer is owed by whoever holds the role, and no name is a precondition for the next step (P-21; the field's mechanics come with block F) | **"por atribuir"** — when the row names neither role nor source, and also when only a council persona was named (`owner.personas`), a persona is a lens, not somebody to ask |
    | Fecha quando | `closes_when` (`would_be_settled_by` / proof `method`) | `closes_when_substitute` = the swing phrase, labelled **"critério formal por definir"** |
    | Próxima ação | the command that records the outcome, after the human step | — |
 
@@ -123,6 +126,9 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    ⚠ Alerta                                                                                    [2 — só se houver]
    Condição de revisão disparou (<TW-n>, decisão <D-NNN>): <linha do registo> satisfaz «<cláusula>» → `/revisit TW-n`
    Facto grave caducou: <facto curto> (<id>) — pede reconfirmação → `/answer --revalidate <id>`
+   Trabalho que ficou a meio numa sessão anterior: <perspectiva ou papel, em palavras> (<TASK-NNN>, …) — ninguém o está a correr; primeiro repor em retomável → `workflow.py task reconcile --engagement <slug>`   [só se reconcile_proposal não estiver vazio]
+   Resultado recebido e ainda por integrar: <o que é, em palavras> (<RES-NNN>) — <actual: integra-o → `resolve.py publish --engagement <slug> --draft <id>` | desactualizado (mudou <o quê>): refazer sobre o que está agora>   [só se results_pending não estiver vazio; não conta para avançar]
+   Leitura parcial: <n> pontos graves não couberam no que foi lido (<ids>) — ler mais → `workflow.py resume --engagement <slug> --budget <N>`   [só se context.omitted_critical não estiver vazio]
    Resumos por tema desactualizados face ao que consomem: <tema — razão curta; …> → `/synthesize <tema>` antes de `/render`
    Resumos por tema sem registo de produção (<temas>) — verificação incompleta, não se afirma que estão actualizados → `/synthesize <tema>`
    Frase do problema por aprovar (<mudou desde a aprovação <D-00x> | nunca aprovada | aprovação antiga, sem impressão digital>) → `/options` pergunta-te antes de avançar   [só se o veredicto da frase não for «confere» (frame.verdict ∉ match, match-other-round, no-frame)]
@@ -151,7 +157,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
    <n> perguntas novas · <n> fechadas · <n> em aberto no total (<c> graves) <· abrimos mais do que fechámos>
    Factos novos nesta passagem: <n> verificados · <n> assumidos · <n> contradições entre fontes · <n> riscos   (round_delta.por_ronda[ronda].novas)
    <n> fechos que o motor não consegue datar — não contam em nenhuma passagem   [só se round_delta.indeterminadas]
-   A passagem <M> ficou a meio: faltam <perspectivas em palavras> — `/round <perspectiva em falta>` para continuar (qualquer uma, por qualquer ordem), ou `/round --close` para a dar por fechada   [só se houver passagem em curso (engagement.round_in_progress); as em falta vêm do motor (engagement.lentes_ronda_aberta.em_falta), nunca inferidas da ordem habitual]
+   A passagem <M> ficou a meio: <ainda sem as seis perspectivas registadas | as seis registadas, por fechar<, ainda por rever>> — `/round` para a análise completa, ou `/round --close` para a fechar com o que tem   [só se houver passagem em curso (engagement.round_in_progress); o estado vem do motor (engagement.lentes_ronda_aberta: corridas, fecha, revista, motivos — o registo de cobertura das perspectivas), nunca inferido]
 
    Conferência do desenho (só a partir do momento em que existe desenho)                        [5b]
    Estrutura: <verificada, sem falhas | <N> falhas que impedem a aprovação (códigos entre parênteses) | ilegível>
@@ -169,7 +175,7 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
      <facto curto> (<id>, <validade>, verificado <data>) — «Ainda é verdade que …?» → `/answer --revalidate <id>`
    Riscos registados: <N> (<ids>) — com mitigação proposta; não são pendências
    Perguntas de orçamento que não deviam estar abertas — o dono declarou que avançar não depende de aprovação de terceiros: <n> (<ids>)   (só se funding_gate.aplicavel e infracoes ≠ [])
-   Perguntas que ainda não dizem o que muda com a resposta: <n> de <total> — a verificação automática da passagem seguinte reclassifica-as   (só se arbiter.sem_declaracao ≠ [])
+   Perguntas com campos por preencher: <n> de <total> — voltam a quem as escreveu; as que não mostram impacto ficam postas de lado com o motivo   (só se arbiter.sem_declaracao ≠ [])
    Como o negócio funciona, dito pelo dono: <n> regras declaradas (<ids>), registadas no arranque | ainda não declarado   (só em Discovery)
    Avisos do sistema ao ler o registo: <verbatim | nenhum>
    Códigos entre parênteses = linhas do registo: U- pergunta · C- facto verificado · A- assumido · X- contradição · R- risco · M- regra do negócio; respondem-se com `/answer <código> "…"`.
@@ -194,18 +200,18 @@ Nothing here resolves a row, executes a proof, changes a phase or approves anyth
 6. **Discovery/Framing name no technology.**
 7. **Absence is incomplete, never zero.**
 8. **Structure, coverage, approval and end-to-end are four questions** (`coverage-contract.md` §1). Report four answers; never let one stand for another, and never print *ainda não foi conferido* as a pass or as a failure.
-9. **Reading the state writes nothing.** This skill's only write stays the SU health header (step 3). The coverage dimension is derived from the records and the sources on every read — it finalizes no review, sets no flag and records no approval, so consulting the status can never change what the status says.
+9. **Reading the state writes nothing.** This skill writes nothing — not even the health line (step 3). The coverage dimension is derived from the records and the sources on every read — it finalizes no review, sets no flag and records no approval, so consulting the status can never change what the status says.
 
 ## Execution steps (--check)
 
-1. `library/kernel/`: the 7 protocol files (`phases.md`, `states.md`, `orchestration.md`, `render-contract.md`, `blueprint-contract.md`, `coverage-contract.md`, `glossary.md`) + `synthesis-templates/` with 5 templates + `capture-templates/process-model.template.md` + `tools/` with `dashboard.py`, `xlsx_extract.py`, `text_extract.py`, `fields_draft.py`, `coverage.py`.
+1. `library/kernel/`: the 8 protocol files (`phases.md`, `states.md`, `orchestration.md`, `render-contract.md`, `blueprint-contract.md`, `coverage-contract.md`, `handoff-contract.md`, `glossary.md`) + `synthesis-templates/` with 5 templates + `capture-templates/process-model.template.md` + `schemas/` with the 6 `handoff-*.schema.json` + `tools/` with `dashboard.py`, `xlsx_extract.py`, `text_extract.py`, `fields_draft.py`, `coverage.py`, `workflow.py`.
 2. `python library/kernel/tools/dashboard.py --version` runs and prints a version ≥ 1.1.0 (the status model).
 3. At least one pack under `library/packs/` with a `pack.yaml`.
 4. Engagements root resolvable: `$AISA_ENGAGEMENTS_ROOT` is set, or `projects/` exists and is writable.
 5. `.claude/hooks/pre-write-guard.py` and `.claude/hooks/on-su-change.py` exist; `python`/`python3` on PATH (all hooks are Python 3).
 6. Output green/red per check:
    ```
-   ✓ kernel: 7/7 protocol files · synthesis-templates 5/5 · capture-templates 1/1 · tools 5/5
+   ✓ kernel: 8/8 protocol files · synthesis-templates 5/5 · capture-templates 1/1 · schemas 6/6 · tools 6/6
    ✓ dashboard.py 1.1.0 (status model)
    ✓ packs: pp (+ generic, mendix, outsystems)
    ✓ engagements root: projects/ (or $AISA_ENGAGEMENTS_ROOT)

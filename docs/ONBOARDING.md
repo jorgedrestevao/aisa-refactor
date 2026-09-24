@@ -2,8 +2,8 @@
 
 **Setup + primeira engagement, do zero ao /render --all em 1-2 horas.**
 
-<!-- SCOPE-STATEMENT v1 -->
-> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada: que tecnologia e que padrão, com que alternativas e a que custo. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão.
+<!-- SCOPE-STATEMENT v2 -->
+> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, com que alternativas e a que custo, e que comportamento, aceitação e operação. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão, o comportamento funcional, a aceitação, a operação ou o esforço.
 
 > Versão: v0.1.0 — DRAFT
 > Data: 2026-05-27
@@ -30,7 +30,7 @@ aisa tem 2 repositórios + 1 sistema de fases:
 ┌─────────────────────────────────────────────────────────────────┐
 │ REPO 1: aisa/  (público dentro da empresa)                    │
 │   ├── .claude/skills/      ← lenses, commands, synthesis        │
-│   ├── .claude/agents/      ← personas para council              │
+│   ├── .claude/agents/      ← revisores independentes + mandatos │
 │   ├── library/kernel/      ← fases, estados, render contract    │
 │   ├── library/packs/pp/    ← templates, glossary, q-bank        │
 │   └── projects/            ← MOUNT POINT → repo 2               │
@@ -323,7 +323,7 @@ O `/answer` actualiza o SU: linhas U-001..U-003 transitam de Unknown → Confirm
 /round
 ```
 
-A segunda ronda explora gaps remanescentes; pode emitir novos Unknowns que dependiam dos primeiros (ex: agora que sabemos da regra €10k, lens-governance pergunta "qual o limite para audit trail mandatório?").
+A segunda ronda explora gaps remanescentes; pode emitir novos Unknowns que dependiam dos primeiros (ex: agora que sabemos da regra €10k, a perspectiva de governação pergunta "qual o limite para audit trail mandatório?").
 
 Iterar /round + /answer até `/status` mostrar:
 
@@ -340,11 +340,9 @@ Tipicamente 2-4 rondas de discovery são suficientes.
 /frame
 ```
 
-Transita de `phase: discovery` → `phase: framing`. Activa modo `council-independent`.
+Transita de `phase: discovery` → `phase: framing`.
 
-Os 6 agentes (business-analyst, operations-lead, user-advocate, data-steward, compliance-officer, cfo-lens) correm **em paralelo via Task subagents**, cada um vê só `context.json` + extracto temático do SU.
-
-Cada agente propõe a "frase única" da sua perspectiva. O `chairman` lê os 6 outputs e sintetiza uma única frase.
+O analista integrado propõe a "frase única" na sessão, com as âncoras na SU. Um revisor independente (`frame-reviewer`, subagente sem o raciocínio do analista) contesta a frase, as âncoras e cada invariante do dono. O `chairman-synthesis` junta a proposta e os achados e escreve `frame.md`.
 
 Output esperado:
 
@@ -360,7 +358,7 @@ Tu validas ou editas. Validação fica registada em `decisions.md` (D-001).
 
 Transita para `phase: options`. **lens-technology entra pela primeira vez.**
 
-Os 7 agentes (agora incluindo solution-architect / lens-technology) correm em paralelo. Cada um propõe opções da sua perspectiva. Chairman sintetiza ~4 opções:
+O autor técnico (`solution-architect`, na sessão) escreve os candidatos pela rota do engagement e publica-os (`review.py`). O router (`library/kernel/specialists.md`) diz que especialistas o risco pede — e porque não chama os outros; cada um corre como `specialist-reviewer` sobre um mandato publicado. O `chairman-synthesis` dispõe os achados e escreve `options.md`, com ~4 opções:
 
 1. **Não fazer nada** — manter Excel + Outlook. Custo: 3.5 dias × 47 aprov/mês = ineficiência. Risco: baixo. Investment: 0€.
 2. **Mudar o processo sem tecnologia** — eliminar 1 step de validação manual via mudança de policy. Custo: 1h training × 12 pessoas. Risco: baixo. Investment: ~500€.
@@ -442,8 +440,8 @@ Se `render-gaps.md` está vazio → tudo OK. Se tem entradas → render-validate
 | Procurar... | Está em... |
 |---|---|
 | Slash commands disponíveis | `.claude/commands/*.md` |
-| O que cada lens faz | `.claude/skills/lens-<name>/SKILL.md` |
-| Personas dos agentes (council mode) | `.claude/agents/*.md` |
+| O que cada lens faz | `library/kernel/lens-checklists.md` (Discovery) · `.claude/skills/lens-technology/SKILL.md` (Options) |
+| Revisores independentes e mandatos | `.claude/agents/*.md` (quem é chamado e quando: `library/kernel/orchestration.md`, `specialists.md`) |
 | As 4 fases + entry/exit | `library/kernel/phases.md` |
 | Os 5 estados + rules | `library/kernel/states.md` |
 | Templates de deliverables | `library/packs/pp/deliverable-templates/*.template.md` |
@@ -453,8 +451,8 @@ Se `render-gaps.md` está vazio → tudo OK. Se tem entradas → render-validate
 | Domain knowledge PP — unidades CRAFT (10) | `library/packs/pp/domain-knowledge/craft/*.md` — prática de entrega, nunca alvo de pull em Options |
 | Question bank PP | `library/packs/pp/question-bank.md` |
 | Glossário PP | `library/packs/pp/glossary.md` |
-| Memória institucional (compartilhada) | `.claude/agent-memory/_universal/<agent>/*.md` |
-| Memória institucional (Galp) | `.claude/agent-memory/_tenant/galp/<agent>/*.md` (via symlink) |
+| Memória institucional (compartilhada) | `.claude/agent-memory/_universal/<papel>/diary.md` |
+| Memória institucional (Galp) | `.claude/agent-memory/_tenant/galp/<papel>/*.md` (via symlink) |
 | Estado actual da engagement | `projects/<slug>/_state.json` |
 | A história para o sponsor | `projects/<slug>/story.md` (episódio por marco) |
 | Artefacto vivo da engagement | `projects/<slug>/shared-understanding.md` |
@@ -464,18 +462,24 @@ Se `render-gaps.md` está vazio → tudo OK. Se tem entradas → render-validate
 | Contrato de cobertura (as 3 etapas, os 13 códigos) | `library/kernel/coverage-contract.md` |
 | Motor de cobertura (`inventory` · `check` · `report` · `finalize`) | `library/kernel/tools/coverage.py` |
 | Revisões de cobertura de uma engagement (imutáveis) | `projects/<slug>/_coverage/coverage_v<NN>.{json,md}` |
+| Contratos funcionais, candidatos, pareceres, âmbito, inventário | `projects/<slug>/_design/` (`functional-contracts.json`, `candidates.json`, `reviews/`, `scope.json`, `work-packages.json`; histórico imutável em `history/`) |
+| Pacote entregue à equipa de implementação | `projects/<slug>/_release/r<NNNN>/` (`handoff-index.json`; nunca reescrito) |
+| Contrato do handoff (perfil, FC, dependências, versões) | `library/kernel/handoff-contract.md` |
+| Setup, manutenção, recuperação, acesso e backup | `docs/OPERACAO.md` |
 
 ---
 
 ## 5. Troubleshooting
 
+Recuperação de estado (operação pendente, grafo divergente, versão não suportada, restore recusado): `docs/OPERACAO.md` §3.
+
 ### 5.1 `/start` falha com "AISA_ENGAGEMENTS_ROOT not set"
 
 Verificar que (a) symlink/junction `aisa/projects/` existe; OU (b) `$env:AISA_ENGAGEMENTS_ROOT` está definido. Ver §2.2.
 
-### 5.2 `/round` "lens-business not found"
+### 5.2 `/round` não encontra uma perspectiva
 
-A skill não está no path. Verificar: `ls .claude/skills/lens-business/SKILL.md`. Se não existe, é porque ainda estamos pré-Fase 2 do roadmap — aisa MVP ainda não está completo.
+Desde o handoff-v1 F3.2 as seis perspectivas de Discovery não são skills: vivem em `library/kernel/lens-checklists.md`. Verificar que o ficheiro existe. Uma instalação antiga que ainda tenha `.claude/skills/lens-business/` e afins está desactualizada.
 
 ### 5.3 `/render --all` produz `render-gaps.md` com vários slots vazios
 

@@ -67,11 +67,11 @@ of the data is the criterion, and the generation is never inferred from a date o
 
 **Goal**: Map operational context, shadow stakeholders, as-is process, constraints. Do not name vendor/product.
 
-**Lenses active (habitual order)**: business → operations → user → data → governance → financial — **mandatory when the six run as one full round** (`/round`, enforced by `pre-lens-order-check`); **free when a lens runs alone** (`/round <lens>`: any lens, no prerequisite, in any order — `/round` records it in `_state.json.round_lenses` = `{ronda, modo, lentes}`, which is what the guard reads; the record is scoped to the round and the lens, so a leftover authorises nothing, and its absence means the order is policed). A lens run alone before `business` still has a denominator: the owner's `M-n` (R-00) and earlier rounds are already in the SU.
+**Perspectives (handoff-v1 F3)**: business · operations · user · data · governance · financial — applied by **one** integrated analysis in `/round` (`library/kernel/lens-checklists.md`, the single owner of the six), with the governance conflict scan last inside it. `/round <perspective>` goes deeper on one with the same analyst, in any order. There is no order to police — one analysis, not six — so the lens-order guard and its `round_lenses` record are retired. A perspective analysed before `business` still has a denominator: the owner's `M-n` (R-00) and earlier rounds are already in the SU.
 
-**Mode**: `inline` (each lens sees the Shared Understanding accumulated by previous lenses)
+**Mode**: `inline` (the analysis sees the Shared Understanding accumulated by earlier rounds)
 
-**Rounds — in progress vs completed**: `_state.json.round` is the last **completed** round; `_state.json.round_in_progress` is the round an open `/round` is filling (empty or absent → none open). `/round` with no argument opens and closes a round in the same call. `/round <lens>` runs inside the round already open, or opens one; the round closes when **all six lenses have stamped it** (a section header `## R-NN …` in each `lens-outputs/<lens>.md` — header match, never a substring; `dashboard.py::lenses_for_round`, published as `engagement.lentes_ronda_aberta`), in one call or across several, in any order — or on `/round --close`. "`financial` wrote" is not a close signal: alone, it may be the first to run. A lens is never re-run in the same open round without the user saying so (`aisa-round` step 3.7). Everything that asks *what is done* — the exit criteria below, `/frame`, `/status` — reads `round`; everything that asks *which round are the lenses stamping now* — the lens-order guard, the lenses' `ronda` column — reads `round_in_progress` when it is ahead of `round`. A round in progress is not a completed round.
+**Rounds — in progress vs completed**: `_state.json.round` is the last **completed** round; `_state.json.round_in_progress` is the round an open `/round` is filling (empty or absent → none open). `/round` with no argument opens and closes a round in the same call; `/round <perspective>` runs inside the round already open, or opens one, and never closes it. A round closes — on a full `/round` or on `/round --close` — when its **`lens` coverage record is valid and current** for that round (`coverage-contract.md` §4.8; `coverage.py round-state`, published for a profile engagement as `engagement.lentes_ronda_aberta`); without the independent review it closes marked *cobertura por rever*. A count of files or of `lens-outputs` headers never closes a round. Everything that asks *what is done* — the exit criteria below, `/frame`, `/status` — reads `round`; everything that asks *which round is the analysis stamping now* — the rows' `ronda` column — reads `round_in_progress` when it is ahead of `round`. A round in progress is not a completed round.
 
 **Entry criteria**:
 - `_state.json` exists with `phase: discovery`.
@@ -81,14 +81,14 @@ of the data is the criterion, and the generation is never inferred from a date o
 
 **Exit criteria** (soft, advisory):
 - `## Confirmed` has ≥10 rows.
-- `## Unknown` Critical = 0. A question the round arbiter lowered to `cosmético` for want of a declared technical consequence carries its `criticidade` down with it (`states.md` → *Admission of a question*), so it stops pressing this gate: what remains `Critical` here moves one of the eight technical axes.
+- `## Unknown` Critical = 0. A question parked for lack of demonstrable impact is not open and stops pressing this gate (`states.md` → *Admission of a question*): what remains `Critical` here moves one of the five aspects.
 - `## Conflicted` Critical = 0.
-- All 6 lenses have written to `lens-outputs/`.
+- The last completed round has a valid `lens` coverage record — the six perspectives recorded (`coverage-contract.md` §4.8). The historical version read the six `lens-outputs/` files instead.
 - The last round converged: `Unknown` created in that round ≤ `Unknown` closed in it (any origin). A round with `criadas > fechadas` is labelled `sem convergência` by `/round` and `/status` — visible, not blocking, no new state. Counts come from the motor (`dashboard.py --json`), never by hand. The label is per **closed** round, not per calendar span: a round filled lens by lens over days, with `/answer` in between, is balanced only when it closes.
 
 **Outputs**:
 - `shared-understanding.md` populated.
-- `lens-outputs/<lens>.md` per lens.
+- `lens-outputs/<perspective>.md` per perspective, and the `lens` coverage record in `_coverage/`.
 
 ---
 
@@ -96,9 +96,9 @@ of the data is the criterion, and the generation is never inferred from a date o
 
 **Goal**: Synthesize a single sentence: "The problem is X, felt by Y, costs Z today, evidence is W." Along the way, **confirm or correct each `M-n`** of `enquadramento.md` with evidence — a corrected invariant is a normal transition (`was C-nnn`), never an edit of the R-00 row.
 
-**Lenses active**: subset of the 6 Discovery lenses (chairman picks the 3-4 most relevant given the Shared Understanding).
+**Perspectives**: the six of `lens-checklists.md`, applied by the integrated analyst in framing mode.
 
-**Mode**: `council-independent` (parallel Task subagents; only the chairman writes to the Shared Understanding).
+**Mode**: `analyst + reviewer` (handoff-v1 F3): the analyst proposes inline, one independent reviewer (subagent) contests, and `chairman-synthesis` — the only writer to the Shared Understanding here — applies the evidence rules. No parallel personas, no antithesis round (`orchestration.md` → *Framing mode*).
 
 **Entry criteria**:
 - Exit criteria of Discovery met (overrideable with justification).
@@ -141,7 +141,7 @@ F-01 approval waved through an F-02 sentence nobody had approved).
   block IS (`kind`) from its content.
 - The fingerprint is always computed from `frame.md` by the motor
   (`dashboard.py --json` → `frame.sha256`), never from the text of the decision block
-  and never by hand: `pricing-marinha-pilot-1` holds an English sentence in `frame.md`
+  and never by hand: a pilot held an English sentence in `frame.md`
   and a Portuguese one in `D-001`, which is exactly the drift this rule closes.
 - **The sentence unchanged in a later round is not a new approval**: no new block, no
   new id — one line in `council-log.md` (`frame unchanged since D-00x (sha256 match)`).
@@ -160,9 +160,9 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 
 **Goal**: Generate 3-5 applicable options — technologies and implementation patterns — each with its high-level architecture, order of magnitude, cost drivers, risks and reversibility; close with the aisa's reasoned recommendation, which is not the decision. **The technology lens enters here for the first time.**
 
-**Lenses active**: technology (new) + business + operations + financial (others read-only).
+**Lenses active**: technology (new, the author) + the specialist roles the router selects (`specialists.md`); the SU of every perspective is read.
 
-**Mode**: `council-independent`.
+**Mode**: `author + specialist reviewers` (handoff-v1 F5): the technical author writes and publishes the candidates by route; the router selects the specialist reviewers; each reviews the published revision on its mandate; `chairman-synthesis` disposes the findings (`orchestration.md` → *Options mode*).
 
 **Entry criteria**:
 - Phase 2 frame validated by sponsor **for the sentence currently on file** —
@@ -173,7 +173,18 @@ F-01 approval waved through an F-02 sentence nobody had approved).
   `/options --reopen "<justification>"` (see *Transition rules*).
 
 **Exit criteria** (soft):
-- ≥3 options recorded. **Doing nothing and changing the process are conditional members**:
+- **The option set follows the route** (`_state.json.workflow.route`, `handoff-v1`):
+  `solution-choice` — the candidates that genuinely apply and their trade-offs, normally ≥ 3;
+  fewer only with the reason written, and a single viable candidate is admitted with its reason
+  — the shortlist is never reduced without one; `platform-constrained` — variations of
+  architecture and implementation inside the imposed platform and the check of their
+  feasibility, with no artificial alternative technology, and an incompatibility declared where
+  one exists (an imposed platform does not make any of its products mandatory, nor remove the
+  analysis of architectural alternatives); `change-impact` — the delta, its blast radius, the
+  decisions to reopen and the work and proofs affected, without repeating discovery and without
+  treating as intact what depends on the change. Until F4 the `/options` gate still counts
+  ≥ 3 options on every route: a warning on the other two routes is read against this rule.
+- **Doing nothing and changing the process are conditional members**:
   each enters when discovery showed it plausible, and where one does not, the round's log
   declares why with ids (`DO-NOTHING` / `PROCESS-CHANGE` class coverage). A silent absence is
   the defect; a reasoned one is a finding.
@@ -209,7 +220,7 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 
 **Lenses active**: none by default — the decision is the **user's**. `lens-technology` (via the solution-architect agent) may be consulted ad-hoc with `/decide --consult` for an advisory review of the chosen option.
 
-**Mode**: `interactive` (user-driven). No council synthesis runs in Decision — the council's work ended at Options; here the user chooses and justifies.
+**Mode**: `interactive` (user-driven). No synthesis runs in Decision — the review ended at Options; here the user chooses and justifies.
 
 **Entry criteria**:
 - Phase 3 options reviewed by sponsor.
@@ -224,6 +235,24 @@ F-01 approval waved through an F-02 sentence nobody had approved).
 - For engagements with a UI component: `_blueprint/ux-blueprint_v<NN>.yaml` (via `/blueprint`, per `blueprint-contract.md`) — iterated with the business until approved (its approval is itself a D-NNN).
 - `_coverage/coverage_v<NN>.json` (+ its Markdown projection) — the recorded coverage reviews, per `coverage-contract.md`: the reconciliation the design was produced against, and the review of each concrete version. Written by the coverage motor's `finalize`, never by hand, and immutable once published.
 - Render-ready state.
+
+**Readiness inside Decision** (`handoff-v1`; `handoff-contract.md` owns the artefacts). Three
+derived predicates, tracked inside this phase — **not new SU states and not a fifth phase**:
+
+| Predicate | Minimum condition |
+|---|---|
+| `decision_ready` | comparable criteria and candidates; material premises and risks explicit; the choice's blockers resolved, or an admissible authorised risk |
+| `design_ready` | scope and architecture authorised; essential rules and interfaces specified; no blocking design contradiction |
+| `handoff_ready` | design ready + a complete, traceable inventory, acceptance, dependencies, the applicable operation/ALM/migration, estimate mode A, current and consistent outputs, zero build blockers in the delivered scope |
+
+Shown separately, never folded into one green: `integrity_ok`, `required_approvals_present`,
+`receiver_review_complete`, `receiver_accepted`. Each is `true`, `false` or `unverified`, with
+its reasons; a coverage review that was not evaluated reads as `unverified`. The four answers of
+*Transition rules* below (structure, coverage, approval, end to end) feed `design_ready`; none
+answers for another. **An approval is a property of a revision and a scope** — the hash of what
+was approved — never of a file name or a version label. The predicates are computed by
+`library/kernel/tools/workflow.py` (`evaluate_readiness`, F6); a final handoff request with a
+blocker produces an incomplete state and the list of what is missing, never a certification.
 
 ---
 

@@ -2,43 +2,45 @@
 
 ## What this is
 
-<!-- SCOPE-STATEMENT v1 -->
-**aisa** runs discovery on a process to reach a grounded technical decision: which technology and pattern, against which alternatives, at what cost. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision. It runs as a Claude Code project, over digitalization projects (Power Platform, OutSystems, Mendix, custom).
+<!-- SCOPE-STATEMENT v2 -->
+**aisa** runs discovery on a process to reach a grounded technical decision and a design a delivery team can build without guessing: which technology and pattern, against which alternatives, at what cost, and which behaviour, acceptance and operation. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision, the functional behaviour, the acceptance, the operation or the effort. It runs as a Claude Code project, over digitalization projects (Power Platform, OutSystems, Mendix, custom).
 
 > **Full architecture**: `docs/ARCHITECTURE.md`
 > **Philosophy**: `docs/PHILOSOPHY.md`
 > **Onboarding**: `docs/ONBOARDING.md`
+> **Operação** (setup, manutenção, recuperação, backup): `docs/OPERACAO.md`
 
 ## Operating principles (inviolable)
 
 1. **Discovery before solution, always.** Lenses do not mention vendor/product before the Options phase.
 2. **Shared Understanding as process artefact; deliverables as transition artefacts.** SU is the source of truth during the engagement; the 6 deliverables are rendered at the end.
 3. **5 knowledge states**: Confirmed / Assumed / Unknown / Conflicted / Risky. No state×tag combinatorics. Confirmed/Assumed carregam validade — conhecimento expira e revalida-se (`library/kernel/states.md` → *Epistemic half-lives*).
-4. **Council híbrido** by phase: inline in Discovery; council-independent (parallel subagents) in Framing/Options. Decision is interactive (user-driven; optional `/decide --consult` technology review).
-5. **Soft gates**: warnings, overrideable with justification. The only hard rule is `library/` is read-only at runtime.
+4. **Orquestração por fase, subagente só com benefício**: Discovery = uma análise integrada das seis perspectivas (inline) + um revisor independente da cobertura; Framing = análise integrada + um revisor independente; Options = o autor técnico escreve e publica os candidatos por rota (inline) + os revisores especialistas que o router escolhe, um subagente por mandato publicado. Decision is interactive (user-driven; optional `/decide --consult` technology review). Um subagente só se define quando não precisa do contexto de quem o lança e só o veredicto volta (`library/kernel/orchestration.md` → *When a subagent is justified*).
+5. **Soft gates, hard integrity**: phase gates are warnings, overrideable with justification. Integrity fails closed: `library/` is read-only at runtime, coordinated state is written only by the coordinator, an engagement of the historical version is read-only, and a `Confirmed` row needs a locator (hooks `pre-write-guard`, `pre-authority-guard`, `pre-profile-check`).
 6. **Native Claude Code primitives**: skills, agents, hooks, commands. No reinvention.
 7. **Pack activo per-engagement**: declared in `projects/<slug>/_state.json.pack`. Not global.
-8. **Atomic writes** to `_state.json`: tmp → mv pattern.
-9. **Knowledge expires; questions have prices; decisions keep their counterfactuals.** (kernel v0.2.0: half-lives, question economics, tripwires/multiverso, diários do council.)
+8. **Authorities are published by the coordinator** (`handoff-v1` F2): the six authorities (`_state.json`, SU, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md`) are written by draft → `resolve.py publish` — one atomic, receipted operation with base and read-set as precondition; never a `.tmp` renamed over a file (`library/kernel/orchestration.md` → *Writing an authority*).
+9. **Knowledge expires; questions have prices; decisions keep their counterfactuals.** (kernel v0.2.0: half-lives, question economics, tripwires/multiverso, diários por papel.)
 10. **Reason deeply → persist selectively → claim conservatively → rehydrate selectively → revalidate when premises change.** Determinism governs what must survive compression, who owns it (SU), what may not be silently promoted or dropped (disposition `MAP`/`ADOPT`/`DISMISS`; fact ≠ fit), what is revalidated when a premise changes, and what a fresh session reloads (phase ≠ session). Never the internal reasoning sequence. (`library/kernel/orchestration.md` → *Comprehension survival*.)
 
 ## Key paths
 
-- `library/kernel/` — universal protocols (phases, states, orchestration, render-contract, blueprint-contract, coverage-contract, glossary).
+- `library/kernel/` — universal protocols (phases, states, orchestration, render-contract, blueprint-contract, coverage-contract, handoff-contract, glossary).
+- `library/kernel/schemas/` — the `handoff-v1` schemas (`handoff-state`, `-pack`, `-response`, `-work`, `-functional`, `-index`); `library/kernel/tools/workflow.py` — the single place that answers which profile an engagement has and whether its pack supports it (read-only; a `_state.json` without the `workflow` block is the historical version, read-only here).
 - `library/kernel/tools/` — **a camada de memória persistente** (P2–P8), os seis motores que fazem o estado do engagement sobreviver a uma sessão e a uma falha. Nenhum é opcional desde que o grafo é obrigatório:
   - `graph.py` — o grafo aditivo do engagement (`<engagement>/_graph/`). Espelha a SU (`provenance.mirror_of`) e **nunca prevalece sobre ela**: `drift` compara e reporta; `state`, `criticidade` e `resolved` divergentes bloqueiam, texto divergente informa.
   - `operation.py` — o coordenador. Toda a escrita de conhecimento passa por aqui: intenção → marcador de pendência → publicação temp+rename → verificação → recibo → retirar a pendência. Exclusão por `flock` (do kernel, não pela existência do ficheiro); `status()` publica sob que garantia foi produzido (`exclusion`).
   - `bootstrap.py` — a reconstrução comum. É o que qualquer leitor ou escritor consulta ANTES de concluir: pendência, snapshot e grafo de **uma revisão só**, autoridade comparada com o espelho, contexto com orçamento e truncagem declarada. `ready=False` nomeia sempre a acção que o desbloqueia.
-  - `resolve.py` — as transições de estado do `/answer` e as quatro operações de ciclo de vida (`revalidate` · `withdraw` · `accept_risk` · `resolve_conflict`), planeadas e publicadas pelo coordenador. `cited_by`/`impact_of` dão os derivados que citam uma linha — **candidatos, não veredicto**. `sync_mirror` é o espelho das escritas que **não** passam pelo coordenador — as das lentes, pela ferramenta Edit — e corre sozinho pelo hook `on-su-mirror.py`.
+  - `resolve.py` — as transições de estado do `/answer` e as quatro operações de ciclo de vida (`revalidate` · `withdraw` · `accept_risk` · `resolve_conflict`), planeadas e publicadas pelo coordenador. `cited_by`/`impact_of` dão os derivados que citam uma linha — **candidatos, não veredicto**. `draft`/`publish` é o caminho das skills para escrever autoridades (rascunho em `_drafts/`, publicação com SU e espelho numa operação, base e read-set como pré-condição). `reconcile` (`--apply` para publicar) é a reconciliação **explícita** de uma edição directa da SU — o hook `on-su-mirror.py` só a detecta e reporta, nunca publica.
   - `migrate.py` — legado → memória persistente (`dry-run` · `apply` · `restore` · `init`). `init` é o grafo com que um engagement NASCE, e recusa um engagement que já tem conhecimento — isso migra-se.
   - `projection.py` — o estado operacional em linguagem de negócio: bloqueios com motivo, evidência e acção; é o que o `/status` consulta antes de responder.
-- `library/kernel/tools/` — motores determinísticos de conteúdo, **read and executed** at runtime (`xlsx_extract.py`, `text_extract.py`, `dashboard.py`, `fields_draft.py` — L1 → rascunho de campos/contratos, invocado por `/blueprint`; `coverage.py` — a conferência de que o que se produz responde ao que foi pedido, em três etapas (`reconciliation` · `blueprint` · `render`), invocada por `/blueprint` (passos 1b e 13b), `/render` (passos 2b e 9b), `/answer`, `/capture` e `/status`; contrato em `library/kernel/coverage-contract.md`). Executing is not writing: the read-only rule covers runtime *edits* — e `finalize` é a única operação de escrita do motor, e escreve só em `<engagement>/_coverage/`.
+- `library/kernel/tools/` — motores determinísticos de conteúdo, **read and executed** at runtime (`xlsx_extract.py`, `text_extract.py`, `dashboard.py`, `fields_draft.py` — L1 → rascunho de campos/contratos, invocado por `/blueprint`; `coverage.py` — a conferência de que o que se produz responde ao que foi pedido, em três etapas (`reconciliation` · `blueprint` · `render`), invocada por `/blueprint` (passos 1b e 13b), `/render` (passos 2b e 9b), `/answer`, `/capture` e `/status`; contrato em `library/kernel/coverage-contract.md`). Executing is not writing: the read-only rule covers runtime *edits* — e `finalize` é a única operação de escrita do motor: publica em `<engagement>/_coverage/` pelo coordenador (recibo em `_ops/`), idempotente e sem reutilizar números de versão.
 - `library/packs/<id>/` — domain-specific (PP, OS, Mendix). Read-only at runtime.
 - `.claude/skills/` — lenses + commands + synthesis + render.
-- `.claude/agents/` — personas for council-independent mode.
+- `.claude/agents/` — the independent reviewers (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer`) and the author/chairman mandates (`solution-architect`, `chairman`). The six Discovery personas are retired (handoff-v1 F5.4).
 - `.claude/hooks/` — programmatic enforcement.
 - `projects/<slug>/` — engagement state (mount point to private repo).
-- `projects/<slug>/_graph/` · `_ops/` · `_migration/` — **estado coordenado. Nunca editar à mão.** O grafo é autoridade operacional (o contexto é construído dele); `_ops/` é a barreira (marcador de pendência + recibos). Quem lá escreve é `operation.py`, em Python. O hook `pre-authority-guard.py` recusa `Write`/`Edit` nestes caminhos — uma escrita por ferramenta aqui é, por construção, edição à mão de estado coordenado.
+- `projects/<slug>/_graph/` · `_ops/` · `_migration/` · `_work/` · `_design/` — **estado coordenado. Nunca editar à mão.** O grafo é autoridade operacional (o contexto é construído dele); `_ops/` é a barreira (marcador de pendência + recibos); `_work/` é o checkpoint do trabalho em curso; `_design/` guarda contratos funcionais, candidatos, pareceres, âmbito e inventário (handoff-v1). Quem lá escreve é `operation.py`, em Python, através dos motores. O hook `pre-authority-guard.py` recusa `Write`/`Edit` nestes caminhos — uma escrita por ferramenta aqui é, por construção, edição à mão de estado coordenado.
 - `projects/<slug>/dashboard.html` — generated living page. Never hand-edit: `shared-understanding.md` stays the source of truth.
 
 ## Slash commands
@@ -46,7 +48,7 @@
 | Command | Purpose |
 |---|---|
 | `/start <slug> [pack]` | New engagement |
-| `/round [lens\|--close]` | Run a Discovery round — sem argumento corre as 6 perspectivas pela ordem obrigatória; `/round <lens>` corre **uma** isolada, sem pré-requisito, por qualquer ordem; `--close` dá a passagem por fechada |
+| `/round [perspectiva\|--close]` | Run a Discovery round — sem argumento, **uma** análise integrada das seis perspectivas (`library/kernel/lens-checklists.md`), com revisão independente da cobertura, e a passagem fecha pelo registo `lens` do coverage; `/round <perspectiva>` aprofunda uma, sem fechar; `--close` fecha com o registo que houver |
 | `/capture [file]` | Process-capture an input file (`.xlsx`/`.xlsm`): deterministic extraction + replay + process model into `_capture/`. Auto-runs in `/start` and on stale hashes in `/round` |
 | `/answer <id> "..."` | Resolve an Unknown/Conflicted/Assumed/Risky row (state transition + answers.md) |
 | `/status` | O que falta para o próximo passo — 7 blocos em linguagem de negócio: resumo em 3 linhas (onde estamos · o que falta · o que tens de fazer tu) · alerta só se houver · o que falta (top-3 + também importa) · agenda da próxima reunião · desde a última passagem · confiança no que sabemos · `A seguir:` |
@@ -59,7 +61,7 @@
 | `/synthesize` | Produce topic packs (auto after `/decide` or manual) |
 | `/render [deliverable\|--all]` | Render the deliverables (filtered by decision type). Confere duas vezes, e as duas não se misturam (`library/kernel/coverage-contract.md` §8.2/§8.3): **antes** de cada deliverable, as autoridades que *ele* declara e a versão de desenho que o *seu template* manda ler; **depois**, se a projecção carregou o que foi seleccionado. Autoridade que ainda não existe é *skip com razão* em `render-log.md`, nunca lacuna; obrigação perdida é lacuna com dono em `render-gaps.md`, devolvida a montante |
 | `/revisit <TW-n\|O-NNN>` | Compare the present with a frozen counterfactual when a tripwire fires; recommend keep/adapt/reopen |
-| `/retro` | Close-of-engagement: personas write diaries (human-curated) — the council gets wiser |
+| `/retro` | Close-of-engagement: each role (analyst, architect, the specialists that reviewed) writes its diary (human-curated) — the roles get wiser |
 | `/resume` | Resume from `_state.json` and name the next command |
 | `/dashboard [slug] [--serve\|--url\|--open]` | Regenerate the living dashboard `projects/<slug>/dashboard.html` — 6 separadores em barra lateral (Panorama / Etapas / Agenda / Registo / Narrativa / Ficheiros; Etapas renderiza frame.md, options.md, premortem, synthesis e blueprint por extenso), self-contained, deterministic. O separador aberto e a linha aberta vivem no URL (`#estado/C-157`, partilhável); o Registo ordena por coluna e exporta CSV do que está no ecrã. The `on-su-change.py` hook covers agent writes only; `--serve` adds a localhost server + mtime watcher, and over HTTP the page reloads only when the build hash changes (on `file://` it can only reload blindly). `--url` prints where to open it when the link is lost; `--serve` reattaches instead of starting a second watcher |
 
@@ -93,7 +95,7 @@ Uma mensagem que descreve um processo, um problema ou uma intenção de começar
 - Editing `library/` at runtime (hook will reject).
 - Inventing claim states without evidence (use Unknown instead).
 - Bypassing `/synthesize` between `/decide` and `/render`.
-- Editar `_graph/`, `_ops/` ou `_migration/` à mão (o guarda recusa, e com razão: apaga a prova de que uma operação aconteceu, ou inventa uma que não aconteceu).
+- Editar `_graph/`, `_ops/`, `_migration/`, `_work/` ou `_design/` à mão (o guarda recusa, e com razão: apaga a prova de que uma operação aconteceu, ou inventa uma que não aconteceu).
 - Concluir antes de apresentar limitações. Um leitor que responde sobre estado por reconstruir apresenta estado misto como estado — as contagens ficam certas e a conclusão errada, e a diferença não aparece em contagem nenhuma.
 
 ## Where things live
@@ -103,7 +105,7 @@ For full layout: `docs/ARCHITECTURE.md §6`.
 ## Regras (hard rules)
 
 - **Nunca inventar.** No guessed IDs, fields, endpoints, values. Unknown → say so, don't fill gaps.
-- **Pergunta em aberto (`Unknown`) só com as três declarações** (P-26, `library/kernel/states.md` → *Admission of a question*): o `M-n` que serve (ou o marcador `TO-BE DIVERGENCE` com o que o alvo tem de decidir) · ≥ 2 respostas · qual dos oito eixos muda com cada uma (tecnologia · padrão arquitetural · componentes · modelo de dados · plano de imposição de permissões · esforço de alto nível · custo · risco técnico). `M-n` **nunca** dispensa o eixo. Sem eixo → `cosmético` (a gravidade desce com ele); sem 2ª resposta → não se escreve. Vale para todos os escritores (6 lentes, `chairman-synthesis`, `/answer`, `PM-U` de `/capture`). Só muda detalhe ou faixa → `Assumed` com base; só se resolve na implementação → nenhuma linha. **A organização não saber não é trabalho do projecto**: falta de política escrita, de inventário ou de maturidade descreve a organização; o que o alvo tem de definir é requisito, não pergunta pendente.
+- **Pergunta em aberto (`Unknown`) só quando a resposta pode mudar um dos cinco aspectos** (handoff-v1, `library/kernel/states.md` → *Admission of a question*): solução/arquitectura (com os oito eixos técnicos) · comportamento funcional · aceitação · segurança/operação/migração/recuperação · viabilidade/custo/esforço. Cada pergunta leva `tipo` (`fact_gap` · `design_choice` · `conflict` · `proof_obligation`), `impacto`, `âmbito`, quem responde, `fecho`, `bloqueio` e `referências`. Facto em falta não precisa de duas respostas inventadas; escolha de desenho nomeia as alternativas reais. Sem impacto demonstrável → não se escreve, ou fica `estacionada` com o motivo. Prioridade (`criticidade`, `swing`) ≠ bloqueio (`bloqueio`). Vale para todos os escritores (6 lentes, `chairman-synthesis`, `/answer`, `PM-U` de `/capture`). Só muda detalhe ou faixa → `Assumed` com base; só se resolve na implementação e não pode invalidar a viabilidade → nenhuma linha. **A organização não saber não é trabalho do projecto**: falta de política escrita, de inventário ou de maturidade descreve a organização; o que o alvo tem de definir é requisito, não pergunta pendente.
 - **Perguntar antes de assumir.** Ambiguous instruction, ambiguous "yes"/"sim" to an either/or question, or any request that could be read as fact-statement OR action-request → confirm scope before mutating anything. Read-only exploration never needs confirmation.
 - **INVIOLÁVEL — perguntas ao utilizador vão SEMPRE por `AskUserQuestion`.** Sempre que o processo pede ao utilizador para resolver um tema — responder a uma `Unknown`/`Conflicted`/`Assumed`/`Risky`, escolher entre alternativas, aprovar um blueprint/versão, confirmar âmbito, autorizar um override de gate, decidir em `/decide`, validar um teach-back — a pergunta é feita com a ferramenta `AskUserQuestion` (opções explícitas; "Other" fica disponível por defeito). Uma pergunta em prosa no fim da resposta **não conta** como pergunta feita e não autoriza a assumir nada. Aplica-se a todas as skills/comandos aisa nesta sessão. Excepção única: quando a ferramenta não está disponível (ex.: subagente sem `AskUserQuestion`) — nesse caso o tema fica registado como aberto (`Unknown`), nunca resolvido por inferência.
 - **Estilo de resposta: Caveman — curto, direto, zero enchimento.**

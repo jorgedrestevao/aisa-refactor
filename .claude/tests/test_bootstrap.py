@@ -13,6 +13,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 B = runpy.run_path(str(TOOLS / "bootstrap.py"))
 G = runpy.run_path(str(TOOLS / "graph.py"))
@@ -38,7 +40,7 @@ def tree_hash(root: Path) -> str:
 def new_eng(tmp, name="eng", nodes=None, edges=None, files=None):
     eng = Path(tmp) / name
     eng.mkdir(parents=True, exist_ok=True)
-    for rel, body in (files or {"_state.json": '{"phase":"discovery"}\n'}).items():
+    for rel, body in (files or {"_state.json": ESTADO_HANDOFF(phase="discovery")}).items():
         (eng / rel).write_text(body, encoding="utf-8", newline="\n")
     if nodes is not None:
         (eng / "_graph").mkdir(exist_ok=True)

@@ -80,13 +80,10 @@ description: Record an answer or resolution for a Shared Understanding row (Unkn
    basis declared, or — **only where the missing input is technical** — an `Unknown` /
    verification obligation (`custo: documento|spike`, `swing` stated). That obligation is an
    `Unknown` like any other and passes the same admission rule (`library/kernel/states.md` →
-   *Admission of a question*, P-26): it cites the `M-n` it serves — or carries the marker
-   `TO-BE DIVERGENCE` with what the target must decide — names ≥ 2 possible answers, **and**
-   names which of the eight technical axes moves with each — `tecnologia` · `padrão
-   arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` ·
-   `esforço de alto nível` · `custo` · `risco técnico`. A verification obligation that names
-   no axis is `cosmético` with `criticidade: Low`; one that names no second answer is not
-   opened at all. Unless independently supported by a cited source. A second-hand statement
+   *Admission of a question*): its answer moves at least one of the five aspects, and it
+   carries `tipo` (usually `proof_obligation` or `fact_gap`), `impacto`, `âmbito`, `quem
+   responde`, `fecho`, `bloqueio` and `referências`. A missing technical fact needs no invented
+   second answer. One whose answer moves nothing demonstrable is not opened at all. Unless independently supported by a cited source. A second-hand statement
    about another team's systems or configuration is `Assumed` with the basis, not
    `Confirmed`, and it **opens nothing**: no `Unknown` is written to chase an email, minutes,
    a written acceptance or a signature, because the gap already lives in the row's basis
@@ -111,11 +108,13 @@ description: Record an answer or resolution for a Shared Understanding row (Unkn
    ` — resolved → <new-id(s)>` marker and is never deleted: append-only, and this marker
    plus the revalidation renewal are the only two sanctioned edits to an existing row.
 6. Update the SU header `Última actualização` and append one line to `council-log.md`:
-   `<round> — /answer <id> → <new-id(s)> (<state>)`. These two are outside the engine's
+   `<round> — /answer <id> → <new-id(s)> (<state>)` — one draft (`resolve.py draft
+   --engagement <slug> --files shared-understanding.md council-log.md --json`, edit the
+   copies, `resolve.py publish`; `library/kernel/orchestration.md` → *Writing an authority*). These two are outside the engine's
    write set on purpose — the log is the skill's narration of what it did, not part of the
    transition, and folding it in would make a narration failure look like a failed
    transition.
-7. **Targeted revalidation** (only when the new fact **contradicts or materially changes** a premise downstream reasoning used — an unrelated answer produces `(none)` and no broad list). Find the dependents through the references that already exist: grep the resolved id and the new fact's subject across `frame.md` (anchors, survival block), `options.md`, `decisions.md` (justification, conditions, tripwires), `_blueprint/ux-blueprint_v<NN>.yaml` (`su_refs`, `forced_by`, `would_be_settled_by`, rationale text naming the changed field), `_synthesis/*.md`. For each dependent write one line — `still valid — <why>` or `revalidate — <what the conclusion assumed>` — in the output and in `council-log.md`. No dependency graph, no registry, no rerun of all phases. Dependents in `decisions.md` (a justification clause, a condition, a cited option strength) → run the tripwire check (`aisa-status` step 7) and name `/revisit` as the next command; the Decision is never rewritten here. Architecture dependents → name them for `/blueprint --refresh`, which records them (step 11b).
+7. **Targeted revalidation** (only when the new fact **contradicts or materially changes** a premise downstream reasoning used — an unrelated answer produces `(none)` and no broad list). Start with the structured radius: `python library/kernel/tools/impact.py impact --engagement <slug> --changed <id>` (handoff-v1 F7, read-only) lists the functional contracts, scope, work packages, candidates, reviews and design nodes that cite the row by reference, directly and through `FC → WP` and `candidate → review`; after publishing, `impact.py stale` shows which of them now block the final version (`STALE_PREMISE`). Each one is republished with the successor id by its own author — never edited here. A row whose `state`/`criticidade` changed in place keeps its id: its dependents are republished with a **recorded assessment** (`revalidation`: per item `still_valid` or `updated`, the assessment, the author's role) — the motor refuses a republication that only moves the pin (`REVALIDATION_REQUIRED`; external audit 2026-09-24). Then find the free-text dependents through the references that already exist: grep the resolved id and the new fact's subject across `frame.md` (anchors, survival block), `options.md`, `decisions.md` (justification, conditions, tripwires), `_blueprint/ux-blueprint_v<NN>.yaml` (`su_refs`, `forced_by`, `would_be_settled_by`, rationale text naming the changed field), `_synthesis/*.md`. For each dependent write one line — `still valid — <why>` or `revalidate — <what the conclusion assumed>` — in the output and in `council-log.md`. No new registry, no rerun of all phases. Dependents in `decisions.md` (a justification clause, a condition, a cited option strength) → run the tripwire check (`aisa-status` step 7) and name `/revisit` as the next command; the Decision is never rewritten here. Architecture dependents → name them for `/blueprint --refresh`, which records them (step 11b).
 7b. **What the new fact did to the coverage reviews — computed, never declared.** A recorded coverage review says *these sources, in this state, were read*. A new answer changes `answers.md` and the SU, so a review written before it may no longer describe the sources it claims to have read. Ask the motor; do not write a flag:
 
    ```
@@ -146,17 +145,17 @@ For expired (or ageing) Confirmed/Assumed rows — see `library/kernel/states.md
 
 1. Locate the row (`C-NNN`/`A-NNN`). Not found → stop and list the expired ids (per `/status`). Already `resolved → …` → stop and say so.
 2. Judge the confirmation note (ask for one if absent): does the fact still hold **unchanged**?
-   - **Holds** → renew `verificado_em` = today on the row itself. No new row, no `resolved` marker — this renewal and the `resolved →` marker are the only two sanctioned edits to existing rows.
-   - **Changed** (the note contradicts or amends the claim) → say so and apply the NORMAL flow instead (steps 3–6 above): new row(s) with `was <id>`, original marked resolved. Never renew a changed fact.
-3. Record the revalidation in `answers.md`:
+   - **Holds** → the engine renews it: `python library/kernel/tools/resolve.py --engagement <slug> --row <id> --op revalidate --note "<verbatim note>" --by "role: <who> | fonte: <what>" --json`. It renews `verificado_em` = today on the row, writes the `answers.md` section below and the graph mirror in **one** coordinator operation, with a receipt — never by hand. No new row, no `resolved` marker — this renewal and the `resolved →` marker are the only two sanctioned edits to existing rows.
+   - **Changed** (the note contradicts or amends the claim) → say so and apply the NORMAL flow instead (steps 3–6 above): new row(s) with `was <id>`, original marked resolved. Never renew a changed fact (the engine refuses `--changed`).
+3. The `answers.md` section the engine records (shape, for reading — the engine writes it):
    ```markdown
-   ## <id> — <date ISO> (revalidação)
+   ## <id> — <date ISO> (revalidacao)
    - **Claim**: <original claim>
-   - **Confirmação**: mantém-se — <verbatim note>
+   - **Confirmacao**: mantem-se — <verbatim note>
    - **Fonte**: <source>
-   - **verificado_em**: <old date> → <today>
+   - **verificado_em**: <old date> -> <today>
    ```
-4. Update the SU header `Última actualização`. Append to `council-log.md`: `<round> — /answer --revalidate <id> (verificado_em renovado)`.
+4. Update the SU header `Última actualização`. Append to `council-log.md`: `<round> — /answer --revalidate <id> (verificado_em renovado)` — one draft, as in step 6 above.
 5. Output:
    ```user-output
    Reconfirmado: <o facto, em meia linha> (<id>) — volta a valer a partir de hoje.

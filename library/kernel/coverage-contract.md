@@ -17,6 +17,9 @@
 >
 > Antes e depois: **ausência de registo de cobertura significa `not_evaluated`** — nunca
 > "completo", nunca "reprovado", e nunca a revogação de uma aprovação já registada (§10).
+>
+> **handoff-v1 F3:** uma quarta etapa, `lens` (§4.8) — a cobertura das seis perspectivas de
+> uma passagem de Discovery, que fecha a passagem em vez de seis execuções de lente.
 
 ## 1. O que a cobertura é, e o que nunca é
 
@@ -46,13 +49,14 @@ taxonomia.
 
 ## 2. As três etapas
 
-`stage` tem exactamente três valores:
+`stage` tem exactamente quatro valores:
 
 | stage | pergunta | quando | `target` |
 |---|---|---|---|
 | `reconciliation` | as fontes → SU / requisitos / decisão | **antes** de desenhar | `null` |
 | `blueprint` | requisitos e obrigações → versão concreta do desenho | depois de desenhar, antes de aprovar | a versão do desenho |
 | `render` | autoridades que o template permite → deliverable concreto | depois de renderizar | o ficheiro renderizado |
+| `lens` | as seis perspectivas → onde está a prova de cada uma (§4.8) | no fecho de cada passagem de Discovery | `null` (a passagem em `lens_coverage.round`) |
 
 Cada etapa produz um **registo novo** no mesmo contador `coverage_vNN`. Uma revisão anterior
 nunca é editada. `based_on` liga às revisões anteriores relevantes.
@@ -83,15 +87,16 @@ resultado da verificação.
 | `schema_version` | int | sim | `1`. Outro valor → `unsupported`, nunca interpretado por aproximação |
 | `version` | `"vNN"` | sim | corresponde ao nome do ficheiro |
 | `engagement` | string | sim | corresponde ao `_state.json.engagement` |
-| `stage` | enum | sim | `reconciliation` · `blueprint` · `render` |
+| `stage` | enum | sim | `reconciliation` · `blueprint` · `render` · `lens` |
 | `generated_at` | ISO-8601 | sim | quando o rascunho foi produzido |
 | `based_on` | lista de `"coverage_vNN.json"` | sim (pode ser vazia) | §4.6 |
-| `target` | mapa ou `null` | sim | `null` em `reconciliation`; obrigatório nas outras |
+| `target` | mapa ou `null` | sim | `null` em `reconciliation` e `lens`; obrigatório nas outras |
 | `deliverable` | mapa | só em `render` | §4.5 |
 | `basis` | mapa | sim | §4.2 |
 | `source_review` | lista | sim | §4.3 |
 | `coverage` | lista | sim | §4.4 |
-| `semantic_review` | mapa | sim | §4.7 |
+| `semantic_review` | mapa | sim | §4.7 (em `lens`, por perspectiva: §4.8) |
+| `lens_coverage` | mapa | só em `lens` | §4.8 |
 
 Campo desconhecido na raiz → diagnóstico (`COV-SCHEMA`, severidade `warn`), não é lido.
 Campo obrigatório ausente, tipo errado, `version` que não bate com o nome do ficheiro, ou
@@ -450,6 +455,43 @@ ainda não tem os achados todos, e exigir-lhos seria acusar duas vezes a mesma p
 `semantic_review.completed` **não é aprovação humana nem prova de verdade**. É a declaração de
 que as duas passagens da §9 foram feitas.
 
+### 4.8 `lens_coverage` — só na etapa `lens` (handoff-v1 F3)
+
+A cobertura das seis perspectivas de uma passagem de Discovery (`business` · `operations` ·
+`user` · `data` · `governance` · `financial`; perguntas centrais em
+`library/kernel/lens-checklists.md`). Uma análise pode cobrir as seis; não se exigem seis
+ficheiros nem seis execuções (T18). `source_review` e `coverage` são listas vazias nesta etapa,
+e `target` é `null`: vale o registo `lens` mais recente.
+
+| campo | tipo | regra |
+|---|---|---|
+| `round` | `R-NN` | a passagem que este registo cobre |
+| `author` | `{kind, name}` | quem fez a análise; o revisor da §4.7 tem de ser outro |
+| `dimensions.<p>.status` | enum | `assessed` (examinada — não resolvida nem aprovada) · `gap` · `not_applicable` |
+| `dimensions.<p>.refs` | lista | ids da SU que existem, ou localizadores das classes do limiar de `Confirmed` (`answers.md#…`, `enquadramento.md#M-n`, `_capture/…`, `inputs/…`) cujo alvo existe |
+| `dimensions.<p>.justification` | string | nunca vazia; `not_applicable` sem motivo é inválido (T07) |
+| `conflict_scan` | `{refs, note}` | obrigatório: as linhas `X-` que o varrimento de conflitos entre fontes produziu; sem nenhuma, a nota diz que se varreu |
+
+Regras de forma (tornam o registo inválido): as seis presentes; `assessed` com pelo menos uma
+referência que prova — **um título, uma secção de `lens-outputs` ou um ficheiro de fase não
+provam cobertura** (T19); `gap` encaminhado para uma pergunta aberta e não estacionada (`U-`,
+`X-`, `R-`). Uma referência que não prova, ao lado de outras que provam, é `COV-DEAD-REF`
+(impeditivo, não inválido).
+
+A revisão semântica da etapa (`semantic_review`, §4.7 sem `passes` nem `findings`) leva
+`dimensions.<p>.verdict ∈ {treated, not_treated, not_applicable_ok}` e uma nota, para as seis:
+a prova apontada **trata** mesmo o risco da perspectiva? `not_treated` é um achado — lacuna à
+vista, e a passagem não fica «revista». `not_applicable_ok` só sobre uma perspectiva declarada
+`not_applicable`. O revisor tem contexto próprio e não é o autor (`performed_by.name` ≠
+`author.name`).
+
+A passagem **fecha** quando o registo `lens` mais recente é dela, válido e actual
+(`coverage.py round-state --round R-NN`). **Revista** quando, além disso, a leitura
+independente está concluída sem perspectiva não tratada (`eligible`). Sem revisão fecha na
+mesma, dita «cobertura por rever» — gate suave. `coverage.py lens-draft --round R-NN` dá o
+esqueleto com a base actual, herdando as perspectivas do registo anterior (é assim que
+`/round <perspectiva>` refaz uma e mantém cinco); a revisão semântica nunca se herda.
+
 ## 5. Locators resolvíveis
 
 ### 5.1 Gramática dos selectors
@@ -790,19 +832,23 @@ contrato: sobe `contract_version`.
 - **`stale` não prova que uma conclusão ficou falsa**: obriga a rever os impactos e a produzir
   nova revisão.
 - **Finalização**: rascunho em ficheiro temporário → validação e recheck dos digests →
-  criação **exclusiva** do próximo `vNN`. Nunca sobrescrever, nunca `os.replace` sobre uma
-  versão publicada. Se a concorrência ocupar a versão, falha com informação clara e
-  repete-se a reserva.
+  publicação do próximo `vNN` **pelo coordenador** (`operation.run`, handoff-v1 F2, decisão
+  Q3): `.json` e `.md` numa operação e num recibo, com `expected = ""` (a versão não existia)
+  e as fontes do último veredicto como read-set, verificadas sob o lock. Nunca sobrescrever,
+  nunca `os.replace` sobre uma versão publicada. Se a concorrência ocupar a versão, toma-se
+  a seguinte. **Idempotente**: o mesmo conteúdo já publicado devolve a versão que o tem, sem
+  emitir outra; e o número é o maior já emitido + 1 — contando os recibos, que sobrevivem a
+  um ficheiro apagado —, nunca um número livre reaproveitado (F0 D07).
 - **O último veredicto é o que manda.** Entre qualquer verificação e a linha seguinte há
   uma janela; o que não pode haver é publicar **depois** de a ter visto fechada. O estado
   que a operação vai reportar é o mesmo que decide se ela publica: se esse estado não é
-  `current` e `valid`, a reserva desfaz-se e nada fica publicado. Uma revisão publicada
+  `current` e `valid`, nada fica publicado. Uma revisão publicada
   nunca sai `stale` do sítio onde foi publicada — se ficar `stale` depois, é a leitura
   seguinte que o diz, e é para isso que `stale` existe.
 - O recheck **de saída** é o mesmo de entrada, e cobre o mesmo: a base **e o alvo**. O alvo
   não está no manifesto (é um alvo, §6.3), por isso uma comparação que só olhe para o
   manifesto deixa passar uma versão publicada já `stale`. Uma revisão publicada está
-  actual — se não estiver, não se publica, e a reserva desfaz-se.
+  actual — se não estiver, não se publica.
 - A revisão publicada é avaliada **por nome**, não por «a mais recente da etapa»: com duas
   finalizações concorrentes, a mais recente é a da outra, e o relatório de uma versão
   passaria a descrever outra.
@@ -1068,7 +1114,7 @@ da ligação; a adequação é revista e escrita pelo agente, e fica assinada po
 | 31 | Se o recheck de saída da finalização cobre o alvo | §6.6: sim, e é o **mesmo** recheck da entrada. O alvo não está no manifesto; uma comparação só do manifesto publica uma revisão já `stale` |
 | 32 | O que se faz a um registo que parseia e não se consegue situar | §6.6: bloqueia todas as etapas. Situar vem antes de filtrar — filtrar por `stage` primeiro fá-lo desaparecer em silêncio |
 | 33 | Se um schema desconhecido impede situar o registo | §6.6: não. Se traz `stage` e a identidade do alvo, é seleccionado e sai `unsupported`; situar não é validar |
-| 34 | O que acontece se a base mudar entre a última verificação e o fim da operação | §6.6: a reserva desfaz-se. O veredicto que ia ser reportado é o mesmo que decide publicar |
+| 34 | O que acontece se a base mudar entre a última verificação e o fim da operação | §6.6: nada se publica — a janela até à publicação fecha-se no read-set do coordenador, sob o lock. O veredicto que ia ser reportado é o mesmo que decide publicar |
 | 35 | Se basta a identidade para escolher a revisão de um alvo | §6.6: não. Identidade **e** ficheiro, e a identidade tem de ser a que o próprio ficheiro dá. Só a identidade deixa passar a troca de uma etiqueta |
 | 36 | O que faz o motor a um campo com o tipo errado | §4.1: `COV-SCHEMA` com o campo e o tipo, `invalid` e saída 2. Nunca `COV-UNEXPECTED` nem saída 5 — um ficheiro mal escrito não é falha do motor |
 | 37 | Se um destino-âncora pode estar noutra versão do desenho | §4.4.2: não. Tem de estar em `target.file`, ou é `COV-AUTHORITY-MISMATCH` e não conta como âncora. Destinos que não são âncora podem viver noutro ficheiro |

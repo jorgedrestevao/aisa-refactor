@@ -350,7 +350,7 @@ class TestDecideOwnsNoAuthorization(unittest.TestCase):
     def test_decide_stage_semantics_untouched(self):
         """Presentation-only change: the decision flow itself must still be intact."""
         for kept in ("### 1. Pre-flight", "### 2. Interactive capture",
-                     "### 3. Flip state to Decision (atomic)",
+                     "### 3. Flip state to Decision (through the coordinator)",
                      "### 4. Append the decision to decisions.md",
                      "### 5. Auto-invoke aisa-synthesize"):
             self.assertIn(kept, DECIDE_SKILL)

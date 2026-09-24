@@ -54,6 +54,13 @@ def _so_agarra(eng, barreira, fila):
     try:
         ident = op["acquire"](Path(eng))
         fila.put(("dono", os.getpid(), bool(ident.get("recovered_from"))))
+        # O dono segura o lock ate todos terem tentado. Sair logo libertava o `flock`, e um
+        # irmao atrasado encontrava um dono MORTO e recuperava-o com toda a legitimidade:
+        # dois donos por tempo, nao por defeito (1 em 24 sob carga, tambem na baseline).
+        fim = Path(barreira).with_name("fim")
+        limite = time.time() + 60
+        while not fim.exists() and time.time() < limite:
+            time.sleep(0.001)
     except Exception as exc:                                        # noqa: BLE001
         fila.put(("recusado", os.getpid(), getattr(exc, "code", type(exc).__name__)))
 
@@ -83,9 +90,11 @@ def _corrida(alvo, eng, extra=lambda i: ()):
         p.start()
     time.sleep(0.2)
     barreira.write_text("go", encoding="utf-8")
+    out = [fila.get(timeout=60) for _ in range(PROCESSOS)]
+    (Path(eng).parent / "fim").write_text("fim", encoding="utf-8")
     for p in ps:
         p.join(60)
-    return [fila.get() for _ in range(PROCESSOS)]
+    return out
 
 
 class _OsQueTrocaOInode:

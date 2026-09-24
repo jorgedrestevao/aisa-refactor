@@ -191,11 +191,18 @@ calculation without an owner · an approval that does not gate publication/load 
 equivalent outputs with different chains · a document claim the workbook contradicts · a
 material HYPOTHESIS in §4 (the question that would settle it).>
 
-| id | question | why it matters | suggested respondent (role) | criticidade | custo | swing | classe |
-|---|---|---|---|---|---|---|---|
-| PM-U-001 | <question> | <decision/risk it unblocks> | `role: <role>` \| `fonte: <artefacto/sistema>` — never a name (`library/kernel/states.md` → *The form of `quem responde`*) | Low \| Med \| Critical | email \| documento \| reuniao \| spike | <classe: frase> | mecânica \| dados \| processo |
+| id | question | why it matters | suggested respondent (role) | criticidade | custo | swing | classe | tipo | impacto |
+|---|---|---|---|---|---|---|---|---|---|
+| PM-U-001 | <question> | <decision/risk it unblocks> | `role: <role>` \| `fonte: <artefacto/sistema>` — never a name (`library/kernel/states.md` → *The form of `quem responde`*) | Low \| Med \| Critical | email \| documento \| reuniao \| spike | <classe: frase> | mecânica \| dados \| processo | fact_gap \| design_choice \| conflict \| proof_obligation | <aspecto[, aspecto]: o que muda> |
 
-<`custo` and `swing` follow `library/kernel/states.md` → *Question economics*, so a lens can
+<**Admission** (handoff-v1 F3): `tipo` and `impacto` follow `library/kernel/states.md` → *Admission of a
+question*, the same rule every writer of an `Unknown` obeys. A candidate whose answer moves none
+of the five aspects (`solucao` · `funcional` · `aceitacao` · `operacao` · `viabilidade`) is **not
+written** as a PM-U. A missing fact is `fact_gap` and owes no invented alternatives; a
+`design_choice` names its real alternatives in `swing`. The two columns sit at the end of the
+table so the positional readers of the earlier columns keep working.
+
+`custo` and `swing` follow `library/kernel/states.md` → *Question economics*, so a lens can
 promote the row to an SU Unknown without inventing them. `custo` = what it takes to get the
 answer. `swing` = `decisivo` (changes which option survives) \| `dimensionante` (changes
 sizing/effort/design) \| `cosmético` (changes nothing material), plus a phrase stating WHAT

@@ -230,7 +230,7 @@ no headless-specific template.
 
 Three retired files — `sharepoint-first.md`, `dataverse-first.md`, `hybrid.md` — and the obsolete
 `Branch (if technology)` decision field predate this model. Already-rendered artefacts are **immutable and
-are not regenerated**; two engagements (`projects/cae-automation`, `projects/dpt-galp-jp`) carry a recorded
+are not regenerated**; two pilot engagements carry a recorded
 legacy branch value and a frozen rendered blueprint.
 
 For **reading** a legacy artefact, interpret the recorded branch value as:

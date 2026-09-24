@@ -466,8 +466,8 @@ class TestConsumerPaths(unittest.TestCase):
     CONSUMERS = [
         ".claude/skills/aisa-blueprint/SKILL.md",
         ".claude/skills/aisa-simulate/SKILL.md",
-        ".claude/agent-memory/_universal/solution-architect/anti-patterns.md",
-        ".claude/agent-memory/_universal/compliance-officer/anti-patterns.md",
+        ".claude/agent-memory/_universal/architect/anti-patterns.md",
+        ".claude/agent-memory/_universal/security-operation/anti-patterns.md",
         "library/packs/pp/deliverable-templates/claude-design-brief.template.md",
         "library/kernel/blueprint-contract.md",
         "docs/ARCHITECTURE.md",
@@ -509,7 +509,7 @@ class TestConsumerPaths(unittest.TestCase):
         )
 
     def test_solution_architect_memory_no_longer_restates_a_threshold(self):
-        body = self._text(".claude/agent-memory/_universal/solution-architect/anti-patterns.md")
+        body = self._text(".claude/agent-memory/_universal/architect/anti-patterns.md")
         self.assertNotIn(">2000 records", body)
         self.assertIn("data/query-and-delegation.md", body)
 

@@ -1,8 +1,8 @@
 pack_id: pp
-pack_version: 1.9.0
+pack_version: 1.10.0
 display_name: "Power Platform Discovery"
-# SCOPE-STATEMENT v1
-# aisa runs discovery on a process to reach a grounded technical decision: which technology and pattern, against which alternatives, at what cost. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision.
+# SCOPE-STATEMENT v2
+# aisa runs discovery on a process to reach a grounded technical decision and a design a delivery team can build without guessing: which technology and pattern, against which alternatives, at what cost, and which behaviour, acceptance and operation. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision, the functional behaviour, the acceptance, the operation or the effort.
 language: pt
 description: >
   Discovery and sensemaking pack tuned for Power Platform engagements.
@@ -11,13 +11,23 @@ description: >
   content (Canvas Apps, Model-driven Apps, Power Automate, Dataverse) is
   scoped to the Options phase and beyond.
 
+# pack_version 1.10.0 (handoff-v1 F1) - WORKFLOW CAPABILITIES DECLARED. One addition, no removal:
+#   three top-level keys declare what this pack supports under the workflow profile of the
+#   handoff-v1 programme (docs/handoff-v1/F1/DESENHO-CONTRATOS.md 2.1): the profile, the three
+#   routes and the design-contract version. They are read by library/kernel/tools/workflow.py
+#   and checked against library/kernel/schemas/handoff-pack.schema.json. A pack that declares
+#   nothing supports nothing - no fallback is inferred for the skeleton packs. A route is a
+#   declared mode of work (which step runs next), never a map from outcome, concern or product
+#   to a template: no stage, concern, option class, outcome class, register row, knowledge unit,
+#   architecture unit, deliverable contract or estimate mode was altered.
+#
 # pack_version 1.9.0 - PLATFORM FORMS ARE NAMED IN OPTIONS. One semantic addition, no removal:
 #   this pack's platform stops being a single candidate "in its several forms" and becomes a class
 #   whose MEMBERS are named `surface x store` pairs (alternatives-register.md 1.2, generated at S1,
 #   re-read at S9). decision-tree.md 14.1 makes the form a MANDATORY returned field for a
 #   platform candidate, in products, one option per form. Cause: an Options round can otherwise
 #   render "this platform over the store that already runs" and never name the surface - the
-#   sponsor is asked to approve a decision they were never shown (observed in pricing-bunkers
+#   sponsor is asked to approve a decision they were never shown (observed in a pilot,
 #   O-01, where two distinct forms shared one option row and no option named a surface).
 #   A form becoming unavailable stays an in-platform redirect, never an exclusion outcome.
 #   No stage, concern, option class, outcome class, composed row, blocking entry, knowledge unit,
@@ -77,6 +87,11 @@ description: >
 # That file never manifested architecture-template paths, so no path here changed. No
 # architecture routing and no product map is introduced — selection is one recorded field
 # resolved by one include.
+
+# Workflow capabilities (pack_version 1.10.0). Absent key = not supported.
+supported_workflow_profiles: [handoff-v1]
+supported_routes: [solution-choice, platform-constrained, change-impact]
+design_contract_version: 1
 
 deliverables:
   # SIX canonical deliverables. Six in, six out — none added, renamed or removed.

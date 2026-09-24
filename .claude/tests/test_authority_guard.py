@@ -19,6 +19,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 HOOK = ROOT / ".claude" / "hooks" / "pre-authority-guard.py"
 TOOLS = ROOT / "library" / "kernel" / "tools"
 G = runpy.run_path(str(TOOLS / "graph.py"))
@@ -38,7 +40,7 @@ CABECA = """> Fase actual: Discovery
 def engagement(base: Path, nome="eng", com_grafo=True):
     eng = base / nome
     eng.mkdir(parents=True, exist_ok=True)
-    (eng / "_state.json").write_text('{"phase":"discovery","round":"R-01"}\n',
+    (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-01"),
                                      encoding="utf-8", newline="\n")
     (eng / SU).write_text(CABECA, encoding="utf-8", newline="\n")
     (eng / "decisions.md").write_text("# Decisions\n", encoding="utf-8", newline="\n")

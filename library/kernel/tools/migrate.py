@@ -42,6 +42,8 @@ _HERE = Path(__file__).resolve().parent
 _D = runpy.run_path(str(_HERE / "dashboard.py"))
 _G = runpy.run_path(str(_HERE / "graph.py"))
 _O = runpy.run_path(str(_HERE / "operation.py"))
+_W = runpy.run_path(str(_HERE / "workflow.py"))
+_W["_CACHE"]["D"] = _D          # o mesmo dashboard, carregado uma vez
 
 MIGRATION_DIR = "_migration"
 MANIFEST = "manifest.json"
@@ -236,9 +238,21 @@ def _nodes_from(plan, rows_by_id):
     return nodes, edges
 
 
+def _refuse_legacy(eng):
+    """Um engagement da versão histórica não se migra nem se repõe aqui (handoff-v1 F1,
+    decisão classic A). A recusa vem ANTES de qualquer backup: o coordenador também recusa,
+    mas só no fim, depois de `apply` já ter copiado ficheiros para `_migration/`."""
+    if _W["profile_of"](eng)["kind"] == _W["LEGACY"]:
+        raise MigrationError(
+            "engagement sem perfil persistido (versão histórica): só leitura nesta versão — "
+            "continuar em {}".format(_W["HISTORICAL_VERSION"]), _W["UNSUPPORTED_PROFILE"],
+            {"source_code": "legacy_profile_absent", "engagement": str(eng)})
+
+
 def apply(eng, plan=None):
     """Aplica pelo coordenador, com backup verificavel antes (C1.4, C1.5)."""
     eng = Path(eng)
+    _refuse_legacy(eng)
     plan = plan or dry_run(eng)
 
     # C1: entrada mudou depois do dry-run -> rejeitar plano antigo
@@ -383,9 +397,15 @@ def read_manifest(eng):
 
 # ---------------------------------------------------------------------- restore
 
-def restore(eng, force=False):
-    """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2)."""
+def restore(eng):
+    """Reverte — so sobre a mesma revisao pos-migracao e sem trabalho posterior (C2).
+
+    Sem `force` (F7, D10): forcar escrevia o backup por cima de trabalho posterior a
+    migracao — `D-NNN` novos incluidos — e apagava-o. Com trabalho posterior recusa-se sempre
+    e diz o que mudou; reconciliar e roll-forward, nunca restore sobre engagement activo
+    (plano 07 -> *Rollback sem perda de conhecimento*)."""
     eng = Path(eng)
+    _refuse_legacy(eng)
     man = read_manifest(eng)
     if not man:
         raise MigrationError("nao ha manifesto de migracao", "NO_MANIFEST",
@@ -397,7 +417,7 @@ def restore(eng, force=False):
     now = _digests(eng)
     drifted = {rel: {"expected": man["after"].get(rel, ""), "actual": now.get(rel, "")}
                for rel in man["after"] if now.get(rel, "") != man["after"].get(rel, "")}
-    if drifted and not force:
+    if drifted:
         raise MigrationError(
             "houve trabalho depois da migracao — restore cego recusado", "WORK_AFTER",
             {"changed": drifted,
@@ -506,7 +526,6 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="migracao legacy -> memoria persistente")
     ap.add_argument("command", choices=["dry-run", "apply", "restore", "init"])
     ap.add_argument("--engagement", required=True)
-    ap.add_argument("--force", action="store_true")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     eng = Path(a.engagement)
@@ -520,7 +539,7 @@ def main(argv=None):
         elif a.command == "init":
             out = init(eng)
         else:
-            out = restore(eng, force=a.force)
+            out = restore(eng)
     except (MigrationError, _O["OperationError"], _G["GraphError"]) as exc:
         print(json.dumps(exc.as_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
         return 1

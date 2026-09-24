@@ -12,6 +12,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 M = runpy.run_path(str(TOOLS / "migrate.py"))
 G = runpy.run_path(str(TOOLS / "graph.py"))
@@ -91,7 +93,7 @@ def make(tmp, su, name="eng", decisions=DECISIONS):
     (eng / "answers.md").write_text("# Respostas\n\n## U-001\n\n> literal\n",
                                     encoding="utf-8", newline="\n")
     (eng / "decisions.md").write_text(decisions, encoding="utf-8", newline="\n")
-    (eng / "_state.json").write_text('{"phase":"discovery","round":"R-01"}\n',
+    (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-01"),
                                      encoding="utf-8", newline="\n")
     return eng
 

@@ -38,6 +38,14 @@ PLACEHOLDER = "b31c2af5507500ef2272d791693f3335b4be63f86ff8a781a8436d1cc253fb81"
 BP01 = "_blueprint/ux-blueprint_v01.yaml"
 BP03 = "_blueprint/ux-blueprint_v03.yaml"
 RECON = "rec-v01-reconciliation-complete"
+# handoff-v1 F2 (Q3): `finalize` publica pelo coordenador, que recusa um engagement da
+# versão histórica (decisão classic A). A fixture `fx-coverage-f06` tem, por isso, o bloco
+# `workflow` no `_state.json` — e os registos citam o digest desse `_state.json`.
+
+
+def outra_data(n):
+    """Um rascunho com conteúdo diferente (`generated_at`), para uma versão nova."""
+    return lambda r: r.__setitem__("generated_at", "2026-03-10T10:{:02d}:00+01:00".format(n))
 
 
 def load(name: str) -> dict:
@@ -391,7 +399,7 @@ class ReadOnly(Base):
 # ==================================================================== finalização
 
 class Finalize(Base):
-    """§6.6 — reserva exclusiva, recusa fundamentada, e nunca sobrescreve."""
+    """§6.6 — publicação pelo coordenador, recusa fundamentada, e nunca sobrescreve."""
 
     def test_a_clean_draft_is_published_as_the_next_version(self):
         out = C["finalize"](self.eng, self.draft())
@@ -400,11 +408,58 @@ class Finalize(Base):
         self.assertTrue((self.eng / "_coverage" / "coverage_v01.json").is_file())
         self.assertTrue((self.eng / "_coverage" / "coverage_v01.md").is_file())
 
-    def test_the_second_finalize_takes_the_next_free_version(self):
+    def test_the_same_draft_twice_is_the_same_version(self):
+        """D07 (handoff-v1 F0): o mesmo rascunho dava v01 e depois v02. É a mesma
+        revisão; não ganha segundo nome (T13)."""
+        a = C["finalize"](self.eng, self.draft())
+        b = C["finalize"](self.eng, self.draft())
+        self.assertEqual((a["version"], b["version"]), ("v01", "v01"))
+        self.assertTrue(b.get("replayed"))
+        self.assertEqual(sorted(p.name for p in (self.eng / "_coverage").glob("*.json")),
+                         ["coverage_v01.json"])
+
+    def test_a_different_draft_takes_the_next_version(self):
         C["finalize"](self.eng, self.draft())
-        out = C["finalize"](self.eng, self.draft())
+        out = C["finalize"](self.eng, self.draft(mutate=outra_data(1)))
         self.assertEqual(out["version"], "v02")
         self.assertTrue((self.eng / "_coverage" / "coverage_v01.json").is_file())
+
+    def test_a_deleted_version_number_is_never_reused(self):
+        """D07, segunda metade: o número era o primeiro livre. Uma versão apagada à mão
+        deixava o seu número para a revisão seguinte — duas revisões, um nome."""
+        C["finalize"](self.eng, self.draft())
+        C["finalize"](self.eng, self.draft(mutate=outra_data(1)))
+        (self.eng / "_coverage" / "coverage_v02.json").unlink()
+        (self.eng / "_coverage" / "coverage_v02.md").unlink()
+        out = C["finalize"](self.eng, self.draft(mutate=outra_data(2)))
+        self.assertEqual(out["version"], "v03")
+
+    def test_the_publication_is_one_coordinator_operation(self):
+        out = C["finalize"](self.eng, self.draft())
+        rec = json.loads((self.eng / "_ops" / "receipts" /
+                          (out["operation_id"] + ".json")).read_text(encoding="utf-8"))
+        self.assertEqual(sorted(rec["revision"]),
+                         ["_coverage/coverage_v01.json", "_coverage/coverage_v01.md"])
+        self.assertEqual(rec["expected"], {"_coverage/coverage_v01.json": "",
+                                           "_coverage/coverage_v01.md": ""})
+        self.assertIn("answers.md", rec["read_set"])
+
+    def test_a_legacy_engagement_is_refused_and_nothing_is_written(self):
+        st = json.loads((self.eng / "_state.json").read_text(encoding="utf-8"))
+        st.pop("workflow")
+        (self.eng / "_state.json").write_text(json.dumps(st), encoding="utf-8")
+        agora = hashlib.sha256((self.eng / "_state.json").read_bytes()).hexdigest()
+
+        def estado_actual(r):
+            # o rascunho leu ESTE `_state.json`: fresco, para a recusa ser a do perfil
+            for src in r["basis"]["sources"]:
+                if src["path"] == "_state.json":
+                    src["sha256"] = agora
+        with self.assertRaises(C["CoverageError"]) as ctx:
+            C["finalize"](self.eng, self.draft(mutate=estado_actual))
+        self.assertIn("UNSUPPORTED_PROFILE", str(ctx.exception))
+        self.assertFalse(list((self.eng / "_coverage").glob("*.json"))
+                         if (self.eng / "_coverage").exists() else [])
 
     def test_an_occupied_version_is_never_overwritten(self):
         """T29 — a versão que já existe fica como está, byte a byte."""
@@ -413,29 +468,35 @@ class Finalize(Base):
         taken.write_text(json.dumps(hydrate(self.eng, load(RECON)), ensure_ascii=False),
                          encoding="utf-8")
         before = taken.read_bytes()
-        out = C["finalize"](self.eng, self.draft())
+        out = C["finalize"](self.eng, self.draft(mutate=outra_data(1)))
         self.assertEqual(out["version"], "v02")
         self.assertEqual(taken.read_bytes(), before)
 
     def test_concurrent_finalizes_get_distinct_versions(self):
-        drafts = [self.draft() for _ in range(1)]
+        drafts = []
+        for i in range(4):
+            p = self.draft(mutate=outra_data(i + 1))
+            q = p.with_name("draft-{}.json".format(i))
+            p.rename(q)
+            drafts.append(q)
         results = []
         lock = threading.Lock()
 
-        def run():
+        def run(i):
             try:
-                out = C["finalize"](self.eng, drafts[0])
+                out = C["finalize"](self.eng, drafts[i])
             except Exception as exc:                                # noqa: BLE001
                 out = {"published": False, "error": repr(exc)}
             with lock:
                 results.append(out)
 
-        threads = [threading.Thread(target=run) for _ in range(4)]
+        threads = [threading.Thread(target=run, args=(i,)) for i in range(4)]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
         versions = [r.get("version") for r in results if r.get("published")]
+        self.assertEqual(len(versions), 4, results)
         self.assertEqual(len(versions), len(set(versions)),
                          "duas finalizações concorrentes ficaram com a mesma versão: %s"
                          % versions)
@@ -477,9 +538,11 @@ class Finalize(Base):
         self.assertEqual(ctx.exception.exit_code, 3)
 
     def test_finalize_writes_only_inside_coverage(self):
-        before = manifest(self.eng, skip=("_coverage/",))
+        """Fora de `_coverage/`, só o registo do coordenador (`_ops/`: recibo) — a prova
+        de que a publicação aconteceu, não conteúdo (handoff-v1 F2, Q3)."""
+        before = manifest(self.eng, skip=("_coverage/", "_ops/"))
         C["finalize"](self.eng, self.draft())
-        self.assertEqual(manifest(self.eng, skip=("_coverage/",)), before,
+        self.assertEqual(manifest(self.eng, skip=("_coverage/", "_ops/")), before,
                          "`finalize` escreveu fora de `_coverage/`")
 
     def test_finalize_never_writes_the_su_or_the_decisions(self):
@@ -491,7 +554,7 @@ class Finalize(Base):
 
     def test_the_published_version_matches_the_file_name(self):
         C["finalize"](self.eng, self.draft())
-        out = C["finalize"](self.eng, self.draft())
+        out = C["finalize"](self.eng, self.draft(mutate=outra_data(1)))
         published = json.loads(
             (self.eng / "_coverage" / "coverage_v02.json").read_text(encoding="utf-8"))
         self.assertEqual(published["version"], "v02")
@@ -650,7 +713,7 @@ class FinalizeUnderChange(Base):
 
     def test_each_markdown_names_its_own_version(self):
         a = C["finalize"](self.eng, self.draft())
-        b = C["finalize"](self.eng, self.draft())
+        b = C["finalize"](self.eng, self.draft(mutate=outra_data(1)))
         for out in (a, b):
             md = (self.eng / out["md"]).read_text(encoding="utf-8")
             self.assertIn("coverage_%s.json" % out["version"], md)

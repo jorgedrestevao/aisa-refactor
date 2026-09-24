@@ -42,9 +42,9 @@ import webbrowser
 from datetime import date, datetime
 from pathlib import Path
 
-TOOL_VERSION = "1.14.0"
+TOOL_VERSION = "1.18.0"
 ARTEFACT_ID = "aisa.dashboard"
-# Schema 2 unchanged throughout: every bump only ADDS keys.
+# Schema 2 unchanged up to 1.14.0: every bump only ADDED keys. 1.15.0 removed some -> 3.
 #   1.2.0  `round_delta` (P-2) · `confirmed_locator` (P-12) · `enquadramento` (P-0) ·
 #          `arbiter` (P-1) · `facets.lens_producao`.
 #   1.3.0  `funding_gate` (P-4, was living in the comparison script -- one rule, one
@@ -81,7 +81,26 @@ ARTEFACT_ID = "aisa.dashboard"
 #          the divergence it announces is real: that reading is the arbiter's.
 #          `has_enq` keeps its meaning -- with no `enquadramento.md`, (i) was never
 #          owed to the motor and still is not, so no old engagement gains a finding.
-SCHEMA_VERSION = 2
+#  1.15.0  handoff-v1 F1.5 (decisions Q3/Q4): the SU parser reads the admission columns
+#          (tipo, impacto, ambito, fecho, bloqueio, referencias, quem decide) and the
+#          `estacionada (<motivo>)` parking; `arbiter` checks the handoff-v1 admission
+#          (five aspects + fields) instead of the three P-26 declarations. KEYS REMOVED
+#          from `arbiter`: `sem_citacao_m`, `sem_eixo`, `sem_eixo_sem_coluna`,
+#          `sem_coluna_swing`, `conjuncao`, `enquadramento_declarado`, `calibracao`;
+#          added: `sem_colunas_handoff`, `sem_impacto`, `regra`, `aspectos`. A removal,
+#          so the model schema moves to 3.
+#  1.16.0  handoff-v1 F3.3: for a profile engagement `engagement.lentes_ronda_aberta` reads
+#          the `lens` coverage record of the open passagem (coverage-contract.md §4.8),
+#          not the `lens-outputs/` headers: `corridas` is the six or nothing, and four
+#          keys are ADDED -- `fonte`, `fecha`, `revista`, `motivos`. The historical
+#          version keeps the header reading and the old shape. Additive: schema stays 3.
+#  1.17.0  handoff-v1 F3.4: the Discovery -> Framing gate of a profile engagement reads the
+#          `lens` coverage record of the last completed round (valid for that round; freshness
+#          and review in the value) instead of counting six `lens-outputs/` files. The
+#          historical version keeps the file count. Schema stays 3.
+#  1.18.0  handoff-v1 F5.4: the Options -> Decision gate of a profile engagement counts the
+#          options by route (three only on solution-choice, fewer with reduction_reason).
+SCHEMA_VERSION = 3
 DEFAULT_RELOAD_SECS = 5
 
 # ---------------------------------------------------------------- utilities
@@ -175,8 +194,7 @@ def engagements_root() -> Path:
 
 
 def _activity_mtime(eng: Path) -> float:
-    """Most recent touch across the engagement's live files (same idiom as
-    .claude/hooks/pre-lens-order-check.py)."""
+    """Most recent touch across the engagement's live files."""
     stamps = [0.0]
     for rel in ("_state.json", "shared-understanding.md", "decisions.md", "council-log.md"):
         f = eng / rel
@@ -278,7 +296,7 @@ def fit_row(cells: list[str], n_cols: int, payload_idx: int = 2) -> tuple[list[s
     """Reconcile a row to the header width. Surplus cells are re-joined into
     payload_idx with ' | '; deficit is right-padded. Returns (cells, malformed).
 
-    Real case: cae-automation/shared-understanding.md U-035 carries unescaped pipes
+    Real case: a pilot's shared-understanding.md U-035 carries unescaped pipes
     BETWEEN code spans -> 8 cells against a 6-column header. A naive split shifts every
     column right and `criticidade` ends up reading a swing phrase."""
     if len(cells) == n_cols:
@@ -450,7 +468,35 @@ COLUMN_ALIASES = {
     "custo": "custo",
     "swing": "swing",
     "ronda": "ronda",
+    # handoff-v1 (states.md -> Admission of a question): the fields a question carries.
+    # `impacto` in Unknown/Conflicted is its own field; in Risky it stays the payload
+    # (`support`) -- see QUESTION_ALIASES, applied per section.
+    "tipo": "tipo",
+    "ambito": "ambito",
+    "fecho": "fecho",
+    "bloqueio": "bloqueio",
+    "referencias": "referencias",
+    "quem decide": "quem_decide",
 }
+QUESTION_SECTIONS = ("Unknown", "Conflicted")
+QUESTION_ALIASES = {"impacto": "impacto"}
+
+# handoff-v1: `impacto` is `aspecto[, aspecto]: frase`, the five aspects of states.md
+# (Admission of a question). The aspect is split off only when the cell OPENS with
+# known aspects; anything else is `nao-lida`, never fabricated (the swing rule).
+# The words each aspect is written with are the plan's own (02 section 4), never synonyms
+# invented here; each maps to the aspect's canonical key.
+IMPACT_ASPECTS = {
+    **dict.fromkeys(("solucao", "arquitectura", "arquitetura", "tecnologia"), "solucao"),
+    **dict.fromkeys(("funcional", "calculo", "transicao", "excepcao", "excecao",
+                     "resultado"), "funcional"),
+    **dict.fromkeys(("aceitacao", "contratual", "evidencia"), "aceitacao"),
+    **dict.fromkeys(("seguranca", "privacidade", "operacao", "suporte", "migracao",
+                     "recuperacao"), "operacao"),
+    **dict.fromkeys(("viabilidade", "dependencia", "custo", "esforco"), "viabilidade"),
+}
+QUESTION_TYPES = ("fact_gap", "design_choice", "conflict", "proof_obligation")
+BLOCKING_CLASSES = ("blocks_all", "blocks_scope", "delegated_choice", "implementation_proof")
 
 CRIT_MAP = {
     "critical": "Critical", "critica": "Critical", "alta": "Critical", "high": "Critical",
@@ -465,6 +511,10 @@ RESOLVED_RE = re.compile(r"resolved\s*(?:\u2192|->)\s*(.+)$", re.I)
 # The reason may itself carry parentheses ("substituida por U-096 (perfis ...)"), so the
 # capture runs greedily to the LAST `)` of the cell -- the marker always closes the cell.
 RETIRED_RE = re.compile(r"\bretirada\b\s*(?:P-\d+)?\s*\((.*)\)\s*$", re.I)
+# handoff-v1: a question with no demonstrable impact is PARKED, with its reason, in the
+# last column -- `— estacionada (<motivo>)`. Not a closure; not open either. Without a
+# reason it is not parked at all (T07): the row stays open and a diagnostic says why.
+PARKED_RE = re.compile(r"\bestacionada\b\s*\((.*)\)\s*$", re.I)
 STRIKE_RES_RE = re.compile(r"~~[^~]*resolvid[oa][^~]*~~|~~[^~]+~~\s*resolvid[oa]", re.I)
 WAS_RE = re.compile(r"\bwas\s+([A-Z]{1,3}-\d{2,4})")
 ID_RE = re.compile(r"\b((?:C|A|U|X|CF|R|RI|D|TW|PM)-\d{2,4})\b")
@@ -506,9 +556,9 @@ def norm_criticidade(raw: str) -> tuple[str, str]:
 
 def detect_resolution(cells: list[str]) -> tuple[bool, list[str]]:
     """Three conventions coexist across live engagements:
-      kernel marker  '... - resolved -> C-072 + U-059'  (pricing-marinha)
-      strikethrough  '~~RESOLVIDO - ver C-036~~' / '~~Alta~~ Resolvido'  (dpt-galp-jp)
-      none at all    (kam-onboarding, cae-automation)"""
+      kernel marker  '... - resolved -> C-072 + U-059'  (a pilot)
+      strikethrough  '~~RESOLVIDO - ver C-036~~' / '~~Alta~~ Resolvido'  (another pilot)
+      none at all    (two other pilots)"""
     last = cells[-1] if cells else ""
     m = RESOLVED_RE.search(last)
     if m:
@@ -531,6 +581,35 @@ def detect_retirement(cells: list[str]) -> tuple[bool, str]:
     return (True, (m.group(1) or "").strip()) if m else (False, "")
 
 
+def detect_parking(cells: list[str]) -> tuple[bool, str]:
+    """handoff-v1 parking: `- estacionada (<motivo>)` in the last column -> (marked, motivo).
+    The caller decides: an empty motivo is not a parking (T07)."""
+    last = cells[-1] if cells else ""
+    m = PARKED_RE.search(last)
+    return (True, (m.group(1) or "").strip()) if m else (False, "")
+
+
+def parse_impacto(raw: str) -> tuple[list[str], str, str]:
+    """`aspecto[, aspecto]: frase` -> (aspectos, frase, forma). `forma` is `canonica`,
+    `nao-lida` (the cell does not open with known aspects: nothing split off, nothing
+    fabricated) or `vazia`."""
+    raw = (raw or "").strip()
+    if not raw:
+        return [], "", "vazia"
+    head, sep, rest = raw.partition(":")
+    if not sep:
+        return [], raw, "nao-lida"
+    tokens = [norm_key(t).strip("*`_ ") for t in re.split(r"[,/;]| e ", head)]
+    tokens = [t for t in tokens if t]
+    if not tokens or any(t not in IMPACT_ASPECTS for t in tokens):
+        return [], raw, "nao-lida"
+    aspectos = []
+    for t in tokens:
+        if IMPACT_ASPECTS[t] not in aspectos:
+            aspectos.append(IMPACT_ASPECTS[t])
+    return aspectos, rest.strip(), "canonica"
+
+
 SWING_CLASSES = ("decisivo", "dimensionante", "cosmetico")
 # `classe: frase` (states.md:128). The class is the FIRST token and one of three; the
 # separator that follows it may be the canonical colon, a dash the lens wrote instead,
@@ -541,15 +620,15 @@ SWING_HEAD_RE = re.compile(
     re.I | re.S)
 
 
-# The sanctioned annotations of P-26 (states.md -> "The arbiter's two effects"): the
-# arbiter appends them to the cell it just reclassified. They are METADATA ABOUT the
+# The sanctioned annotations the arbiter appends to a cell it reclassified: P-26 on SUs
+# written before handoff-v1 (read, never rewritten), P-1/P-21 since. They are METADATA ABOUT the
 # row -- and the first of them quotes the very declaration it says is missing ("nao
 # cita `M-n` nem declara TO-BE DIVERGENCE"), so a presence match over the whole cell
 # reads the audit note as the declaration (DEF-P2-01). Everything from the marker on
 # is annotation; the body is what comes before.
 ARB_ANNOT_RE = re.compile(
     r"\s*(?:\u2014|\u2013|--|-)?\s*"
-    r"(?:reclassificad[oa]|criticidade\s+baixada)\s+P-26\s*"
+    r"(?:reclassificad[oa]|criticidade\s+baixada)\s+P-(?:1|21|26)\s*"
     r"\(\s*[A-Z]{1,2}-\d{1,3}\s*\)\s*:",
     re.I | re.U)
 
@@ -626,16 +705,19 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 break
         if state is None:
             continue
-        canon = [canon_header(h) for h in tbl.headers]
+        canon = [QUESTION_ALIASES.get(norm_key(h), canon_header(h))
+                 if state in QUESTION_SECTIONS else canon_header(h) for h in tbl.headers]
         seen_columns.update(canon)
         meta = sections.setdefault(
             state,
-            {"open": 0, "resolved": 0, "retirada": 0, "columns": tbl.headers, "prefixes": []},
+            {"open": 0, "resolved": 0, "retirada": 0, "estacionada": 0,
+             "columns": tbl.headers, "prefixes": []},
         )
         for line_no, cells in tbl.rows:
             rec = {k: "" for k in ("id", "lens", "claim", "support", "extra",
                                    "criticidade", "verificado_em", "validade",
-                                   "custo", "swing", "ronda")}
+                                   "custo", "swing", "ronda", "tipo", "impacto", "ambito",
+                                   "fecho", "bloqueio", "referencias", "quem_decide")}
             raw_map: dict[str, str] = {}
             for key, head, cell in zip(canon, tbl.headers, cells):
                 raw_map[head] = cell
@@ -653,6 +735,21 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                     resolved = True
                 else:
                     retired, retired_reason = False, ""
+            parked, parked_reason = detect_parking(cells)
+            if parked and not retired:
+                if state in QUESTION_SECTIONS and parked_reason:
+                    resolved = True
+                else:
+                    if state in QUESTION_SECTIONS:
+                        diagnostics.append({
+                            "level": "warn", "where": "shared-understanding.md",
+                            "line": line_no,
+                            "message": "{}: `estacionada` sem motivo -- nao conta como "
+                                       "estacionada; continua aberta".format(
+                                           rec["id"].strip())})
+                    parked, parked_reason = False, ""
+            else:
+                parked, parked_reason = False, ""
             crit, crit_raw = norm_criticidade(rec["criticidade"])
             swing_class, swing_text, swing_form = parse_swing(rec["swing"])
             if swing_form in ("separador", "nao-lida"):
@@ -663,6 +760,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
             meta["resolved" if resolved else "open"] += 1
             if retired:
                 meta["retirada"] += 1
+            if parked:
+                meta["estacionada"] += 1
             rows.append({
                 "id": row_id,
                 "state": state,
@@ -695,6 +794,21 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 "resolved_to": targets,
                 "retired": retired,
                 "retired_reason": retired_reason,
+                "parked": parked,
+                "parked_reason": parked_reason,
+                # handoff-v1 question fields (empty on a SU without those columns)
+                # Conflicted has no `tipo`: any admission column marks the handoff-v1 schema
+                "handoff_cols": bool({"tipo", "fecho"} & set(canon)),
+                "tipo": norm_key(re.sub(r"[*`]", "", rec["tipo"])).replace(" ", "_"),
+                "impacto_raw": rec["impacto"].strip(),
+                "impacto_aspectos": parse_impacto(rec["impacto"])[0],
+                "impacto_texto": parse_impacto(rec["impacto"])[1],
+                "impacto_forma": parse_impacto(rec["impacto"])[2],
+                "ambito": rec["ambito"].strip(),
+                "fecho": rec["fecho"].strip(),
+                "bloqueio": norm_key(re.sub(r"[*`]", "", rec["bloqueio"])).replace(" ", "_"),
+                "referencias": rec["referencias"].strip(),
+                "quem_decide": rec["quem_decide"].strip(),
                 "was": WAS_RE.findall(rec["claim"] or ""),
                 "expired": False,
                 "expires_on": "",
@@ -740,7 +854,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
 
     for s in SECTIONS:
         sections.setdefault(
-            s, {"open": 0, "resolved": 0, "retirada": 0, "columns": [], "prefixes": []}
+            s, {"open": 0, "resolved": 0, "retirada": 0, "estacionada": 0, "columns": [],
+                "prefixes": []}
         )
 
     # An id is the engagement's unit of reference: a deliverable, a decision, a
@@ -776,7 +891,7 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                               "foi recuperada e o texto preservado; corrigir o separador"),
         "nao-lida": ("warn", "swing nao abre por `decisivo`/`dimensionante`/`cosmetico` -- "
                              "classificacao NAO avaliada (nao foi inventada) e o texto ficou "
-                             "inteiro; as declaracoes P-26 continuam a ser lidas do texto"),
+                             "inteiro; as alternativas e o referente continuam a ser lidos do texto"),
     }
     for forma, hits in swing_anomalies.items():
         level, msg = SWING_DIAG[forma]
@@ -1036,9 +1151,10 @@ def critical_open(rows: list[dict]) -> list[dict]:
 
 
 # ------------------------------------------------ Confirmed locator (P-12)
-# One implementation, two consumers: the `sem locator` facet below and the
-# .claude/hooks/su-confirmed-guard.py hook, which imports this module. The regex
-# lives here and nowhere else.
+# One implementation, several consumers: the `sem locator` facet below, and — before a
+# write — `workflow.su_problems`, used by the pre-authority-guard hook (tool writes) and by
+# `resolve.py publish` (coordinator writes). The regex lives here and nowhere else.
+# (`su-confirmed-guard.py`, the old post-write warner, was retired in handoff-v1 F2, Q4.)
 #
 # The five classes are `library/kernel/states.md` -> *Confirmed threshold* rule 1
 # (the fifth -- a persisted direct extraction -- was added after the R-05 validation).
@@ -1113,11 +1229,18 @@ def locator_classes(text: str) -> list[str]:
     return [name for name, rx in LOCATOR_PATTERNS if rx.search(txt)]
 
 
-def evidence_targets(eng: Path) -> dict:
+def evidence_targets(eng: Path, overlay: dict | None = None) -> dict:
     """What the engagement actually holds, so a locator can be resolved and not just
     matched. `inputs/` and `_capture/` by file name; `answers.md` by section anchor
     (states.md rule 1: first segment of the heading before ' - ', spaces as hyphens);
-    `enquadramento.md` by `M-n`."""
+    `enquadramento.md` by `M-n`.
+
+    `overlay` (handoff-v1 F2): `{rel: text}` of files about to be published in the SAME
+    coordinator operation as the rows being audited — a birth that writes
+    `enquadramento.md` and its `M-n` rows together, an answer that writes its section and
+    the row citing it. Their anchors are read from the new text, never from disk.
+    Only `answers.md`, `enquadramento.md` and `context.json` are read this way."""
+    ov = overlay or {}
     names: set[str] = set()
     for sub in ("inputs", "_capture"):
         d = eng / sub
@@ -1128,7 +1251,8 @@ def evidence_targets(eng: Path) -> dict:
                 names.add(p.name.lower())
                 names.add(deaccent(p.name).lower())
     anchors: set[str] = set()
-    for line in (_read(eng / "answers.md") or "").splitlines():
+    for line in (ov.get("answers.md") if "answers.md" in ov
+                 else (_read(eng / "answers.md") or "")).splitlines():
         if not line.startswith("#"):
             continue
         head = line.lstrip("#").strip().strip("*` ")
@@ -1137,7 +1261,8 @@ def evidence_targets(eng: Path) -> dict:
             a = head.replace(" ", "-")
             anchors.add(a.lower())
             anchors.add(deaccent(a).lower())
-    enq = _read(eng / "enquadramento.md") or ""
+    enq = ov["enquadramento.md"] if "enquadramento.md" in ov \
+        else (_read(eng / "enquadramento.md") or "")
     # The theme anchors `aisa-start` writes: `## T1 · actors` answers both `#T1` and
     # the full slug. Same rule as answers.md -- the first segment of the heading.
     enq_anchors: set[str] = set()
@@ -1151,18 +1276,36 @@ def evidence_targets(eng: Path) -> dict:
                 a = form.replace(" ", "-")
                 enq_anchors.add(a.lower())
                 enq_anchors.add(deaccent(a).lower())
+    # Decision blocks (`## D-NNN — …`): the target of a `D-NNN` row's own locator
+    # (states.md → *Confirmed threshold*, the decision-record rule).
+    dec = ov["decisions.md"] if "decisions.md" in ov \
+        else (_read(eng / "decisions.md") or "")
+    decision_ids = {m.upper() for m in re.findall(r"(?m)^#{1,4}\s*\**\s*(D-\d+)\b", dec)}
+    # The approvals among them (frame, solution, blueprint) — the only blocks an
+    # `[ÂMBITO AUTORIZADO]` row may cite (states.md rule 3; maintainer decision Q6).
+    approval_ids = {b["id"].upper() for b in classify_decisions(dec)
+                    if b["kind"] in ("frame", "solution", "blueprint-approval")}
     ctx_path = eng / "context.json"
-    ctx_raw = _read(ctx_path)
-    ctx = _read_json(ctx_path)
+    if "context.json" in ov:
+        ctx_raw = ov["context.json"]
+        try:
+            ctx = json.loads(ctx_raw)
+        except ValueError:
+            ctx = None
+    else:
+        ctx_raw = _read(ctx_path)
+        ctx = _read_json(ctx_path)
     return {
         "files": names,
+        "decision_ids": decision_ids,
+        "approval_ids": approval_ids,
         "answers_anchors": anchors,
-        "has_answers": (eng / "answers.md").is_file(),
+        "has_answers": "answers.md" in ov or (eng / "answers.md").is_file(),
         "enq_ids": set(re.findall(r"\bM-\d+\b", enq)),
         "enq_anchors": enq_anchors,
-        "has_enq": (eng / "enquadramento.md").is_file(),
+        "has_enq": "enquadramento.md" in ov or (eng / "enquadramento.md").is_file(),
         "context": ctx,
-        "has_context": ctx_path.is_file(),
+        "has_context": "context.json" in ov or ctx_path.is_file(),
         # a file that exists and does not parse is NOT the same as a missing one: the
         # locator points somewhere real that nothing can be read from.
         "context_broken": bool(ctx_raw) and not ctx,
@@ -1272,11 +1415,38 @@ def locator_target_gaps(text: str, classes: list[str], tgt: dict) -> list[str]:
     return gaps
 
 
+DECISION_ROW_RE = re.compile(r"^D-\d+$")
+AUTHORIZED_SCOPE_RE = re.compile(r"\[(?:ÂMBITO|AMBITO) AUTORIZADO\]", re.I)
+DECISION_CITE_RE = re.compile(r"decisions\.md#(D-\d+)\b", re.I)
+
+CAPTURE_RUN_RE = re.compile(r"\brun\s+(\d+)\b")
+
+
+def capture_run(eng: Path, state: dict | None = None) -> int:
+    """How many L2 capture passes ran — derived from `_capture/_capture-log.md`, never
+    stored (handoff-v1 F2: `aisa-capture` no longer writes `_state.json`). The highest
+    `run N` of an `L2` line wins; an engagement written before this rule may still carry
+    `_state.json.capture_run`, read as a floor."""
+    best = 0
+    for line in (_read(Path(eng) / "_capture" / "_capture-log.md") or "").splitlines():
+        if "L2" not in line:
+            continue
+        for m in CAPTURE_RUN_RE.finditer(line):
+            best = max(best, int(m.group(1)))
+    try:
+        legado = int((state or {}).get("capture_run") or 0)
+    except (TypeError, ValueError):
+        legado = 0
+    return max(best, legado)
+
+
 def audit_confirmed_locators(rows: list[dict], eng: Path,
-                             only_ids: set[str] | None = None) -> dict:
+                             only_ids: set[str] | None = None,
+                             overlay: dict | None = None) -> dict:
     """P-12 deterministic half. Open `Confirmed` rows without a resolvable locator.
-    `only_ids` narrows it to the rows a single write touched (the hook's use)."""
-    tgt = evidence_targets(eng)
+    `only_ids` narrows it to the rows a single write touched (the hook's use);
+    `overlay` resolves targets published in the same operation (`evidence_targets`)."""
+    tgt = evidence_targets(eng, overlay)
     sem: list[dict] = []
     alvo: list[dict] = []
     excepcao: list[str] = []
@@ -1289,6 +1459,44 @@ def audit_confirmed_locators(rows: list[dict], eng: Path,
             continue
         total += 1
         text = " ".join((r.get("support") or "", r.get("extra") or ""))
+        if DECISION_ROW_RE.match(r["id"] or ""):
+            # A `D-NNN` row points at an authorised choice, not at a fact: its one locator
+            # is its own record, `decisions.md#D-NNN`, and the block must exist. Only D-
+            # ids take this path — a fact never confirms itself by citing decisions.md.
+            por_classe["decision"] = por_classe.get("decision", 0) + 1
+            if ("decisions.md#" + r["id"]).lower() not in text.lower():
+                sem.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                            "motivo": "linha de decisao sem `decisions.md#{}`".format(
+                                r["id"])})
+            elif r["id"].upper() not in tgt["decision_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["decision"],
+                             "motivo": "decisions.md sem o bloco {}".format(r["id"])})
+            else:
+                ok += 1
+            continue
+        escopo = AUTHORIZED_SCOPE_RE.search(" ".join((r.get("claim") or "", text)))
+        cita = DECISION_CITE_RE.search(text)
+        if escopo and cita:
+            # states.md rule 3 (Q6): a fact of the ENGAGEMENT itself — authorised scope, a
+            # registration decision — confirmed by the executor and marked as such. Its
+            # locator is the approval that authorised it; the block must exist and be an
+            # approval (frame, solution, blueprint). Without the mark, citing
+            # `decisions.md` is not evidence of anything.
+            por_classe["authorized-scope"] = por_classe.get("authorized-scope", 0) + 1
+            did = cita.group(1).upper()
+            if did not in tgt["decision_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["authorized-scope"],
+                             "motivo": "decisions.md sem o bloco {}".format(did)})
+            elif did not in tgt["approval_ids"]:
+                alvo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                             "classes": ["authorized-scope"],
+                             "motivo": "{} nao e uma aprovacao (frame, solucao ou "
+                                       "desenho)".format(did)})
+            else:
+                ok += 1
+            continue
         classes = locator_classes(text)
         if not classes:
             if LOCATOR_EXCEPTION.search(text):
@@ -1344,9 +1552,11 @@ ENQ_LENS = "enquadramento"
 # contra estes três -- dois vivos sob a regra e um anterior a ela -- e nunca só contra o
 # template. Foi a ausência desta disciplina que produziu os quatro defeitos que a
 # validação de R-05 apanhou (step-9c §5.2.1).
-CALIBRACAO = ("pricing-marinha-pilot-3", "dpt-galp-jp", "cae-automation")
+# Os três pilotos privados em que estes padrões foram calibrados. Os nomes dos engagements
+# ficam no repositório privado (handoff-v1 F2, higiene H2); aqui só o papel de cada um.
+CALIBRACAO = ("piloto de pricing (3.ª iteração)", "piloto de triagem de pedidos",
+              "piloto de automação")
 
-ARB_M_RE = re.compile(r"\bM-\d+\b")
 # P-1, terceira declaração: um `decisivo` nomeia o referente que a resposta elimina ou
 # mantém vivo. Vivia no script de comparação -- duas casas para a mesma regra divergem.
 ARB_REF_RE = re.compile(
@@ -1388,24 +1598,6 @@ def funding_term(text: str) -> str | None:
         return None
     # deaccent preserva o comprimento nos acentos latinos, logo o span mapeia de volta
     return raw[m.start():m.end()] if len(flat) == len(raw) else m.group(0)
-# P-26, terceira declaracao: qual dos OITO eixos tecnicos muda com cada resposta.
-# Generoso por desenho -- aqui um falso positivo seria assinalar uma linha que declara
-# o eixo por palavras que o regex nao conhece, e essa e a troca que este ficheiro nao
-# aceita (ver `falsos_negativos`). Le-se so a frase do `swing`: e ai que a regra poe a
-# declaracao.
-ARB_AXIS_RE = re.compile(
-    r"\btecnologia\b|\bplataforma\b|\bproduto\b"                     # tecnologia
-    r"|\bpadr[ãa]o\b|\barquitec?tura\b|\bdesenho da solu"           # padrão arquitetural
-    r"|\bcomponente|\bconector|\bm[óo]dulo|\bintegra[çc][ãa]o\b"      # componentes
-    r"|\bmodelo de dados\b|\bentidade|\besquema\b|\bschema\b|\btabela"
-    r"|\bcampo|\bchave\b"                                            # modelo de dados
-    r"|\bpermiss|\bRBAC\b|\bacesso|\bautoriza|\bperfil"                # imposição de
-    r"|\bimposi[çc][ãa]o\b|\bpartilha\b"                             # permissões
-    r"|\besfor[çc]o|\bdimension|\bordem de grandeza\b|\btamanho\b"     # esforço de
-    r"|\b[âa]mbito\b"                                                # alto nível
-    r"|\bcusto|\blicen[çc]|\bpre[çc]o|\bor[çc]ament"              # custo
-    r"|\brisco",                                                      # risco técnico
-    re.I | re.U)
 # ">= 2 named answers" -- the three shapes the swing phrase uses in live SUs
 ARB_ALT_RE = re.compile(
     r"\(\s*a\s*\)[^|]{2,400}?\(\s*b\s*\)"       # "(a) ... (b)" -- what live SUs write
@@ -1413,7 +1605,7 @@ ARB_ALT_RE = re.compile(
     r"|\bvs\.?\b|\bversus\b"                    # "A vs B"
     # "se ..., se ...": a janela era `[^|;]{2,80}` -- um ponto-e-virgula entre os dois
     # ramos, ou um ramo com mais de 80 caracteres, dava FALSO POSITIVO. Aconteceu 7 vezes
-    # em pricing-bunkers R-01 (council-log) e voltou em pilot-3 R-05 com P-26, onde a
+    # num piloto, R-01 (council-log), e voltou noutro, R-05, com P-26, onde a
     # conjuncao o torna consequente: sob a regra antiga a linha passava por citar `M-n`.
     # A janela larga alinha com a do "(a) ... (b)" e troca falsos positivos por falsos
     # negativos -- a troca que este ficheiro aceita.
@@ -1423,13 +1615,8 @@ ARB_ALT_RE = re.compile(
     re.I | re.U | re.S)
 
 
-# P-26 declaracao (i), segunda forma admissivel (veredicto do dono, 2026-09-10).
-# Marcador de CONJUNTO FECHADO e NAO TRADUZIDO, pela mesma razao que os quatro de G1:
-# a SU sai na lingua do pacote e uma frase traduzida faz o teste passar em falso.
-# Presenca, nunca verdade -- o que o marcador anuncia le-se, nao se verifica aqui.
-ARB_TOBE_RE = re.compile(r"TO-BE DIVERGENCE")
-
-# P-26, segunda declaracao: as formas do portugues real que ARB_ALT_RE nao cobria.
+# Alternativas de uma `design_choice` (era a segunda declaracao do P-26): as formas do
+# portugues real que ARB_ALT_RE nao cobria.
 #
 # DEF-P1-03: as 8 perguntas de P1 R-01 nomeiam duas respostas em ORACOES PARALELAS
 # separadas por ponto-e-virgula -- "traducao implica conteudo com variantes de lingua;
@@ -1437,7 +1624,7 @@ ARB_TOBE_RE = re.compile(r"TO-BE DIVERGENCE")
 # assinaladas como nao nomeando duas. A regra universal `tem ; => duas alternativas`
 # nao serve: o mesmo ponto-e-virgula separa, noutras linhas, duas consequencias da
 # MESMA resposta ("acrescenta relogio, alerta e medicao; move `modelo de dados`"), e
-# ja tinha dado 7 falsos positivos em pricing-bunkers R-01.
+# ja tinha dado 7 falsos positivos num piloto (R-01).
 #
 # O que se reconhece e a ESTRUTURA, nao o sentido: dois ramos, cada um com o seu
 # antecedente. Um ramo vale quando abre por uma condicao (`sem ...`, `se ...`, `com
@@ -1555,129 +1742,106 @@ def declara_alternativas(texto: str) -> str:
     return "nao"
 
 
-def arbiter_declarations(rows: list[dict], ronda: str | None = None,
-                        has_enq: bool = True) -> dict:
-    """P-1 + P-26 support. Per open `Unknown`, the THREE declarations the row owes,
-    as a conjunction: does it cite an `M-n` (only owed where `enquadramento.md`
-    exists), does its `swing` phrase name >= 2 answers, and does that phrase name
-    which technical axis moves? `ronda` narrows it to the round just run.
+def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
+    """handoff-v1 admission support (states.md -> Admission of a question). Per open
+    `Unknown` / `Conflicted` written with the admission columns: are the fields there and
+    readable? `ronda` narrows it to the round just run.
 
-    Declaration (i) has two admissible forms: cite an `M-n`, or carry the marker
-    `TO-BE DIVERGENCE`. The `M-n` waiver over declaration (iii) is gone (P-26):
-    citing an invariant is the context half and never the consequence half. Presence
-    only -- whether the axis named is the right one is the arbiter's reading, not
-    this function's."""
+    Presence only. Whether the question is material, whether the impact is true and whether
+    the alternatives are the real ones are the arbiter's reading (aisa-round step 5f), never
+    this function's. It never edits a row. A row written before the columns existed is
+    counted apart and never reclassified; a resolved, withdrawn or parked row is skipped.
+    A `fact_gap` owes no alternatives (T06); a `design_choice` owes >= 2, read from the
+    `swing` phrase with the same detector as before."""
     sem: list[dict] = []
+    sem_impacto: list[dict] = []
     sem_ref: list[dict] = []
-    sem_m: list[dict] = []
-    sem_eixo: list[dict] = []
     sem_classe: list[dict] = []
     sem_alt_aval: list[dict] = []
     decisivas = 0
     total = 0
+    sem_colunas = 0
+    vazio = ("", "—", "-", "--")
     for r in rows:
-        if r["state"] != "Unknown" or r["resolved"]:
+        if r["state"] not in QUESTION_SECTIONS or r["resolved"]:
             continue
         if ronda and r["ronda"] != ronda:
             continue
-        total += 1
-        # DEF-P2-01: the metadata of a reclassification never sustains the declaration
-        # it audits. Body only -- the annotation is preserved on the row and in the
-        # file, and is simply not evidence of anything the row declares.
-        body = r.get("swing_body", r.get("swing_text") or "")
-        text = " ".join((split_annotation(r.get("claim") or "")[0], body,
-                         split_annotation(r.get("support") or "")[0]))
-        cita_m = bool(ARB_M_RE.search(text))
-        tobe = bool(ARB_TOBE_RE.search(text))
-        alt = declara_alternativas(body)
-        duas = alt == "sim"
-        if alt == "nao-avaliado":
-            sem_alt_aval.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                                 "motivo": "forma comparativa -- >= 2 respostas nao avaliado"})
-        eixo = bool(ARB_AXIS_RE.search(body))
-        if r.get("swing_form") == "nao-lida":
-            # DEF-P4-01: the class could not be read. It is not `decisivo` and it is
-            # not `cosmetico` either -- it is unknown, and says so in its own list
-            # instead of silently joining a count.
-            sem_classe.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                               "motivo": "classe do swing nao avaliada (forma nao suportada)"})
-        if r["swing_class"] == "decisivo":
-            decisivas += 1
-            if not ARB_REF_RE.search(text):
-                sem_ref.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                                "motivo": "`decisivo` sem referente nomeado"})
-        if not cita_m and not tobe:
-            sem_m.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"]})
-        if not eixo:
-            sem_eixo.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                             "swing_class": r["swing_class"],
-                             "swing_inferred": r["swing_inferred"],
-                             "motivo": "o swing nao nomeia o eixo tecnico que muda"})
-        # P-26: conjuncao. A declaracao (i) so e devida ao motor quando ha
-        # enquadramento declarado, e satisfaz-se por qualquer das duas formas.
-        em_falta = []
-        if has_enq and not (cita_m or tobe):
-            em_falta.append("nao cita M-n nem declara TO-BE DIVERGENCE")
-        # `nao-avaliado` nao entra em falta: nao se prova ausencia com uma forma que
-        # o motor admite nao saber ler.
-        if alt == "nao":
-            em_falta.append("o swing nao nomeia >= 2 respostas")
-        if not eixo:
-            em_falta.append("o swing nao nomeia o eixo tecnico que muda")
-        if not em_falta:
+        if not r.get("handoff_cols"):
+            sem_colunas += 1
             continue
-        sem.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
-                    "swing_class": r["swing_class"],
-                    "swing_inferred": r["swing_inferred"],
-                    "motivo": " + ".join(em_falta)})
+        total += 1
+        pergunta = r["state"] == "Unknown"
+        em_falta = []
+        if pergunta and r.get("tipo") not in QUESTION_TYPES:
+            em_falta.append("tipo ausente ou fora de " + "/".join(QUESTION_TYPES))
+        if r.get("impacto_forma") != "canonica":
+            sem_impacto.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                "forma": r.get("impacto_forma", ""),
+                                "motivo": "o impacto nao nomeia um aspecto legivel"})
+            em_falta.append("impacto sem aspecto legivel")
+        if r.get("ambito", "").strip() in vazio:
+            em_falta.append("sem ambito afectado")
+        papel = r["support"] if pergunta else r.get("quem_decide", "")
+        if (papel or "").strip() in vazio:
+            em_falta.append("sem quem responde" if pergunta else "sem quem decide")
+        if r.get("fecho", "").strip() in vazio:
+            em_falta.append("sem condicao de fecho")
+        if r.get("bloqueio") not in BLOCKING_CLASSES + ("—", "-"):
+            em_falta.append("bloqueio ausente ou fora de " + "/".join(BLOCKING_CLASSES) + "/—")
+        if r.get("referencias", "").strip() in vazio:
+            em_falta.append("sem referencias")
+        body = r.get("swing_body", r.get("swing_text") or "")
+        if pergunta and r.get("tipo") == "design_choice":
+            alt = declara_alternativas(body)
+            if alt == "nao":
+                em_falta.append("design_choice sem >= 2 alternativas no swing")
+            elif alt == "nao-avaliado":
+                # nao se prova ausencia com uma forma que o motor admite nao saber ler
+                sem_alt_aval.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                     "motivo": "forma comparativa -- alternativas nao avaliadas"})
+        if pergunta:
+            if r.get("swing_form") == "nao-lida":
+                sem_classe.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                   "motivo": "classe do swing nao avaliada (forma nao suportada)"})
+            if r["swing_class"] == "decisivo":
+                decisivas += 1
+                text = " ".join((split_annotation(r.get("claim") or "")[0], body))
+                if not ARB_REF_RE.search(text):
+                    sem_ref.append({"id": r["id"], "lens": r["lens"], "ronda": r["ronda"],
+                                    "motivo": "`decisivo` sem referente nomeado"})
+        if em_falta:
+            sem.append({"id": r["id"], "state": r["state"], "lens": r["lens"],
+                        "ronda": r["ronda"], "tipo": r.get("tipo", ""),
+                        "motivo": " + ".join(em_falta)})
     return {
         "avaliadas": total,
-        # a pre-v2.3 SU has no `swing` column at all: every row lands here for a
-        # reason the arbiter cannot act on. Say how many, so nobody reads it as a
-        # finding (states.md -> Compatibility).
-        "sem_coluna_swing": sum(1 for x in sem if x["swing_inferred"]),
+        # SUs written before handoff-v1 have no admission columns: nothing to act on.
+        "sem_colunas_handoff": sem_colunas,
         "sem_declaracao": sem,
+        # the arbiter PARKS these (no demonstrable impact); the rest go back to the writer
+        "sem_impacto": sem_impacto,
         "decisivas": decisivas,
-        # DEF-P4-01: rows whose swing class the motor could not read. `decisivas` is a
-        # count of rows READ as decisive, so these are neither in it nor against it.
         "classe_nao_avaliada": sem_classe,
-        # DEF-P1-03: formas em que o motor nao decide se ha duas respostas. Nem contam
-        # como declaradas, nem como em falta -- contam como por ler.
         "alternativas_nao_avaliadas": sem_alt_aval,
         "decisivo_sem_referente": sem_ref,
-        # P-0: quais nao satisfazem (i) por nenhuma das duas formas. Nao e falha por
-        # si onde nao ha enquadramento -- e a lista existe para alguem LER se alguma
-        # pergunta o porque que um `M-n` ja responde.
-        "sem_citacao_m": sem_m,
-        # P-26, terceira declaracao isolada: uteis separadas porque e a que quase
-        # nenhuma linha anterior a regra carrega, e misturada com as outras duas
-        # deixaria de se ver quantas mudaram de estado por causa DESTA.
-        "sem_eixo": sem_eixo,
-        # Mesma razao que `sem_coluna_swing`: numa SU pre-v2.3 nao ha coluna `swing`,
-        # logo NENHUMA linha pode nomear o eixo -- contar isso como falta de declaracao
-        # seria ler como achado o que e ausencia de esquema. Diz-se quantas sao.
-        "sem_eixo_sem_coluna": sum(1 for x in sem_eixo if x["swing_inferred"]),
-        "conjuncao": ("P-26: as tres declaracoes sao devidas em conjunto; citar `M-n` "
-                      "nao dispensa nomear o eixo tecnico. A (i) satisfaz-se por `M-n` "
-                      "ou pelo marcador `TO-BE DIVERGENCE` (veredicto do dono, 2026-09-10)"),
-        "enquadramento_declarado": has_enq,
         "ids": [x["id"] for x in sem] + [x["id"] for x in sem_ref],
+        "regra": ("handoff-v1 (states.md -> Admission of a question): a resposta muda pelo "
+                  "menos um de cinco aspectos, e a linha traz tipo, impacto, ambito, quem "
+                  "responde, fecho, bloqueio e referencias. fact_gap nao deve alternativas; "
+                  "design_choice deve >= 2 no swing"),
+        "aspectos": sorted(set(IMPACT_ASPECTS.values())),
         "regex": {
-            "m_n": ARB_M_RE.pattern,
-            "to_be": ARB_TOBE_RE.pattern,
             "alternativas": ARB_ALT_RE.pattern,
             "referente": ARB_REF_RE.pattern,
-            "eixo": ARB_AXIS_RE.pattern,
         },
-        "falsos_negativos": ("ACEITES por desenho -- uma row que declare a divergencia "
-                             "em palavras que estes regex nao conhecem passa em silencio. "
-                             "Falsos POSITIVOS nao sao aceites: um motor que avisa a torto "
-                             "deixa de ser lido"),
-        "julgamento": ("o motor verifica PRESENCA de declaracao; se a pergunta e material, "
-                       "se o referente e o certo e se a classe do swing esta bem sao "
-                       "julgamento do arbitro (aisa-round step 5f). Lista vazia significa "
-                       "'nada em falta que este regex saiba ver', nunca 'aprovado'"),
-        "calibracao": list(CALIBRACAO),
+        "falsos_negativos": ("ACEITES por desenho -- um aspecto escrito com palavras fora "
+                             "das do plano fica `nao-lida` e e assinalado; o motor nao "
+                             "adivinha o aspecto. Falsos POSITIVOS nao sao aceites"),
+        "julgamento": ("o motor verifica PRESENCA dos campos; se a pergunta e material, se o "
+                       "impacto e verdadeiro e se as alternativas sao as reais sao julgamento "
+                       "do arbitro (aisa-round step 5f). Lista vazia significa 'nada em falta "
+                       "que o motor saiba ver', nunca 'aprovado'"),
     }
 
 
@@ -1795,6 +1959,7 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
     fechadas: dict[str, int] = {}
     sem_ronda = 0
     retiradas = 0
+    estacionadas = 0
     fonte = {"destino.ronda": 0, "destino.verificado_em": 0, "indeterminado": 0}
     indet: list[dict] = []
 
@@ -1808,6 +1973,10 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
         if r.get("retired"):
             # Withdrawn for scope: not an answer, so not a closure of any round (P-21).
             retiradas += 1
+            continue
+        if r.get("parked"):
+            # Parked for lack of demonstrable impact: nothing was answered either.
+            estacionadas += 1
             continue
         rnd = src_label = ""
         for tid in r["resolved_to"]:
@@ -1865,6 +2034,7 @@ def round_delta(rows: list[dict], round_dates: dict) -> dict:
     return {
         "por_ronda": por_ronda,
         "retiradas": retiradas,
+        "estacionadas": estacionadas,
         "abertas": sum(1 for r in unknowns if not r["resolved"]),
         "critical_abertas": sum(1 for r in unknowns
                                 if not r["resolved"] and r["criticidade"] == "Critical"),
@@ -2380,14 +2550,14 @@ def frame_sentence(md: str) -> str:
     approval is an approval OF.
 
     It lives under '## Single problem sentence', written either as a blockquote or in
-    bold: `pricing-marinha-pilot-1`, `kam-onboarding` and `cae-automation` all use bold,
+    bold: three pilot engagements all use bold,
     and the blockquote-only reader returned "" for all three -- no sentence on the page,
     and nothing to approve. Normalisation is deliberate and narrow, because this output
     is hashed (P-18/F05): quote markers, bold wrappers, horizontal rules and whitespace
     are presentation and must not change the identity; the words are the identity.
     """
     # Three real headings across the engagements: `## Single problem sentence`
-    # (kernel template), `### Frame sentence` (dpt-galp-jp). Reading only the first
+    # (kernel template), `### Frame sentence` (another pilot). Reading only the first
     # would call a framed engagement "no frame" and make its approval unverifiable.
     m = re.search(r"^#{2,4}\s+(?:Single problem sentence|Frame sentence)\s*$"
                   r"(.*?)(?=^#{1,4}\s|\Z)", md, re.M | re.S)
@@ -2517,7 +2687,7 @@ def parse_render_gaps(eng: Path) -> list[dict]:
 
 # ---------------------------------------------------- tolerant YAML extraction
 # A blueprint is authored by an LLM and is not guaranteed to be well-formed:
-# `pricing-marinha` v05 (an APPROVED version) fails yaml.safe_load at
+# a pilot's v05 (an APPROVED version) fails yaml.safe_load at
 # irreversible_choices. A strict parse would therefore lose the whole record for
 # the sections that ARE well-formed. So: no PyYAML, stdlib only, and a targeted
 # indentation walk that reads the keys the status view needs and skips the rest.
@@ -2892,7 +3062,7 @@ def _tw_bullets(body: str) -> tuple[list[dict], list[str]]:
     """(declared tripwires, unlabelled notes under the same heading).
 
     A bullet is a tripwire ONLY where it declares `TW-<n>:`. Auto-numbering the
-    rest fabricates tripwires: `pricing-marinha` D-002 carries a note saying the
+    rest fabricates tripwires: a pilot's D-002 carries a note saying the
     other premortem candidates were considered and deliberately NOT adopted, and
     numbering it TW-2 made the view announce a tripwire the decision declined.
     Notes are returned, never dropped -- they are just not tripwires."""
@@ -3819,7 +3989,7 @@ def _synth_cited_version(text: str) -> str:
 def synthesis_entries(log: str) -> list[dict]:
     """Every run recorded in _synthesis-log.md. Two shapes exist in real engagements:
     one line per topic (`<ts> — <topic> — ...`, the kernel's) and a `## Run N — <ts>`
-    heading followed by a `| topic | ... |` table (dpt-galp-jp). Both are read; a
+    heading followed by a `| topic | ... |` table (another pilot). Both are read; a
     topic token tolerates a suffix (`architecture-story (re-síntese, manual)`)."""
     entries: list[dict] = []
     run_ts = ""
@@ -5214,13 +5384,52 @@ def _options_blocks(options_md: str) -> list[str]:
     return re.findall(r"^###\s+(O-\d+)", options_md or "", re.M)
 
 
+def _lens_record_criterion(eng: Path, round_id: str) -> dict:
+    """handoff-v1 F3.4: a profile engagement leaves Discovery on the `lens` coverage record
+    of its last completed round (coverage-contract.md §4.8), never on a count of files.
+
+    The criterion holds when that record is VALID for that round. Freshness and review are
+    reported in the value, not failed on: an `/answer` after the round closed moves the SU
+    and makes the record stale, and a soft gate that went red on every answer would train
+    the owner to override it. The staleness stays visible; `/round` is the remedy."""
+    label = "as seis perspectivas registadas na última passagem (registo lens)"
+    if not round_id.startswith("R-") or round_id == "R-00":
+        return _g(label, "codigo", False, "nenhuma passagem fechada", "registo válido")
+    C = coverage_module()
+    if C is None:
+        return _g(label, "n/a", None, "", "registo válido",
+                  "motor de cobertura indisponível: " + _COVERAGE_ERR)
+    try:
+        st = C["lens_round_state"](eng, round_id, C["ReaderAdapter"](module=globals()))
+    except Exception as exc:                                            # noqa: BLE001
+        return _g(label, "n/a", None, "", "registo válido",
+                  "{}: {}".format(type(exc).__name__, exc))
+    inner = st.get("state") or {}
+    ok = (inner.get("contract_validity") == "valid"
+          and (inner.get("lens") or {}).get("round") == round_id)
+    value = "{} · {} · {}".format(
+        round_id, "actual" if inner.get("freshness") == "current" else
+        "desactualizado ({})".format(inner.get("freshness") or "-"),
+        "revisto" if st.get("reviewed") else "por rever")
+    return _g(label, "codigo", ok, value, "registo válido",
+              "; ".join(st.get("reasons") or []) or "coverage-contract.md §4.8")
+
+
 def _gate_discovery(eng: Path, model_bits: dict) -> list[dict]:
     rows = model_bits["rows"]
     confirmed = len(_open_rows(rows, "Confirmed"))
     unk = _critical(rows, "Unknown")
     con = _critical(rows, "Conflicted")
-    lenses = _lens_files(eng)
-    missing_lens = [k for k, v in lenses.items() if not v]
+    state = model_bits.get("state") or {}
+    if state.get("workflow"):
+        lens_criterion = _lens_record_criterion(eng, state.get("round") or "")
+    else:
+        lenses = _lens_files(eng)
+        missing_lens = [k for k, v in lenses.items() if not v]
+        lens_criterion = _g("6 lentes escreveram em lens-outputs/", "codigo", not missing_lens,
+                            "{}/6".format(6 - len(missing_lens)), "6/6",
+                            "presença de conteúdo mínimo (ficheiro com >= 1 id da SU), "
+                            "nunca qualidade")
     delta = model_bits["round_delta"].get("por_ronda") or []
     last = [d for d in delta if str(d.get("ronda", "")).startswith("R-")]
     last = last[-1] if last else None
@@ -5232,9 +5441,7 @@ def _gate_discovery(eng: Path, model_bits: dict) -> list[dict]:
            "uma pergunta descida a cosmético leva a criticidade com ela (states.md)"),
         _g("Conflicted Critical = 0", "codigo", not con,
            "{} ({})".format(len(con), ", ".join(r["id"] for r in con[:6]) or "-"), "0"),
-        _g("6 lentes escreveram em lens-outputs/", "codigo", not missing_lens,
-           "{}/6".format(6 - len(missing_lens)), "6/6",
-           "presença de conteúdo mínimo (ficheiro com >= 1 id da SU), nunca qualidade"),
+        lens_criterion,
         _g("a última passagem convergiu", "codigo",
            (last is None) or not last.get("sem_convergencia"),
            "-" if last is None else "{}: criadas {} · fechadas {}".format(
@@ -5359,8 +5566,7 @@ def _gate_options(eng: Path, model_bits: dict) -> list[dict]:
     rec = bool(re.search(r"(?mi)^##+\s+(recomenda|recommendation)", body))
     no_rec = "no recommendation" in body.lower() or "sem recomendação" in body.lower()
     return [
-        _g(">= 3 opções", "codigo", len(ids) >= 3,
-           "{} ({})".format(len(ids), ", ".join(ids) or "-"), ">= 3"),
+        _route_count_criterion(eng, ids),
         _g("cobertura DO-NOTHING declarada", "codigo", "DO-NOTHING" in log,
            "no log da ronda {}".format(rnd or "-"), "marcador presente"),
         _g("cobertura PROCESS-CHANGE declarada", "codigo", "PROCESS-CHANGE" in log,
@@ -5377,6 +5583,32 @@ def _gate_options(eng: Path, model_bits: dict) -> list[dict]:
         _g("decision-tree.md do pacote consultado", "n/a", None, "", "",
            "não há registo mecânico da consulta — não avaliável, nunca 'OK'"),
     ]
+
+
+def _route_count_criterion(eng: Path, ids: list) -> dict:
+    """handoff-v1 F5.4: the option count follows the route (`phases.md` → Options exit).
+    `solution-choice` asks for three, fewer only with `reduction_reason` in the published
+    candidates; `platform-constrained` and `change-impact` admit one. The historical
+    version (no `workflow`) keeps `>= 3`."""
+    try:
+        wf = json.loads((eng / "_state.json").read_text(encoding="utf-8")).get("workflow")
+    except (OSError, ValueError, AttributeError):
+        wf = None
+    detalhe = "{} ({})".format(len(ids), ", ".join(ids) or "-")
+    if not wf:
+        return _g(">= 3 opções", "codigo", len(ids) >= 3, detalhe, ">= 3")
+    route = wf.get("route") or "-"
+    try:
+        cand = json.loads((eng / "_design" / "candidates.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cand = {}
+    if route == "solution-choice":
+        motivo = bool(str(cand.get("reduction_reason") or "").strip())
+        return _g("opções da rota solution-choice", "codigo",
+                  len(ids) >= 3 or (len(ids) > 0 and motivo), detalhe,
+                  ">= 3, ou menos com o motivo da redução")
+    return _g("opções da rota {}".format(route), "codigo", len(ids) > 0, detalhe,
+              ">= 1 (um candidato viável admitido com o motivo)")
 
 
 def _option_segment(body: str, oid: str) -> str:
@@ -5466,6 +5698,7 @@ def gate_state(eng: Path, transition: str) -> dict:
         "round_delta": round_delta(rows, parse_round_dates(eng, st, _h)),
         "frame_identity": frame_identity(eng, classify_decisions(_read(eng / "decisions.md") or "")),
         "options_history": options_round_history(eng, st),
+        "state": st if isinstance(st, dict) else {},
     }
     g = gates(eng, transition, bits)
     fp = gate_fingerprint(eng, transition, bits, g["criteria"])
@@ -5711,12 +5944,13 @@ def build_model(eng: Path, today: date) -> dict:
             # finished. Empty string = no round open. Stale values (not ahead of `round`) are
             # dropped here so no consumer has to re-derive the rule.
             "round_in_progress": _open_round(state),
-            # Which perspectives already stamped the open passagem (header match, 1.8.0).
-            # Empty lists when no passagem is open.
-            "lentes_ronda_aberta": lenses_for_round(eng, _open_round(state)),
+            # Which perspectives already covered the open passagem (1.8.0; the `lens`
+            # record for a profile engagement since handoff-v1 F3.3). Empty lists when no
+            # passagem is open.
+            "lentes_ronda_aberta": lenses_for_round(eng, _open_round(state), state),
             "created": state.get("created", ""),
             "aisa_version": state.get("aisa_version", ""),
-            "capture_run": state.get("capture_run", 0),
+            "capture_run": capture_run(eng, state),
             "path": str(eng),
             "sponsor": su_header.get("sponsor", "") or (requester.get("name") or ""),
             "requester_role": requester.get("role", ""),
@@ -5768,8 +6002,7 @@ def build_model(eng: Path, today: date) -> dict:
         "round_delta": round_delta(rows, round_dates),
         "confirmed_locator": audit_confirmed_locators(rows, eng),
         "enquadramento": enquadramento_state(eng, rows),
-        "arbiter": arbiter_declarations(
-            rows, has_enq=(eng / "enquadramento.md").is_file()),
+        "arbiter": arbiter_declarations(rows),
         "funding_gate": funding_gate_audit(rows, context),
         "diagnostics": diagnostics,
     }
@@ -7866,9 +8099,9 @@ def lens_wrote_round(path: Path, round_id: str) -> bool:
 
     A lens appends `## R-NN — <lens>` (legacy files: `## R-NN (date)`,
     `## R-NN — date`). The match is on the heading line, never a substring of
-    the body: prose that says "vs R-02" is not R-02's output. One rule, read
-    by the guard (`pre-lens-order-check.py`), the round close test
-    (`aisa-round` 5a) and the model below."""
+    the body: prose that says "vs R-02" is not R-02's output. Since handoff-v1
+    F3.3 this is the reading of the historical version only (`lenses_for_round`);
+    a profile engagement closes its passagem by the `lens` coverage record."""
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -7877,25 +8110,57 @@ def lens_wrote_round(path: Path, round_id: str) -> bool:
     return bool(pat.search(text))
 
 
-def lenses_for_round(eng: Path, round_id: str) -> dict:
-    """Discovery lenses that stamped `round_id` vs the ones still missing.
+def lenses_for_round(eng: Path, round_id: str, state: dict | None = None) -> dict:
+    """Discovery perspectives that covered `round_id` vs the ones still missing.
 
     `{"ronda": "R-02", "corridas": [...], "em_falta": [...]}`; empty lists and
     `ronda == ""` when no round is given. Order is the habitual one of
-    `phases.md`, purely for display -- `/round <lens>` may run any lens alone."""
+    `phases.md`, purely for display.
+
+    A profile engagement (`_state.json.workflow`, handoff-v1 F3.3) reads the `lens`
+    coverage record of the passagem (coverage-contract.md §4.8): one integrated analysis
+    covers the six or none, so `corridas` is the six or nothing. Four more keys say what
+    the record proves: `fonte`, `fecha` (valid and current for this passagem), `revista`
+    (and the independent reading is complete, with no untreated perspective) and
+    `motivos`. The historical version keeps the section headers of `lens-outputs/`."""
     if not round_id:
         return {"ronda": "", "corridas": [], "em_falta": []}
+    if (state or {}).get("workflow"):
+        return _lenses_from_record(eng, round_id)
     ran = [l for l in DISCOVERY_LENSES
            if lens_wrote_round(eng / "lens-outputs" / f"{l}.md", round_id)]
     return {"ronda": round_id, "corridas": ran,
             "em_falta": [l for l in DISCOVERY_LENSES if l not in ran]}
 
 
+def _lenses_from_record(eng: Path, round_id: str) -> dict:
+    """The profile half of `lenses_for_round`: the `lens` record, never the headers."""
+    out = {"ronda": round_id, "corridas": [], "em_falta": list(DISCOVERY_LENSES),
+           "fonte": "registo lens", "fecha": False, "revista": False, "motivos": []}
+    if not any((eng / "_coverage").glob("coverage_v*.json")):
+        out["motivos"] = ["sem registo de cobertura das perspectivas"]
+        return out
+    C = coverage_module()
+    if C is None:
+        out["motivos"] = ["motor de cobertura indisponível: " + _COVERAGE_ERR]
+        return out
+    try:
+        st = C["lens_round_state"](eng, round_id, C["ReaderAdapter"](module=globals()))
+    except Exception as exc:                                            # noqa: BLE001
+        out["motivos"] = ["{}: {}".format(type(exc).__name__, exc)]
+        return out
+    if ((st.get("state") or {}).get("lens") or {}).get("round") == round_id:
+        out["corridas"] = [l for l in DISCOVERY_LENSES if l in (st.get("dimensions") or {})]
+        out["em_falta"] = [l for l in DISCOVERY_LENSES if l not in out["corridas"]]
+    out.update(fecha=bool(st.get("closes")), revista=bool(st.get("reviewed")),
+               motivos=list(st.get("reasons") or []))
+    return out
+
+
 def _open_round(state: dict) -> str:
     """The round an open `/round` is filling, "" when none is.
 
-    Mirrors `.claude/hooks/pre-lens-order-check.py::in_progress_round`: a
-    `round_in_progress` equal to or behind `round` is a leftover from a closed
+    A `round_in_progress` equal to or behind `round` is a leftover from a closed
     round (phase transition, hand edit) and is not an open round."""
     open_round = (state.get("round_in_progress") or "").strip()
     if not open_round:

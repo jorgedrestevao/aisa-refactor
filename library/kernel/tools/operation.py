@@ -57,12 +57,28 @@ ORDEM (B2)
 
 O marcador é escrito ANTES de qualquer publicação e retirado DEPOIS do recibo. Entre os
 dois, qualquer leitor vê pendência e recusa-se a declarar sucesso.
+
+READ-SET (handoff-v1 F2, D08)
+
+`expected` só cobre o que se escreve. Uma decisão também depende do que se LEU sem
+escrever — o blueprint que uma resposta cita, a SU que um espelho de outro ficheiro
+supõe — e até aqui esse input não podia ser pré-condição: declarado em `expected`, fora
+do conjunto de escrita, dava `BASE_CHANGED` com `actual=''`. `read_set` é esse input:
+verificado sob o lock, antes do staging; mudou → `STALE_INPUT`, nada preparado, nada
+publicado, e o rascunho de quem chamou fica como estava.
+
+CÓDIGOS ESTÁVEIS
+
+Os códigos de origem ficam (os testes e os leitores antigos dependem deles). Quem fala
+com o contrato `handoff-response/1` usa `stable_code`/`response_from_error`, que os
+traduz para os códigos estáveis mínimos do plano (02 §Respostas) e guardam o de origem.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -452,27 +468,148 @@ def read_receipt(eng: Path, op_id: str) -> dict | None:
     return _read_json(receipt_path(eng, op_id))
 
 
-def request_hash(write_set: dict) -> str:
-    """Identidade do PEDIDO. Mesmo id com payload diferente é erro (B2)."""
-    body = json.dumps({k: hashlib.sha256(v.encode("utf-8")).hexdigest()
-                       for k, v in sorted(write_set.items())},
-                      ensure_ascii=False, sort_keys=True)
+def request_hash(write_set: dict, read_set: dict | None = None) -> str:
+    """Identidade do PEDIDO. Mesmo id com payload diferente é erro (B2).
+
+    O `read_set` faz parte do pedido quando existe: o mesmo conteúdo publicado sobre
+    inputs diferentes é outra decisão. Sem ele, o hash é o de sempre — os recibos
+    escritos antes do read-set continuam a reconhecer-se."""
+    corpo = {k: hashlib.sha256(v.encode("utf-8")).hexdigest()
+             for k, v in sorted(write_set.items())}
+    if read_set:
+        corpo = {"write": corpo, "read": dict(sorted(read_set.items()))}
+    body = json.dumps(corpo, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+# Códigos de origem -> códigos estáveis do contrato (plan 02 §Respostas). O mínimo do
+# contrato não tem nome para «outro escritor está lá dentro agora»; `CONCURRENT_WRITE` é o
+# mesmo código que o bootstrap já usa para uma escrita durante a leitura.
+STABLE_CODES = {
+    "BASE_CHANGED": "STALE_INPUT", "STALE_INPUT": "STALE_INPUT",
+    "PENDING_EXISTS": "RECOVERY_REQUIRED", "PENDING_UNREADABLE": "RECOVERY_REQUIRED",
+    "THIRD_STATE": "RECOVERY_REQUIRED", "STAGING_INCOMPLETE": "RECOVERY_REQUIRED",
+    "STAGING_CORRUPT": "RECOVERY_REQUIRED", "INTENT_VERSION": "RECOVERY_REQUIRED",
+    "VERIFY_FAILED": "INTEGRITY_FAILURE", "RECEIPT_MISMATCH": "INTEGRITY_FAILURE",
+    "READ_SET_OVERLAP": "INTEGRITY_FAILURE",
+    "LOCK_ACTIVE": "CONCURRENT_WRITE", "LOCK_UNDETERMINED": "CONCURRENT_WRITE",
+    "LOCK_CONTENDED": "CONCURRENT_WRITE", "LOCK_UNREADABLE": "CONCURRENT_WRITE",
+    "UNSUPPORTED_PROFILE": "UNSUPPORTED_PROFILE",
+}
+
+NEXT_ACTION = {
+    "STALE_INPUT": "reler os inputs e refazer o rascunho sobre a base actual",
+    "RECOVERY_REQUIRED": "python library/kernel/tools/operation.py recover "
+                         "--engagement <slug>",
+    "INTEGRITY_FAILURE": "não repetir: inspeccionar o pedido e os bytes nomeados",
+    "CONCURRENT_WRITE": "repetir quando o outro escritor terminar "
+                        "(`operation.py status --engagement <slug>`)",
+    "UNSUPPORTED_PROFILE": "só leitura nesta versão",
+}
+
+
+def stable_code(code: str) -> str:
+    """O código estável de um código de origem. Desconhecido → `INTEGRITY_FAILURE`:
+    fechar é o lado seguro de um erro que ninguém classificou."""
+    return STABLE_CODES.get(code, "INTEGRITY_FAILURE")
+
+
+def response_from_error(exc: "OperationError", input_revision=None) -> dict:
+    """Envelope `handoff-response/1` de uma recusa do coordenador."""
+    codigo = stable_code(exc.code)
+    det = exc.detail or {}
+    afectados = sorted({str(p.get("path") if isinstance(p, dict) else p)
+                        for p in (det.get("paths") or [])}
+                       | ({str(det["path"])} if det.get("path") else set()))
+    return {"ok": False, "code": codigo,
+            "reasons": [{"detail": str(exc), "source": "operation",
+                         "source_code": exc.code}],
+            "affected_ids": afectados, "input_revision": input_revision,
+            "next_actions": [{"action": NEXT_ACTION.get(codigo, "resolver antes de "
+                                                                 "continuar"),
+                              "reason": str(exc)}]}
+
+
+# ------------------------------------------------------------------- segredos (T40)
+
+# handoff-v1 F6.5 (DESENHO Q4): conteúdo com um segredo não se publica. Padrões fechados e
+# estritos — um falso positivo em texto de negócio bloqueava trabalho legítimo. Uma
+# referência segura (cofre, variável, marcador) não é segredo e passa.
+SECRET_PATTERNS = (
+    ("private_key", re.compile(
+        r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")),
+    ("aws_access_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("github_token", re.compile(
+        r"\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b")),
+    ("slack_token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b")),
+    ("api_key_sk", re.compile(r"\bsk-(?:ant-)?[A-Za-z0-9_-]{32,}\b")),
+    ("bearer_token", re.compile(r"\bBearer\s+[A-Za-z0-9._~+/-]{30,}=*")),
+    ("connection_password", re.compile(
+        r"(?i)\b(?:password|pwd|passwd)\s*=\s*(?![<{$%`]|@Microsoft\.KeyVault|vault:|ref:)"
+        r"[^;\s'\"]{4,}")),
+)
+
+
+def find_secrets(text: str) -> list:
+    """Os NOMES dos padrões de segredo encontrados — nunca o valor."""
+    return sorted({nome for nome, rx in SECRET_PATTERNS if rx.search(text or "")})
 
 
 # ------------------------------------------------------------------- operação
 
-def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = None) -> dict:
+_WF: dict = {}
+
+
+def _refuse_foreign_profile(eng: Path) -> None:
+    """Esta versão não publica num engagement da versão histórica (handoff-v1 F1, decisão
+    classic A): sem bloco `workflow` em `_state.json`, é só leitura aqui.
+
+    Só se olha para o TIPO de engagement. A validação completa (schema, pack, `_state.json`
+    ilegível) é do bootstrap, que bloqueia os escritores a montante. Aqui um `_state.json`
+    ilegível NÃO recusa: a publicação ou a recuperação podem ser exactamente o que o repara,
+    e recusá-las deixava o engagement preso. Um engagement a nascer (sem `_state.json`)
+    publica — é o `migrate.init`."""
+    if "W" not in _WF:
+        import runpy
+        _WF["W"] = runpy.run_path(str(Path(__file__).resolve().parent / "workflow.py"))
+    W = _WF["W"]
+    who = W["profile_of"](eng)
+    if who["kind"] == W["LEGACY"]:
+        raise OperationError(
+            "engagement sem perfil persistido (versão histórica): só leitura nesta versão — "
+            "continuar em {}".format(W["HISTORICAL_VERSION"]), W["UNSUPPORTED_PROFILE"],
+            {"source_code": "legacy_profile_absent", "engagement": str(eng)})
+
+
+def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = None,
+        read_set: dict | None = None) -> dict:
     """Publica um conjunto de escrita como UMA operação.
 
     `write_set`: `{caminho relativo ao engagement: conteúdo}`.
     `expected`  : `{caminho relativo: digest esperado}` — a base sobre a qual se calculou.
                   `""` significa «não existia». Base diferente = recusa (B2.3).
+    `read_set`  : `{caminho relativo: digest}` dos inputs consumidos que NÃO se escrevem.
+                  Diferente = `STALE_INPUT`, antes de qualquer staging (F2, D08). Um
+                  caminho não pode estar nos dois: a base de um ficheiro escrito é
+                  `expected`.
 
     Devolve o recibo. Repetir o mesmo `operation_id` com o mesmo pedido devolve o recibo
     existente sem repetir efeitos (B2, W03)."""
     eng = Path(eng)
-    rq = request_hash(write_set)
+    read_set = dict(read_set or {})
+    sobrepostos = sorted(set(read_set) & set(write_set))
+    if sobrepostos:
+        raise OperationError(
+            "caminho no read-set e no conjunto de escrita — a base de um ficheiro escrito "
+            "declara-se em `expected`", "READ_SET_OVERLAP", {"paths": sobrepostos})
+    segredos = {rel: find_secrets(c) for rel, c in write_set.items()
+                if isinstance(c, str) and find_secrets(c)}
+    if segredos:
+        raise OperationError(
+            "conteúdo com segredo em {} — guardar a referência (cofre, variável), nunca o valor"
+            .format(", ".join(sorted(segredos))), "SECRET_IN_CONTENT",
+            {"paths": sorted(segredos), "patterns": segredos})
+    rq = request_hash(write_set, read_set)
 
     prior = read_receipt(eng, operation_id)
     if prior:
@@ -488,6 +625,7 @@ def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = N
         agora = {rel: digest(eng / rel) for rel in gravado}
         return dict(prior, replayed=True, effects_present=(agora == gravado))
 
+    _refuse_foreign_profile(eng)
     ident = acquire(eng)
     try:
         existing = read_pending(eng)      # ilegível sobe como PENDING_UNREADABLE
@@ -507,6 +645,17 @@ def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = N
                         "BASE_CHANGED",
                         {"path": rel, "expected": want, "actual": before.get(rel, "")})
 
+        # --- 3b. read-set, sob a mesma exclusão. Nada foi preparado ainda: recusar aqui
+        # deixa o disco e o rascunho de quem chamou exactamente como estavam.
+        mudados = [{"path": rel, "expected": want, "actual": digest(eng / rel)}
+                   for rel, want in sorted(read_set.items())
+                   if digest(eng / rel) != want]
+        if mudados:
+            raise OperationError(
+                "input lido mudou em `{}` — reler e refazer, não publicar".format(
+                    mudados[0]["path"]),
+                "STALE_INPUT", {"paths": mudados, "path": mudados[0]["path"]})
+
         # --- 4/5. staging + intenção, ANTES de publicar
         stg = ops_dir(eng) / STAGING / operation_id
         if stg.exists():
@@ -524,6 +673,7 @@ def run(eng: Path, operation_id: str, write_set: dict, expected: dict | None = N
                   # isto nao dizia sobre que base, e "publicou" e "publicou sobre a base que
                   # tinha lido" sao afirmacoes diferentes — a segunda e auditavel.
                   "expected": dict(expected) if expected is not None else None,
+                  "read_set": read_set or None,
                   "before": before, "after": after,
                   "staging": str(stg.relative_to(eng)),
                   "opened_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
@@ -562,6 +712,7 @@ def _finish(eng: Path, intent: dict, published: list[str]) -> dict:
     receipt = {"operation_id": intent["operation_id"], "request_hash": intent["request_hash"],
                "result": "committed", "revision": intent["after"],
                "expected": intent.get("expected"),
+               "read_set": intent.get("read_set"),
                "published": published,
                "committed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     _atomic_write(receipt_path(eng, intent["operation_id"]),
@@ -589,6 +740,7 @@ def recover(eng: Path) -> dict:
         raise OperationError("versão de intenção não suportada", "INTENT_VERSION",
                              {"have": intent.get("intent_version")})
 
+    _refuse_foreign_profile(eng)
     ident = acquire(eng)
     try:
         third = []

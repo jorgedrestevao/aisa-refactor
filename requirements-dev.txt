@@ -8,7 +8,11 @@
 #
 # Running the suite (unittest, no pytest needed — every file is executable):
 #
-#     for f in .claude/tests/test_*.py; do python "$f" || exit 1; done
+#     python .github/run_tests.py
+#
+# The stdlib-only subset (ADR-001 evidence, no packages installed):
+#
+#     python .github/run_tests.py --list .github/stdlib-tests.txt
 #
 # The 2026-09-08 adversarial review could not run the full suite because PyYAML
 # was missing, and "inconclusive" was read as "green" (P-15). No frente is
@@ -16,3 +20,5 @@
 
 PyYAML>=6.0        # pack.yaml / ux-blueprint_vNN.yaml parsing in the tests
 openpyxl>=3.1      # xlsx_extract.py — .xlsx/.xlsm extraction and replay
+python-docx>=1.2  # text_extract.py — .docx extraction (tested: 1.2.0)
+pypdf>=6.19       # text_extract.py — .pdf extraction (tested: 6.19.0)

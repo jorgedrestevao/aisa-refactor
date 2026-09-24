@@ -1,7 +1,7 @@
 # aisa
 
-<!-- SCOPE-STATEMENT v1 -->
-**aisa runs discovery on a process to reach a grounded technical decision: which technology and pattern, against which alternatives, at what cost. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision.**
+<!-- SCOPE-STATEMENT v2 -->
+**aisa runs discovery on a process to reach a grounded technical decision and a design a delivery team can build without guessing: which technology and pattern, against which alternatives, at what cost, and which behaviour, acceptance and operation. It is not an open-ended business-discovery platform; a question is admitted only when its answer can change the decision, the functional behaviour, the acceptance, the operation or the effort.**
 
 Built for engagements that precede the choice of digitalization technology (Power Platform, OutSystems, Mendix, custom). It runs as a Claude Code project — skills, agents, hooks and slash commands, no service and no database.
 
@@ -42,6 +42,7 @@ Two limits are stated rather than papered over: atomicity is **observable to sup
 
 - Using it: [`docs/COMO-USAR.md`](docs/COMO-USAR.md) — one page, in business language.
 - Setting it up or extending it: [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
+- Operating it (setup, maintenance, recovery, access, backup): [`docs/OPERACAO.md`](docs/OPERACAO.md).
 
 ## Documents
 
@@ -52,6 +53,7 @@ Two limits are stated rather than papered over: atomicity is **observable to sup
 | [`docs/PHILOSOPHY.md`](docs/PHILOSOPHY.md) | Why aisa exists; for non-technical audiences |
 | [`docs/COMO-USAR.md`](docs/COMO-USAR.md) | One page for whoever runs an engagement |
 | [`docs/ONBOARDING.md`](docs/ONBOARDING.md) | Setup + first engagement walkthrough (consultant / developer) |
+| [`docs/OPERACAO.md`](docs/OPERACAO.md) | Setup, maintenance, recovery, access and backup (who operates it) |
 | [`library/kernel/`](library/kernel/) | The contracts themselves — phases, states, orchestration, render, blueprint, coverage, glossary |
 | [`docs/PACK_AUTHORING.md`](docs/PACK_AUTHORING.md) · [`docs/LENS_AUTHORING.md`](docs/LENS_AUTHORING.md) | Writing a technology pack or a perspective |
 | [`docs/evolution/`](docs/evolution/) | How it got here: one report per phase, P0–P8 |

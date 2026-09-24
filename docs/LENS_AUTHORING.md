@@ -1,5 +1,7 @@
 # Lens Authoring Guide
 
+> **handoff-v1 F3.2:** the six Discovery lens skills are retired. Their perspectives live in `library/kernel/lens-checklists.md`, applied by one integrated analyst in `/round`; coverage is the `lens` record of the coverage engine (`library/kernel/coverage-contract.md` §4.8). Change a Discovery perspective there (an administrative edit of `library/`). This guide still governs `lens-technology`, the Options lens, and describes the historical shape of the six.
+
 Lenses are the perspective skills aisa uses during Discovery (`inline` mode) and during Framing/Options/Decision (`council-independent` mode, via persona agents). This guide explains how to add a new lens, modify an existing one, or audit a lens for kernel-compliance.
 
 Existing lenses (the kernel's 7):
@@ -49,7 +51,7 @@ The evidence contract is `library/kernel/orchestration.md` → *Evidence contrac
 Two surfaces, cleanly separated:
 
 - **`shared-understanding.md`** — the **atomic** engagement knowledge/evidence state: one claim, question, conflict or risk per row, tagged `lens=<name>`, append-only.
-- **`lens-outputs/<lens>.md`** — a **short perspective interpretation**, appended once per round under a `## <round> — <lens>` header (the round id in the file is a hard dependency of `pre-lens-order-check.py`). It communicates: **what matters** · **tensions / risks** · **open evidence**.
+- **`lens-outputs/<lens>.md`** — a **short perspective interpretation**, appended once per round under a `## <round> — <lens>` header (the round id in the file was a hard dependency of `pre-lens-order-check.py`, retired in handoff-v1 F3.3). It communicates: **what matters** · **tensions / risks** · **open evidence**.
 
 Keep the lens output lightweight. It is an interpretation, not a report: no long narrative, no restatement of the rows above it.
 

@@ -1,4 +1,11 @@
-"""R3–R6 — o árbitro das declarações P-26 lê o que a linha declara, e só isso.
+"""R3–R6 — o árbitro da admissão lê o que a linha declara, e só isso.
+
+handoff-v1 F1.5 (disposição F0: adaptar): o árbitro verifica agora a admissão handoff-v1
+(states.md → Admission of a question). O que este ficheiro protege mantém-se: uma anotação de
+auditoria nunca satisfaz o que audita (agora, as alternativas de uma `design_choice`); o
+detector de ≥ 2 respostas distingue ramos de consequências; a porta orçamental exige
+contexto financeiro. As linhas de `arb()` usam o schema novo (`tipo = design_choice`, que é
+o único tipo que deve alternativas); `fin()` fica no schema antigo, que a porta não usa.
 
 `docs/PILOT_RUNTIME_CORRECTION_PLAN.md` → R3, R4, R5, R6.
 
@@ -49,22 +56,32 @@ SU = """# Shared Understanding — fx
 {rows}
 """
 
+SU_NOVA = """# Shared Understanding — fx
+
+## Unknown
+
+| id | lens | pergunta | tipo | impacto | âmbito | quem responde | fecho | bloqueio | criticidade | custo | swing | referências | ronda |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+{rows}
+"""
+
 ANOT_I = " — reclassificado P-26 (R-01): não cita `M-n` nem declara TO-BE DIVERGENCE"
 ANOT_EIXO = " — reclassificado P-26 (R-02): o swing não nomeia o eixo técnico que muda"
 ANOT_CRIT = " — criticidade baixada P-26 (R-01): sustentava-se em Critical"
 
 
-def rows_for(swings, claims=None, crit="Low"):
+def rows_for(swings, claims=None, crit="Low", tipo="design_choice"):
     out = []
     for i, sw in enumerate(swings, start=1):
         claim = (claims or {}).get(i, "Pergunta {}?".format(i))
-        out.append("| U-{:03d} | business | {} | o dono | {} | email | {} | R-01 |"
-                   .format(i, claim, crit, sw))
-    return SU.format(rows="\n".join(out))
+        out.append("| U-{:03d} | business | {} | {} | funcional: muda o resultado | cálculo | "
+                   "role: dono do processo | escolha registada | blocks_scope | {} | email | {} | "
+                   "sources/nota.md#N1 | R-01 |".format(i, claim, tipo, crit, sw))
+    return SU_NOVA.format(rows="\n".join(out))
 
 
-def arb(swings, claims=None, crit="Low"):
-    _h, rows, _m, _d = D.parse_su(rows_for(swings, claims, crit))
+def arb(swings, claims=None, crit="Low", tipo="design_choice"):
+    _h, rows, _m, _d = D.parse_su(rows_for(swings, claims, crit, tipo))
     return rows, D.arbiter_declarations(rows)
 
 
@@ -81,47 +98,48 @@ CORPO_TOBE = ("decisivo: serve TO-BE DIVERGENCE — o alvo tem de escolher. Duas
               "(a) manter (b) automatizar. Move `esforço de alto nível`.")
 CORPO_M = ("decisivo: serve M-1. Duas respostas: (a) um perfil (b) dois perfis. "
            "Move `plano de imposição de permissões`.")
+# handoff-v1: um corpo sem alternativas, e uma anotação que as tem — a auditoria não as dá.
+CORPO_SEM_ALT = "dimensionante: muda o cálculo do pedido"
+ANOT_COM_ALT = " — reclassificado P-1 (R-01): (a) manter (b) mudar eram de outra linha"
 
 
 class AnotacaoSancionada(unittest.TestCase):
 
-    def test_a_anotacao_nao_faz_a_declaracao_que_ela_diz_faltar(self):
-        _r, a = arb([CORPO_SEM_DECL + ANOT_I])
-        self.assertIn("U-001", {x["id"] for x in a["sem_citacao_m"]})
+    def test_a_anotacao_nao_da_as_alternativas_que_o_corpo_nao_tem(self):
+        _r, a = arb([CORPO_SEM_ALT + ANOT_COM_ALT])
         self.assertTrue(falta(a, "U-001"))
+        self.assertIn("alternativas", a["sem_declaracao"][0]["motivo"])
 
     def test_declaracao_genuina_com_anotacao_continua_aceite(self):
         for corpo in (CORPO_TOBE, CORPO_M):
             with self.subTest(corpo=corpo[:12]):
                 _r, a = arb([corpo + ANOT_I])
-                self.assertEqual(a["sem_citacao_m"], [])
                 self.assertFalse(falta(a, "U-001"))
 
     def test_controlo_sem_anotacao_nenhuma(self):
         _r, a = arb([CORPO_M])
-        self.assertEqual(a["sem_citacao_m"], [])
         self.assertEqual(a["sem_declaracao"], [])
 
-    def test_anotacao_que_cita_um_m_n_tambem_nao_conta(self):
-        anot = " — reclassificado P-26 (R-01): não cita `M-n`; o M-1 que invocava não é seu"
-        _r, a = arb([CORPO_SEM_DECL + anot])
-        self.assertIn("U-001", {x["id"] for x in a["sem_citacao_m"]})
+    def test_uma_anotacao_legada_p26_tambem_nao_conta(self):
+        anot = " — reclassificado P-26 (R-01): (a) e (b) eram da regra antiga"
+        _r, a = arb([CORPO_SEM_ALT + anot])
+        self.assertTrue(falta(a, "U-001"))
 
     def test_varias_anotacoes_acumuladas_cortam_na_primeira(self):
-        _r, a = arb([CORPO_SEM_DECL + ANOT_I + ANOT_EIXO])
-        self.assertIn("U-001", {x["id"] for x in a["sem_citacao_m"]})
+        _r, a = arb([CORPO_SEM_ALT + ANOT_I + ANOT_COM_ALT])
+        self.assertTrue(falta(a, "U-001"))
         corpo, anot = D.split_annotation(CORPO_SEM_DECL + ANOT_I + ANOT_EIXO)
         self.assertEqual(corpo, CORPO_SEM_DECL)
         self.assertIn("R-01", anot)
         self.assertIn("R-02", anot)
 
-    def test_o_marcador_no_corpo_e_diferente_do_marcador_na_anotacao(self):
-        """`TO-BE DIVERGENCE` escrito na frase da linha é declaração; escrito dentro
-        do sufixo sancionado é auditoria."""
-        corpo, anot = D.split_annotation(CORPO_TOBE + ANOT_I)
-        self.assertIn("TO-BE DIVERGENCE", corpo)
-        self.assertIn("TO-BE DIVERGENCE", anot)
-        self.assertTrue(D.ARB_TOBE_RE.search(corpo))
+    def test_as_alternativas_no_corpo_sao_diferentes_das_da_anotacao(self):
+        """Escritas na frase da linha são declaração; dentro do sufixo sancionado são
+        auditoria."""
+        corpo, anot = D.split_annotation(CORPO_M + ANOT_COM_ALT)
+        self.assertIn("(a) um perfil", corpo)
+        self.assertIn("(a) manter", anot)
+        self.assertEqual(D.declara_alternativas(corpo), "sim")
 
     def test_texto_que_apenas_menciona_p26_nao_e_anotacao(self):
         frase = ("decisivo: serve M-1 e cumpre P-26. Duas respostas: a ou b. "
@@ -141,9 +159,10 @@ class AnotacaoSancionada(unittest.TestCase):
         self.assertNotIn("reclassificado P-26", rows[0]["swing_body"])
 
     def test_a_anotacao_da_criticidade_nao_muda_a_criticidade_lida(self):
-        _h, rows, _m, _d = D.parse_su(SU.format(rows=(
-            "| U-001 | business | Pergunta? | o dono | Low" + ANOT_CRIT
-            + " | email | " + CORPO_SEM_DECL + ANOT_I + " | R-01 |")))
+        _h, rows, _m, _d = D.parse_su(SU_NOVA.format(rows=(
+            "| U-001 | business | Pergunta? | design_choice | funcional: x | cálculo | "
+            "role: dono | escolha | blocks_scope | Low" + ANOT_CRIT
+            + " | email | " + CORPO_SEM_DECL + ANOT_I + " | sources/n.md#N1 | R-01 |")))
         self.assertEqual(rows[0]["criticidade"], "Low")
 
 
@@ -159,12 +178,11 @@ class SufixoSancionadoInteiro(unittest.TestCase):
                         "Serve M-1 e duas respostas: (a) manter (b) mudar. "
                         "Move `modelo de dados`.")
 
-    def test_mencao_no_corpo_nao_e_anotacao_e_o_m_n_conta(self):
+    def test_mencao_no_corpo_nao_e_anotacao_e_as_alternativas_contam(self):
         corpo, anot = D.split_annotation(self.CORPO_COM_MENCAO)
         self.assertEqual(anot, "")
-        self.assertIn("M-1", corpo)
+        self.assertIn("(a) manter", corpo)
         _r, a = arb([self.CORPO_COM_MENCAO])
-        self.assertEqual(a["sem_citacao_m"], [])
         self.assertFalse(falta(a, "U-001"))
 
     def test_mencao_sem_ronda_nem_dois_pontos_nao_e_anotacao(self):
@@ -178,18 +196,18 @@ class SufixoSancionadoInteiro(unittest.TestCase):
 
     def test_o_sufixo_completo_continua_a_ser_anotacao(self):
         for txt in (CORPO_SEM_DECL + ANOT_I,
+                    CORPO_SEM_DECL + ANOT_COM_ALT,
+                    CORPO_SEM_DECL + " — reclassificado P-21 (R-03): pergunta de pessoa",
                     CORPO_SEM_DECL + " -- reclassificado P-26 (R-02): sem eixo",
                     CORPO_SEM_DECL + " — criticidade baixada P-26 (F-01): sustentava-se"):
             with self.subTest(txt=txt[-40:]):
                 _corpo, anot = D.split_annotation(txt)
                 self.assertTrue(anot, "sufixo prescrito tem de ser reconhecido")
 
-    def test_o_m_n_que_esta_so_na_anotacao_continua_a_nao_contar(self):
-        txt = (CORPO_SEM_DECL
-               + " — reclassificado P-26 (R-01): não cita `M-n`; o M-1 que invocava "
-                 "não é seu")
+    def test_alternativas_que_estao_so_na_anotacao_continuam_a_nao_contar(self):
+        txt = CORPO_SEM_ALT + " — reclassificado P-26 (R-01): (a) x (b) y eram de outra linha"
         _r, a = arb([txt])
-        self.assertIn("U-001", {x["id"] for x in a["sem_citacao_m"]})
+        self.assertTrue(falta(a, "U-001"))
 
 
 # --------------------------------- R4: duas respostas, em oracoes paralelas
@@ -328,12 +346,15 @@ class DuasRespostas(unittest.TestCase):
             "dimensionante: serve M-1 — é o passo mais repetido e o que a auditoria "
             "quer retirar à equipa. Move `esforço de alto nível`."), "nao")
 
-    def test_a_declaracao_ausente_continua_a_pesar_no_conjunto(self):
-        """P-26 é conjunção: reconhecer a segunda declaração não dispensa as outras."""
-        _r, a = arb(["dimensionante: tradução implica variantes de língua; percurso "
-                     "próprio implica conteúdo versionado. Move `modelo de dados`."])
-        self.assertTrue(falta(a, "U-001"), "sem `M-n` nem TO-BE continua em falta")
-        self.assertIn("nao cita M-n", a["sem_declaracao"][0]["motivo"])
+    def test_so_a_design_choice_deve_alternativas(self):
+        """T06: um facto em falta não precisa de duas respostas fabricadas."""
+        so_uma = "dimensionante: o valor define quem aprova"
+        _r, a = arb([so_uma], tipo="fact_gap")
+        self.assertFalse(falta(a, "U-001"))
+        self.assertEqual(a["alternativas_nao_avaliadas"], [])
+        _r, a = arb([so_uma], tipo="design_choice")
+        self.assertTrue(falta(a, "U-001"))
+        self.assertIn("alternativas", a["sem_declaracao"][0]["motivo"])
 
 
 # ------------------------------------ R6: tecto de volume nao e tecto de verba

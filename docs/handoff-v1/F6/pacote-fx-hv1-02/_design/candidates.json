@@ -1,0 +1,67 @@
+{
+ "schema_version": "handoff-candidates/1",
+ "engagement_id": "fx-hv1-02",
+ "revision": 1,
+ "route": "platform-constrained",
+ "based_on": [
+  {
+   "ref": "shared-understanding.md"
+  }
+ ],
+ "retired_ids": [],
+ "criteria": [
+  "cumprir a segregação (C-004)",
+  "calcular o valor sem ambiguidade (U-001)"
+ ],
+ "exclusions": [
+  {
+   "what": "outras plataformas",
+   "reason": "imposta (D-001)"
+  }
+ ],
+ "imposed_platform": "Plataforma X",
+ "imposition_ref": "decisions.md#D-001",
+ "reduction_reason": "duas formas viáveis dentro da imposta",
+ "items": [
+  {
+   "option_class": "aplicação na plataforma",
+   "platform": "Plataforma X",
+   "order_of_magnitude": {
+    "value": "4–6 semanas",
+    "source": "ANALOGY (sintético)"
+   },
+   "risks": [
+    "regra de arredondamento por escolher (U-001)"
+   ],
+   "premise_refs": [
+    "C-002",
+    "C-004"
+   ],
+   "id": "O-001",
+   "name": "Aplicação de formulário com fluxo de aprovação",
+   "technology": "Plataforma X — formulário + fluxo, dados na plataforma",
+   "architecture": "pedido com chave de submissão; aprovação por papel; passagem a compras por fluxo",
+   "reversibility": "média"
+  },
+  {
+   "option_class": "aplicação na plataforma",
+   "platform": "Plataforma X",
+   "order_of_magnitude": {
+    "value": "6–8 semanas",
+    "source": "ANALOGY (sintético)"
+   },
+   "risks": [
+    "regra de arredondamento por escolher (U-001)"
+   ],
+   "premise_refs": [
+    "C-002",
+    "C-004"
+   ],
+   "id": "O-002",
+   "name": "Aplicação orientada a registos",
+   "technology": "Plataforma X — aplicação de registos, dados na plataforma",
+   "architecture": "registo de pedidos com estados e regras de negócio no armazenamento",
+   "reversibility": "baixa"
+  }
+ ]
+}

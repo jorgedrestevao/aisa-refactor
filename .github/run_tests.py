@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """A suite inteira, um processo por ficheiro, em paralelo.
 
-Corre em qualquer clone, sem instalar nada (ADR-001: stdlib apenas). Sai 1 se algum
-ficheiro falhar, para o CI reprovar.
+A suite inteira precisa das dependencias de teste (requirements-dev.txt: PyYAML, openpyxl,
+python-docx, pypdf). O runtime nao (ADR-001: stdlib apenas), e `--list .github/stdlib-tests.txt`
+corre so os ficheiros que o provam, num Python sem pacotes. Sai 1 se algum ficheiro falhar,
+ou se a lista nomear um ficheiro que nao existe, para o CI reprovar.
 
 Os 65 ficheiros ja corriam cada um no seu processo — o que nao corriam era ao mesmo tempo.
 Medido: 221s sequenciais, 85% em 12 ficheiros e 61% so nos 7 de `coverage`, que refazem o
@@ -30,8 +32,18 @@ def corre(f):
 
 
 def main():
-    files = (sorted(glob.glob(".claude/tests/test_*.py"))
-             + sorted(glob.glob("library/kernel/tools/tests/test_*.py")))
+    if "--list" in sys.argv:
+        lista = sys.argv[sys.argv.index("--list") + 1]
+        with open(lista, encoding="utf-8") as fh:
+            files = [l.strip() for l in fh if l.strip() and not l.lstrip().startswith("#")]
+        falta = [f for f in files if not os.path.isfile(f)]
+        if falta:
+            for f in falta:
+                print("FAIL", f, "listado em", lista, "mas nao existe")
+            return 1
+    else:
+        files = (sorted(glob.glob(".claude/tests/test_*.py"))
+                 + sorted(glob.glob("library/kernel/tools/tests/test_*.py")))
     sequencial = "--sequential" in sys.argv
     t0 = time.time()
     if sequencial:
@@ -64,7 +76,7 @@ def main():
         detail = verdict.group(3) or ""
         for key, label in (("failures", "failures"), ("errors", "errors"),
                            ("skips", "skipped"), ("expected_failures", "expected failures")):
-            m = re.search(r"(?<!un)\b" + label + r"=(\d+)", detail)
+            m = re.search(r"(?<!un)(?<!expected )\b" + label + r"=(\d+)", detail)
             if m:
                 tot[key] += int(m.group(1))
         if verdict.group(1) == "OK":

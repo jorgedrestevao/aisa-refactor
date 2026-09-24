@@ -13,6 +13,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ESTADO_HANDOFF = runpy.run_path(str(ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
+                                  / "estado.py"))["estado"]
 TOOLS = ROOT / "library" / "kernel" / "tools"
 R = runpy.run_path(str(TOOLS / "resolve.py"))
 G = runpy.run_path(str(TOOLS / "graph.py"))
@@ -71,7 +73,7 @@ def new_eng(tmp, name="eng"):
     eng.mkdir(parents=True, exist_ok=True)
     (eng / "shared-understanding.md").write_text(SU, encoding="utf-8", newline="\n")
     (eng / "answers.md").write_text("# Respostas\n", encoding="utf-8", newline="\n")
-    (eng / "_state.json").write_text('{"phase":"discovery","round":"R-01"}\n',
+    (eng / "_state.json").write_text(ESTADO_HANDOFF(phase="discovery", round="R-01"),
                                      encoding="utf-8", newline="\n")
     # Nasce com grafo, como o `/start` o deixa desde P7.5 §W8 (passo 9c). Sem isto a
     # fixture modelava um engagement que hoje nao existe — e que, desde que `LEGACY_MODE`

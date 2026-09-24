@@ -1,0 +1,1147 @@
+{
+ "schema_version": "handoff-f0-test-baseline/1",
+ "test_id": "T01",
+ "plan_version": "1.2",
+ "baseline_commit": "85baf1018ca2b238c41745f7f13dbb539589867f",
+ "tree_under_test": {
+  "repo": "jorgedrestevao/aisa-refactor",
+  "commits": [
+   "fca2fe4",
+   "8b7987e"
+  ],
+  "tree_identical_to_baseline_outside_docs_handoff_v1_and_fixtures_handoff_v1": true,
+  "evidence": "diff -rq --exclude=.git contra um clone de jorgedrestevao/aisa em 85baf10 (fora do repo): vazio antes de F0; F0 só acrescenta docs/handoff-v1/ e .claude/tests/fixtures/handoff-v1/"
+ },
+ "policy": "Plano v1.2 (05 F0 item 3, 09): a execução integral é diagnóstico, não gate. Executados todos os ficheiros para caracterizar os componentes reutilizados; resultado por ficheiro nos dois ambientes.",
+ "environments": {
+  "devdeps": {
+   "where": "container cloud, Linux, 4 CPUs, utilizador root",
+   "python": "3.11.15",
+   "packages": [
+    "PyYAML 6.0.3",
+    "openpyxl 3.1.5",
+    "python-docx 1.2.0",
+    "pypdf 6.19.0",
+    "lxml 6.1.3",
+    "et_xmlfile 2.0.0",
+    "typing_extensions 4.16.0"
+   ]
+  },
+  "stdlib": {
+   "where": "container cloud, venv sem pacotes (espelha o job de CI)",
+   "python": "3.11.15",
+   "packages": []
+  },
+  "ci": {
+   "where": "GitHub Actions ubuntu-latest, job 'suite' de .github/workflows/tests.yml",
+   "python": "3.12.14",
+   "packages": []
+  }
+ },
+ "commands": [
+  {
+   "id": "R-dev-per-file",
+   "env": "devdeps",
+   "command": "python <ficheiro> -v, um processo por ficheiro, sequencial (75 ficheiros)",
+   "result": {
+    "files": 75,
+    "ok": 75,
+    "cases": 2621,
+    "skips": 34,
+    "expected_failures": 3,
+    "sum_seconds": 161.9
+   }
+  },
+  {
+   "id": "R-std-per-file",
+   "env": "stdlib",
+   "command": "idem, venv sem pacotes",
+   "result": {
+    "files": 75,
+    "ok": 56,
+    "cases": 2174,
+    "sum_seconds": 150.9
+   }
+  },
+  {
+   "id": "R-dev-runner",
+   "env": "devdeps",
+   "command": "python .github/run_tests.py",
+   "result": {
+    "files": 75,
+    "ok": 75,
+    "fail_files": 0,
+    "tests": 2621,
+    "skips": 34,
+    "expected_failures": 3,
+    "wall_s": 50.4
+   },
+   "note": "corrido também depois de acrescentar as fixtures de F0 (8b7987e): igual"
+  },
+  {
+   "id": "R-ci-fca2fe4",
+   "env": "ci",
+   "command": "python .github/run_tests.py (run 35855064560, job 107161474110)",
+   "result": {
+    "files": 75,
+    "ok": 56,
+    "fail_files": 19,
+    "tests": 2174,
+    "failures": 58,
+    "errors": 7,
+    "skips": 167,
+    "wall_s": 52.1
+   },
+   "exit_code": 1
+  },
+  {
+   "id": "R-ci-history",
+   "env": "ci",
+   "command": "runs 35851369697, 35851388397, 35851556146, 35853696800, 35854432853 (ba0c27b..262fa70)",
+   "result": "todos failure, mesma assinatura de 19 ficheiros"
+  }
+ ],
+ "groups": {
+  "memory": {
+   "files": 24,
+   "cases": 547,
+   "seconds": 26.92,
+   "ok_devdeps": 24,
+   "ok_stdlib": 24
+  },
+  "coverage_render": {
+   "files": 19,
+   "cases": 847,
+   "seconds": 109.88,
+   "ok_devdeps": 19,
+   "ok_stdlib": 18
+  },
+  "pack_council": {
+   "files": 16,
+   "cases": 981,
+   "seconds": 6.63,
+   "ok_devdeps": 16,
+   "ok_stdlib": 9
+  },
+  "extract_pilot": {
+   "files": 16,
+   "cases": 246,
+   "seconds": 18.51,
+   "ok_devdeps": 16,
+   "ok_stdlib": 5
+  }
+ },
+ "files": [
+  {
+   "file": ".claude/tests/test_a5_dictionary_contract.py",
+   "group": "coverage_render",
+   "cases": 27,
+   "seconds_devdeps": 0.24,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK (skipped=12)",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_admission_rule.py",
+   "group": "pack_council",
+   "cases": 30,
+   "seconds_devdeps": 0.1,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_arbiter_declarations.py",
+   "group": "pack_council",
+   "cases": 42,
+   "seconds_devdeps": 0.1,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_audit_findings.py",
+   "group": "pack_council",
+   "cases": 38,
+   "seconds_devdeps": 1.86,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_audit_round2.py",
+   "group": "pack_council",
+   "cases": 14,
+   "seconds_devdeps": 1.81,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_authority_guard.py",
+   "group": "memory",
+   "cases": 19,
+   "seconds_devdeps": 3.16,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_blueprint_yaml.py",
+   "group": "coverage_render",
+   "cases": 73,
+   "seconds_devdeps": 0.48,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_no_unjustified_difference",
+     "where": "__main__.Snapshot.test_no_unjustified_difference",
+     "reason": "engagements não montados"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_bootstrap.py",
+   "group": "memory",
+   "cases": 45,
+   "seconds_devdeps": 0.42,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_calc_archetypes.py",
+   "group": "extract_pilot",
+   "cases": 10,
+   "seconds_devdeps": 1.21,
+   "verdict_devdeps": "OK (skipped=1, expected failures=3)",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [
+    {
+     "test": "test_power_query_fixture_or_inconclusive",
+     "where": "__main__.TestArchetypePowerQuery.test_power_query_fixture_or_inconclusive",
+     "reason": "INCONCLUSIVO — fx-arch-pq não existe (openpyxl não escreve DataMashup; D-8: o dono gera em Excel). Não é verde."
+    }
+   ],
+   "expected_failures": [
+    {
+     "test": "test_conversion_inside_round_is_detected",
+     "where": "__main__.TestArchetypeAddin.test_conversion_inside_round_is_detected"
+    },
+    {
+     "test": "test_block_declares_the_cycle",
+     "where": "__main__.TestArchetypeIterative.test_block_declares_the_cycle"
+    },
+    {
+     "test": "test_single_sheet_workbook_yields_blocks",
+     "where": "__main__.TestArchetypeSingleSheet.test_single_sheet_workbook_yields_blocks"
+    }
+   ]
+  },
+  {
+   "file": ".claude/tests/test_calc_budget.py",
+   "group": "extract_pilot",
+   "cases": 8,
+   "seconds_devdeps": 2.85,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_calc_chain.py",
+   "group": "extract_pilot",
+   "cases": 11,
+   "seconds_devdeps": 1.12,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_capability_boundary.py",
+   "group": "extract_pilot",
+   "cases": 7,
+   "seconds_devdeps": 0.22,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [
+    {
+     "test": "test_power_query_fixture_or_inconclusive",
+     "where": "__main__.TestPowerQueryArchetype.test_power_query_fixture_or_inconclusive",
+     "reason": "INCONCLUSIVO — fx-arch-pq não existe: openpyxl não escreve DataMashup; o dono gera a fixture em Excel (plano D-8). Não é verde."
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_cf_patterns.py",
+   "group": "extract_pilot",
+   "cases": 13,
+   "seconds_devdeps": 2.7,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [
+    {
+     "test": "test_the_real_workbook_stops_being_a_six_megabyte_file",
+     "where": "__main__.C3_ContraOPilotoReal.test_the_real_workbook_stops_being_a_six_megabyte_file",
+     "reason": "piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_council_wiring.py",
+   "group": "pack_council",
+   "cases": 31,
+   "seconds_devdeps": 0.05,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_contract.py",
+   "group": "coverage_render",
+   "cases": 101,
+   "seconds_devdeps": 29.48,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_fixtures.py",
+   "group": "coverage_render",
+   "cases": 64,
+   "seconds_devdeps": 0.73,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "FAILED (errors=1)",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_freshness.py",
+   "group": "coverage_render",
+   "cases": 50,
+   "seconds_devdeps": 6.97,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_graph.py",
+   "group": "coverage_render",
+   "cases": 29,
+   "seconds_devdeps": 0.24,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_integration.py",
+   "group": "coverage_render",
+   "cases": 53,
+   "seconds_devdeps": 26.15,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "OK (skipped=2)",
+   "skips": [
+    {
+     "test": "test_a_real_engagement_without_records_is_not_evaluated",
+     "where": "__main__.TheRealEngagementIsUntouched.test_a_real_engagement_without_records_is_not_evaluated",
+     "reason": "engagements não montados neste checkout"
+    },
+    {
+     "test": "test_inventory_and_check_leave_it_byte_identical",
+     "where": "__main__.TheRealEngagementIsUntouched.test_inventory_and_check_leave_it_byte_identical",
+     "reason": "engagements não montados neste checkout"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_inventory.py",
+   "group": "coverage_render",
+   "cases": 86,
+   "seconds_devdeps": 4.64,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_phase4.py",
+   "group": "coverage_render",
+   "cases": 45,
+   "seconds_devdeps": 11.26,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_coverage_phase5.py",
+   "group": "coverage_render",
+   "cases": 61,
+   "seconds_devdeps": 21.27,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_dashboard_kernel_state.py",
+   "group": "coverage_render",
+   "cases": 9,
+   "seconds_devdeps": 1.7,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_dashboard_memory_tab.py",
+   "group": "coverage_render",
+   "cases": 12,
+   "seconds_devdeps": 1.6,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_the_real_pilot_has_history_to_show",
+     "where": "__main__.M3_ContraOsPilotosReais.test_the_real_pilot_has_history_to_show",
+     "reason": "piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_dependents.py",
+   "group": "memory",
+   "cases": 16,
+   "seconds_devdeps": 0.24,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "OK (skipped=2)",
+   "skips": [
+    {
+     "test": "test_an_open_question_is_typically_cited_nowhere",
+     "where": "__main__.W6c_ContraOsPilotosReais.test_an_open_question_is_typically_cited_nowhere",
+     "reason": "engagement ausente neste ambiente"
+    },
+    {
+     "test": "test_the_ticket_pilot_has_the_cross_references_the_method_needs",
+     "where": "__main__.W6c_ContraOsPilotosReais.test_the_ticket_pilot_has_the_cross_references_the_method_needs",
+     "reason": "engagement ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_drift_authority.py",
+   "group": "memory",
+   "cases": 19,
+   "seconds_devdeps": 0.32,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "OK (skipped=2)",
+   "skips": [
+    {
+     "test": "test_the_authority_and_the_graph_agree_on_a_freshly_migrated_pilot",
+     "where": "__main__.W5e_AProjeccaoEntregaAAutoridade.test_the_authority_and_the_graph_agree_on_a_freshly_migrated_pilot",
+     "reason": "engagement ausente neste ambiente"
+    },
+    {
+     "test": "test_the_projection_publishes_what_it_found",
+     "where": "__main__.W5e_AProjeccaoEntregaAAutoridade.test_the_projection_publishes_what_it_found",
+     "reason": "engagement ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_extraction_limits.py",
+   "group": "extract_pilot",
+   "cases": 16,
+   "seconds_devdeps": 0.87,
+   "verdict_devdeps": "OK (skipped=4)",
+   "verdict_stdlib": "OK (skipped=16)",
+   "skips": [
+    {
+     "test": "test_the_active_workbook_declares_the_addin_call",
+     "where": "__main__.E05d_OFicheiroRealDoPiloto.test_the_active_workbook_declares_the_addin_call",
+     "reason": "input do piloto ausente neste ambiente (dados de cliente)"
+    },
+    {
+     "test": "test_the_authoritative_workbook_is_not_claimed_to_have_macros",
+     "where": "__main__.E05d_OFicheiroRealDoPiloto.test_the_authoritative_workbook_is_not_claimed_to_have_macros",
+     "reason": "o input activo não é o `.xlsx` autoritativo"
+    },
+    {
+     "test": "test_the_stored_capture_is_compared_not_trusted",
+     "where": "__main__.E05d_OFicheiroRealDoPiloto.test_the_stored_capture_is_compared_not_trusted",
+     "reason": "captura do piloto ausente neste ambiente"
+    },
+    {
+     "test": "test_the_workbook_that_has_macros_declares_them_without_inventing",
+     "where": "__main__.E05d_OFicheiroRealDoPiloto.test_the_workbook_that_has_macros_declares_them_without_inventing",
+     "reason": "nenhum livro real com vbaProject.bin neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_frame_identity.py",
+   "group": "memory",
+   "cases": 13,
+   "seconds_devdeps": 0.15,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_existing_approvals_are_legacy_not_broken",
+     "where": "__main__.RealEngagementsStillParse.test_existing_approvals_are_legacy_not_broken",
+     "reason": "no engagements mounted"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_graph_birth.py",
+   "group": "memory",
+   "cases": 17,
+   "seconds_devdeps": 0.27,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_graph_inspection.py",
+   "group": "memory",
+   "cases": 22,
+   "seconds_devdeps": 0.22,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_the_real_pilot_reports_legacy_mode_not_an_empty_graph",
+     "where": "__main__.E04h_InspeccaoSobreOEngagementRealDoPiloto.test_the_real_pilot_reports_legacy_mode_not_an_empty_graph",
+     "reason": "engagement do piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_graph_store.py",
+   "group": "memory",
+   "cases": 33,
+   "seconds_devdeps": 0.12,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_permission_denied_is_unreadable_not_absent",
+     "where": "__main__.K07_AusenteVersusIlegivel.test_permission_denied_is_unreadable_not_absent",
+     "reason": "chmod não restringe root nem Windows"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_hook_invocation.py",
+   "group": "memory",
+   "cases": 18,
+   "seconds_devdeps": 2.73,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_hooks_gates.py",
+   "group": "memory",
+   "cases": 36,
+   "seconds_devdeps": 3.87,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_knowledge_lifecycle.py",
+   "group": "memory",
+   "cases": 40,
+   "seconds_devdeps": 2.09,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_lens_mirror.py",
+   "group": "memory",
+   "cases": 15,
+   "seconds_devdeps": 3.96,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_locator_resolution.py",
+   "group": "coverage_render",
+   "cases": 29,
+   "seconds_devdeps": 0.15,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_migration.py",
+   "group": "memory",
+   "cases": 33,
+   "seconds_devdeps": 0.45,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_dry_run_on_a_real_engagement_changes_nothing",
+     "where": "__main__.EngagementReal.test_dry_run_on_a_real_engagement_changes_nothing",
+     "reason": "engagement real ausente (projects/ e gitignored)"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_motor_identity.py",
+   "group": "memory",
+   "cases": 19,
+   "seconds_devdeps": 1.23,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_case_variants_block_on_windows",
+     "where": "__main__.LibraryGuardIsCanonical.test_case_variants_block_on_windows",
+     "reason": "case-insensitive filesystem required"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_operation_concurrency.py",
+   "group": "memory",
+   "cases": 20,
+   "seconds_devdeps": 1.4,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_operation_recovery.py",
+   "group": "memory",
+   "cases": 25,
+   "seconds_devdeps": 0.32,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_options_artefact.py",
+   "group": "pack_council",
+   "cases": 53,
+   "seconds_devdeps": 0.06,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_conforming_and_legacy_artefacts_are_told_apart",
+     "where": "__main__.TestRenderedArtefacts.test_conforming_and_legacy_artefacts_are_told_apart",
+     "reason": "no engagement mounted"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_orchestrator_wiring.py",
+   "group": "pack_council",
+   "cases": 23,
+   "seconds_devdeps": 0.14,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "FAILED (errors=1)",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_p8_comparator.py",
+   "group": "extract_pilot",
+   "cases": 36,
+   "seconds_devdeps": 2.0,
+   "verdict_devdeps": "OK (skipped=3)",
+   "verdict_stdlib": "OK (skipped=3)",
+   "skips": [
+    {
+     "test": "test_the_real_engagement_yields_rows",
+     "where": "__main__.GuardaContraALeituraSilenciosaDoVazio.test_the_real_engagement_yields_rows",
+     "reason": "engagement do piloto ausente neste ambiente"
+    },
+    {
+     "test": "test_the_real_engagement_yields_the_decisions_that_are_written",
+     "where": "__main__.GuardaContraALeituraSilenciosaDoVazio.test_the_real_engagement_yields_the_decisions_that_are_written",
+     "reason": "engagement do piloto ausente neste ambiente"
+    },
+    {
+     "test": "test_the_real_engagement_is_still_on_the_legacy_path_today",
+     "where": "__main__.ProvenienciaDaRecuperacao.test_the_real_engagement_is_still_on_the_legacy_path_today",
+     "reason": "engagement do piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_p8_report_schema.py",
+   "group": "extract_pilot",
+   "cases": 19,
+   "seconds_devdeps": 0.55,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_architecture_templates.py",
+   "group": "pack_council",
+   "cases": 116,
+   "seconds_devdeps": 0.13,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_deliverable_templates.py",
+   "group": "pack_council",
+   "cases": 247,
+   "seconds_devdeps": 0.69,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "FAILED (failures=55, skipped=114)",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_discovery_runtime.py",
+   "group": "pack_council",
+   "cases": 22,
+   "seconds_devdeps": 0.09,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 1",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_domain_knowledge.py",
+   "group": "pack_council",
+   "cases": 64,
+   "seconds_devdeps": 0.57,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 1",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_options_decision_model.py",
+   "group": "pack_council",
+   "cases": 99,
+   "seconds_devdeps": 0.08,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 1",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_pp_pack_integrity.py",
+   "group": "pack_council",
+   "cases": 97,
+   "seconds_devdeps": 0.56,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 1",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_projection_ux.py",
+   "group": "coverage_render",
+   "cases": 23,
+   "seconds_devdeps": 0.78,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_render_validate.py",
+   "group": "coverage_render",
+   "cases": 19,
+   "seconds_devdeps": 0.84,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "OK (skipped=2)",
+   "skips": [
+    {
+     "test": "test_dry_run_writes_nothing",
+     "where": "__main__.RealPilot1.test_dry_run_writes_nothing",
+     "reason": "pilot-1 v02 not mounted"
+    },
+    {
+     "test": "test_v02_against_the_approved_v05_yields_the_three_families_of_gaps",
+     "where": "__main__.RealPilot1.test_v02_against_the_approved_v05_yields_the_three_families_of_gaps",
+     "reason": "pilot-1 v02 not mounted"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_reopen_transition.py",
+   "group": "memory",
+   "cases": 10,
+   "seconds_devdeps": 0.17,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_pilot_1_still_reports_its_decision",
+     "where": "__main__.RealEngagementUnaffected.test_pilot_1_still_reports_its_decision",
+     "reason": "engagement not mounted"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_replay_clones.py",
+   "group": "extract_pilot",
+   "cases": 4,
+   "seconds_devdeps": 0.45,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_replay_scope.py",
+   "group": "extract_pilot",
+   "cases": 10,
+   "seconds_devdeps": 0.18,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_replay_severity.py",
+   "group": "extract_pilot",
+   "cases": 5,
+   "seconds_devdeps": 0.46,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_resolve_operation.py",
+   "group": "memory",
+   "cases": 40,
+   "seconds_devdeps": 3.49,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_retirement.py",
+   "group": "memory",
+   "cases": 19,
+   "seconds_devdeps": 0.2,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_round_in_progress.py",
+   "group": "memory",
+   "cases": 32,
+   "seconds_devdeps": 0.65,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_scan_limits.py",
+   "group": "extract_pilot",
+   "cases": 14,
+   "seconds_devdeps": 1.93,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_state_scaffold.py",
+   "group": "memory",
+   "cases": 15,
+   "seconds_devdeps": 0.1,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_status_model.py",
+   "group": "coverage_render",
+   "cases": 68,
+   "seconds_devdeps": 0.8,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_step8c_semantic_continuity.py",
+   "group": "pack_council",
+   "cases": 64,
+   "seconds_devdeps": 0.13,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "no verdict, exit 1",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_su_table_reader.py",
+   "group": "memory",
+   "cases": 30,
+   "seconds_devdeps": 0.31,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_suite_integrity.py",
+   "group": "memory",
+   "cases": 2,
+   "seconds_devdeps": 0.07,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_swing_parse.py",
+   "group": "extract_pilot",
+   "cases": 22,
+   "seconds_devdeps": 0.22,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_synthesis_checks.py",
+   "group": "coverage_render",
+   "cases": 50,
+   "seconds_devdeps": 1.8,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_the_real_engagement_that_persists_pairs_is_read",
+     "where": "__main__.StampHasToBeSupported.test_the_real_engagement_that_persists_pairs_is_read",
+     "reason": "engagement nao montado"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_synthesis_freshness.py",
+   "group": "coverage_render",
+   "cases": 27,
+   "seconds_devdeps": 0.67,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_technical_decision_refocus.py",
+   "group": "pack_council",
+   "cases": 16,
+   "seconds_devdeps": 0.09,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_text_formats.py",
+   "group": "extract_pilot",
+   "cases": 35,
+   "seconds_devdeps": 1.03,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "OK (skipped=1)",
+   "skips": [
+    {
+     "test": "test_the_kam_pilot_txt_now_reads",
+     "where": "__main__.T6_OInputRealQueEstavaPorLer.test_the_kam_pilot_txt_now_reads",
+     "reason": "piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_to_read_targets.py",
+   "group": "extract_pilot",
+   "cases": 13,
+   "seconds_devdeps": 0.41,
+   "verdict_devdeps": "OK (skipped=1)",
+   "verdict_stdlib": "no verdict, exit 2",
+   "skips": [
+    {
+     "test": "test_the_replay_report_names_what_to_read",
+     "where": "__main__.A4_ContraOPilotoReal.test_the_replay_report_names_what_to_read",
+     "reason": "piloto ausente neste ambiente"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_user_language.py",
+   "group": "pack_council",
+   "cases": 25,
+   "seconds_devdeps": 0.17,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": ".claude/tests/test_windows_console.py",
+   "group": "memory",
+   "cases": 9,
+   "seconds_devdeps": 0.98,
+   "verdict_devdeps": "OK",
+   "verdict_stdlib": "OK",
+   "skips": [],
+   "expected_failures": []
+  },
+  {
+   "file": "library/kernel/tools/tests/test_fields_draft.py",
+   "group": "coverage_render",
+   "cases": 21,
+   "seconds_devdeps": 0.08,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "OK (skipped=2)",
+   "skips": [
+    {
+     "test": "setUpClass",
+     "where": "__main__.RealDptGalpJp",
+     "reason": "dpt-galp-jp not mounted"
+    },
+    {
+     "test": "setUpClass",
+     "where": "__main__.RealPilot1",
+     "reason": "pilot-1 not mounted"
+    }
+   ],
+   "expected_failures": []
+  },
+  {
+   "file": "library/kernel/tools/tests/test_text_extract.py",
+   "group": "extract_pilot",
+   "cases": 23,
+   "seconds_devdeps": 2.31,
+   "verdict_devdeps": "OK (skipped=2)",
+   "verdict_stdlib": "FAILED (failures=3, errors=5, skipped=2)",
+   "skips": [
+    {
+     "test": "test_existing_xlsx_extraction_still_re_extracts_identically",
+     "where": "__main__.TestExcelRegression.test_existing_xlsx_extraction_still_re_extracts_identically",
+     "reason": "pricing-marinha not present"
+    },
+    {
+     "test": "test_index_reports_the_xlsx_tier_not_the_text_tier",
+     "where": "__main__.TestExcelRegression.test_index_reports_the_xlsx_tier_not_the_text_tier",
+     "reason": "pricing-marinha not present"
+    }
+   ],
+   "expected_failures": []
+  }
+ ],
+ "failures_by_current_relevance": [
+  {
+   "id": "BL-ENV-1",
+   "files": 11,
+   "cause": "openpyxl ausente: library/kernel/tools/xlsx_extract.py:32-35 termina o processo ao importar; o ficheiro de teste não imprime veredicto",
+   "environments": [
+    "stdlib",
+    "ci"
+   ],
+   "current_relevance": "ambiente; tocam extractores congelados; não bloqueia critério de F1 se o ambiente de teste tiver openpyxl"
+  },
+  {
+   "id": "BL-ENV-2",
+   "files": 1,
+   "cause": "python-docx e pypdf ausentes (library/kernel/tools/text_extract.py:144-146, :209); não constam de requirements-dev.txt",
+   "environments": [
+    "stdlib",
+    "ci"
+   ],
+   "current_relevance": "ambiente; extractor congelado"
+  },
+  {
+   "id": "BL-ENV-3",
+   "files": 7,
+   "cause": "PyYAML ausente (pack.yaml e YAML de blueprint)",
+   "environments": [
+    "stdlib",
+    "ci"
+   ],
+   "current_relevance": "ambiente; afecta testes de pack/orquestração que F1 vai adaptar"
+  },
+  {
+   "id": "BL-DOC-1",
+   "cause": "tests.yml e run_tests.py:4 dizem que a suite corre num clone limpo sem instalar nada (ADR-001); a suite precisa de PyYAML, openpyxl, python-docx e pypdf; requirements-dev.txt só lista os dois primeiros",
+   "current_relevance": "RELEVANTE: o gate de release do plano (06, 09) exige a suite aplicável verde; hoje o CI não consegue produzir essa evidência. Decisão D-F1-01."
+  },
+  {
+   "id": "BL-REPORT-1",
+   "cause": ".github/run_tests.py:66-70 conta 'expected failures=N' também como failures (regex \\bfailures=)",
+   "current_relevance": "baixa; ler failures com expected_failures ao lado"
+  }
+ ],
+ "skips_summary": {
+  "devdeps_total": 34,
+  "private_engagement_data_absent": "maioria (projects/ vazio)",
+  "environment": "root (test_graph_store.py:231), Windows-only (test_motor_identity.py:272), bash/symlinks",
+  "inconclusive_declared": "fx-arch-pq não gerável por openpyxl (test_calc_archetypes.py:183, test_capability_boundary.py:103)"
+ },
+ "expected_failures_summary": "3 em test_calc_archetypes.py (ITEM-3b-1/2/3), defeitos conhecidos do extractor xlsx, fora de âmbito",
+ "verdict": {
+  "baseline_reproducible": true,
+  "code_failures_with_dev_dependencies": 0,
+  "ci_as_configured": "vermelho (BL-DOC-1)",
+  "regression_command": "python .github/run_tests.py num ambiente com PyYAML, openpyxl, python-docx e pypdf; comparar contra R-dev-runner (75/75, 2621, 34 skips, 3 xfail) mais os ficheiros novos de cada fase"
+ }
+}

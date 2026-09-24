@@ -1,0 +1,85 @@
+{
+  "schema_version": "handoff-f0-fixture/1",
+  "id": "fx-hv1-01-solution-choice",
+  "synthetic": true,
+  "title": "Reembolso de despesas de deslocação — escolha de solução com decisão económica",
+  "route": "solution-choice",
+  "fixture_requirements": ["alternativas reais", "decisão económica", "premissa não confirmada", "conflito entre fontes"],
+  "sources": [
+    {"id": "SRC-PEDIDO", "path": "sources/pedido.md", "kind": "request"},
+    {"id": "SRC-FIN", "path": "sources/entrevista-financas.md", "kind": "interview-notes"},
+    {"id": "SRC-POL", "path": "sources/politica-rh.md", "kind": "policy-excerpt"},
+    {"id": "SRC-TI", "path": "sources/nota-ti.md", "kind": "note"}
+  ],
+  "scope": {
+    "in": ["submissão de despesas de deslocação", "aprovação", "pagamento"],
+    "out": ["despesas de representação", "adiantamentos"]
+  },
+  "constraints": ["sem orçamento aprovado; custo recorrente exige aprovação da administração (sources/nota-ti.md#T3)"],
+  "expected": [
+    {
+      "id": "E01",
+      "kind": "conflict",
+      "statement": "Limiar de aprovação pela direcção financeira diverge entre fontes: 500 € (entrevista) vs 250 € (política).",
+      "source_refs": ["sources/entrevista-financas.md#F3", "sources/politica-rh.md#R1"],
+      "classification": {"question_type": "conflict", "impact": ["functional", "acceptance", "governance"], "blocking": "blocks_scope", "affected_scope": "jornada de aprovação", "owner_role": "direcção financeira"},
+      "must_not": ["escolher um dos valores sem decisão do dono", "marcar qualquer dos valores como Confirmed"],
+      "scenarios": ["T08"]
+    },
+    {
+      "id": "E02",
+      "kind": "assumption",
+      "statement": "Volume de cerca de 300 pedidos/mês é dito de memória, sem registo.",
+      "source_refs": ["sources/entrevista-financas.md#F2"],
+      "classification": {"epistemic_state": "Assumed", "impact": ["cost", "effort", "capacity"], "closure": "contagem a partir de registos (folha da contabilidade ou ERP-X)"},
+      "must_not": ["promover a Confirmed porque várias análises repetem o número", "tratar a aprovação do TO-BE como confirmação do volume"],
+      "scenarios": ["T08", "T22"]
+    },
+    {
+      "id": "E03",
+      "kind": "fact_gap",
+      "statement": "A taxa por quilómetro existe numa deliberação que não foi fornecida; o valor é necessário ao cálculo.",
+      "source_refs": ["sources/politica-rh.md#R3"],
+      "classification": {"question_type": "fact_gap", "impact": ["functional", "acceptance"], "owner_role": "administração"},
+      "must_not": ["fabricar duas respostas alternativas para a admitir", "inventar um valor por omissão"],
+      "scenarios": ["T06"]
+    },
+    {
+      "id": "E04",
+      "kind": "assumption",
+      "statement": "A existência de licenças da plataforma low-code é uma crença não verificada.",
+      "source_refs": ["sources/nota-ti.md#T2"],
+      "classification": {"epistemic_state": "Assumed", "impact": ["cost", "architecture"], "closure": "confirmação com compras, com fonte e data"},
+      "must_not": ["usar conhecimento do pack como prova de licença do cliente"],
+      "scenarios": []
+    },
+    {
+      "id": "E05",
+      "kind": "route",
+      "statement": "Options apresenta as alternativas realmente aplicáveis, incluindo melhorar o actual; a construção low-code fica condicionada a E04.",
+      "source_refs": ["sources/pedido.md#P1", "sources/nota-ti.md#T4", "sources/entrevista-financas.md#F6"],
+      "classification": {"route": "solution-choice", "candidates_min": 2},
+      "must_not": ["reduzir a shortlist sem motivo registado", "adoptar a preferência de uma fonte como decisão"],
+      "scenarios": []
+    },
+    {
+      "id": "E06",
+      "kind": "readiness",
+      "statement": "decision_ready exige comparação económica com os pressupostos explícitos (E02, E04) e o conflito E01 resolvido ou com risco autorizado admissível.",
+      "source_refs": ["sources/pedido.md#P1", "sources/nota-ti.md#T3"],
+      "classification": {"predicate": "decision_ready"},
+      "must_not": ["declarar decision_ready com E01 aberto e não autorizado"],
+      "scenarios": []
+    },
+    {
+      "id": "E07",
+      "kind": "requirement",
+      "statement": "Pedidos duplicados por reenvio são um problema actual; o TO-BE tem de impedir o efeito duplicado, qualquer que seja o candidato.",
+      "source_refs": ["sources/entrevista-financas.md#F5"],
+      "classification": {"impact": ["functional", "acceptance"]},
+      "must_not": [],
+      "scenarios": []
+    }
+  ],
+  "notes": ["Dados sintéticos; nenhum valor corresponde a uma organização real."]
+}

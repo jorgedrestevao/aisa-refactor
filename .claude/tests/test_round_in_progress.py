@@ -1,67 +1,32 @@
-"""Frente E (P-15) — a round in progress is not a completed round; a single lens runs free.
+"""Frente E (P-15) — a round in progress is not a completed round.
 
-Inverts two reproductions of the 2026-09-08 adversarial review
-(`docs/ADVERSARIAL_REVIEW_2026-09-08.md`, `docs/review-evidence/`):
+The contract lives in `library/kernel/phases.md` (*Rounds — in progress vs completed*);
+`aisa-round` step 3/7 writes `round_in_progress`, and `dashboard.py` reads it.
 
-  P-R6  `docs/review-evidence/repro-round-order.py` asserted `[0, 2]`: with the
-        round already stamped as completed, the second single-lens `/round`
-        dead-ended. The guard now reads `round_in_progress`, so the same
-        sequence passes — the assertion here is the inverted one.
-
-  guard engagement resolution (found in operation, two copies of pilot-3 in a
-        simultaneous round): the lens invocation declares ``engagement root
-        `<path>``` and the guard must check THAT engagement, not the most
-        recently touched one.
-
-The contract itself lives in `library/kernel/phases.md` (*Rounds — in progress
-vs completed*); `aisa-round` step 3/5a writes it, this hook and `dashboard.py`
-read it.
+handoff-v1 F3.3 (decision Q2): the passagem closes by its `lens` coverage record, and the
+lens-order guard (`pre-lens-order-check.py`) with its `round_lenses` record is retired.
+The guard's cases here (P-R6, engagement resolution, single mode authorised by state)
+were eliminated with it: there is no order left to police — the six perspectives are one
+analysis. What stays: the open-round rule of the motor, the header reading of the
+historical version, and the written contract. New: a profile engagement reads the
+perspectives of the open passagem from the `lens` record.
 
     python .claude/tests/test_round_in_progress.py
 """
 
-import contextlib
-import io
 import json
-import os
 import runpy
-import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
-HOOK = ROOT / ".claude" / "hooks" / "pre-lens-order-check.py"
 DASHBOARD = ROOT / "library" / "kernel" / "tools" / "dashboard.py"
 ROUND_SKILL = ROOT / ".claude" / "skills" / "aisa-round" / "SKILL.md"
 START_SKILL = ROOT / ".claude" / "skills" / "aisa-start" / "SKILL.md"
 PHASES = ROOT / "library" / "kernel" / "phases.md"
-
-
-def load_hook():
-    """Fresh module namespace per call — the guard exits via SystemExit."""
-    return runpy.run_path(str(HOOK))
-
-
-def run_guard(lens, engagements_root, args=None):
-    """Invoke the real guard on a real on-disk engagement tree.
-
-    Returns (exit_code, stderr). 0 = allowed, 2 = blocked.
-    """
-    payload = {"tool_name": "Skill", "tool_input": {"skill": f"lens-{lens}"}}
-    if args is not None:
-        payload["tool_input"]["args"] = args
-    stderr = io.StringIO()
-    env = dict(os.environ, AISA_ENGAGEMENTS_ROOT=str(engagements_root))
-    with patch.dict(os.environ, env, clear=False), \
-            patch.object(sys, "stdin", io.StringIO(json.dumps(payload))), \
-            contextlib.redirect_stderr(stderr):
-        try:
-            code = load_hook()["main"]()
-        except SystemExit as error:
-            code = error.code
-    return code, stderr.getvalue()
+HOOKS = ROOT / ".claude" / "hooks"
+SIX = ["business", "operations", "user", "data", "governance", "financial"]
 
 
 def make_engagement(base, slug, *, round_done="R-00", in_progress="",
@@ -81,207 +46,9 @@ def make_engagement(base, slug, *, round_done="R-00", in_progress="",
     return eng
 
 
-class SingleLensSequence(unittest.TestCase):
-    """P-R6 inverted: `/round business` then `/round operations` must both run."""
-
-    def test_open_round_lets_the_next_lens_run(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            # business ran inside the open R-01; the round did NOT close, so
-            # `round` still says R-00.
-            make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01",
-                            lens_outputs={"business": "R-01"})
-            code, err = run_guard("operations", tmp)
-        self.assertEqual(code, 0, f"open round R-01 must not block operations: {err}")
-
-    def test_the_defect_shape_still_blocks_without_an_open_round(self):
-        """The old state shape (round closed at R-01, nothing open) is exactly
-        the dead end the review found — and the guard must still block there,
-        because R-02's business output genuinely does not exist."""
-        with tempfile.TemporaryDirectory() as tmp:
-            make_engagement(tmp, "eng", round_done="R-01",
-                            lens_outputs={"business": "R-01"})
-            code, err = run_guard("operations", tmp)
-        self.assertEqual(code, 2)
-        self.assertIn("R-02", err)
-
-    def test_stale_in_progress_is_ignored(self):
-        """`round_in_progress` behind `round` is a leftover, not an open round."""
-        with tempfile.TemporaryDirectory() as tmp:
-            make_engagement(tmp, "eng", round_done="R-02", in_progress="R-01",
-                            lens_outputs={"business": "R-02"})
-            code, err = run_guard("operations", tmp)
-        self.assertEqual(code, 2)
-        self.assertIn("R-03", err, "stale value must not be trusted as the open round")
-
-    def test_missing_previous_lens_still_blocks_in_an_open_round(self):
-        """The order rule survives the fix: an open round is not a free pass."""
-        with tempfile.TemporaryDirectory() as tmp:
-            make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01")
-            code, err = run_guard("operations", tmp)
-        self.assertEqual(code, 2)
-        self.assertIn("lens-business", err)
-
-    def test_business_is_always_allowed(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            make_engagement(tmp, "eng", round_done="R-00")
-            code, _ = run_guard("business", tmp)
-        self.assertEqual(code, 0)
-
-
-class EngagementResolution(unittest.TestCase):
-    """Two copies in a simultaneous round: the declared root decides."""
-
-    def _two_copies(self, tmp):
-        # `ready` has business stamped for the open round; `behind` has nothing.
-        make_engagement(tmp, "pilot-3-val-opus", round_done="R-00",
-                        in_progress="R-01", lens_outputs={"business": "R-01"})
-        make_engagement(tmp, "pilot-3-val-sonnet", round_done="R-00",
-                        in_progress="R-01")
-
-    def test_declared_root_wins_over_most_recently_touched(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self._two_copies(tmp)
-            args = (f"Round: R-01 - engagement `pilot-3-val-opus` - "
-                    f"engagement root `{Path(tmp) / 'pilot-3-val-opus'}`\n"
-                    "Shared Understanding: ...")
-            code, err = run_guard("operations", tmp, args=args)
-        self.assertEqual(code, 0, f"the declared engagement has business for R-01: {err}")
-
-    def test_declared_root_blocks_when_that_copy_is_behind(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self._two_copies(tmp)
-            args = ("Round: R-01 - engagement `pilot-3-val-sonnet` - "
-                    f"engagement root `{Path(tmp) / 'pilot-3-val-sonnet'}`")
-            code, err = run_guard("operations", tmp, args=args)
-        self.assertEqual(code, 2)
-        self.assertIn("lens-business", err)
-
-    def test_unknown_root_falls_back_instead_of_blocking(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01",
-                            lens_outputs={"business": "R-01"})
-            args = "engagement root `Z:/does/not/exist`"
-            code, _ = run_guard("operations", tmp, args=args)
-        self.assertEqual(code, 0, "a bogus root must not decide anything by itself")
-
-    def test_engagement_outside_discovery_is_not_policed(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done="F-01", phase="framing")
-            code, _ = run_guard("operations", tmp,
-                                args=f"engagement root `{eng}`")
-        self.assertEqual(code, 0)
-
-
-class SingleLensIsFree(unittest.TestCase):
-    """`/round <lens>` runs any lens alone, in any order (F1 of the 2026-09-09 review).
-
-    The invocation carries ``round mode: single``; the guard stands aside. The
-    marker is fail-closed: absent, the full-round order is enforced as before.
-    """
-
-    def test_single_mode_runs_any_lens_without_prerequisite(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01")
-            args = (f"Round: R-01 - engagement `eng` - engagement root `{eng}` - "
-                    "round mode: single")
-            for lens in ("financial", "data", "governance"):
-                code, err = run_guard(lens, tmp, args=args)
-                self.assertEqual(code, 0, f"{lens} alone must run: {err}")
-
-    def test_marker_absent_is_fail_closed(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01")
-            args = f"Round: R-01 - engagement root `{eng}` - round mode: full"
-            code, err = run_guard("data", tmp, args=args)
-        self.assertEqual(code, 2)
-        self.assertIn("lens-business", err)
-
-    def test_full_mode_marker_still_enforces(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done="R-00", in_progress="R-01",
-                                  lens_outputs={"business": "R-01"})
-            args = f"engagement root `{eng}` - round mode: full"
-            code, _ = run_guard("operations", tmp, args=args)
-            self.assertEqual(code, 0)
-            code, err = run_guard("user", tmp, args=args)
-        self.assertEqual(code, 2)
-        self.assertIn("lens-operations", err)
-
-
-class SingleIsAuthorisedByState(unittest.TestCase):
-    """The isolation signal is `_state.json.round_lenses`, not prose.
-
-    Regression for the 2026-09-09 operational failure: `/round data` on
-    `pricing-bunkers` R-03 was refused because the invocation text did not
-    carry the marker the skill was supposed to type. The record `/round`
-    writes in step 3c is machine-set and scoped to the round AND the lens, so
-    it authorises exactly one thing and a leftover authorises nothing.
-    """
-
-    SINGLE = {"ronda": "R-03", "modo": "single", "lentes": ["data"]}
-
-    def _guard(self, lens, record, *, in_progress="R-03", round_done="R-02"):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done=round_done,
-                                  in_progress=in_progress, round_lenses=record)
-            return run_guard(lens, tmp, args="engagement root `%s`" % eng)
-
-    def test_state_alone_authorises_the_named_lens(self):
-        code, err = self._guard("data", self.SINGLE)
-        self.assertEqual(code, 0, "round_lenses must authorise data: %s" % err)
-
-    def test_record_does_not_authorise_another_lens(self):
-        code, err = self._guard("governance", self.SINGLE)
-        self.assertEqual(code, 2)
-        self.assertIn("lens-business", err)
-
-    def test_record_from_another_round_authorises_nothing(self):
-        code, err = self._guard("data", {"ronda": "R-02", "modo": "single",
-                                         "lentes": ["data"]})
-        self.assertEqual(code, 2)
-        self.assertIn("R-03", err)
-
-    def test_full_mode_record_still_enforces_the_order(self):
-        code, err = self._guard("data", {"ronda": "R-03", "modo": "full",
-                                         "lentes": ["business", "data"]})
-        self.assertEqual(code, 2)
-        self.assertIn("lens-business", err)
-
-    def test_absent_or_malformed_record_is_fail_closed(self):
-        for record in (None, {}, {"ronda": "R-03", "modo": "single"},
-                       {"ronda": "R-03", "modo": "single", "lentes": "data"}):
-            code, _ = self._guard("data", record)
-            self.assertEqual(code, 2, record)
-
-    def test_the_pricing_bunkers_repro(self):
-        """R-03 open, nothing stamped, `/round data`: refused before, runs now."""
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "pricing-bunkers", round_done="R-02",
-                                  in_progress="R-03",
-                                  lens_outputs={"business": "R-02"})
-            args = "engagement root `%s`" % eng
-            self.assertEqual(run_guard("data", tmp, args=args)[0], 2,
-                             "without the record the order is policed")
-            state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
-            state["round_lenses"] = {"ronda": "R-03", "modo": "single",
-                                     "lentes": ["data"]}
-            (eng / "_state.json").write_text(json.dumps(state), encoding="utf-8")
-            code, err = run_guard("data", tmp, args=args)
-        self.assertEqual(code, 0, "`/round data` must run in R-03: %s" % err)
-
-
 class OutputIsAHeaderNotASubstring(unittest.TestCase):
-    """F4: "wrote for R-02" means a `## R-02 …` heading, never a body mention."""
-
-    def test_body_mention_does_not_count(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            eng = make_engagement(tmp, "eng", round_done="R-01", in_progress="R-02")
-            (eng / "lens-outputs" / "business.md").write_text(
-                "## R-01 - business\nCompared with what R-02 will need.\n",
-                encoding="utf-8")
-            code, err = run_guard("operations", tmp)
-        self.assertEqual(code, 2)
-        self.assertIn("R-02", err)
+    """F4: "wrote for R-02" means a `## R-02 …` heading, never a body mention (the
+    historical version's reading)."""
 
     def test_legacy_header_shapes_count(self):
         dash = runpy.run_path(str(DASHBOARD))
@@ -369,23 +136,121 @@ class ContractIsWritten(unittest.TestCase):
         self.assertIn("round_in_progress", text)
         self.assertIn("`round_in_progress` = `\"\"`", text)
 
-    def test_round_declares_single_mode_and_asks_before_rerun(self):
+    def test_round_closes_by_the_coverage_record(self):
         text = ROUND_SKILL.read_text(encoding="utf-8")
-        self.assertIn("round mode: <full|single>", text)
+        self.assertIn("coverage.py round-state", text)
+        self.assertIn("coverage.py lens-draft", text)
+        self.assertIn("coverage.py finalize", text)
         self.assertIn("lentes_ronda_aberta", text)
         self.assertIn("Passagem guard", text)
-        self.assertNotIn("last of the order** (`financial`)", text,
-                         "closing on `financial` breaks single-lens rounds")
+        self.assertIn("*Never* close on a count of files", text)
+        self.assertNotIn("last of the order** (`financial`)", text)
 
-    def test_phases_and_hooks_doc_name_the_state_record(self):
-        self.assertIn("round_lenses", PHASES.read_text(encoding="utf-8"))
-        hooks = (ROOT / ".claude" / "hooks" / "HOOKS.md").read_text(encoding="utf-8")
-        self.assertIn("round_lenses", hooks)
-
-    def test_round_writes_and_clears_the_record(self):
+    def test_the_reviewer_runs_once_at_close_with_fresh_context(self):
         text = ROUND_SKILL.read_text(encoding="utf-8")
-        self.assertIn("round_lenses", text)
-        self.assertIn("`round_lenses` = `{}`", text)
+        self.assertIn("subagent_type: lens-coverage-reviewer", text)
+        self.assertIn("only when the passagem is to close", text)
+        self.assertIn("never after `/round <perspective>`", text)
+        agent = (ROOT / ".claude" / "agents" / "lens-coverage-reviewer.md").read_text(
+            encoding="utf-8")
+        self.assertIn("tools: [Read, Grep, Glob]", agent)
+        self.assertIn('"name": "lens-coverage-reviewer"', agent)
+
+    def test_the_order_guard_and_its_record_are_retired(self):
+        self.assertFalse((HOOKS / "pre-lens-order-check.py").exists())
+        settings = (ROOT / ".claude" / "settings.json").read_text(encoding="utf-8")
+        self.assertNotIn("pre-lens-order-check", settings)
+        self.assertNotIn("pre-lens-order-check", (HOOKS / "HOOKS.md").read_text(
+            encoding="utf-8"))
+        phases = PHASES.read_text(encoding="utf-8")
+        self.assertNotIn("`_state.json.round_lenses` =", phases)
+        self.assertIn("`round_lenses` record are retired", phases)
+        text = ROUND_SKILL.read_text(encoding="utf-8")
+        self.assertNotIn("`round_lenses` = `{", text)
+        self.assertNotIn("round mode: <full|single>", text)
+
+
+class RecordIsTheSourceForAProfile(unittest.TestCase):
+    """handoff-v1 F3.3: a profile engagement reads the open passagem from the `lens`
+    coverage record — the six or nothing, plus whether it closes and was reviewed."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.dash = runpy.run_path(str(DASHBOARD))
+        cls.fix = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_migration.py"))
+        cls.mig = runpy.run_path(str(ROOT / "library" / "kernel" / "tools" / "migrate.py"))
+        cls.cov = runpy.run_path(str(ROOT / "library" / "kernel" / "tools" / "coverage.py"))
+
+    def engagement(self, tmp):
+        projects = Path(tmp) / "projects"
+        projects.mkdir()
+        eng = Path(self.fix["make"](str(projects), self.fix["NOVO"]))
+        self.mig["apply"](eng)
+        return eng
+
+    def record(self, eng, tmp, round_id, review=None):
+        sk = self.cov["lens_skeleton"](eng, round_id)
+        sk["generated_at"] = "2026-09-23T20:00:00Z"
+        for d in SIX:
+            sk["lens_coverage"]["dimensions"][d] = {
+                "status": "assessed", "refs": ["C-001"], "justification": "base"}
+        sk["lens_coverage"]["conflict_scan"] = {"refs": [], "note": "nenhum conflito"}
+        if review:
+            sk["semantic_review"] = review
+        p = Path(tmp) / "draft-{}.json".format(round_id)
+        p.write_text(json.dumps(sk), encoding="utf-8")
+        out = self.cov["finalize"](eng, p)
+        self.assertTrue(out["published"], out)
+
+    def test_no_record_means_nothing_covered_and_says_why(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = self.engagement(tmp)
+            state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
+            self.assertTrue(state.get("workflow"))
+            got = self.dash["lenses_for_round"](eng, "R-01", state)
+        self.assertEqual(got["corridas"], [])
+        self.assertEqual(got["em_falta"], SIX)
+        self.assertEqual(got["fonte"], "registo lens")
+        self.assertFalse(got["fecha"])
+        self.assertTrue(got["motivos"])
+
+    def test_headers_do_not_count_for_a_profile(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = self.engagement(tmp)
+            (eng / "lens-outputs").mkdir(exist_ok=True)
+            for l in SIX:
+                (eng / "lens-outputs" / (l + ".md")).write_text(
+                    "## R-01 — {}\nx\n".format(l), encoding="utf-8")
+            state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
+            got = self.dash["lenses_for_round"](eng, "R-01", state)
+        self.assertEqual(got["corridas"], [], "six headers closed a passagem")
+
+    def test_the_record_of_this_passagem_covers_the_six(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = self.engagement(tmp)
+            self.record(eng, tmp, "R-01")
+            state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
+            got = self.dash["lenses_for_round"](eng, "R-01", state)
+            other = self.dash["lenses_for_round"](eng, "R-02", state)
+        self.assertEqual(got["corridas"], SIX)
+        self.assertEqual(got["em_falta"], [])
+        self.assertTrue(got["fecha"])
+        self.assertFalse(got["revista"], "closed as reviewed without a review")
+        self.assertEqual(other["corridas"], [], "another passagem's record counted")
+        self.assertFalse(other["fecha"])
+
+    def test_reviewed_by_the_independent_reader(self):
+        review = {"status": "completed",
+                  "performed_by": {"kind": "agent", "name": "lens-coverage-reviewer"},
+                  "method": "leitura", "completed_at": "2026-09-23T21:00:00Z",
+                  "limitations": [],
+                  "dimensions": {d: {"verdict": "treated", "note": "ok"} for d in SIX}}
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = self.engagement(tmp)
+            self.record(eng, tmp, "R-01", review)
+            state = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
+            got = self.dash["lenses_for_round"](eng, "R-01", state)
+        self.assertTrue(got["fecha"] and got["revista"], got["motivos"])
 
 
 if __name__ == "__main__":

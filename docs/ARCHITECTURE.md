@@ -1,12 +1,12 @@
 # aisa — Discovery orientado a uma decisão técnica
 
-<!-- SCOPE-STATEMENT v1 -->
-> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada: que tecnologia e que padrão, com que alternativas e a que custo. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão.
+<!-- SCOPE-STATEMENT v2 -->
+> O aisa faz discovery de um processo para chegar a uma decisão técnica fundamentada e a um desenho que uma equipa consegue construir sem adivinhar: que tecnologia e que padrão, com que alternativas e a que custo, e que comportamento, aceitação e operação. Não é uma plataforma de discovery de negócio sem destino; uma pergunta só entra quando a resposta pode mudar a decisão, o comportamento funcional, a aceitação, a operação ou o esforço.
 
 **Architecture & Concept Specification**
 
-> Versão: v3.5.0 — ver *Changelog* abaixo
-> Data: 2026-09-22 (primeira redacção: 2026-05-28)
+> Versão: v3.6.0 — ver *Changelog* abaixo
+> Data: 2026-09-24 (primeira redacção: 2026-05-28)
 > Estado: **construído e em uso**, sob endurecimento contínuo. O que falta demonstrar está
 > nomeado no fim do `README.md` e em `docs/evolution/p8/PROTOCOLO.md` — não é este documento
 > que o declara feito.
@@ -16,6 +16,20 @@
 ---
 
 ## Changelog
+
+### v3.6.0 — 2026-09-24 (handoff-v1: do discovery ao pacote que uma equipa constrói)
+
+Programa `docs/handoff-v1/` (F0–F7; relatórios por fase). O que mudou na arquitectura:
+
+- **Perfil e rota** (F1): `_state.json.workflow` (`handoff-state/1`) com perfil `handoff-v1` e rota (`solution-choice` · `platform-constrained` · `change-impact`); `workflow.py` é o único que responde que perfil um engagement tem. Um engagement sem perfil é a versão histórica: só leitura (decisão A — sem runtime classic). Admissão de uma pergunta (cinco aspectos, `tipo`, `impacto`, `bloqueio`) em `states.md`.
+- **Continuidade transaccional** (F2): as seis autoridades escrevem-se por rascunho → `resolve.py publish`, uma operação do coordenador com base e read-set; checkpoint `_work/checkpoint.json`; retoma a frio.
+- **Discovery integrado** (F3): uma análise das seis perspectivas (`library/kernel/lens-checklists.md`) + um revisor independente da cobertura; `/frame` com um revisor independente. As seis skills de lente e as seis personas foram retiradas (F3.2, F5.4).
+- **Contratos funcionais** (F4): `functional.py` — `FC-NNNN` com autorização do dono pela impressão do item, coerência com o desenho aprovado, gate da versão final do render.
+- **Options por rota e especialistas** (F5): `review.py` — o autor técnico publica candidatos; o router (`specialists.md`) chama só os especialistas que o risco pede, um `specialist-reviewer` por mandato publicado; disposições em registo; memória por papel.
+- **Pacote implementável** (F6): `inventory.py` (âmbito `SCOPE-NNNN` e inventário `WP-NNNN`), `trace.py` (rastreabilidade vertical e gate de âmbito), `release.py` (pacote com índice, nível de entrega calculado, segredos recusados, aceitação do destinatário).
+- **Mudança e compatibilidade** (F7): `impact.py` — raio de impacto e dependentes desactualizados derivados em cada leitura; `STALE_PREMISE` bloqueia a versão final; `workflow.SUPPORTED` — tabela única de versões; `migrate restore` sem força. Operação: `docs/OPERACAO.md`.
+
+As secções abaixo que descrevem o council de seis personas, as skills `lens-*` de Discovery e o modo `council-independent` ficam como registo da v3.5 e anteriores; onde divergem, manda o que está nesta entrada, no `CLAUDE.md` e em `library/kernel/orchestration.md`.
 
 ### v3.5.0 — 2026-09-22 (memória persistente, e a auditoria que a pôs à prova)
 
@@ -64,7 +78,7 @@ obrigatória dependia dele.
 Um caso real abriu isto: uma versão de desenho que o verificador estrutural deu por `valid: yes (0 block, 0 warn)` tinha deixado cair um requisito que a Shared Understanding já carregava. **Estrutura válida nunca quis dizer desenho coberto**, e não havia onde essa segunda pergunta fosse feita. Plano e evidência em `docs/runtime-hardening/coverage-reconciliation-implementation-plan.md` + `coverage-phase-{1..6}-report.md`.
 
 - **Contrato novo** `library/kernel/coverage-contract.md` (§7.6) — três etapas (`reconciliation` · `blueprint` · `render`), esquema v1 versionado, 13 códigos numa tabela única usada pelo motor, pela CLI e pelos hooks. As **quatro perguntas** — estrutura · cobertura · aprovação · ponta-a-ponta — passam a ser separadas por construção, e nenhuma responde pela outra.
-- **Motor novo** `library/kernel/tools/coverage.py` (stdlib-only): `inventory` (denominador derivado das fontes, nunca do registo), `check`, `report` (projecção determinística que não é autoridade) e `finalize` — a única escrita, e só em `<engagement>/_coverage/`. Registos imutáveis; revisão nova é versão nova.
+- **Motor novo** `library/kernel/tools/coverage.py` (stdlib-only): `inventory` (denominador derivado das fontes, nunca do registo), `check`, `report` (projecção determinística que não é autoridade) e `finalize` — a única escrita, em `<engagement>/_coverage/`, publicada pelo coordenador (handoff-v1 F2). Registos imutáveis; revisão nova é versão nova; o mesmo conteúdo não ganha segundo número.
 - **Ligação aos comandos**: `/blueprint` reconcilia antes de produzir (1b) e revê a versão depois (13b), e a condição de **nova** aprovação passa por aí; `/render` corre o pré-render por deliverable (2b) e a revisão de projecção depois (9b); `/answer` e `/capture` mostram o efeito na actualidade; `/status` expõe `status.coverage`; `blueprint-validate.py` e `render-validate.py` reportam cobertura **ao lado** da estrutura e da suficiência, read-only.
 - **Autoridade de versão por deliverable** (§8.3): cada template declara `blueprint_version_read` — `v<latest authorized>` · `v<approved>` · `none`. Campo ausente é defeito do contrato, não sinónimo de `none`. A cobertura *verifica* a selecção que o `render-contract.md` já definia; não a redefine.
 - **Regras que fecham falsos verdes**: um id citado em comentário é referência, não projecção; a âncora tem de estar no artefacto sob revisão; uma obrigação não desaparece entre versões sem disposição; a autoridade que não existe não se satisfaz por omissão; e os campos que o registo declara têm de concordar entre si (§4.5.1).
@@ -108,7 +122,7 @@ Merge da linha `local/capture-line` (módulo desenvolvido em paralelo, spec `doc
 - **Process capture em 3 camadas**: L1 extracção determinística de `.xlsx`/`.xlsm` (estrutura, padrões de fórmula normalizados a R1C1, colunas `input`/`derived`/`manual`, células de excepção = overrides humanos, validações, formatação condicional **agrupada por padrão R1C1** (uma entrada por regra distinta, com contagem de instâncias e intervalos — o Excel escreve uma instância por linha copiada), cor-como-dado, comentários, anomalias, flags de VBA/links externos); L3 **replay** — bateria fixa que re-executa lookups, unicidade de chaves, whitespace/casing, staleness, excepções de padrão e referências órfãs, com a regra dura *no check = no claim*; o que recusa computar sai como `TO-READ` **com o alvo nomeado** (folha, tabela ou família de intervalos nomeados, e se vive fora do ficheiro), porque milhares de chamadas recusadas costumam apontar para meia dúzia de sítios a abrir; L2 **modelo de processo** (LLM) que reconstrói as regras de negócio evidenciadas (PM-NNN, sempre com citação de célula) e a lista de interrogação (PM-U-NNN) para os humanos.
 - **As lenses consomem o modelo primeiro** (`orchestration.md`), com **spot-check obrigatório de ≥1 afirmação PM contra o ficheiro cru por ronda** *(quota substituída na v3.2.0 por verificação baseada em materialidade — ver abaixo)* — o raw é sempre autoritativo; divergência gera row **Conflicted**. É a mitigação da falha correlacionada (um modelo errado a envenenar 6 lenses).
 - **Alinhamento epistémico**: as regras PM carregam `verificado_em` = data de modificação **do ficheiro** (não da corrida de captura — um Excel de janeiro é evidência de janeiro, e nasce expirado se passou a meia-vida) + `validade`; as PM-U carregam `criticidade`, `custo` e `swing`. As lenses herdam esses carimbos na promoção, sem re-datar.
-- **Hooks migrados para Python** (cross-platform, sem dependência de `jq`), mais o novo `pre-lens-order-check.py` que impõe a ordem das lenses numa passagem completa de Discovery (`/round <lens>` corre uma lens isolada, sem ordem). O `pre-write-guard.py` mantém-se **fail-closed**: enforce por default, `AISA_GUARD_MODE=log` é o override administrativo.
+- **Hooks migrados para Python** (cross-platform, sem dependência de `jq`), mais o `pre-lens-order-check.py` (retirado em handoff-v1 F3.3) que impunha a ordem das lenses numa passagem completa de Discovery (`/round <lens>` corre uma lens isolada, sem ordem). O `pre-write-guard.py` mantém-se **fail-closed**: enforce por default, `AISA_GUARD_MODE=log` é o override administrativo.
 - Deliverable `estimate` reestruturado em 10 secções por fase.
 
 Validação: fixture xlsx com os 3 defeitos do critério de aceitação do spec §10 — duplicado de chave, falha de lookup por espaço à direita, aging >120 dias — **todos reencontrados mecanicamente pelo replay, com citação de célula** e sem envolvimento de lenses.
@@ -174,7 +188,7 @@ Documento inicial baseado em 10 decisões da sessão de brainstorm.
 
 `aisa` é uma plataforma de **discovery e sensemaking organizacional** que antecede qualquer escolha tecnológica em projectos de digitalização (Power Platform, OutSystems, Mendix, custom). Resolve o problema de raiz: a maioria dos projectos falha em **discovery**, não em implementação — desalinhamento entre stakeholders, entendimento incompleto do problema, contexto fragmentado, e selecção tecnológica prematura.
 >
-> **Errata (2026-09-11)**: esta frase é de 2026-05-28 e mantém-se como registo. O âmbito em vigor é o do cabeçalho — discovery orientado a uma decisão técnica (`SCOPE-STATEMENT v1`); o refoco foi confirmado pelo dono em 2026-09-09.
+> **Errata (2026-09-11)**: esta frase é de 2026-05-28 e mantém-se como registo. O âmbito em vigor é o do cabeçalho — discovery orientado a uma decisão técnica (`SCOPE-STATEMENT v1`); o refoco foi confirmado pelo dono em 2026-09-09. Desde handoff-v1 F1 (2026-09-23) o cabeçalho é a v2: decisão técnica e desenho construível.
 
 O aisa v2 substitui o **SPEA v2 (aisa v1)**. O sistema anterior é estruturalmente over-engineered: força reasoning determinístico em cima de um LLM probabilístico através de um kernel com dezenas de invariantes (Ledger, claims tipadas, coherence-cells, event-order gates, YAML frontmatter mandatório). Dois runs com input idêntico produziram outputs divergentes e ambos não-conformes — o que prova que o problema é estrutural, não implementacional.
 
@@ -309,6 +323,8 @@ Transições típicas: `Unknown → (USER_ANSWER) → Confirmed` ou `Assumed`. `
 
 ### 3.3 As 7 Lenses
 
+> **handoff-v1 F3.2:** as seis perspectivas de Discovery deixaram de ser skills. Vivem em `library/kernel/lens-checklists.md` (dono único das perguntas centrais, das regras próprias e da evidência de cobertura), e um analista integrado aplica-as no `/round`; a cobertura fica no registo `lens` do coverage (`library/kernel/coverage-contract.md` §4.8). `lens-technology` continua skill (Options). A tabela abaixo descreve as perspectivas; o contrato de §7.2 vale hoje só para `lens-technology`.
+
 Cada lens é uma skill em `.claude/skills/lens-<name>/SKILL.md`. Independente, idempotente, lê context.json + (depending on mode) parte ou totalidade do SU, emite contribuições com estado.
 
 | Lens | Objectivo | Sinais que recolhe |
@@ -330,6 +346,8 @@ Cada lens é uma skill em `.claude/skills/lens-<name>/SKILL.md`. Independente, i
 Os deliverables consomem os summaries narrativos para preencher slots de prose (`business_context`, `current_state_summary`, etc.) sem precisar de re-sintetizar a partir das rows. Isto garante: (a) determinismo do render; (b) coerência entre deliverables que partilham temas. Discovery é "qualquer coisa menos tecnologia".
 
 ### 3.4 Council Híbrido — Modos de Orquestração
+
+> **handoff-v1 (F3, F5):** o council de seis personas em paralelo foi retirado. Em vigor: Discovery = uma análise integrada das seis perspectivas, inline, + um revisor independente da cobertura (`lens-coverage-reviewer`); Framing = análise integrada + um revisor independente (`frame-reviewer`); Options = o autor técnico (`solution-architect`, inline) publica os candidatos e o router chama um `specialist-reviewer` por mandato publicado; contratos funcionais revistos pelo `fc-reviewer`. Um subagente só existe quando não precisa do contexto de quem o lança e só o veredicto volta (`library/kernel/orchestration.md` → *When a subagent is justified*). O texto abaixo é o desenho anterior, mantido como registo.
 
 Duas formas de invocar uma lens, **declaradas pela fase**:
 
@@ -540,17 +558,18 @@ aisa/                                              # repo 1 — partilhável den
 │   │   ├── shared-understanding-as-source-of-truth.md
 │   │   └── render-on-decision-only.md
 │   ├── skills/
-│   │   ├── lens-{business,operations,user,data,technology,governance,financial}/SKILL.md
+│   │   ├── lens-technology/SKILL.md                 # a única lente que resta (Options)
 │   │   ├── chairman-synthesis/SKILL.md
-│   │   └── aisa-{start,round,answer,status,frame,options,simulate,decide,synthesize,blueprint,render}/SKILL.md
+│   │   └── aisa-{start,orient,round,capture,answer,status,frame,options,simulate,premortem,
+│   │            decide,synthesize,blueprint,render,revisit,retro}/SKILL.md
 │   ├── commands/                                    # thin entry points
-│   │   └── {start,round,answer,status,frame,options,simulate,decide,synthesize,blueprint,render,resume}.md
-│   ├── agents/                                      # personas council-independent
-│   │   ├── business-analyst.md · operations-lead.md · user-advocate.md · data-steward.md
-│   │   ├── solution-architect.md · compliance-officer.md · cfo-lens.md
-│   │   └── chairman.md
+│   │   └── {start,round,capture,answer,status,frame,options,simulate,premortem,decide,
+│   │        synthesize,blueprint,render,revisit,retro,resume,dashboard}.md
+│   ├── agents/                                      # revisores independentes + mandatos (handoff-v1)
+│   │   ├── lens-coverage-reviewer.md · frame-reviewer.md · fc-reviewer.md · specialist-reviewer.md
+│   │   └── solution-architect.md (autor técnico) · chairman.md
 │   ├── agent-memory/
-│   │   └── _universal/<persona>/{universal-constraints,anti-patterns}.md
+│   │   └── _universal/<papel>/diary.md              # analyst, architect e os papéis de especialista
 │   │       # _tenant/ é gitignored — vive no repo privado (corporate-patterns etc.)
 │   ├── output-styles/                               # (vazio; opcional)
 │   └── hooks/                                       # todos Python 3 (ver .claude/hooks/HOOKS.md)
@@ -558,14 +577,19 @@ aisa/                                              # repo 1 — partilhável den
 │       ├── pre-authority-guard.py                   # ENFORCE: não escrever numa autoridade
 │       │                                            # (SU, decisions, answers, _state, _graph/, _ops/)
 │       │                                            # sobre estado por reconstruir. Fail-closed
-│       ├── pre-lens-order-check.py                  # ENFORCE: ordem das lenses na passagem completa (Discovery)
+│       ├── pre-profile-check.py                     # ENFORCE: skill que escreve recusada na versão histórica
+│       ├── (pre-lens-order-check.py — retirado em handoff-v1 F3.3: a passagem fecha pelo registo `lens` do coverage)
 │       ├── on-su-change.py                          # ACTIVO: regenera <slug>/dashboard.html
-│       └── phase-gate-check.py · synthesis-validate.py · render-validate.py   # log-only
+│       ├── on-su-mirror.py                          # detecta edição directa da SU; só reporta
+│       └── phase-gate-check.py · phase-completeness.py · blueprint-validate.py ·
+│           synthesis-validate.py · render-validate.py   # ver HOOKS.md
 │
 ├── library/                                         # read-only em runtime (hook + deny)
 │   ├── kernel/                                      # universal, vendor-agnóstico
-│   │   ├── phases.md · states.md · orchestration.md
-│   │   ├── render-contract.md · blueprint-contract.md · coverage-contract.md · glossary.md
+│   │   ├── phases.md · states.md · orchestration.md · lens-checklists.md · specialists.md
+│   │   ├── render-contract.md · blueprint-contract.md · coverage-contract.md · handoff-contract.md · glossary.md
+│   │   ├── schemas/handoff-{state,pack,response,work,functional,candidates,review,scope,
+│   │   │                    work-packages,index}.schema.json
 │   │   ├── synthesis-templates/{business-story,as-is,architecture-story,risks-and-assumptions,financial-story}.template.md
 │   │   ├── capture-templates/process-model.template.md
 │   │   └── tools/                                   # motores determinísticos, LIDOS E EXECUTADOS
@@ -584,7 +608,15 @@ aisa/                                              # repo 1 — partilhável den
 │   │       │                                        # consultam ANTES de concluir
 │   │       ├── resolve.py                           # transições do /answer + as 4 operações de ciclo de vida
 │   │       ├── migrate.py                           # legado → memória: dry-run · apply · restore · init
-│   │       └── projection.py                        # estado operacional em linguagem de negócio (/status)
+│   │       ├── projection.py                        # estado operacional em linguagem de negócio (/status)
+│   │       │                                        # -- handoff-v1 --
+│   │       ├── workflow.py                          # perfil, rota, capacidade do pack, versões suportadas
+│   │       ├── functional.py                        # contratos funcionais FC: publicar, autorizar, gate do render
+│   │       ├── review.py                            # candidatos de Options, mandatos, pareceres, disposições
+│   │       ├── inventory.py                         # âmbito SCOPE e inventário de trabalho WP
+│   │       ├── trace.py                             # rastreabilidade vertical e gate de âmbito (só leitura)
+│   │       ├── release.py                           # pacote com índice, verificação, aceitação do destinatário
+│   │       └── impact.py                            # raio de impacto e dependentes desactualizados (só leitura)
 │   │                                                # executar não é escrever: a regra read-only
 │   │                                                # aplica-se a EDIÇÕES em runtime, não à execução
 │   └── packs/
@@ -620,7 +652,7 @@ aisa/                                              # repo 1 — partilhável den
 
 # Estrutura típica de UM engagement (vive em aisa-engagements-<tenant>/<slug>/):
 #   <slug>/
-#   ├── _state.json                              # phase, round, pack, atomic writes (tmp → mv)
+#   ├── _state.json                              # phase, round, pack, workflow — published by the coordinator (draft → resolve.py publish)
 #   ├── context.json                             # captura do /start
 #   ├── shared-understanding.md                  # ARTEFACTO VIVO (5 secções por estado)
 #   ├── dashboard.html                           # PÁGINA VIVA (gerada; nunca editada à mão)
@@ -766,6 +798,8 @@ Tamanho: alvo leve (indicativo), **nunca critério de PASS/FAIL** e sem validado
 
 ### 7.3 Agent contract — `.claude/agents/<name>.md`
 
+> **handoff-v1 (F5.4):** as personas de council foram retiradas. Os agentes em vigor são revisores independentes (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer` — um para todos os papéis; o mandato publicado diz qual) e os mandatos de autor (`solution-architect`) e de síntese (`chairman`). A memória é por papel (`.claude/agent-memory/_universal/<papel>/diary.md`). O modelo abaixo é o anterior, mantido como registo.
+
 Personas para modo council-independent. **Agent = perspectiva independente + mandato.**
 
 ```markdown
@@ -860,7 +894,7 @@ ponta-a-ponta  a solução funciona?                   prova de execução — f
 
 Ausência de registo lê-se **`not_evaluated`**: nunca "completo", nunca "reprovado retroactivamente", e nunca a revogação de uma aprovação já registada.
 
-**O motor** é `library/kernel/tools/coverage.py` (stdlib-only). Quatro operações: `inventory` (o denominador, derivado das fontes e nunca do registo), `check` (os cinco veredictos), `report` (projecção Markdown determinística, que **não** é autoridade) e `finalize` — a **única** que escreve, e escreve só em `<engagement>/_coverage/`. Os registos são imutáveis: uma revisão nova é uma versão nova.
+**O motor** é `library/kernel/tools/coverage.py` (stdlib-only). Quatro operações: `inventory` (o denominador, derivado das fontes e nunca do registo), `check` (os cinco veredictos), `report` (projecção Markdown determinística, que **não** é autoridade) e `finalize` — a **única** que escreve, em `<engagement>/_coverage/`, pelo coordenador (recibo em `_ops/`; handoff-v1 F2). Os registos são imutáveis: uma revisão nova é uma versão nova, e o mesmo conteúdo não ganha segundo número.
 
 **O que o motor nunca faz:** contar palavras, procurar nomes, medir semelhança textual, ou tratar a existência de uma referência como prova de satisfação. Verifica a *forma* da ligação — que o destino existe, que está no artefacto sob revisão, que não é um comentário; a adequação é revista e escrita pelo agente em duas passagens (fonte → destino e destino → fonte), e fica assinada por quem a fez.
 
@@ -881,8 +915,8 @@ Plano de implementação e evidência das seis fases: `docs/runtime-hardening/co
 | `/capture [file]` | Discovery (auto no `/start`, freshness check no `/round`) | Process-capture de inputs: L1 extracção determinística de `.xlsx`/`.xlsm` (`library/kernel/tools/xlsx_extract.py`) → L3 replay (bateria fixa de verificações) → LT capture-lite de `.docx`/`.pdf`/`.vtt`/`.srt`/`.txt`/`.md`/`.csv` (`text_extract.py`, sem LLM) → L2 modelo de processo (LLM, **cross-source**: lê toda a evidência normalizada via `evidence-index.md`, source-complete em cobertura, e escreve a sinopse de processo em `process-model.md` §4 com marcadores OBSERVED/INFERRED/HYPOTHESIS/UNKNOWN). Escreve `_capture/{<f>.extraction.json, <f>.replay.md, <f>.text.md, process-model.md, evidence-index.md, _capture-log.md}`. `inputs/` fica evidência pura. Spec: `docs/PROCESS_CAPTURE_SPEC.md`. Declara os limites de captura (uma fonte sem extractor entra como limitação, **nunca** como coberta) e recalcula o efeito na actualidade das revisões quando uma fonte ou um extractor muda (§7.6). |
 | `/answer <id> "..."` | Em qualquer fase | Resolve uma row Unknown/Conflicted/Assumed/Risky: resposta verbatim em `answers.md`, nova row `was <id>`, marcador `resolved →` na original. Mostra o efeito calculado na actualidade das revisões de cobertura (§7.6) — uma resposta nova muda a base, e as revisões que assentavam nela ficam `stale`. Não escreve flag nenhuma: o estado é derivado em cada leitura. |
 | `/status` | A qualquer momento | Mostra fase, ronda actual, contagem de items por estado (abertos vs resolvidos), contradições por resolver, gaps abertos, próxima acção sugerida. Expõe `status.coverage` (§7.6) com as quatro perguntas em linhas separadas — estrutura, cobertura, aprovação, ponta-a-ponta — e `not_evaluated` onde não há revisão, que não é aprovação nem reprovação. |
-| `/frame` | Discovery → Framing | Transita para fase Framing. Corre lenses em modo council-independent + chairman. Produz `frame.md` (a frase única) + `contradictions.md` resolvidas. |
-| `/options` | Framing → Options | Transita para Options. Corre lens-technology + outras lenses como council. Gera 3-5 opções (incluindo `do nothing` e `non-tech`). Consulta `decision-tree.md` pela 1.ª vez. |
+| `/frame` | Discovery → Framing | Transita para fase Framing. O analista integrado propõe o enquadramento inline, um revisor independente (`frame-reviewer`) contesta-o, o `chairman-synthesis` escreve `frame.md` (a frase única) e as linhas da SU; a aprovação fica em `decisions.md` com a impressão da frase. |
+| `/options` | Framing → Options | Transita para Options. O autor técnico (`solution-architect`, inline) escreve e publica os candidatos por rota (`review.py`); o router chama só os especialistas que o risco pede, um `specialist-reviewer` por mandato publicado; o `chairman-synthesis` dispõe os achados e escreve `options.md`. Consulta `decision-tree.md` pela 1.ª vez. |
 | `/simulate [O-NNN ...]` | Em Options | Projecta cada opção (ecrãs/intervenção, banda de esforço, riscos, constraints) lado-a-lado em `_simulation/` + lista os Unknowns *decision-flipping* (value of information). Advisory. |
 | `/premortem [--horizon <meses>]` | Em Options/Decision, antes do `/decide` | O obituário do projecto datado a +N meses: causas de morte narradas (ids), sinais observáveis, mitigações → requisitos/tripwires. Soft-sugerido pelo `/decide`. |
 | `/decide [--consult]` | Options → Decision | Captura escolha + justificação + alternativas + riscos + condições. Regista em `decisions.md` + row D-NNN no SU. `--consult` = review opcional do solution-architect. **Auto-corre `/synthesize` no fim.** |
@@ -890,7 +924,7 @@ Plano de implementação e evidência das seis fases: `docs/runtime-hardening/co
 | `/synthesize` | Auto após `/decide` (ou ad-hoc) | Produz `_synthesis/{business-story, as-is, architecture-story, risks-and-assumptions, financial-story}.md` a partir do SU + lens-outputs + decisions. Camada intermédia para garantir coerência entre os 6 deliverables. |
 | `/render [deliverable\|--all]` | Fim de Decision (após `/synthesize`) | Renderiza 1 ou todos os 6 deliverables em `_render/`. Lê dos topic packs em `_synthesis/`. Falha alto se faltam topic packs ou slots required. Versioning incremental (`v01`, `v02`, ...) — nunca sobrescreve. **Cobertura em duas verificações que não se misturam** (§7.6): o pré-render por deliverable (passo 2b) — as autoridades que *ele* declara e a versão que o *seu template* manda ler — e a revisão de projecção do ficheiro escrito (9b). Autoridade que ainda não existe é *skip com razão* em `render-log.md`, **nunca** lacuna; obrigação perdida é lacuna com dono em `render-gaps.md`, devolvida a montante — o render nunca reabre o Excel, nunca reescreve a SU, nunca resolve uma pergunta em aberto. |
 | `/revisit <TW-n\|O-NNN>` | Pós-decisão, quando um tripwire dispara | Compara o presente com o counterfactual congelado; recomenda manter/adaptar/reabrir. Nunca altera a decisão. |
-| `/retro` | Fecho do engagement | As 7 personas escrevem diários (staged → curadoria humana → agent-memory). O council fica mais sábio a cada engagement. |
+| `/retro` | Fecho do engagement | Cada papel que trabalhou o engagement (analista, arquitecto, os especialistas que reviram) escreve o seu diário (staged → curadoria humana → agent-memory). |
 | `/resume` | Session retomada | Lê `_state.json`, mostra onde estamos, verifica tripwires, deriva o bloco *Read to resume* da fase (o conjunto mínimo de autoridades a recarregar — nunca o transcript anterior, nunca toda a evidência) e nomeia o próximo comando. §3.5. |
 | `/dashboard [slug] [--open]` | A qualquer momento | Regenera `projects/<slug>/dashboard.html` — a página viva self-contained, 6 tabs: **Panorama** (fase, saúde, barra dos 5 estados, a frase única do frame, as 3 coisas a fazer, último episódio da `story.md`), **Outputs** (o que cada fase produziu, por extenso: `_capture/process-model.md`, `frame.md`, `options.md`, `_simulation/`, `premortem.md`, `decisions.md`, `_synthesis/`, `_blueprint/` — renderizados com os ids do SU clicáveis, os da fase actual expandidos), **Agenda** (baldes por custo/swing + tripwires), **Registo** (as 5 secções do SU, claim clampado a 2 linhas, clique abre gaveta com o detalhe integral), **Narrativa** (timeline) e **Artefactos**. Paleta alinhada com os deliverables DOCX. Determinística (`library/kernel/tools/dashboard.py`, stdlib-only, zero requests externos, `build` hash estável). O hook `on-su-change.py` mantém-na actualizada **apenas para escritas do agente**; para edições externas (editor, script, outra sessão) usar `--serve` (poll de mtimes + servidor em `http://127.0.0.1:8787`, só localhost). Sobre HTTP a página sonda `/__build` e recarrega apenas quando o hash do build muda; sobre `file://` não pode fazer `fetch` e cai no reload cego por temporizador, que contextos sandboxed recusam. Também para bootstrap, slug não-activo e `--open`. |
 | `/export` | (backlog — não implementado) | Snapshot completo do engagement (para handoff ou archive). |
@@ -906,7 +940,7 @@ Plano de implementação e evidência das seis fases: `docs/runtime-hardening/co
 /round              # nova ronda Discovery se necessário
 /status             # vê 2 Conflicted Critical → tem de resolver
 [user resolve Conflicted com sponsor]
-/frame              # transita para Framing; council-independent
+/frame              # transita para Framing; analista integrado + revisor independente
   → frase única; sponsor valida
 /options            # transita para Options
   → 4 opções: do nothing / process change / PP Premium / OutSystems
@@ -933,7 +967,7 @@ Plano de implementação e evidência das seis fases: `docs/runtime-hardening/co
 
 ### 9.2 Soft (advisory, overrideable com justificação)
 
-- **`on-su-change.py`** — **activo**. Após qualquer Write/Edit dentro de um engagement (SU, `_state.json`, `decisions.md`, `story.md`, `council-log.md`, `answers.md`, `options.md`, `frame.md`, `context.json`, `premortem.md`, ou qualquer ficheiro sob `_capture/ _synthesis/ _render/ _blueprint/ _simulation/ _retro/ lens-outputs/ _coverage/`), spawna `library/kernel/tools/dashboard.py` em background e regenera `<slug>/dashboard.html`. Debounce de 2 s (`AISA_DASHBOARD_DEBOUNCE`) para não rebuildar 7 vezes numa ronda. Nunca bloqueia: sai sempre 0. **Limite**: `PostToolUse` só vê as escritas do agente — para editores/scripts/outras sessões usar `/dashboard --serve`. A detecção de contradições continua a ser feita pela lens-governance (conflict-scan) e pelo chairman na síntese.
+- **`on-su-change.py`** — **activo**. Após qualquer Write/Edit dentro de um engagement (SU, `_state.json`, `decisions.md`, `story.md`, `council-log.md`, `answers.md`, `options.md`, `frame.md`, `context.json`, `premortem.md`, ou qualquer ficheiro sob `_capture/ _synthesis/ _render/ _blueprint/ _simulation/ _retro/ lens-outputs/ _coverage/`), spawna `library/kernel/tools/dashboard.py` em background e regenera `<slug>/dashboard.html`. Debounce de 2 s (`AISA_DASHBOARD_DEBOUNCE`) para não rebuildar 7 vezes numa ronda. Nunca bloqueia: sai sempre 0. **Limite**: `PostToolUse` só vê as escritas do agente — para editores/scripts/outras sessões usar `/dashboard --serve`. A detecção de contradições continua a ser feita pela perspectiva de governação (conflict-scan, `library/kernel/lens-checklists.md`) e pelo chairman na síntese.
 - **`phase-completeness.py`** (hook `Stop`) — **activo**. No fim de cada turno verifica se a skill da fase corrente escreveu tudo o que a sua secção `Outputs (written)` promete. Framing: `frame.md` com a frase única, `chairman-synthesis-F-NN.md`, os 6 excertos `_council-prep`, rows novas no SU com a ronda, linha no `council-log` — e, em separado, o fecho por validação (`D-001` + episódio da `story.md`). Options: o mesmo com 7 personas e ≥3 opções incluindo do-nothing e non-technology. Decision: bloco `D-NNN`, os 5 topic packs, row `D-NNN` no SU, counterfactuals congelados. Reporta em stderr, **nunca bloqueia**, sai sempre 0, silencioso quando está completo. Também corre à mão: `python .claude/hooks/phase-completeness.py --engagement <slug>`.
 - **`phase-gate-check.py`** — antes de transição de fase, verifica entry/exit criteria. Emite warning se violados. User pode prosseguir com `/frame --override "razão"`.
 - **`synthesis-validate.py`** — após `/synthesize`, verifica que todos os 5 topic packs em `_synthesis/` foram produzidos sem secções vazias críticas. Se algum está vazio, lista qual lens devia ter contribuído. Bloqueia `/render --all` com warning (overrideable com `/render --skip-validate`).
@@ -992,6 +1026,8 @@ aisa-engagements-galp/             # repo 2 — privado, encrypted, restrito ao 
 - **Skills + agents + library/ + docs/ tracked em repo 1** — equipa contribui melhorias.
 
 ### 10.2 Agent-memory split (universal vs tenant-proprietary)
+
+> **handoff-v1 (F5.4):** a memória passou a ser por papel (`_universal/<papel>/diary.md`: `analyst`, `architect`, `cost-estimate`, `data-integration`, `security-operation`, `ux-process`), não por persona. A separação universal/tenant abaixo mantém-se; os nomes de pasta do exemplo são os da v3.5.
 
 `.claude/agent-memory/` em `aisa/` contém apenas memória **universal** (constraints genéricos, anti-padrões de indústria). Memória **proprietária** (e.g. "Galp usa SAP S/4HANA") vive em `agent-memory/<tenant>/` sob o repo 2 ou em ficheiros gitignored:
 

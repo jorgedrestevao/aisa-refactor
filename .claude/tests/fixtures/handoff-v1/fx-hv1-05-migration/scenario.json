@@ -1,0 +1,209 @@
+{
+  "schema_version": "handoff-f0-fixture/1",
+  "id": "fx-hv1-05-migration",
+  "synthetic": true,
+  "title": "Substituição do registo de equipamentos legado com migração de histórico",
+  "route": "platform-constrained",
+  "fixture_requirements": [
+    "dados históricos",
+    "qualidade",
+    "reconciliação",
+    "cutover",
+    "rollback",
+    "coexistência temporária"
+  ],
+  "sources": [
+    {
+      "id": "SRC-PEDIDO",
+      "path": "sources/pedido.md",
+      "kind": "request"
+    },
+    {
+      "id": "SRC-LEG",
+      "path": "sources/nota-legado.md",
+      "kind": "note"
+    },
+    {
+      "id": "SRC-INV",
+      "path": "sources/entrevista-inventario.md",
+      "kind": "interview-notes"
+    },
+    {
+      "id": "SRC-AMOSTRA",
+      "path": "sources/amostra-legado.md",
+      "kind": "data-sample"
+    }
+  ],
+  "scope": {
+    "in": [
+      "registo de equipamentos",
+      "histórico de atribuições",
+      "estado"
+    ],
+    "out": [
+      "amortizações"
+    ]
+  },
+  "constraints": [
+    "paragem do inventário ≤ 1 dia (sources/pedido.md#P1)",
+    "não coincidir com o inventário anual de Dezembro (sources/entrevista-inventario.md#N4)"
+  ],
+  "expected": [
+    {
+      "id": "E01",
+      "kind": "assumption",
+      "statement": "Volumes e percentagens de qualidade (12 000 registos, ~3% duplicados, ~15% sem localização) são estimativas até haver perfil de dados.",
+      "source_refs": [
+        "sources/nota-legado.md#L1",
+        "sources/nota-legado.md#L2",
+        "sources/nota-legado.md#L3"
+      ],
+      "classification": {
+        "epistemic_state": "Assumed",
+        "closure": "perfil de dados do legado",
+        "impact": [
+          "effort",
+          "migration"
+        ]
+      },
+      "must_not": [
+        "usar as estimativas como factos na estimativa modo A sem as marcar"
+      ],
+      "scenarios": []
+    },
+    {
+      "id": "E02",
+      "kind": "design_choice",
+      "statement": "Regra de resolução de números de série duplicados é escolha de negócio com alternativas reais.",
+      "source_refs": [
+        "sources/entrevista-inventario.md#N2",
+        "sources/nota-legado.md#L2"
+      ],
+      "classification": {
+        "question_type": "design_choice",
+        "alternatives": [
+          "manter o registo mais recente",
+          "fundir os registos com revisão manual"
+        ],
+        "impact": [
+          "data",
+          "migration",
+          "acceptance"
+        ],
+        "owner_role": "responsável de património"
+      },
+      "must_not": [
+        "escolher a regra por conveniência técnica sem autorização"
+      ],
+      "scenarios": []
+    },
+    {
+      "id": "E03",
+      "kind": "traceability",
+      "statement": "Mapping, limpeza, reconciliação por tipo e estado, cutover, rollback, coexistência e destino do legado estão ligados a trabalho e a critérios de aceitação.",
+      "source_refs": [
+        "sources/entrevista-inventario.md#N1",
+        "sources/entrevista-inventario.md#N3",
+        "sources/nota-legado.md#L6"
+      ],
+      "classification": {
+        "handoff_domains": [
+          "migração/cutover",
+          "testes/provas",
+          "operação"
+        ]
+      },
+      "must_not": [
+        "deixar reconciliação ou rollback só em prosa sem trabalho nem aceitação"
+      ],
+      "scenarios": [
+        "T38"
+      ]
+    },
+    {
+      "id": "E04",
+      "kind": "requirement",
+      "statement": "Rollback preserva o que se registou depois da passagem.",
+      "source_refs": [
+        "sources/entrevista-inventario.md#N1"
+      ],
+      "classification": {
+        "impact": [
+          "migration",
+          "operations",
+          "data"
+        ]
+      },
+      "must_not": [
+        "planear rollback que descarta registos novos"
+      ],
+      "scenarios": [
+        "T38"
+      ]
+    },
+    {
+      "id": "E05",
+      "kind": "requirement",
+      "statement": "Normalização do estado em texto livre exige tabela de correspondência autorizada.",
+      "source_refs": [
+        "sources/nota-legado.md#L4"
+      ],
+      "classification": {
+        "question_type": "design_choice",
+        "impact": [
+          "data",
+          "acceptance"
+        ]
+      },
+      "must_not": [
+        "inventar a correspondência de valores ambíguos como 'avariado?'"
+      ],
+      "scenarios": []
+    },
+    {
+      "id": "E06",
+      "kind": "requirement",
+      "statement": "Histórico de atribuições conservado 10 anos; retenção pertence ao dono de dados do blueprint.",
+      "source_refs": [
+        "sources/nota-legado.md#L5"
+      ],
+      "classification": {
+        "impact": [
+          "data",
+          "governance"
+        ]
+      },
+      "must_not": [],
+      "scenarios": []
+    },
+    {
+      "id": "E07",
+      "kind": "traceability",
+      "statement": "A reconciliação da amostra é contável: 10 registos de origem (4 portáteis, 4 monitores, 2 acessórios), 2 pares de número de série repetido (A1/A4, A5/A10), 2 registos sem localização (A2, A6) e 10 valores de estado com 7 grafias que, em minúsculas, dão 5 valores, um deles ambíguo ('avariado?'); a contagem por tipo e estado antes/depois é critério de aceitação da migração.",
+      "source_refs": [
+        "sources/amostra-legado.md#A1",
+        "sources/amostra-legado.md#A4",
+        "sources/amostra-legado.md#A5",
+        "sources/amostra-legado.md#A10",
+        "sources/amostra-legado.md#A2",
+        "sources/amostra-legado.md#A6"
+      ],
+      "classification": {
+        "handoff_domains": [
+          "migração/cutover",
+          "testes/provas"
+        ]
+      },
+      "must_not": [
+        "reconciliar só o total sem as contagens por tipo e estado",
+        "resolver os duplicados sem a regra autorizada (E02)"
+      ],
+      "scenarios": [
+        "T38"
+      ]
+    }
+  ],
+  "notes": [
+    "Dados sintéticos. Este é um caso de migração de dados do cliente; não confundir com T35 (migração de engagements AISA)."
+  ]
+}

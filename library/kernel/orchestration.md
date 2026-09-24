@@ -4,8 +4,11 @@
 
 Each phase declares its mode in [`phases.md`](phases.md):
 
-- **`inline`**: lenses run sequentially in the current thread, sharing accumulated context. Used in Discovery. The habitual order is mandatory for a full round and a preference otherwise: `/round <lens>` runs one lens alone, in any order (`phases.md` → *Rounds*).
-- **`council-independent`**: each lens runs as a Task subagent (concurrent), seeing only `context.json` + a thematic Shared Understanding excerpt. The chairman synthesizes outputs. Used in Framing/Options/Decision.
+- **`inline`**: one integrated analysis in the current thread applies the six perspectives of `lens-checklists.md`, with the whole accumulated context. Used in Discovery (`/round`); an independent reviewer reads the coverage record when the round closes (*Inline mode* below).
+- **`analyst + reviewer`** (handoff-v1 F3): the integrated analyst proposes inline; one independent reviewer, a subagent with fresh context, contests; the chairman's evidence rules settle the synthesis. Used in Framing (*Framing mode* below).
+- **`author + specialist reviewers`** (handoff-v1 F5): the technical author writes the candidates inline and publishes them; an explainable router selects the specialists the risk calls for; each reviews the published revision as a subagent, on its published mandate; the chairman disposes the findings. Used in Options (*Options mode* below). Decision is interactive (user-driven). The persona council is retired (F5.4).
+
+**When a subagent is justified** (handoff-v1; README → *Regras de execução*). A subagent is defined only when both hold: the task does **not** need the context of whoever launches it, and its detail does **not** have to come back — only its verdict. Independence between an author and a reviewer is the typical case, and the subagent is the only way to get it. Everything else runs inline; in doubt, inline. Parallelism is a further choice, taken only when the subagents are independent of each other and the gain is real; a reviewer runs after what it reviews, never beside it.
 
 ## Evidence contract — parse once, reason many
 
@@ -87,9 +90,9 @@ No new state, no new field, no register, no matrix: these are existing SU semant
 
 **Fact ≠ fit.** A technical or configuration fact (a connection exists, a gateway is configured, a capability is documented) is never, by itself, an architecture-fit conclusion. Where a proposition is architecture-significant **and** is used to settle or materially support a structural architecture conclusion, it closes only on one sufficient basis — authoritative RESEARCH / Domain Knowledge read against the material requirements (exclusions included), engagement-verifiable technical evidence from an accountable source, or a proof / measurement / spike — otherwise the engagement fact is recorded and the structural choice stays open (`aisa-answer`, `aisa-blueprint`). Capability confirmed ≠ fit confirmed.
 
-**Targeted revalidation.** When a new or changed material fact contradicts or materially changes a premise that downstream reasoning used, the conclusions materially based on it are named and marked for revalidation — through the references that already exist (`su_refs`, anchors, `forced_by`, conditions, proof obligations, open architecture choices, tripwires, the blueprint log), never through a dependency graph or a new field. No automatic reversal; no rerun of all phases. Where the Decision basis may have moved: tripwire check → `/revisit`. Architecture never rewrites the Decision.
+**Targeted revalidation.** When a new or changed material fact contradicts or materially changes a premise that downstream reasoning used, the conclusions materially based on it are named and marked for revalidation — through the references that already exist (`su_refs`, anchors, `forced_by`, conditions, proof obligations, open architecture choices, tripwires, the blueprint log), and, in a `handoff-v1` engagement, also through the typed dependencies of `handoff-contract.md` → *Dependencies*. No automatic reversal; no rerun of all phases: the motor marks what needs revalidation and never decides that new evidence confirms or refutes. Where the Decision basis may have moved: tripwire check → `/revisit`. Architecture never rewrites the Decision.
 
-**Phase ≠ session.** A phase may span many sessions; several phases may run in one. Session context is a **disposable cache**; repository engagement state is the **durable memory**. A fresh session must not depend on the previous transcript and reloads **selectively**: phase authority + SU material state + the process synopsis where relevant + the current phase artefact + targeted evidence / Domain Knowledge pulls — never all raw evidence, all transcripts, all lens outputs or all Domain Knowledge (`aisa-status` → *Read to resume*). No handoff-summary artefact: the canonical artefacts are the memory.
+**Phase ≠ session.** A phase may span many sessions; several phases may run in one. Session context is a **disposable cache**; repository engagement state is the **durable memory**. A fresh session must not depend on the previous transcript and reloads **selectively**: phase authority + SU material state + the process synopsis where relevant + the current phase artefact + targeted evidence / Domain Knowledge pulls — never all raw evidence, all transcripts, all lens outputs or all Domain Knowledge (`aisa-status` → *Read to resume*). No handoff-summary artefact: the canonical artefacts are the memory. The one work file a `handoff-v1` engagement keeps is `_work/checkpoint.json` (`handoff-contract.md` → *Checkpoint*): references to tasks, results and authorities by id and revision — never a copy of their content, never a summary of what is known.
 
 ## Orchestrator boundaries
 
@@ -102,7 +105,7 @@ An orchestrator **may**:
 - inject that pack's relevant `lenses_config.<lens>.extra_signals` as attention cues;
 - make `question-bank.md` available at the one step that formulates questions;
 - carry round bookkeeping (current round id, next free SU id per section);
-- provide the common council execution mechanics and the persona return schema.
+- provide the return schema (owned by `chairman-synthesis`) and, in Options, the published mandate a reviewer runs on.
 
 An orchestrator **must not**:
 
@@ -112,7 +115,28 @@ An orchestrator **must not**:
 - convert signals into mandatory checklist coverage;
 - become a routing or rules engine.
 
+**Dispatch is not routing** (`handoff-v1`). Choosing which step or role runs next from the profile and route the engagement declares (`_state.json.workflow`, checked by `library/kernel/tools/workflow.py` against the pack's `supported_workflow_profiles` and `supported_routes`) is allowed. Choosing by content — which evidence matters, which architecture, which template for which outcome — stays on the list above.
+
 If a revision has the orchestrator scoring evidence relevance, ranking signals, or selecting questions, that is the line being crossed.
+
+## Writing an authority (`handoff-v1`)
+
+The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place (`docs/handoff-v1/F2/DESENHO.md` §3). One protocol, every skill:
+
+1. **Open a draft** for everything the step writes, authorities and their companions together (`lens-outputs/<lens>.md`, `council-log.md`, `story.md`), declaring what the step read to decide: `python library/kernel/tools/resolve.py draft --engagement <slug> --files <rel>... --reads <rel|glob>... --json`. The draft copies the files to `_drafts/<id>/` and records their base.
+2. **Edit the copies** under the returned `path` — Edit/Write on `_drafts/<id>/<rel>`, never on the engagement file. A draft is nobody's truth: no reader, gate or render consumes it.
+3. **Publish**: `python library/kernel/tools/resolve.py publish --engagement <slug> --draft <id>`. One operation writes the changed files and, when the SU changed, its graph mirror, with one receipt. Publishing the same draft again returns the same receipt.
+
+A refusal leaves the draft as it was and prints a structured reason:
+
+| Code | Meaning | What the step does |
+|---|---|---|
+| `STALE_INPUT` | a file the draft started from, or declared as read, changed since | re-read, open a new draft on the current base, redo the edit — never force the old one |
+| `INTEGRITY_FAILURE` | the new content breaks an authority rule (a SU row removed, a `Confirmed` without a resolvable locator, a `_state.json` key dropped, the `workflow` block changed) | fix the copy and publish again |
+| `NOT_READY` / `RECOVERY_REQUIRED` | the engagement is not reconstructed (pending operation, divergent mirror) | follow the recovery the reason names; never write around it |
+| `CONCURRENT_WRITE` | another writer holds the engagement | publish again when it finishes |
+
+Never `mv` a `.tmp` over `_state.json`, never edit an authority with Bash, never Edit the SU in place. A direct edit that happened anyway is **preserved**: `on-su-mirror.py` reports it, the engagement stops being ready, and `python library/kernel/tools/resolve.py reconcile --engagement <slug>` shows the reconciliation (`--apply` publishes it). The `/answer` state transitions keep their own engine (`resolve.py --row …`), which publishes through the same coordinator. Phase artefacts (`frame.md`, `options.md`, `_blueprint/`, `_synthesis/`, `_render/`) stay tool-written until their phases (F4–F6).
 
 ## Pack context — Discovery vs Options
 
@@ -140,10 +164,18 @@ It is consulted selectively, at question-generation time, to phrase askable ques
 
 ## Inline mode
 
-- Order is fixed in `phases.md`: `business → operations → user → data → governance → financial` (Discovery).
-- Each lens reads: `context.json`, `shared-understanding.md`, `lens-outputs/` (of previous lenses in this round), and the shared evidence the orchestrator carries in (`_capture/evidence-index.md`).
-- Each lens writes: rows to the Shared Understanding + `lens-outputs/<lens>.md`.
+- One integrated analysis applies the six perspectives of `lens-checklists.md` (the single owner of their questions and of the evidence of their coverage); the governance conflict scan runs last inside it. No order is policed — there is one analysis, not six.
+- It reads: `context.json`, `shared-understanding.md`, `enquadramento.md`, `lens-outputs/` (earlier rounds), and the shared evidence the orchestrator carries in (`_capture/evidence-index.md`).
+- It writes, through one draft: rows to the Shared Understanding + a block per perspective in `lens-outputs/<perspective>.md`. Then the `lens` coverage record (`coverage-contract.md` §4.8), which is what closes the round.
+- One reviewer subagent (`lens-coverage-reviewer`) reads the record once, when the round closes, and returns a verdict per perspective (T19).
 - The orchestrator skill (`aisa-round`) drives the sequence.
+
+## Framing mode (handoff-v1 F3)
+
+- The integrated analyst, in framing mode, proposes inline: the single sentence, its anchors, the confirmation or correction of each `M-n`, the survival candidates — in the return schema `chairman-synthesis` owns.
+- One reviewer subagent (`frame-reviewer`, `tools: [Read, Grep, Glob]`, fresh context, paths only) contests it with findings: target, severity, kind (`fact` | `recommendation`), premise/evidence, failure scenario, closing condition.
+- `chairman-synthesis` applies the evidence rules: agreement is not evidence; a `fact` finding with a locator corrects by evidence; without one it is `Conflicted`; a `recommendation` divergence goes to the owner through `AskUserQuestion`. There is no antithesis round.
+- No persona council runs (retired in handoff-v1 F5.4).
 
 ## Declared technical premises (P-25)
 
@@ -157,43 +189,36 @@ that was supposed to absorb it has no way to know it existed — which is exactl
 decision axis ends up missing from the artefact that compares the candidates. The user may decline to
 record; the offer is never *we will use it without recording it*.
 
-## Council-independent mode
+## Options mode (handoff-v1 F5)
 
-- 6 or 7 agents launched **in parallel via concurrent Task subagents**.
-- Each agent receives:
-  - `context.json` (read-only).
-  - A thematic Shared Understanding excerpt curated by the orchestrator (e.g., for the data lens: only `lens: data` rows).
-  - The shared evidence for this engagement (`_capture/evidence-index.md`, and `process-model.md` when it exists) — see *Evidence contract* above. Raw `inputs/` stays openable; a persona is not asked to parse every file.
-  - It does **not** receive other agents' outputs in-flight.
-- Each agent has `tools: [Read, Grep, Glob]` (no Write).
-- When all agents return, the `chairman-synthesis` skill:
-  - Reads all agent outputs.
-  - Identifies overlaps, gaps, contradictions.
-  - Writes new rows to the Shared Understanding.
-  - Writes `chairman-synthesis-<round>.md` in `lens-outputs/` (`F-<NN>` in Framing, `O-<NN>` in Options — the Decision phase runs no council synthesis).
+- **Author, inline.** The technical author (`.claude/agents/solution-architect.md`, run by the session — it needs the whole engagement and the candidates are the product) writes the candidates and publishes them through `review.py` (`library/kernel/handoff-contract.md` → *Options candidates*). No reviewer runs on a candidate still under construction.
+- **Router, explainable.** `review.py route` evaluates every role of `library/kernel/specialists.md` — selected with the evidence that fired it, or not called with what was checked.
+- **Mandate before reviewer.** `review.py mandate` publishes, per selected role, the questions, the inputs and the pack units (and, when listed, the role's own memory) with their `sha256`.
+- **Reviewers, subagents.** One `specialist-reviewer` per mandate (`tools: [Read, Grep, Glob]`, fresh context, the mandate path only), in parallel with each other; none sees the author's reasoning or another review. `review.py receive` publishes each return, pinned to the revision it read.
+- **Chairman, inline.** `chairman-synthesis` reads the published reviews, never votes, and disposes every finding (`review.py dispose`, append-only; a minority opinion is never deleted).
 
-**Common council mechanics live here, not in the persona files.** The invocation carries them, authored once and used verbatim by `aisa-frame` step 5 and `aisa-options` step 5: read-only tool grant · no in-flight peer reads · the persona returns, never writes · the two hard rules that bind a read-only persona (no vendor/product naming outside Options; no `Confirmed` without evidence) · the persona return schema (owned by `chairman-synthesis`, its only consumer) · the shared-evidence pointer (see *Evidence contract* above) · the pack attention cues.
-
-**Persona boundary.** **Agent = independent perspective + mandate.** A persona file (`.claude/agents/<persona>.md`) carries primarily: identity, perspective, phase mandate, what it challenges, and its memory binding. It does **not** duplicate kernel state semantics (`states.md`), orchestration, full lens procedures, common output schemas, or domain knowledge. **A council persona is not required to re-read its lens `SKILL.md`** — the invocation carries what binds it, and one channel is chosen deliberately: two would drift. Only `solution-architect` reads pack domain knowledge, pull-based and Options-only (see *Pack context* above).
+**Agent = independent perspective + mandate.** An agent file carries identity, perspective, what it challenges and its output; it does **not** duplicate kernel state semantics (`states.md`), orchestration, common schemas or domain knowledge. The role's content lives in one kernel file (`specialists.md`), the task in the published mandate: one channel each, because two would drift. Only the technical author pulls pack domain knowledge on its own, Options-only (see *Pack context* above); a reviewer reads only what its mandate lists.
 
 ## Dialectic round
 
-Full peer review was rejected for cost. Its surgical replacement: when the chairman detects **material divergences** between persona outputs (claim vs counter-claim that would change the phase artefact), the orchestrator runs an antithesis round for those points ONLY — each side attacks the other's strongest thesis and returns `Concedo / Contesto / Síntese proposta`. Cap: **3 divergences × 2 calls = ≤6 extra passes** per council round. Divergences that survive the antithesis become Conflicted rows; the chairman never silently picks a winner. Thesis → antithesis → synthesis, only where there is real disagreement.
+Options only — retired in Framing by handoff-v1 F3 (Q5), where a factual divergence without a locator becomes `Conflicted` and a recommendation divergence goes to the owner. Full peer review was rejected for cost. Its surgical replacement: when the chairman detects **material divergences** between reviews, or between a review and the author's candidate (claim vs counter-claim that would change the phase artefact), the orchestrator runs an antithesis round for those points ONLY — each side attacks the other's strongest thesis and returns `Concedo / Contesto / Síntese proposta`. Cap: **3 divergences × 2 calls = ≤6 extra passes** per candidate revision, kept by the engine (`review.py diverge` / `dialectic-call`). Divergences that survive the antithesis become Conflicted rows; the chairman never silently picks a winner. Thesis → antithesis → synthesis, only where there is real disagreement.
 
-## Why parallel (not sequential isolated)
+**What a synthesis may settle** (handoff-v1). An accepted synthesis settles a recommendation, a ranking or a disposition — never a fact. A factual divergence becomes a `Confirmed` row only when the antithesis produced a locator of the *Confirmed threshold* classes (`states.md`); otherwise it is `Conflicted`. How many reviewers agree never changes an epistemic state. The cap is a ceiling, not a verdict: divergences still open when it is reached are **escalated** — to the owner through `AskUserQuestion`, or recorded as a finding with its disposition — and never accepted by exhaustion.
 
-Concurrent Task subagents complete the council round in ~1 LLM-pass-time, versus ~6× for sequential isolated. Claude Code supports parallelism natively for the Task tool. There is no race-condition risk because agents do not share writable state.
+## Why parallel among the Options reviewers (not sequential isolated)
+
+The reviewers of one published revision read the same inputs and do not depend on each other: concurrent Task subagents complete the review in ~1 LLM-pass-time, versus one per reviewer in sequence; they share no writable state. The author publishes before any of them runs. Parallelism is not a phase rule: it is justified only when the subagents themselves are (*When a subagent is justified*, above). Discovery and Framing run no parallel subagents.
 
 ## Peer review (omitted in MVP)
 
-Karpathy's full pattern includes peer review (each agent comments on the neighbor's output). aisa omits the full version by cost; the **dialectic round** above is its surgical replacement — antithesis only where personas materially disagree.
+Karpathy's full pattern includes peer review (each agent comments on the neighbor's output). aisa omits the full version by cost; the **dialectic round** above is its surgical replacement — antithesis only where reviewers materially disagree.
 
 ## Cost envelope per engagement
 
-- Discovery: ~6 lenses × ~2-3 rounds = 12-18 LLM passes (inline, cheaper per pass).
-- Framing: 6 agents + 1 chairman = 7 passes (council) + 0-6 dialectic passes (only on material divergence).
-- Options: 7 agents + 1 chairman = 8 passes (council, technology enters) + 0-6 dialectic passes.
+- Discovery: 1 integrated analysis + 1 coverage review per round × ~2-3 rounds = 4-6 passes (inline).
+- Framing: 1 analysis + 1 reviewer + 1 synthesis = 3 passes (no dialectic).
+- Options: 1 author (inline, technology enters) + 1 review per selected specialist (1-5, by the router) + 1 chairman = 3-7 passes + 0-6 dialectic passes.
 - Decision: interactive (user-driven) + optional 1 solution-architect review (`/decide --consult`) + auto synthesize (5 topic packs) = 5-7 passes.
 - Render: 6 deliverables × 1 composition pass = 6 passes.
 
-**Total per engagement**: ~40-50 LLM passes.
+**Total per engagement**: ~25-35 LLM passes (handoff-v1 F3/F5: no persona council in any phase).

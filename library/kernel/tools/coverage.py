@@ -61,6 +61,7 @@ import os
 import re
 import runpy
 import sys
+import time
 import unicodedata
 from pathlib import Path
 
@@ -107,7 +108,9 @@ SYNTHESIS_DIR = "_synthesis/"
 # nenhuma — é o registo de que uma escrita aconteceu. Entrava como fonte `freshness` pela
 # regra por defeito, e bastava uma operação qualquer para tornar `stale` uma revisão que
 # nada do que ela leu tinha mudado.
-OPERATIONAL_DIRS = ("_ops/", "_migration/")
+# handoff-v1 F2: os rascunhos (`_drafts/`) não são verdade de ninguém, e o checkpoint do
+# trabalho (`_work/`) muda a cada tarefa sem mudar nada do que uma revisão consumiu.
+OPERATIONAL_DIRS = ("_ops/", "_migration/", "_drafts/", "_work/")
 
 # O grafo NÃO entra por bytes. Uma aresta de navegação muda `graph.jsonl` e não muda nada
 # do que a revisão consumiu; comparar os bytes fazia disso um `stale`. O que entra — quando
@@ -119,7 +122,17 @@ GRAPH_DIR = "_graph/"
 # §6.3: comparados por fingerprint semântico, nunca pelos bytes.
 INFORMATIVE = ("shared-understanding.md", "decisions.md")
 
-STAGES = ("reconciliation", "blueprint", "render")
+STAGES = ("reconciliation", "blueprint", "render", "lens")
+# Etapas sem alvo: vale o registo mais recente da etapa. `lens` (handoff-v1 F3) é a
+# cobertura das seis perspectivas de uma passagem de Discovery — o que ela examinou, e
+# onde está a prova; a passagem vive em `lens_coverage.round`, não num ficheiro alvo.
+TARGETLESS = ("reconciliation", "lens")
+LENS_DIMENSIONS = ("business", "operations", "user", "data", "governance", "financial")
+LENS_STATUSES = ("assessed", "gap", "not_applicable")
+LENS_VERDICTS = ("treated", "not_treated", "not_applicable_ok")
+LENS_SU_ID_RE = re.compile(r"^(?:[CAUXRMD])-\d+$")
+LENS_LOCATOR_DIRS = ("_capture/", "inputs/")
+LENS_ROUND_RE = re.compile(r"^R-\d{2,}$")
 
 # §8.2 e `render-contract.md` -> *Applicability*: os MESMOS quatro estados do render, sem
 # taxonomia paralela. `not_applicable` e `blocked` são ausências legítimas: skip com
@@ -254,6 +267,9 @@ class ReaderAdapter:
     def classify_decisions(self, md: str):
         return self.d["classify_decisions"](md)
 
+    def evidence_targets(self, eng: Path) -> dict:
+        return self.d["evidence_targets"](eng)
+
     def live_solution_decision(self, md: str):
         return self.d["live_solution_decision"](md)
 
@@ -357,6 +373,15 @@ def _graph_module(eng: Path):
     if "mod" not in _GRAPH_MODULE:
         _GRAPH_MODULE["mod"] = runpy.run_path(str(caminho))
     return _GRAPH_MODULE["mod"]
+
+
+def _operation_module():
+    """`operation.py` — o coordenador, único mecanismo de publicação (handoff-v1 F2, Q3).
+    Carregado só quando se finaliza: ler e conferir não publica nada."""
+    if "op" not in _GRAPH_MODULE:
+        _GRAPH_MODULE["op"] = runpy.run_path(str(Path(__file__).resolve().parent /
+                                                 "operation.py"))
+    return _GRAPH_MODULE["op"]
 
 
 GRAPH_CONSUMED_PATH = "_graph#consumed"
@@ -1088,9 +1113,9 @@ def compute_basis(eng: Path, inventory: dict, stage: str, target: dict | None = 
     do seu digest faz-se em `check_freshness`, junto com o resto da base."""
     if stage not in STAGES:
         raise CoverageError("etapa desconhecida: {!r} (contrato §2)".format(stage), 2)
-    if stage == "reconciliation" and target is not None:
-        raise CoverageError("etapa `reconciliation` não tem target (contrato §4.6)", 2)
-    if stage != "reconciliation" and target is None:
+    if stage in TARGETLESS and target is not None:
+        raise CoverageError("etapa `{}` não tem target (contrato §4.6)".format(stage), 2)
+    if stage not in TARGETLESS and target is None:
         raise CoverageError("etapa {!r} exige target (contrato §4.6)".format(stage), 2)
     diag_auth: list[dict] = []
     readers = readers or ReaderAdapter()
@@ -1530,7 +1555,7 @@ def _cannot_situate(rec: dict | None, identity_of=None) -> str:
     stage = rec.get("stage")
     if stage not in STAGES:
         return "declara a etapa {!r}, que não existe".format(stage)
-    if stage != "reconciliation":
+    if stage not in TARGETLESS:
         tgt = rec.get("target")
         if not isinstance(tgt, dict):
             return ("é da etapa {!r} e o seu `target` não é um mapa ({})"
@@ -1636,7 +1661,7 @@ _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?"
                   r"(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$")
 ROOT_FIELDS = ("schema_version", "version", "engagement", "stage", "generated_at",
                "based_on", "target", "deliverable", "basis", "source_review",
-               "coverage", "semantic_review")
+               "coverage", "semantic_review", "lens_coverage")
 
 
 def obligation_identity(item: dict) -> tuple:
@@ -1661,6 +1686,10 @@ def record_context(eng: Path, inventory: dict, readers: ReaderAdapter | None = N
     return {
         "identity_of": lambda stage, f: target_identity(eng, stage, f),
         "su_ids": {r["id"] for r in rows if r.get("id")},
+        # perguntas abertas, não estacionadas: o que pode encaminhar uma lacuna (§4.8)
+        "su_open": {r["id"] for r in rows if r.get("id")
+                    and r.get("state") in ("Unknown", "Conflicted", "Risky")
+                    and not r.get("resolved") and not r.get("parked")},
         "decision_ids": set(re.findall(r"^##\s+(D-\d{2,4})\b", dec_md or "", re.M)),
         "unit_keys": {u["unit_key"] for u in inventory.get("units", [])},
         "limitation_units": {l["unit_key"] for l in inventory.get("limitations", [])},
@@ -1759,9 +1788,17 @@ def _check_root(rec: dict, filename: str | None, ctx: dict, diags: list) -> str:
                            .format(rec.get("engagement"), ctx["engagement"])))
         bad = True
     tgt = rec.get("target") if isinstance(rec.get("target"), (dict, type(None))) else None
-    if stage == "reconciliation" and tgt not in (None, {}):
+    if stage in TARGETLESS and tgt not in (None, {}):
         diags.append(_diag(COV_SCHEMA, "error",
-                           "`reconciliation` não tem target (contrato §4.6)"))
+                           "`{}` não tem target (contrato §4.6)".format(stage)))
+        bad = True
+    if stage == "lens" and not isinstance(rec.get("lens_coverage"), dict):
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "a etapa `lens` exige o bloco `lens_coverage` (§4.8)"))
+        bad = True
+    if stage != "lens" and rec.get("lens_coverage") is not None:
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "`lens_coverage` só existe na etapa `lens` (§4.8)"))
         bad = True
     if stage in ("blueprint", "render"):
         if not isinstance(tgt, dict) or not tgt.get("file"):
@@ -2689,6 +2726,289 @@ def _no_verdict(validity: str, diags: list) -> dict:
             "inheritance_ok": False, "deliverable_ok": False}
 
 
+# ============================================== cobertura por perspectiva §4.8 (F3)
+
+def _lens_targets(eng: Path | None, readers) -> dict:
+    """Âncoras que um localizador de cobertura pode apontar — as mesmas do limiar de
+    `Confirmed` (`dashboard.evidence_targets`), lidas uma vez."""
+    if eng is None:
+        return {"answers_anchors": set(), "enq_anchors": set(), "enq_ids": set()}
+    return readers.evidence_targets(eng)
+
+
+def _lens_ref(ref, ctx: dict, tgt: dict, eng: Path | None) -> tuple:
+    """`(tipo, None)` para uma referência que prova cobertura, `(None, razão)` para uma
+    que não prova. Provam: um id da SU que existe, ou um localizador das classes do
+    limiar cujo alvo existe. Não provam: um título, uma secção de `lens-outputs`, um
+    ficheiro de fase — um texto que nomeia a perspectiva não mostra que ela foi tratada
+    (T19)."""
+    r = str(ref or "").strip()
+    if not r:
+        return None, "referência vazia"
+    if LENS_SU_ID_RE.match(r):
+        return ("su", None) if r in ctx.get("su_ids", set()) else \
+            (None, "id que a SU não tem")
+    path, _, anchor = r.partition("#")
+    if ".." in path.split("/"):
+        return None, "caminho fora do engagement"
+    if path == "answers.md":
+        ok = anchor and anchor.lower() in tgt.get("answers_anchors", set())
+        return ("locator", None) if ok else (None, "secção de answers.md inexistente")
+    if path == "enquadramento.md":
+        ok = anchor and (anchor in tgt.get("enq_ids", set())
+                         or anchor.lower() in tgt.get("enq_anchors", set()))
+        return ("locator", None) if ok else (None, "âncora de enquadramento.md inexistente")
+    if path.startswith(LENS_LOCATOR_DIRS):
+        if eng is not None and (Path(eng) / path).is_file():
+            return "locator", None
+        return None, "ficheiro inexistente"
+    return None, ("não prova cobertura: um título, uma secção de `lens-outputs` ou um "
+                  "ficheiro fora das classes do limiar não contam")
+
+
+def _check_lens(rec: dict, ctx: dict, eng: Path | None, readers, diags: list) -> dict:
+    """§4.8 — as seis perspectivas. Devolve `{ok, gaps, lens}`.
+
+    Forma (torna o registo inválido): as seis presentes, um estado dos três, justificação
+    sempre, `assessed` com uma referência que prova, `gap` encaminhado para uma pergunta
+    aberta, varrimento de conflitos declarado. Uma referência morta ao lado de outras
+    que provam não invalida o registo — é um achado impeditivo."""
+    antes = len(diags)
+    gaps: list[dict] = []
+    lc = rec.get("lens_coverage")
+    if not isinstance(lc, dict):
+        return {"ok": False, "gaps": gaps, "lens": {}}
+    rnd = str(lc.get("round", ""))
+    if not LENS_ROUND_RE.match(rnd):
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "`lens_coverage.round` tem de ser a passagem `R-NN`, e é {!r}"
+                           .format(lc.get("round"))))
+    author = lc.get("author")
+    if not isinstance(author, dict) or author.get("kind") not in ("agent", "human") \
+            or not str(author.get("name", "")).strip():
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "`lens_coverage.author` exige `kind` (agent|human) e `name` — "
+                           "sem autor não há como verificar que o revisor é outro"))
+    dims = lc.get("dimensions")
+    if not isinstance(dims, dict):
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "`lens_coverage.dimensions` tem de ser um mapa das seis "
+                           "perspectivas"))
+        dims = {}
+    tgt = _lens_targets(eng, readers)
+    resumo = {}
+    for d in LENS_DIMENSIONS:
+        e = dims.get(d)
+        if not isinstance(e, dict):
+            diags.append(_diag(COV_SCHEMA, "error",
+                               "perspectiva ausente: `{}` — as seis são obrigatórias, "
+                               "`not_applicable` com motivo incluído".format(d),
+                               item="LENS:" + d))
+            resumo[d] = "missing"
+            continue
+        st = e.get("status")
+        if st not in LENS_STATUSES:
+            diags.append(_diag(COV_SCHEMA, "error",
+                               "`{}.status: {!r}` fora de assessed/gap/not_applicable"
+                               .format(d, st), item="LENS:" + d))
+        if not str(e.get("justification", "")).strip():
+            diags.append(_diag(COV_SCHEMA, "error",
+                               ("`{}` é `not_applicable` sem motivo — inválido, não fecha "
+                                "cobertura (T07)" if st == "not_applicable" else
+                                "`{}` sem justificação").format(d), item="LENS:" + d))
+        refs = e.get("refs")
+        if not isinstance(refs, list):
+            diags.append(_diag(COV_SCHEMA, "error", "`{}.refs` tem de ser lista".format(d),
+                               item="LENS:" + d))
+            refs = []
+        provam, abertas = [], []
+        for r in refs:
+            kind, porque = _lens_ref(r, ctx, tgt, eng)
+            if kind is None:
+                diags.append(_diag(COV_DEAD_REF, "error",
+                                   "referência de `{}` que não prova cobertura: {!r} — {}"
+                                   .format(d, r, porque), item="LENS:" + d,
+                                   resolves="apontar a linha da SU ou o localizador que "
+                                            "trata a perspectiva"))
+                continue
+            provam.append(str(r))
+            if kind == "su" and str(r) in ctx.get("su_open", set()):
+                abertas.append(str(r))
+        if st == "assessed" and not provam:
+            diags.append(_diag(COV_SCHEMA, "error",
+                               "`{}` diz `assessed` sem uma referência que prove — um "
+                               "texto que nomeia a perspectiva não mostra que ela foi "
+                               "tratada (T19)".format(d), item="LENS:" + d))
+        if st == "gap":
+            if not abertas:
+                diags.append(_diag(COV_SCHEMA, "error",
+                                   "`{}` é `gap` sem pergunta aberta (U-/X-/R-) que o "
+                                   "encaminhe — uma lacuna sem dono some".format(d),
+                                   item="LENS:" + d))
+            else:
+                gaps.append({"item": "LENS:" + d, "status": "gap", "refs": abertas,
+                             "requirement_refs": abertas,
+                             "required_action": "responder às perguntas abertas ({})"
+                                                .format(", ".join(abertas)),
+                             "responsible_role": "dono do processo"})
+                diags.append(_diag(COV_KNOWN_GAP, "error",
+                                   "perspectiva `{}` com lacuna encaminhada ({})"
+                                   .format(d, ", ".join(abertas)), item="LENS:" + d))
+        resumo[d] = st
+    for extra in sorted(k for k in dims if k not in LENS_DIMENSIONS):
+        diags.append(_diag(COV_SCHEMA, "warn",
+                           "perspectiva desconhecida, não lida: `{}`".format(extra)))
+    cs = lc.get("conflict_scan")
+    if not isinstance(cs, dict) or not isinstance(cs.get("refs"), list):
+        diags.append(_diag(COV_SCHEMA, "error",
+                           "`lens_coverage.conflict_scan` é obrigatório, com `refs` "
+                           "(lista) — o varrimento de conflitos entre fontes corre depois "
+                           "das seis perspectivas"))
+    else:
+        for r in cs["refs"]:
+            if not (str(r).startswith("X-") and str(r) in ctx.get("su_ids", set())):
+                diags.append(_diag(COV_SCHEMA, "error",
+                                   "`conflict_scan.refs` só leva linhas `X-` que a SU tem: "
+                                   "{!r}".format(r)))
+        if not cs["refs"] and not str(cs.get("note", "")).strip():
+            diags.append(_diag(COV_SCHEMA, "error",
+                               "`conflict_scan` sem conflitos e sem nota — não se distingue "
+                               "«varri e não havia» de «não varri»"))
+    forma = [x for x in diags[antes:]
+             if x["code"] == COV_SCHEMA and x["severity"] == "error"]
+    return {"ok": not forma, "gaps": gaps,
+            "lens": {"round": rnd, "dimensions": resumo,
+                     "author": (author or {}).get("name", "") if isinstance(author, dict)
+                     else ""}}
+
+
+def _check_lens_semantic(rec: dict, lens: dict, diags: list) -> str:
+    """§4.8 — a leitura independente, por perspectiva (T19).
+
+    O revisor diz, para cada perspectiva, se a prova apontada TRATA mesmo o risco
+    (`treated`), não trata (`not_treated`: é um achado, uma lacuna à vista), ou se o
+    `not_applicable` se justifica (`not_applicable_ok`). O revisor não é o autor."""
+    sem = rec.get("semantic_review")
+    if not isinstance(sem, dict):
+        diags.append(_diag(COV_REVIEW_INCOMPLETE, "error",
+                           "`semantic_review` ausente (§4.7)"))
+        return "pending"
+    status = sem.get("status")
+    if status not in ("completed", "pending", "not_started"):
+        diags.append(_diag(COV_REVIEW_INCOMPLETE, "error",
+                           "`semantic_review.status: {!r}` fora de completed/pending/"
+                           "not_started".format(status)))
+        return "pending"
+    if status != "completed":
+        return "pending"
+    who = sem.get("performed_by")
+    bad = []
+    if not isinstance(who, dict) or who.get("kind") not in ("agent", "human") \
+            or not str(who.get("name", "")).strip():
+        bad.append("`performed_by` exige `kind` (agent|human) e `name`")
+    elif str(who.get("name")).strip() == str((lens.get("lens") or {}).get("author", "")
+                                             ).strip():
+        bad.append("o revisor é o autor da análise — a leitura tem de ser independente "
+                   "(03, T19)")
+    if not str(sem.get("method", "")).strip():
+        bad.append("`completed` exige `method`")
+    if not _ISO.match(str(sem.get("completed_at", ""))):
+        bad.append("`completed` exige `completed_at` em ISO-8601")
+    if not isinstance(sem.get("limitations"), list):
+        bad.append("`limitations` é obrigatória; vazia é uma afirmação, ausente é uma "
+                   "omissão")
+    vd = sem.get("dimensions")
+    estados = (lens.get("lens") or {}).get("dimensions") or {}
+    if not isinstance(vd, dict):
+        bad.append("`semantic_review.dimensions` exige o veredicto das seis perspectivas")
+        vd = {}
+    for d in LENS_DIMENSIONS:
+        v = vd.get(d)
+        verdict = v.get("verdict") if isinstance(v, dict) else None
+        if verdict not in LENS_VERDICTS:
+            bad.append("perspectiva `{}` sem veredicto válido ({})".format(
+                d, "/".join(LENS_VERDICTS)))
+            continue
+        if verdict == "not_applicable_ok" and estados.get(d) != "not_applicable":
+            bad.append("`{}`: `not_applicable_ok` sobre uma perspectiva que não foi "
+                       "declarada não aplicável".format(d))
+        if verdict == "not_treated":
+            lens["gaps"].append({"item": "LENS:" + d, "status": "not_treated",
+                                 "refs": [], "requirement_refs": [], "required_action":
+                                     "tratar a perspectiva: a prova apontada não trata o "
+                                     "risco ({})".format(str(v.get("note", "")).strip()
+                                                         or "sem nota"),
+                                 "responsible_role": "analista integrado"})
+            diags.append(_diag(COV_KNOWN_GAP, "error",
+                               "o revisor diz que `{}` não está tratada: {}"
+                               .format(d, str(v.get("note", "")).strip() or "sem nota"),
+                               item="LENS:" + d,
+                               resolves="refazer a perspectiva (`/round {}`)".format(d)))
+    for b in bad:
+        diags.append(_diag(COV_REVIEW_INCOMPLETE, "error", b))
+    return "pending" if bad else "completed"
+
+
+def lens_skeleton(eng: Path, round_id: str, readers: ReaderAdapter | None = None,
+                  inherit: bool = True) -> dict:
+    """O rascunho de um registo `lens` para a passagem, com a base de AGORA (§4.2).
+
+    `inherit`: as perspectivas do registo `lens` mais recente entram como estavam — é
+    assim que `/round <perspectiva>` refaz uma e mantém as outras cinco. A revisão
+    semântica nunca se herda: um registo novo é lido de novo."""
+    readers = readers or ReaderAdapter()
+    eng = Path(eng).resolve()
+    inventory = build_inventory(eng, readers)
+    basis = compute_basis(eng, inventory, "lens", None, readers=readers, graph_consumed=())
+    basis.pop("diagnostics", None)
+    dims = {d: {"status": "", "refs": [], "justification": ""} for d in LENS_DIMENSIONS}
+    conflito = {"refs": [], "note": ""}
+    anterior = []
+    if inherit:
+        sel = select_record(eng, "lens")
+        prev = (sel.get("selected") or {}).get("record") or {}
+        plc = _as_dict(prev.get("lens_coverage"))
+        for d in LENS_DIMENSIONS:
+            e = _as_dict(_as_dict(plc.get("dimensions")).get(d))
+            if e:
+                dims[d] = {"status": e.get("status", ""),
+                           "refs": list(_as_list(e.get("refs"))),
+                           "justification": e.get("justification", "")}
+        if isinstance(plc.get("conflict_scan"), dict):
+            conflito = dict(plc["conflict_scan"])
+        if sel.get("selected"):
+            anterior = [sel["selected"]["name"]]
+    return {"schema_version": SCHEMA_VERSION, "version": "",
+            "engagement": engagement_state(eng)[0].get("engagement", ""),
+            "stage": "lens", "generated_at": "", "based_on": anterior, "target": None,
+            "basis": basis, "source_review": [], "coverage": [],
+            "lens_coverage": {"round": round_id,
+                              "author": {"kind": "agent",
+                                         "name": "analista integrado (/round)"},
+                              "dimensions": dims, "conflict_scan": conflito},
+            "semantic_review": {"status": "not_started", "limitations": []}}
+
+
+def lens_round_state(eng: Path, round_id: str, readers: ReaderAdapter | None = None
+                     ) -> dict:
+    """Fecha esta passagem? (§4.8). `closes` — o registo `lens` mais recente é desta
+    passagem, válido e actual; `reviewed` — e a leitura independente está concluída,
+    sem achado impeditivo. Fechar sem revisão é permitido e dito: «por rever»."""
+    st = coverage_state(eng, "lens", None, readers)
+    lens = st.get("lens") or {}
+    closes = (st["contract_validity"] == "valid" and st["freshness"] == "current"
+              and lens.get("round") == round_id)
+    reasons = []
+    if lens.get("round") and lens.get("round") != round_id:
+        reasons.append("o registo mais recente é da passagem {}, não de {}".format(
+            lens.get("round"), round_id))
+    reasons += st.get("reasons") or []
+    return {"closes": closes, "reviewed": bool(closes and st["eligible"]),
+            "round": round_id, "record": st.get("record"), "dimensions":
+            lens.get("dimensions") or {}, "coverage": st["coverage"],
+            "semantic_review": st["semantic_review"], "reasons": reasons, "state": st}
+
+
 def validate_record(record: dict, inventory: dict, eng: Path | None = None,
                     readers: ReaderAdapter | None = None, chain: dict | None = None,
                     filename: str | None = None, context: dict | None = None) -> dict:
@@ -2712,6 +3032,18 @@ def validate_record(record: dict, inventory: dict, eng: Path | None = None,
         # Não se lê por aproximação: nada deste registo é interpretado a seguir.
         return _no_verdict("unsupported", diags)
     basis_ok = _check_basis(record, diags, ctx)
+    if record.get("stage") == "lens":
+        lens = _check_lens(record, ctx, eng, readers, diags)
+        sem = _check_lens_semantic(record, lens, diags)
+        schema_errors = [d for d in diags
+                         if d["code"] == COV_SCHEMA and d["severity"] == "error"]
+        if validity == "valid" and (schema_errors or not basis_ok or not lens["ok"]):
+            validity = "invalid"
+        return {"contract_validity": validity, "diagnostics": diags,
+                "handled": {}, "gaps": lens["gaps"], "source_units": set(),
+                "source_review_ok": True, "coverage_ok": lens["ok"],
+                "semantic_review": sem, "inheritance_ok": True, "deliverable_ok": True,
+                "lens": lens["lens"]}
     sr = _check_source_review(record, ctx, eng, readers, diags)
     cov = _check_coverage(record, ctx, eng, readers, sr, diags)
     _check_links(record, ctx, cov, diags)
@@ -3114,7 +3446,8 @@ def upstream_health(eng: Path, record: dict, chain: dict, readers: ReaderAdapter
 
 ACTION_BY_STAGE = {"reconciliation": "produce_blueprint",
                    "blueprint": "approve_blueprint",
-                   "render": "complete_deliverable"}
+                   "render": "complete_deliverable",
+                   "lens": "close_round"}
 
 
 def coverage_state(eng: Path, stage: str, target: dict | None = None,
@@ -3142,7 +3475,7 @@ def coverage_state(eng: Path, stage: str, target: dict | None = None,
     inventory = inventory or build_inventory(eng, readers)
     identity = None
     requested_file = None
-    if stage != "reconciliation":
+    if stage not in TARGETLESS:
         if not target or not target.get("file"):
             raise CoverageError(
                 "a etapa {!r} exige `--target <ficheiro>` (contrato §4.6): sem alvo não "
@@ -3192,7 +3525,7 @@ def coverage_state(eng: Path, stage: str, target: dict | None = None,
     else:
         selection = select_record(eng, stage, identity,
                                   target_file=(requested_file
-                                               if stage != "reconciliation" else None))
+                                               if stage not in TARGETLESS else None))
         for broken in selection["unreadable"]:
             diags.append(_diag(COV_SCHEMA, "error",
                                "registo de cobertura que não se consegue situar: {} — {}"
@@ -3283,7 +3616,13 @@ def coverage_state(eng: Path, stage: str, target: dict | None = None,
         result["diagnostics"] = diags
         result["eligible"], result["reasons"] = _eligibility(result, val, record)
         return result
-    if stage == "reconciliation":
+    if stage == "lens":
+        # A cobertura por perspectiva não revê unidades do inventário: examina seis
+        # perguntas centrais e aponta onde está a prova (§4.8). A revisão das fontes é
+        # da reconciliação, e não se mistura aqui.
+        result["source_review"] = "not_applicable"
+        result["lens"] = val.get("lens") or {}
+    elif stage == "reconciliation":
         n = _unreviewed_units(inventory, val["source_units"], diags)
         result["source_review"] = "complete" if (n == 0 and val["source_review_ok"]
                                                  and inventory.get("complete", True)) \
@@ -3386,6 +3725,33 @@ def _eligibility(result: dict, val: dict, record: dict) -> tuple[bool, list[str]
         reasons.append("A base mudou desde a revisão: é preciso rever os impactos antes "
                        "de usar (atualidade `stale`).")
         return False, reasons
+    if stage == "lens":
+        blocking = [d for d in result.get("diagnostics", [])
+                    if d.get("severity") == "error" and d.get("code") != COV_KNOWN_GAP]
+        if blocking:
+            reasons.append("Há {} achado(s) impeditivo(s) na cobertura por perspectiva "
+                           "({}).".format(len(blocking),
+                                          ", ".join(sorted({d["code"] for d in blocking}))))
+            return False, reasons
+        if result["semantic_review"] != "completed":
+            reasons.append("As seis perspectivas foram examinadas, mas a leitura "
+                           "independente ainda não está feita: a passagem fecha como "
+                           "«cobertura por rever».")
+            return False, reasons
+        nao_tratadas = [g["item"].split(":", 1)[-1] for g in val["gaps"]
+                        if g.get("status") == "not_treated"]
+        if nao_tratadas:
+            reasons.append("A leitura independente diz que {} não {} tratada{}: a prova "
+                           "apontada não trata o risco. Refazer antes de dar a passagem "
+                           "por revista.".format(", ".join(nao_tratadas),
+                                                 "está" if len(nao_tratadas) == 1
+                                                 else "estão",
+                                                 "" if len(nao_tratadas) == 1 else "s"))
+            return False, reasons
+        reasons.append("Seis perspectivas examinadas e revistas por quem não as escreveu{}."
+                       .format("; lacunas à vista e encaminhadas ({})".format(
+                           len(val["gaps"])) if val["gaps"] else ""))
+        return True, reasons
     if result["source_review"] != "complete":
         reasons.append("Há material por rever neste passo.")
         return False, reasons
@@ -3481,7 +3847,13 @@ def render_report(record: dict | None, result: dict) -> str:
     tgt = record.get("target") or {}
     out.append("| alvo | {} |".format("`{}` ({})".format(tgt.get("file"),
                                                         tgt.get("identity"))
-                                      if tgt else "— (reconciliação)"))
+                                      if tgt else ("— (cobertura por perspectiva, "
+                                                   "passagem {})".format(
+                                                       _as_dict(record.get(
+                                                           "lens_coverage")).get(
+                                                           "round", "?"))
+                                                   if stage == "lens" else
+                                                   "— (reconciliação)")))
     out.append("| revisões anteriores | {} |".format(
         ", ".join("`%s`" % b for b in (record.get("based_on") or [])) or "—"))
     out.append("")
@@ -3513,6 +3885,27 @@ def render_report(record: dict | None, result: dict) -> str:
         out.append("")
         for f in result["superseded"]:
             out.append("- `{}`".format(f))
+        out.append("")
+    lc = _as_dict(record.get("lens_coverage"))
+    if stage == "lens" and lc:
+        vd = _as_dict(_as_dict(record.get("semantic_review")).get("dimensions"))
+        out.append("## Perspectivas")
+        out.append("")
+        out.append("| perspectiva | estado | prova | porquê | leitura independente |")
+        out.append("|---|---|---|---|---|")
+        for d in LENS_DIMENSIONS:
+            e = _as_dict(_as_dict(lc.get("dimensions")).get(d))
+            v = _as_dict(vd.get(d))
+            out.append("| {} | {} | {} | {} | {} |".format(
+                d, e.get("status", "—"),
+                ", ".join("`%s`" % r for r in _as_list(e.get("refs"))) or "—",
+                str(e.get("justification", "—")).replace("|", "/"),
+                v.get("verdict", "—")))
+        cs = _as_dict(lc.get("conflict_scan"))
+        out.append("")
+        out.append("Conflitos entre fontes: {}".format(
+            ", ".join("`%s`" % r for r in _as_list(cs.get("refs")))
+            or (cs.get("note") or "—")))
         out.append("")
     obligations = record.get("coverage") or []
     if obligations:
@@ -3603,13 +3996,36 @@ def read_draft(path: Path) -> tuple[object, str]:
             "ok" if isinstance(data, dict) else "unreadable")
 
 
-def next_version(eng: Path) -> str:
+_ISSUED_RE = re.compile(r"^coverage-v(\d{2,4})-[0-9a-f]+\.json$")
+
+
+def issued_versions(eng: Path) -> set:
+    """As versões já emitidas: as que estão em `_coverage/` E as que têm recibo do
+    coordenador (`_ops/receipts/coverage-vNN-….json`). O recibo sobrevive a um ficheiro
+    apagado à mão — e é isso que impede reutilizar o número (D07)."""
     taken = {_version_num("v" + _RECORD_RE.match(r.rsplit("/", 1)[-1]).group(1))
              for r in record_files(eng)}
-    n = 1
-    while n in taken:
-        n += 1
-    return "v{:02d}".format(n)
+    rec = Path(eng) / "_ops" / "receipts"
+    if rec.is_dir():
+        for p in rec.iterdir():
+            m = _ISSUED_RE.match(p.name)
+            if m:
+                taken.add(int(m.group(1)))
+    return taken
+
+
+def next_version(eng: Path) -> str:
+    """A maior versão já emitida + 1 — NUNCA o primeiro número livre (D07): um número
+    livre pode ser o de uma versão apagada, e reutilizá-lo daria a duas revisões
+    diferentes o mesmo nome."""
+    return "v{:02d}".format(max(issued_versions(eng) | {0}) + 1)
+
+
+def record_content_key(record: dict) -> str:
+    """Identidade do CONTEÚDO de um registo — tudo menos o nome que lhe foi dado."""
+    corpo = {k: v for k, v in (record or {}).items() if k != "version"}
+    return hashlib.sha256(json.dumps(corpo, ensure_ascii=False, sort_keys=True)
+                          .encode("utf-8")).hexdigest()
 
 
 def _coverage_dir(eng: Path) -> Path:
@@ -3632,11 +4048,18 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
     2. **base alterada** — o rascunho declara a base que diz ter lido; se essa base já
        não é a actual, publicar carimbaria como revista uma fonte que mudou sem ser
        relida. Os digests antigos **nunca** são substituídos pelos actuais;
-    3. **base alterada DURANTE a operação** — a reserva é desfeita e nada fica publicado.
+    3. **base alterada DURANTE a operação** — nada fica publicado.
 
-    A reserva da versão é **exclusiva** (`O_CREAT|O_EXCL`): duas finalizações concorrentes
-    ficam com versões diferentes e nenhuma sobrescreve a outra. Não há `os.replace` sobre
-    uma versão publicada em lado nenhum deste ficheiro."""
+    Publica pelo coordenador (handoff-v1 F2, decisão Q3; F0 D07): `operation.run`, os dois
+    ficheiros numa operação e num recibo, com `expected = ""` (a versão não existia — não
+    há maneira de sobrescrever uma publicada) e as fontes do último veredicto como
+    read-set, verificadas sob o lock. Duas finalizações concorrentes ficam com versões
+    diferentes: a segunda vê a versão ocupada (`BASE_CHANGED`) e toma a seguinte.
+
+    **Idempotente** (D07): o mesmo conteúdo já publicado devolve a versão que o tem, sem
+    emitir outra. E o número é o maior já emitido + 1 (`next_version`), nunca um número
+    livre reaproveitado. Não há `os.replace` sobre uma versão publicada em lado nenhum
+    deste ficheiro."""
     readers = readers or ReaderAdapter()
     eng = Path(eng).resolve()
     draft, state = read_draft(Path(draft_path))
@@ -3650,6 +4073,19 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
     stage = draft.get("stage")
     if stage not in STAGES:
         raise CoverageError("rascunho com etapa desconhecida: {!r}".format(stage), 2)
+    chave = record_content_key(draft)
+    for e in load_records(eng):
+        if e.get("record") is not None and record_content_key(e["record"]) == chave:
+            # Já publicado: a mesma revisão não ganha segundo nome. O veredicto dela
+            # continua a ser recalculado em cada leitura — não se decide aqui.
+            return {"published": True, "replayed": True, "version": e["version"],
+                    "json": e["file"],
+                    "md": e["file"][:-len(".json")] + ".md",
+                    "result": coverage_state(eng, stage, draft.get("target"), readers,
+                                             record=e["record"], record_name=e["file"],
+                                             record_filename=e["name"]),
+                    "message": "esta revisão já estava publicada como {} — nada de novo "
+                               "foi emitido".format(e["version"])}
     inventory = build_inventory(eng, readers)
     chain = {e["name"]: e["record"] for e in load_records(eng) if e["record"] is not None}
     ctx = dict(record_context(eng, inventory, readers), chain=chain)
@@ -3678,82 +4114,81 @@ def finalize(eng: Path, draft_path: Path, readers: ReaderAdapter | None = None,
                 "message": "a base mudou depois de a revisão ser escrita: {} — publicar "
                            "agora carimbaria como revista uma fonte que mudou sem ser "
                            "relida".format("; ".join(fresh["reasons"]) or "ver `changed`")}
-    cdir = _coverage_dir(eng)
-    cdir.mkdir(parents=True, exist_ok=True)
-    fd = None
+    _coverage_dir(eng)                       # recusa um `_coverage/` fora do engagement
+    O = _operation_module()
+    alvo_rel = _as_dict(draft).get("target") if isinstance(draft.get("target"), str) else None
     for _ in range(max_attempts):
         version = next_version(eng)
-        target = cdir / "coverage_{}.json".format(version)
-        try:
-            fd = os.open(str(target), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            break
-        except FileExistsError:
-            fd = None                    # concorrência ocupou a versão: repete a reserva
-    if fd is None:
-        raise CoverageError(
-            "não foi possível reservar uma versão em {} após {} tentativas"
-            .format(cdir, max_attempts), 5)
-    published = dict(draft)
-    published["version"] = version       # a identidade é o ficheiro (§4.1); só isto muda
-    payload = json.dumps(published, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
-    md_path = cdir / "coverage_{}.md".format(version)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(payload)
-        # A verificação final é EXACTAMENTE a mesma da inicial -- `finalize_recheck`,
-        # sobre a base recalculada E sobre o alvo recalculado. A versão anterior
-        # comparava à mão só os três digests e o manifesto, e o alvo não está no
-        # manifesto (é um alvo, §6.3): mexer no desenho entre a reserva e esta linha
-        # passava, e a revisão era publicada já `stale`. Duas definições de «a base
-        # mudou» divergem sempre; esta é a única.
-        after = compute_basis(eng, build_inventory(eng, readers), stage,
-                              draft.get("target"),
+        published = dict(draft)
+        published["version"] = version   # a identidade é o ficheiro (§4.1); só isto muda
+        payload = json.dumps(published, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
+        json_rel = "{}coverage_{}.json".format(COVERAGE_DIR, version)
+        md_rel = "{}coverage_{}.md".format(COVERAGE_DIR, version)
+        # A verificação final é EXACTAMENTE a mesma da inicial -- `finalize_recheck`, sobre
+        # a base recalculada E sobre o alvo recalculado. Duas definições de «a base mudou»
+        # divergem sempre; esta é a única.
+        after = compute_basis(eng, build_inventory(eng, readers), stage, draft.get("target"),
                               authorities=_as_list(_as_dict(draft.get("basis"))
-                                                .get("authorities")),
+                                                   .get("authorities")),
                               readers=readers, synthesis_authorities=synth,
                               graph_consumed=declared_graph_consumed(draft))
-        moved = finalize_recheck(published, after, current_target(eng,
-                                                                 draft.get("target")))
+        moved = finalize_recheck(published, after, current_target(eng, draft.get("target")))
         if moved["status"] != "current":
-            target.unlink(missing_ok=True)
             return {"published": False, "reason": "changed-during",
                     "freshness": moved, "changed": moved["reasons"],
-                    "message": "a base mudou enquanto a revisão era publicada ({}) — a "
-                               "reserva foi desfeita e nada ficou publicado"
-                               .format("; ".join(moved["reasons"]) or "ver `changed`")}
-        # Avalia-se o registo que ACABOU de ser publicado, por nome, e não «o mais
-        # recente da etapa»: com duas finalizações concorrentes, o mais recente é o da
-        # outra, e o relatório de uma versão falava da outra.
+                    "message": "a base mudou enquanto a revisão era preparada ({}) — nada "
+                               "ficou publicado".format("; ".join(moved["reasons"])
+                                                        or "ver `changed`")}
+        # Avalia-se o registo que VAI ser publicado, por nome, e não «o mais recente da
+        # etapa»: com duas finalizações concorrentes, o mais recente é o da outra.
         result = coverage_state(eng, stage, draft.get("target"), readers,
-                                record=published,
-                                record_name="_coverage/coverage_{}.json".format(version),
+                                record=published, record_name=json_rel,
                                 record_filename="coverage_{}.json".format(version))
-        # O ÚLTIMO veredicto é o que manda, e é o mesmo que vai ser reportado. Há sempre
-        # uma janela entre uma verificação e a linha seguinte; o que não pode haver é
-        # publicar depois de a ter visto fechada. Se o estado que se ia reportar não está
-        # actual, ou não é válido, a reserva desfaz-se aqui -- não se anuncia uma revisão
-        # que a própria operação já sabe desactualizada.
+        # O ÚLTIMO veredicto é o que manda, e é o mesmo que vai ser reportado: se não está
+        # actual, ou não é válido, não se publica.
         if result["freshness"] != "current" or result["contract_validity"] != "valid":
-            target.unlink(missing_ok=True)
             return {"published": False, "reason": "changed-during", "result": result,
                     "changed": result.get("reasons", []),
-                    "message": "no fim da operação a revisão já não estava actual "
-                               "(atualidade: {} · contrato: {}) — a reserva foi desfeita "
-                               "e nada ficou publicado"
-                               .format(result["freshness"],
-                                       result["contract_validity"])}
-        md_path.write_text(render_report(published, result), encoding="utf-8",
-                           newline="\n")
-    except Exception:                                               # noqa: BLE001
-        target.unlink(missing_ok=True)
-        md_path.unlink(missing_ok=True)
-        raise
-    return {"published": True, "version": version,
-            "json": "_coverage/coverage_{}.json".format(version),
-            "md": "_coverage/coverage_{}.md".format(version),
-            "result": result,
-            "message": "revisão publicada como {} — o veredicto continua a ser "
-                       "recalculado em cada leitura".format(version)}
+                    "message": "no fim da preparação a revisão já não estava actual "
+                               "(atualidade: {} · contrato: {}) — nada ficou publicado"
+                               .format(result["freshness"], result["contract_validity"])}
+        md = render_report(published, result)
+        # handoff-v1 F2 (Q3, D07): UM mecanismo de publicação — o coordenador. Os dois
+        # ficheiros saem numa operação, com recibo; `expected = ""` diz «não existia»,
+        # que é o que torna impossível sobrescrever uma versão publicada (T29); e as
+        # fontes que este veredicto leu entram como read-set, verificadas sob o lock: a
+        # janela entre o último veredicto e a publicação fecha-se ali, não por esperança.
+        lidos = {src["path"]: O["digest"](eng / src["path"])
+                 for src in after.get("sources") or []
+                 if isinstance(src, dict) and "#" not in str(src.get("path", ""))
+                 and (eng / str(src.get("path", ""))).is_file()}
+        if alvo_rel and (eng / alvo_rel).is_file():
+            lidos[alvo_rel] = O["digest"](eng / alvo_rel)
+        op_id = "coverage-{}-{}".format(version, hashlib.sha256(
+            payload.encode("utf-8")).hexdigest()[:12])
+        try:
+            O["run"](eng, op_id, {json_rel: payload, md_rel: md},
+                     expected={json_rel: "", md_rel: ""}, read_set=lidos)
+        except O["OperationError"] as exc:
+            if exc.code == "BASE_CHANGED":
+                continue                  # outra finalização ocupou a versão: a seguinte
+            if exc.code in ("LOCK_ACTIVE", "LOCK_CONTENDED"):
+                time.sleep(0.05)
+                continue                  # outro escritor tem o engagement: repetir
+            if exc.code == "STALE_INPUT":
+                return {"published": False, "reason": "changed-during",
+                        "changed": [exc.detail.get("path")],
+                        "message": "a fonte `{}` mudou entre o último veredicto e a "
+                                   "publicação — nada ficou publicado".format(
+                                       exc.detail.get("path"))}
+            raise CoverageError("publicação recusada pelo coordenador ({}): {}".format(
+                exc.code, exc), 5)
+        return {"published": True, "version": version, "json": json_rel, "md": md_rel,
+                "result": result, "operation_id": op_id,
+                "message": "revisão publicada como {} — o veredicto continua a ser "
+                           "recalculado em cada leitura".format(version)}
+    raise CoverageError("não foi possível publicar uma versão em {} após {} tentativas"
+                        .format(_coverage_dir(eng), max_attempts), 5)
 
 
 def finalize_recheck(draft: dict, current: dict, target_now: dict | None) -> dict:
@@ -3896,10 +4331,10 @@ def _exit_for(result: dict) -> int:
 
 
 def _target_arg(eng: Path, stage: str, target: str | None) -> dict | None:
-    if stage == "reconciliation":
+    if stage in TARGETLESS:
         if target:
             raise CoverageError(
-                "a etapa `reconciliation` não tem alvo (contrato §4.6)", 2)
+                "a etapa `{}` não tem alvo (contrato §4.6)".format(stage), 2)
         return None
     if not target:
         raise CoverageError(
@@ -3936,6 +4371,15 @@ def main(argv=None) -> int:
     chk = sub.add_parser("check", help="veredictos de uma etapa (read-only)")
     rep = sub.add_parser("report", help="projecção Markdown de um registo (read-only)")
     fin = sub.add_parser("finalize", help="publica um rascunho como versão nova")
+    ldr = sub.add_parser("lens-draft", help="esqueleto de um registo `lens` (não escreve "
+                                            "no engagement)")
+    rst = sub.add_parser("round-state", help="a passagem fecha? (read-only, §4.8)")
+    for p in (ldr, rst):
+        p.add_argument("--engagement", default=None)
+        p.add_argument("--round", required=True, help="a passagem, `R-NN`")
+        p.add_argument("--json", action="store_true")
+    ldr.add_argument("--no-inherit", action="store_true",
+                     help="não herdar as perspectivas do registo `lens` anterior")
     for p in (inv, chk, rep, fin):
         p.add_argument("--engagement", default=None,
                        help="slug ou caminho; obrigatório quando há mais do que um")
@@ -3958,6 +4402,20 @@ def main(argv=None) -> int:
     try:
         eng = find_engagement(args.engagement)
         readers = ReaderAdapter()
+        if args.command == "lens-draft":
+            print(json.dumps(lens_skeleton(eng, args.round, readers,
+                                           inherit=not args.no_inherit),
+                             ensure_ascii=False, indent=2, default=str))
+            return 0
+        if args.command == "round-state":
+            out = lens_round_state(eng, args.round, readers)
+            out.pop("state", None)
+            print(json.dumps(out, ensure_ascii=False, indent=2, default=str) if args.json
+                  else "fecha: {} · revista: {} · {}".format(
+                      "sim" if out["closes"] else "não",
+                      "sim" if out["reviewed"] else "não",
+                      " · ".join(out["reasons"])))
+            return 0 if out["closes"] else 4
         if args.command == "inventory":
             inventory = build_inventory(eng, readers)
             print(json.dumps(inventory, ensure_ascii=False, indent=2) if args.json

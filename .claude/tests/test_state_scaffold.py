@@ -78,7 +78,9 @@ class TestScaffoldMatchesContract(unittest.TestCase):
     def test_unknown_column_order_is_the_contract_order(self):
         self.assertEqual(
             scaffold_columns("Unknown"),
-            ["id", "lens", "pergunta", "quem responde", "criticidade", "custo", "swing", "ronda"])
+            # handoff-v1 F1.5 (decisao Q3): as colunas da admissao entram na tabela
+            ["id", "lens", "pergunta", "tipo", "impacto", "âmbito", "quem responde", "fecho",
+             "bloqueio", "criticidade", "custo", "swing", "referências", "ronda"])
 
     def test_separator_row_width_matches_the_header(self):
         for state in self.STATES:
@@ -90,6 +92,7 @@ class TestScaffoldMatchesContract(unittest.TestCase):
     def test_skeleton_points_at_the_owning_kernel_sections(self):
         self.assertIn("library/kernel/states.md", START)
         self.assertIn("Question economics", START)
+        self.assertIn("Admission of a question", START)
         self.assertIn("Epistemic half-lives", START)
 
     def test_no_state_invented_by_the_scaffold(self):
@@ -205,8 +208,9 @@ class TestNoMigration(unittest.TestCase):
         self.assertEqual(rows, [])
         self.assertEqual(diag, [])
         self.assertEqual(meta["sections"]["Unknown"]["columns"],
-                         ["id", "lens", "pergunta", "quem responde", "criticidade",
-                          "custo", "swing", "ronda"])
+                         ["id", "lens", "pergunta", "tipo", "impacto", "âmbito",
+                          "quem responde", "fecho", "bloqueio", "criticidade", "custo",
+                          "swing", "referências", "ronda"])
 
 
 if __name__ == "__main__":

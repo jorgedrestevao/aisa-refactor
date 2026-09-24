@@ -148,10 +148,25 @@ def su_with(swings, crit="Med"):
     return SU.format(rows="\n".join(rows))
 
 
+def su_nova(swings, crit="Med"):
+    """O mesmo, no schema da admissão handoff-v1 (design_choice deve alternativas)."""
+    head = ("# SU\n\n## Unknown\n\n| id | lens | pergunta | tipo | impacto | âmbito | "
+            "quem responde | fecho | bloqueio | criticidade | custo | swing | referências | "
+            "ronda |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+    rows = []
+    for i, sw in enumerate(swings, start=1):
+        rows.append("| U-{:03d} | data | Pergunta {}? | design_choice | funcional: muda o "
+                    "resultado | cálculo | role: dono | escolha registada | blocks_scope | {} | "
+                    "email | {} | sources/n.md#N1 | R-01 |".format(i, i, crit, sw))
+    return head + "\n".join(rows) + "\n"
+
+
 class LinhaEArbitro(unittest.TestCase):
+    """A classe do swing lê-se igual em todas as formas, e o árbitro (agora a admissão
+    handoff-v1, F1.5) conta as mesmas decisivas e as mesmas faltas numa e noutra."""
 
     def arb(self, swings, **kw):
-        _h, rows, _m, diags = D.parse_su(su_with(swings))
+        _h, rows, _m, diags = D.parse_su(su_nova(swings))
         return rows, D.arbiter_declarations(rows, **kw), diags
 
     def test_a_forma_desviada_declara_o_mesmo_que_a_canonica(self):
@@ -162,21 +177,20 @@ class LinhaEArbitro(unittest.TestCase):
         self.assertEqual(r_a[0]["swing_class"], r_b[0]["swing_class"])
         self.assertEqual(r_a[0]["swing_text"], r_b[0]["swing_text"])
         self.assertEqual(a_a["decisivas"], a_b["decisivas"], 1)
-        self.assertEqual(a_a["sem_citacao_m"], a_b["sem_citacao_m"], [])
         self.assertEqual(a_a["sem_declaracao"], a_b["sem_declaracao"], [])
 
-    def test_o_marcador_tobe_sobrevive_na_forma_desviada(self):
+    def test_as_alternativas_e_o_referente_sobrevivem_na_forma_desviada(self):
         _r, arb, _d = self.arb(
-            ["decisivo — TO-BE DIVERGENCE. Duas respostas: (a) manter (b) separar. "
+            ["decisivo — elimina O-002. Duas respostas: (a) manter (b) separar. "
              "Move `modelo de dados`."])
-        self.assertEqual(arb["sem_citacao_m"], [])
         self.assertEqual(arb["sem_declaracao"], [])
+        self.assertEqual(arb["decisivo_sem_referente"], [])
 
-    def test_um_caso_nao_conforme_nao_prova_ausencia_de_m_n(self):
-        # classe ilegível, mas a frase traz `M-1`: a citação continua a ser lida.
+    def test_um_caso_nao_conforme_nao_prova_ausencia_de_alternativas(self):
+        # classe ilegível, mas a frase traz duas respostas: continuam a ser lidas.
         _r, arb, _d = self.arb(
             ["o que muda: serve M-1. Duas respostas: (a) um (b) dois. Move `custo`."])
-        self.assertEqual(arb["sem_citacao_m"], [])
+        self.assertEqual(arb["sem_declaracao"], [])
         self.assertEqual(arb["classe_nao_avaliada"][0]["id"], "U-001")
         self.assertEqual(arb["decisivas"], 0, "não avaliada não é decisiva")
 
