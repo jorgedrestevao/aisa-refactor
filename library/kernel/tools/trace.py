@@ -211,7 +211,8 @@ def derived_check(eng, text: str, kind: str = "estimate") -> dict:
     """A estimativa (`estimate`), a spec (`spec`) ou o backlog (`backlog`) contra o inventário:
     cada linha de tabela que cita `WP-NNNN` é uma unidade; a revisão do inventário citada tem
     de ser a corrente (DESENHO Q2). Estimativa: cada WP exactamente uma vez. Spec e backlog:
-    cada WP pelo menos uma vez. Um WP citado que não existe é sempre achado. Nunca compara esforços."""
+    cada WP pelo menos uma vez. Um WP citado que não existe é sempre achado. Nunca compara
+    esforços."""
     eng = Path(eng)
     inv = _load(eng / "_design/work-packages.json")
     rev = inv.get("revision")
@@ -285,10 +286,18 @@ def scope_gate(eng) -> dict:
         md = (eng / "shared-understanding.md").read_text(encoding="utf-8")
     except OSError:
         md = ""
+    citadas = {ref for it in fcs.values() for ref in it.get("open_refs") or []}
     for r in _mod("dashboard")["parse_su"](md)[1]:
-        if r.get("state") == "Unknown" and r.get("bloqueio") == "blocks_all" and not (
-                r.get("resolved") or r.get("parked") or r.get("retired")):
+        if r.get("state") != "Unknown" or r.get("resolved") or r.get("parked") \
+                or r.get("retired"):
+            continue
+        if r.get("bloqueio") == "blocks_all":
             blockers.append(_f("BLOCKS_ALL_OPEN", r["id"], "pergunta em aberto bloqueia tudo"))
+        elif r.get("bloqueio") == "blocks_scope" and r["id"] not in citadas \
+                and r["id"] not in excluded:
+            # T43 R3: sem FC que a cite em `open_refs` e sem exclusão, ninguém a vê
+            blockers.append(_f("UNLINKED_BLOCKING_QUESTION", r["id"], "pergunta que bloqueia o "
+                               "âmbito, sem FC que a cite e sem exclusão autorizada"))
     incoerente = []
     trabalha_excl = {w["id"] for w in wps if set(w.get("realizes") or []) & excluded}
     for w in sorted(trabalha_excl):
@@ -329,7 +338,8 @@ def main(argv=None) -> int:
     except Exception:                                                   # noqa: BLE001
         pass
     ap = argparse.ArgumentParser(description="rastreabilidade vertical (só leitura)")
-    ap.add_argument("command", choices=["show", "estimate-check", "backlog-check", "scope-gate"])
+    ap.add_argument("command", choices=["show", "estimate-check", "backlog-check",
+                                        "scope-gate"])
     ap.add_argument("--engagement", required=True)
     ap.add_argument("--file", default="", help="estimate-check/backlog-check: o deliverable")
     ap.add_argument("--spec", default="", help="estimate-check: a implementation-spec")

@@ -22,6 +22,7 @@ TOOLS = ROOT / "library" / "kernel" / "tools"
 TT = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_trace.py"))
 SG = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_scope_gate.py"))
 IT, AU = TT["IT"], SG["AU"]
+VT = runpy.run_path(str(ROOT / ".claude" / "tests" / "test_hv1_vertical.py"))
 REL = runpy.run_path(str(TOOLS / "release.py"))
 F = runpy.run_path(str(TOOLS / "functional.py"))
 R = runpy.run_path(str(TOOLS / "resolve.py"))
@@ -46,7 +47,9 @@ def pronto(tmp, render=True):
         "name: valor_total, type: number, required: false"), encoding="utf-8")
     _decisao(eng, F["blueprint_approval_block"](eng, "01", AU["OWNER"],
                                                 timestamp="2026-09-24T08:00:00Z"))
-    IT["publish"](eng, "scope", TT["escopo"](eng))
+    s = TT["escopo"](eng)
+    s["items"][0]["excludes"].append(SG["U002_FORA"])
+    IT["publish"](eng, "scope", s)
     IT["publish"](eng, "work-packages", IT["inventario"](eng, TT["wps"]()))
     if render:
         (eng / "_render").mkdir()
@@ -96,6 +99,35 @@ class Build(unittest.TestCase):
             self.assertEqual((Path(r1["path"]) / "handoff-index.json").read_bytes(), antes)
             with self.assertRaises(REL["ReleaseError"]):
                 REL["build"](eng, out=r1["path"])
+
+
+class IndiceDoRelease(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.eng = VT["percurso"](cls.tmp.name)[0]
+        pkg = Path(REL["build"](cls.eng)["path"])
+        cls.idx = json.loads((pkg / "handoff-index.json").read_text(encoding="utf-8"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_r1_the_index_names_every_decision_it_rests_on(self):
+        for d in ("D-001", "D-002", "D-003", "D-004"):
+            self.assertIn("decisions.md#" + d, self.idx["authorization_refs"])
+
+    def test_r2_the_index_says_what_each_review_read(self):
+        rb = self.idx["reviews_basis"]["REV-0001"]
+        self.assertEqual(rb["candidate_revision"], 1)
+        self.assertEqual(rb["inputs"]["decisions.md"]["now"], "changed since the review")
+
+    def test_r4_a_decision_dated_after_the_build_is_a_limitation(self):
+        _decisao(self.eng, "\n## D-009 — nota\n\n- **Timestamp**: 2999-01-01T00:00:00Z\n")
+        pkg = Path(REL["build"](self.eng)["path"])
+        idx = json.loads((pkg / "handoff-index.json").read_text(encoding="utf-8"))
+        self.assertTrue(any("D-009 (2999-01-01T00:00:00Z)" in m for m in idx["limitations"]))
 
 
 class Verificacao(unittest.TestCase):

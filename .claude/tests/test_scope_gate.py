@@ -35,6 +35,10 @@ BLOCKS_ALL = ("| U-010 | governance | A plataforma pode guardar dados pessoais n
               "dimensionante: condiciona tudo | pedido.md#¶3 | R-01 |")
 
 
+U002_FORA = {"ref": "U-002", "reason": "o encaminhamento pela direcção financeira fica fora "
+             "deste parcial", "authorization_ref": "decisions.md#D-004"}
+
+
 def codes(findings):
     return sorted({(f["code"], f["ref"]) for f in findings})
 
@@ -96,11 +100,17 @@ class GateDeAmbito(unittest.TestCase):
             p.write_text(p.read_text(encoding="utf-8").replace(
                 "name: valor_total, type: number, required: true",
                 "name: valor_total, type: number, required: false"), encoding="utf-8")
-            IT["publish"](eng, "scope", TT["escopo"](eng))
+            s = TT["escopo"](eng)
+            IT["publish"](eng, "scope", s)
             IT["publish"](eng, "work-packages", IT["inventario"](eng, TT["wps"]()))
             g = TR["scope_gate"](eng)
+            # T43 R3: a U-002 (blocks_scope) não é citada por nenhum FC nem excluída
+            self.assertIn(("UNLINKED_BLOCKING_QUESTION", "U-002"), codes(g["blockers"]))
+            s["items"][0]["excludes"].append(U002_FORA)
+            IT["publish"](eng, "scope", dict(s, revision=2))
+            g = TR["scope_gate"](eng)
             self.assertEqual(g["delivery"], "partial", g)
-            self.assertEqual(g["excluded"], ["FC-0002"])
+            self.assertEqual(g["excluded"], ["FC-0002", "U-002"])
 
     def test_t33_a_blocker_in_an_included_item_blocks_the_delivery(self):
         with tempfile.TemporaryDirectory() as tmp:

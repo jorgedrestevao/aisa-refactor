@@ -152,6 +152,58 @@ def readiness(eng) -> dict:
             "proofs": trace["proofs"], "viability_blockers": trace["viability_blockers"]}
 
 
+def _decision_refs(eng: Path, scope: dict, ap: dict) -> list:
+    """T43 R1: as decisões que o pacote assenta — autorização de FC, aprovação do desenho,
+    âmbito e exclusões, a autoridade da rota (imposição) e a escolha do candidato."""
+    F, D = _mod("functional"), _mod("dashboard")
+    ids = {b["id"] for b in F["authorization_blocks"](eng)}
+    if ap.get("block"):
+        ids.add(ap["block"])
+    for s in scope.get("items") or []:
+        for ref in [s.get("authorized_by")] + [e.get("authorization_ref")
+                                               for e in s.get("excludes") or []]:
+            if ref:
+                ids.add(str(ref).split("#")[-1])
+    try:
+        st = json.loads((eng / "_state.json").read_text(encoding="utf-8"))
+        rb = ((st.get("workflow") or {}).get("route_basis") or {}).get("authority_ref")
+        if rb:
+            ids.add(str(rb).split("#")[-1])
+    except (OSError, ValueError):
+        pass
+    cand = set()
+    try:
+        cand = {c["id"] for c in json.loads((eng / "_design/candidates.json").read_text(
+            encoding="utf-8")).get("items") or []}
+    except (OSError, ValueError):
+        pass
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    for b in D["classify_decisions"](md):
+        if b.get("kind") == "solution" or set(re.findall(r"\bO-\d{3,}\b",
+                                                          b.get("title", ""))) & cand:
+            ids.add(b["id"])
+    existentes = set(_mod("workflow")["_decision_ids"](eng))
+    return sorted("decisions.md#" + i for i in ids if i in existentes)
+
+
+def _reviews_basis(eng: Path) -> dict:
+    """T43 R2 (repõe S4): por parecer, a base que o mandato fixou e se ainda é a corrente."""
+    O = _mod("operation")
+    out = {}
+    for m in sorted((eng / "_design/reviews").glob("REV-*.mandate.json")):
+        d = json.loads(m.read_text(encoding="utf-8"))
+        out[d["task_id"]] = {
+            "role": d["role"], "candidate_revision": d["candidate_revision"],
+            "inputs": {r["ref"]: {"sha256": r["sha256"],
+                                  "now": "current" if O["digest"](eng / r["ref"]) == r["sha256"]
+                                  else "changed since the review"}
+                       for r in d.get("input_refs") or []}}
+    return out
+
+
 def build(eng, out: str | None = None) -> dict:
     eng = Path(eng)
     W, F, RV = _mod("workflow"), _mod("functional"), _mod("review")
@@ -219,10 +271,8 @@ def build(eng, out: str | None = None) -> dict:
             for s in scope.get("items") or [] for e in s.get("excludes") or []],
         "code_version": _code_version(), "pack_version": _pack_version(eng),
         "files": [{"path": r, "sha256": _sha(dest / r)} for r in todos],
-        "authorization_refs": sorted({"decisions.md#" + b["id"]
-                                      for b in F["authorization_blocks"](eng)}
-                                     | ({"decisions.md#" + ap["block"]} if ap.get("block")
-                                        else set())),
+        "authorization_refs": _decision_refs(eng, scope, ap),
+        "reviews_basis": _reviews_basis(eng),
         "readiness": {"delivery": rd["delivery"], "ready": rd["ready"],
                       "reasons": rd["reasons"], "render_checks": rd["render_checks"],
                       "blueprint_approval": ap["state"]},
@@ -236,8 +286,21 @@ def build(eng, out: str | None = None) -> dict:
                                        "excludes": s.get("excludes"),
                                        "authorized_by": s.get("authorized_by")}
                              for s in scope.get("items") or []},
-        "limitations": rd["reasons"] or ["nenhuma limitação estrutural; provas por executar"],
+        "limitations": list(rd["reasons"]),
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    # T43 R4: uma decisão com data posterior ao build é incoerência de relógio ou de registo
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    futuras = sorted({"{} ({})".format(m.group(1), m.group(2)) for m in re.finditer(
+        r"^##\s+(D-\d+)[^\n]*\n(?:(?!^## ).*\n)*?.*\*\*Timestamp\*\*\s*:\s*(\S+)", md, re.M)
+        if m.group(2) > index["built_at"]})
+    if futuras:
+        index["limitations"].append("decisões com data posterior ao build ({}): {}".format(
+            index["built_at"], ", ".join(futuras)))
+    if not index["limitations"]:
+        index["limitations"] = ["nenhuma limitação estrutural; provas por executar"]
     errors, _u = W["validate"](index, W["load_schema"]("handoff-index"))
     if errors:
         shutil.rmtree(dest)
