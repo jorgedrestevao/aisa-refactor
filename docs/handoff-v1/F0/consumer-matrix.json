@@ -1013,6 +1013,26 @@
      "evidence": "docs/process-map/M0/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/orchestration.patch",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Patch (staging M1) que acrescenta a orchestration.md o parágrafo do mapa de processo: estado coordenado com escritor próprio, a SU continua autoridade dos factos e decisions.md do âmbito. Aplicado pelo mantenedor com install.py; não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/orchestration.patch",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Cópia de staging do motor process_map.py (M1), carregada pelos testes enquanto library/ não a tiver; lê decisions.md (cabeçalhos D-NNN) e declara a SU como autoridade dos factos. Não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2177,6 +2197,36 @@
      "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
      "via": "",
      "evidence": "docs/process-map/M0/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/install.py",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Instalador M1 do mantenedor: aplica os patches e copia o motor para library/, e regista-o no inventário F0. Descreve papéis sobre SU, decisões e estado; não os lê nem escreve.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/install.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/orchestration.patch",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Patch (staging M1) que acrescenta a orchestration.md o parágrafo do mapa de processo: estado coordenado com escritor próprio, a SU continua autoridade dos factos e decisions.md do âmbito. Aplicado pelo mantenedor com install.py; não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/orchestration.patch",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Cópia de staging do motor process_map.py (M1), carregada pelos testes enquanto library/ não a tiver; lê decisions.md (cabeçalhos D-NNN) e declara a SU como autoridade dos factos. Não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -4042,6 +4092,16 @@
      "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
      "via": "",
      "evidence": "docs/process-map/M0/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/install.py",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Instalador M1 do mantenedor: aplica os patches e copia o motor para library/, e regista-o no inventário F0. Descreve papéis sobre SU, decisões e estado; não os lê nem escreve.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/install.py",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -6596,6 +6656,36 @@
      "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
      "via": "",
      "evidence": "docs/process-map/M0/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/install.py",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Instalador M1 do mantenedor: aplica os patches e copia o motor para library/, e regista-o no inventário F0. Descreve papéis sobre SU, decisões e estado; não os lê nem escreve.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/install.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/orchestration.patch",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Patch (staging M1) que acrescenta a orchestration.md o parágrafo do mapa de processo: estado coordenado com escritor próprio, a SU continua autoridade dos factos e decisions.md do âmbito. Aplicado pelo mantenedor com install.py; não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/orchestration.patch",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Cópia de staging do motor process_map.py (M1), carregada pelos testes enquanto library/ não a tiver; lê decisions.md (cabeçalhos D-NNN) e declara a SU como autoridade dos factos. Não é runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
     }

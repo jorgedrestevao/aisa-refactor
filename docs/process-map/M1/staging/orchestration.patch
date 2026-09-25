@@ -1,0 +1,13 @@
+diff --git a/library/kernel/orchestration.md b/library/kernel/orchestration.md
+index 437e962..6d671d5 100644
+--- a/library/kernel/orchestration.md
++++ b/library/kernel/orchestration.md
+@@ -140,6 +140,8 @@ A refusal leaves the draft as it was and prints a structured reason:
+ 
+ Never `mv` a `.tmp` over `_state.json`, never edit an authority with Bash, never Edit the SU in place. A direct edit that happened anyway is **preserved**: `on-su-mirror.py` reports it, the engagement stops being ready, and `python library/kernel/tools/resolve.py reconcile --engagement <slug>` shows the reconciliation (`--apply` publishes it). The `/answer` state transitions keep their own engine (`resolve.py --row …`), which publishes through the same coordinator. Phase artefacts (`frame.md`, `options.md`, `_blueprint/`, `_synthesis/`, `_render/`) stay tool-written until their phases (F4–F6).
+ 
++**The process map** (`_map/`, process-map M1 — `docs/process-map/PLANO.md`) is coordinated state with its own writer, not a seventh authority: `library/kernel/tools/process_map.py` publishes `_map/map.json` and the immutable `_map/history/mp-vNN.json` in one coordinator operation. The draft lives **outside** the engagement; `process_map.py check` separates errors (publication refused) from explicit gaps (published, still visible); `stamp` fills only what is missing (`base`, a reference's digest, a consumed source) and never replaces a value; `publish` uses the draft's `base` as `expected` (`BASE_CHANGED` — the map moved: reopen on the current version and reconcile, never bump the version) and `based_on` as `read_set` (`STALE_INPUT` — a source moved: re-read, re-evaluate the elements that cite it, stamp again). The map organises knowledge and references; facts stay in the SU, scope and exclusions in `decisions.md`. Write/Edit under `_map/` is refused by `pre-authority-guard.py`; `process-map.html` is a derived view.
++
+ ## Pack context — Discovery vs Options
+ 
+ **The six Discovery lenses** (`business`, `operations`, `user`, `data`, `governance`, `financial`):

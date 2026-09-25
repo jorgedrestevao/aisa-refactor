@@ -57,6 +57,7 @@
 .claude/tests/test_p8_comparator.py
 .claude/tests/test_p8_report_schema.py
 .claude/tests/test_pp_architecture_templates.py
+.claude/tests/test_process_map_core.py
 .claude/tests/test_process_map_guard.py
 .claude/tests/test_projection_ux.py
 .claude/tests/test_render_validate.py
