@@ -67,7 +67,7 @@ Plano: `docs/process-map/PLANO.md`.
 | `test_process_map_coverage.py` | 23 OK |
 | Mutações (4): regra `COV-MAP-UNPLACED`, razões do release, herança de `elementos` na transição, linha curta de escritor antigo | 7 testes falham; repostas, 23 OK |
 | Suite completa, 1.ª execução (`enforce`) | `files=120 ok=117`: 4 falhas em 3 ficheiros, analisadas abaixo |
-| Suite completa, fecho (`enforce`) | ver §2.1 |
+| Suite completa e stdlib, fecho (`enforce`) | ver §2.1 |
 
 **As 4 falhas da primeira execução:**
 - `test_state_scaffold` (2) e `test_handoff_skill_writes` (1) fixavam a largura antiga das secções da SU.
@@ -80,7 +80,14 @@ Plano: `docs/process-map/PLANO.md`.
 
 ### 2.1 Fecho
 
-Preenchido depois da última execução.
+Execução sobre `598e09a` (M3 completo), com `AISA_GUARD_MODE=enforce`:
+
+| Execução | Resultado |
+|---|---|
+| `python .github/run_tests.py` | `files=120 ok=120 fail_files=0 tests=3197 failures=0 errors=0 skips=34 expected_failures=3 wall=102.9s` |
+| `python .github/run_tests.py --list .github/stdlib-tests.txt` | `files=101 ok=101 fail_files=0 tests=2399 failures=0 errors=0 skips=28 wall=105.7s` |
+
+Skips e falhas esperadas iguais à baseline (34/3 e 28/0). Not-run: nenhum.
 
 ### Testes de fecho do plano
 
