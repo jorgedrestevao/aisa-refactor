@@ -1053,6 +1053,56 @@
      "evidence": "library/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-capture/SKILL.md",
+     "kind": "skill",
+     "role": "declares-contract",
+     "mechanism": "Passos 5d/5e (process-map M2): declara que o mapa nunca é autoridade de um facto (a SU é) e que uma resposta do dono que muda conhecimento entra na SU pelo fluxo normal (/answer, Discovery); a captura não lê nem escreve a SU.",
+     "via": "",
+     "evidence": ".claude/skills/aisa-capture/SKILL.md passo 5d, 5e.b",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/demo-output.txt",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/demo-output.txt",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/process-map-v02.html",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/process-map-v02.html",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M2 do mapa de processo: descreve a validação em decisions.md, a relação com a SU e a demonstração. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M2/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2267,6 +2317,66 @@
      "mechanism": "Lê os cabeçalhos `## D-NNN` de decisions.md para validar o `decision_ref` de um órfão `out_of_scope` material; nunca escreve decisões.",
      "via": "",
      "evidence": "library/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": ".claude/skills/aisa-capture/SKILL.md",
+     "kind": "skill",
+     "role": "appender",
+     "mechanism": "Passo 5e.d (process-map M2): acrescenta a decisions.md o bloco `D-NNN — Mapa do processo mp-vNN validado`, texto gerado por process_map.py approval-block e publicado por resolve.py draft/publish; só com a aprovação do dono via AskUserQuestion.",
+     "via": "",
+     "evidence": ".claude/skills/aisa-capture/SKILL.md passo 5e.d",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/demo-output.txt",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/demo-output.txt",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/process-map-v02.html",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Demonstração M2 do mapa de processo sobre cópia temporária de fixture: escreve answers.md/decisions.md pelo escritor real (resolve.py draft/publish) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M2/process-map-v02.html",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "library/kernel/capture-templates/process-map.guide.md",
+     "kind": "kernel-contract",
+     "role": "declares-contract",
+     "mechanism": "Guia de autoria do mapa: declara que o âmbito vive em decisions.md e que uma exclusão material só sai do mapa com a D-NNN que a autoriza.",
+     "via": "",
+     "evidence": "library/kernel/capture-templates/process-map.guide.md §Transferência",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M2/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M2 do mapa de processo: descreve a validação em decisions.md, a relação com a SU e a demonstração. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M2/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }

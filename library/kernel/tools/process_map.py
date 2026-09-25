@@ -21,7 +21,17 @@ Understanding é. Escreve-o só este motor, pelo coordenador (`operation.run`); 
             `STALE_INPUT`). A versão sai da base, sob o lock; um conflito nunca se resolve
             incrementando a versão. Repetir o mesmo rascunho devolve o mesmo recibo.
     status  --engagement <slug|caminho> [--json]
-            o mapa publicado: ausente · ok · inválido · versão não suportada.
+            o mapa publicado (ausente · ok · inválido · versão não suportada) e a validação
+            aplicável: validado · validação de outra versão · inválida · por validar.
+    render  --engagement <slug|caminho>
+            `<engagement>/process-map.html`, vista derivada e determinista (fluxograma por
+            faixas em SVG + passos, ligações, dúvidas, fora do mapa, fontes).
+    questions --engagement <slug|caminho> [--json]
+            as dúvidas do mapa agrupadas por tema, estrutura primeiro — a validação pelo
+            dono pergunta por grupo, nunca por célula.
+    approval-block --engagement --scope --conditions --validated-by [--timestamp]
+            o texto do bloco `D-NNN — Mapa do processo mp-vNN validado` com o digest da
+            versão publicada; quem o escreve em decisions.md é `resolve.py draft/publish`.
 
 Referências (`evidence[].ref`, `details[].ref`, `orphans[].ref`): `<caminho>[#<âncora>]`,
 relativo ao engagement.
@@ -608,6 +618,10 @@ def check(eng, draft: dict, draft_path=None) -> dict:
         for el in draft[coll]:
             if el["marker"] == "UNKNOWN":
                 gaps.append(_diag("MAP-UNKNOWN", el["label"], el["id"], "gap"))
+    for s in incomplete_sources(eng):
+        gaps.append(_diag("MAP-SOURCE-INCOMPLETE", "extracção `{}`: {}{}".format(
+            s["path"], s["status"], " — " + s["reason"] if s["reason"] else ""),
+            s["path"], "gap"))
     return _verdict(errors, gaps, warnings, units, missing)
 
 
@@ -700,6 +714,580 @@ def _receipt_version(eng: Path, receipt: dict) -> str:
     return ""
 
 
+# ============================================================= fontes com leitura incompleta
+
+def incomplete_sources(eng) -> list:
+    """As extracções da captura com estado diferente de `ok` — a incompletude fica à vista,
+    referenciada ou não pelo mapa (`[{path, status, reason}]`)."""
+    eng = Path(eng)
+    out = []
+    cap = eng / "_capture"
+    if not cap.is_dir():
+        return out
+    for p in sorted(cap.glob("*.extraction.json")):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            out.append({"path": "_capture/" + p.name, "status": "unreadable", "reason": ""})
+            continue
+        st = str(data.get("status", "")) if isinstance(data, dict) else "unreadable"
+        if st != "ok":
+            out.append({"path": "_capture/" + p.name, "status": st or "unknown",
+                        "reason": str((data or {}).get("reason") or "")})
+    return out
+
+
+# ============================================================= validação pelo dono
+
+VALIDATION_HEAD_RE = re.compile(r"^##\s+(D-\d{3,})\s+—\s+Mapa do processo\s+(mp-v\d{2,})\s+"
+                                r"validado\s*$")
+FIELD_RE = re.compile(r"^-\s+\*\*(?P<k>[^*]+)\*\*\s*:\s*(?P<v>.*)$")
+VALIDATION_FIELDS = ("Map sha256", "Scope", "Conditions", "Validated by", "Timestamp")
+ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})$")
+
+
+def validation_blocks(eng) -> list:
+    """Os blocos `## D-NNN — Mapa do processo mp-vNN validado` de decisions.md, pela ordem
+    do ficheiro, com os campos lidos e os problemas de cada um."""
+    eng = Path(eng)
+    try:
+        lines = (eng / "decisions.md").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    blocks, cur = [], None
+    for line in lines:
+        if line.startswith("## "):
+            m = VALIDATION_HEAD_RE.match(line.strip())
+            cur = {"decision": m.group(1), "version": m.group(2), "fields": {}} if m else None
+            if cur:
+                blocks.append(cur)
+            continue
+        if cur:
+            f = FIELD_RE.match(line.strip())
+            if f:
+                cur["fields"][f.group("k").strip()] = f.group("v").strip()
+    validator_problem = _mod("functional")["validator_problem"]
+    for b in blocks:
+        probs = []
+        for k in VALIDATION_FIELDS:
+            if not b["fields"].get(k):
+                probs.append("falta `{}`".format(k))
+        sha = b["fields"].get("Map sha256", "")
+        if sha and not re.fullmatch(r"[0-9a-f]{64}", sha):
+            probs.append("`Map sha256` não é um digest")
+        vp = validator_problem(b["fields"].get("Validated by", ""))
+        if b["fields"].get("Validated by") and vp:
+            probs.append(vp)
+        ts = b["fields"].get("Timestamp", "")
+        if ts and not ISO_RE.match(ts):
+            probs.append("`Timestamp` não é ISO-8601")
+        hist = eng / HISTORY_DIR / (b["version"] + ".json")
+        if not hist.is_file():
+            probs.append("a versão {} não existe no histórico".format(b["version"]))
+        elif sha and _sha(hist.read_bytes()) != sha:
+            probs.append("o digest não é o de {} (bloco não corresponde à versão que "
+                         "diz validar)".format(b["version"]))
+        b["problems"] = probs
+    return blocks
+
+
+def validation(eng) -> dict:
+    """A validação aplicável ao mapa publicado AGORA:
+    `validated` (bloco válido para esta versão e estes bytes) · `stale` (a validação válida
+    mais recente é de outra versão: a mudança pede avaliação — nunca transita sozinha) ·
+    `invalid` (há bloco para esta versão, mas incompleto ou forjado) · `not_validated` ·
+    `no_map`. O mapa nunca é alterado para levar a sua aprovação."""
+    eng = Path(eng)
+    cur = load(eng)
+    blocks = validation_blocks(eng)
+    base = {"blocks": [{k: b[k] for k in ("decision", "version", "problems")} for b in blocks]}
+    if cur["status"] != "ok":
+        return dict(base, status="no_map", decision="", version="", scope="", conditions="",
+                    detail="sem mapa publicado legível ({})".format(cur["status"]))
+    version = cur["map"].get("version", "")
+    good = [b for b in blocks if not b["problems"]]
+    here = [b for b in good if b["version"] == version and
+            b["fields"]["Map sha256"] == cur["digest"]]
+    if here:
+        b = here[-1]
+        return dict(base, status="validated", decision=b["decision"], version=version,
+                    scope=b["fields"]["Scope"], conditions=b["fields"]["Conditions"],
+                    validated_by=b["fields"]["Validated by"],
+                    timestamp=b["fields"]["Timestamp"], detail="")
+    bad_here = [b for b in blocks if b["version"] == version and b["problems"]]
+    if bad_here:
+        b = bad_here[-1]
+        return dict(base, status="invalid", decision=b["decision"], version=version,
+                    scope="", conditions="",
+                    detail="{}: {}".format(b["decision"], "; ".join(b["problems"])))
+    if good:
+        b = good[-1]
+        return dict(base, status="stale", decision=b["decision"], version=version,
+                    scope=b["fields"]["Scope"], conditions=b["fields"]["Conditions"],
+                    detail="{} validou {}; o mapa publicado é {} — avaliar a mudança e "
+                           "validar de novo".format(b["decision"], b["version"], version))
+    return dict(base, status="not_validated", decision="", version=version, scope="",
+                conditions="", detail="nenhuma validação do dono registada")
+
+
+def approval_block(eng, scope: str, conditions: str, validated_by: str,
+                   timestamp: str | None = None) -> str:
+    """O texto do bloco de validação da versão publicada, com o digest calculado pelo
+    motor. O escritor de decisions.md continua a ser `resolve.py draft/publish`."""
+    import time
+    eng = Path(eng)
+    cur = load(eng)
+    if cur["status"] != "ok":
+        raise ValueError("sem mapa publicado legível ({})".format(cur["status"]))
+    prob = _mod("functional")["validator_problem"](validated_by)
+    if prob:
+        raise ValueError("validação recusada: " + prob)
+    if not str(scope).strip():
+        raise ValueError("validação recusada: falta o âmbito validado")
+    if not str(conditions).strip():
+        raise ValueError("validação recusada: `Conditions` diz as dúvidas mantidas, ou "
+                         "`nenhuma`")
+    ts = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    try:
+        md = (eng / "decisions.md").read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    later = sorted(t for t in re.findall(r"\*\*Timestamp\*\*\s*:\s*(\S+)", md) if t > ts)
+    if later:
+        raise ValueError("o bloco teria data {} anterior a uma decisão já registada ({})"
+                         .format(ts, later[-1]))
+    ids = _mod("workflow")["_decision_ids"](eng)
+    did = "D-{:03d}".format(max([int(d[2:]) for d in ids] or [0]) + 1)
+    return ("\n## {} — Mapa do processo {} validado\n\n- **Map sha256**: {}\n"
+            "- **Scope**: {}\n- **Conditions**: {}\n- **Validated by**: {}\n"
+            "- **Timestamp**: {}\n").format(did, cur["map"]["version"], cur["digest"],
+                                            scope.strip(), conditions.strip(),
+                                            validated_by.strip(), ts)
+
+
+# ============================================================= perguntas agrupadas
+
+GROUPS = (("estrutura", "Passos e ligações"),
+          ("saidas", "Saídas e quem as recebe"),
+          ("excecoes", "Exceções e desvios"),
+          ("ambito", "Âmbito e temas transversais"))
+FIXED_QUESTIONS = {
+    "estrutura": "Os passos e a ordem estão certos, e nenhum falta?",
+    "saidas": "As saídas e quem as recebe estão completas?",
+    "ambito": "O que está fora do mapa está bem fora do âmbito?",
+}
+
+
+def questions(eng) -> list:
+    """As dúvidas do mapa publicado agrupadas por tema, estrutura primeiro — o material da
+    validação pelo dono (perguntas agrupadas, nunca uma por célula). Cada grupo abre com a
+    pergunta fixa que valida a representação; as dúvidas vêm a seguir."""
+    cur = load(eng)
+    if cur["status"] != "ok":
+        return []
+    m = cur["map"]
+    kinds = {n["id"]: n["kind"] for n in m["nodes"]}
+    lane_kind = {la["id"]: la["kind"] for la in m["lanes"]}
+    node_lane = {n["id"]: n["lane"] for n in m["nodes"]}
+    edge_kind = {e["id"]: e["kind"] for e in m["edges"]}
+    detail_on = {d["id"]: d["attaches_to"] for d in m["details"]}
+
+    def group_of(targets):
+        flat = []
+        for t in targets:
+            flat += detail_on.get(t, [t])
+        if "GLOBAL" in flat:
+            return "ambito"
+        if any(kinds.get(t) == "exception" or edge_kind.get(t) == "exception" for t in flat):
+            return "excecoes"
+        if any(kinds.get(t) == "output" or
+               lane_kind.get(node_lane.get(t, "")) in ("consumer", "downstream") for t in flat):
+            return "saidas"
+        return "estrutura"
+
+    items = {g: [] for g, _t in GROUPS}
+    for g in m["gaps"]:
+        items[group_of(g["attaches_to"])].append(
+            {"id": g["id"], "question": g["question"], "about": g["attaches_to"],
+             "respondent": g.get("respondent", ""), "pm_u_ref": g.get("pm_u_ref", "")})
+    for o in m["orphans"]:
+        if o["reason"] == "out_of_scope":
+            continue
+        items["estrutura" if o["reason"] == "gap_in_map" else "ambito"].append(
+            {"id": o["ref"], "question": o["note"], "about": [], "respondent": "",
+             "pm_u_ref": ""})
+    out = []
+    for g, title in GROUPS:
+        fixed = FIXED_QUESTIONS.get(g)
+        if not items[g] and not fixed:
+            continue
+        out.append({"group": g, "title": title, "validates": fixed or "",
+                    "items": items[g]})
+    return out
+
+
+# ============================================================= render (vista derivada)
+
+KIND_LABEL = {"trigger": "início", "step": "passo", "decision": "decisão",
+              "exception": "exceção", "output": "saída"}
+LANE_LABEL = {"actor": "quem faz", "tool": "ferramenta", "channel": "canal",
+              "consumer": "quem recebe", "downstream": "sistema a jusante"}
+MARK_LABEL = {"OBSERVED": "observado", "INFERRED": "inferido", "HYPOTHESIS": "hipótese",
+              "UNKNOWN": "por saber"}
+ORPHAN_LABEL = {"gap_in_map": "falta representar", "out_of_scope": "fora do âmbito",
+                "undetermined": "por avaliar"}
+VALIDATION_LABEL = {"validated": "validado pelo dono", "stale": "validação de outra versão",
+                    "invalid": "validação inválida", "not_validated": "por validar",
+                    "no_map": "sem mapa"}
+RENDER_REL = "process-map.html"
+
+CSS = """
+:root{--bg:#EDE9DF;--panel:#FFFFFF;--surface:#F5F2EC;--line:#D7CEC5;--ink:#39383A;
+--ink2:#6B635B;--accent:#FF5A00;--a-tint:#FFE7D8;--brand:#7A1400;--warn:#8F3200;
+--f-ui:'Segoe UI',system-ui,-apple-system,Arial,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#191A1C;
+--panel:#232427;--surface:#2B2C30;--line:#3B3C42;--ink:#EDE9DF;--ink2:#B5AEA4;
+--a-tint:#431800;--brand:#FFB183;--warn:#E0A33A}}
+:root[data-theme="dark"]{--bg:#191A1C;--panel:#232427;--surface:#2B2C30;--line:#3B3C42;
+--ink:#EDE9DF;--ink2:#B5AEA4;--a-tint:#431800;--brand:#FFB183;--warn:#E0A33A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-ui)}
+main{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}
+.sub{color:var(--ink2);margin:0 0 12px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;background:var(--a-tint);
+color:var(--brand);font-weight:600;font-size:12px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+.stat b{font-size:16px;margin-right:4px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;color:var(--ink2);font-size:12px;margin:8px 0}
+.flow{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+svg{display:block}
+svg .lane-bg{fill:var(--surface)}svg .lane-sep{stroke:var(--line)}
+svg .lane-t{fill:var(--ink);font:600 12px var(--f-ui)}
+svg .lane-k{fill:var(--ink2);font:11px var(--f-ui)}
+svg .node{fill:var(--panel);stroke:var(--ink2);stroke-width:1.2}
+svg .node.exception{stroke:var(--warn);stroke-dasharray:5 3}
+svg .node.unknown{stroke-dasharray:2 3}
+svg .node.output{stroke:var(--brand);stroke-width:2}
+svg .node.decision{fill:var(--a-tint)}
+svg .nt{fill:var(--ink);font:12px var(--f-ui)}
+svg .nm{fill:var(--warn);font:italic 11px var(--f-ui)}
+svg .num{fill:var(--accent)}svg .numt{fill:#FFFFFF;font:600 11px var(--f-ui)}
+svg .edge{fill:none;stroke:var(--ink2);stroke-width:1.3}
+svg .edge.exception{stroke:var(--warn);stroke-dasharray:6 4}
+svg .el{fill:var(--ink2);font:11px var(--f-ui)}
+svg .q{fill:var(--warn);font:700 13px var(--f-ui)}
+table{width:100%;border-collapse:collapse;background:var(--panel);
+border:1px solid var(--line);border-radius:8px;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:6px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--surface);font-weight:600}
+td code{font-size:12px;overflow-wrap:anywhere}
+.tbl{overflow-x:auto}
+ul.q{margin:4px 0 12px;padding-left:20px}
+.empty{color:var(--ink2)}
+"""
+
+COL_W, NODE_W, NODE_H, LANE_LBL, PAD_Y, GAP_Y = 210, 170, 62, 150, 14, 10
+
+
+def _e(text) -> str:
+    import html
+    return html.escape(str(text), quote=True)
+
+
+def _wrap(label: str, width: int = 24, lines: int = 3) -> list:
+    words, out, cur = str(label).split(), [], ""
+    for w in words:
+        if len(cur) + len(w) + (1 if cur else 0) <= width:
+            cur = (cur + " " + w).strip()
+        else:
+            if cur:
+                out.append(cur)
+            cur = w
+    if cur:
+        out.append(cur)
+    if len(out) > lines:
+        out = out[:lines]
+        out[-1] = out[-1][:max(0, width - 1)] + "…"
+    return out or [""]
+
+
+def layout(m: dict) -> dict:
+    """Posições deterministas: faixa → linha, `order` → coluna; empates pelo id."""
+    lanes = [la["id"] for la in m["lanes"]]
+    orders = sorted({n["order"] for n in m["nodes"]})
+    col = {o: i for i, o in enumerate(orders)}
+    stacks: dict = {}
+    for n in sorted(m["nodes"], key=lambda n: (n["order"], n["id"])):
+        stacks.setdefault((n["lane"], n["order"]), []).append(n["id"])
+    depth = {la: max([len(v) for (l2, _o), v in stacks.items() if l2 == la] or [1])
+             for la in lanes}
+    y, lane_y = 0, {}
+    for la in lanes:
+        h = PAD_Y * 2 + depth[la] * NODE_H + (depth[la] - 1) * GAP_Y
+        lane_y[la] = (y, h)
+        y += h
+    pos = {}
+    for (la, o), ids in stacks.items():
+        top = lane_y[la][0] + PAD_Y
+        for i, nid in enumerate(ids):
+            pos[nid] = (LANE_LBL + 20 + col[o] * COL_W, top + i * (NODE_H + GAP_Y))
+    number = {nid: i + 1 for i, nid in enumerate(
+        sorted(pos, key=lambda n: (col[next(x["order"] for x in m["nodes"] if x["id"] == n)],
+                                   lanes.index(next(x["lane"] for x in m["nodes"]
+                                                    if x["id"] == n)), n)))}
+    width = LANE_LBL + 40 + max(1, len(orders)) * COL_W
+    back = any(e["src"] in pos and e["dst"] in pos and pos[e["dst"]][0] < pos[e["src"]][0]
+               for e in m["edges"])
+    return {"pos": pos, "lane_y": lane_y, "width": width,
+            "height": max(y, 1) + (40 if back else 0),
+            "number": number}
+
+
+def render_svg(m: dict) -> str:
+    """O fluxograma por faixas, em SVG inline. Sem limite de nós: o diagrama cresce e a
+    moldura desliza; a tabela de passos é a vista completa."""
+    lay = layout(m)
+    pos, W, H = lay["pos"], lay["width"], lay["height"]
+    gap_on = set()
+    for g in m["gaps"]:
+        gap_on.update(g["attaches_to"])
+    for d in m["details"]:
+        if d["id"] in gap_on:
+            gap_on.update(d["attaches_to"])
+    o = ['<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 {} {}" '
+         'role="img" aria-label="Fluxograma do processo por faixas">'.format(W, H, W, H),
+         '<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+         'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" '
+         'fill="currentColor"/></marker></defs>']
+    for i, la in enumerate(m["lanes"]):
+        y, h = lay["lane_y"][la["id"]]
+        if i % 2 == 0:
+            o.append('<rect class="lane-bg" x="0" y="{}" width="{}" height="{}"/>'.format(y, W, h))
+        o.append('<line class="lane-sep" x1="0" y1="{0}" x2="{1}" y2="{0}"/>'.format(y + h, W))
+        o.append('<text class="lane-t" x="12" y="{}">{}</text>'.format(y + 24, _e(la["label"])))
+        o.append('<text class="lane-k" x="12" y="{}">{}</text>'.format(
+            y + 40, _e(LANE_LABEL.get(la["kind"], la["kind"]))))
+    for e in sorted(m["edges"], key=lambda e: e["id"]):
+        if e["src"] not in pos or e["dst"] not in pos:
+            continue
+        (sx, sy), (dx, dy) = pos[e["src"]], pos[e["dst"]]
+        x1, y1 = sx + NODE_W, sy + NODE_H / 2
+        x2, y2 = dx, dy + NODE_H / 2
+        if sx == dx:
+            # mesma coluna, outra linha: por fora, à direita, sem atravessar o que está
+            # empilhado entre os dois
+            gx = sx + NODE_W + 22
+            d = "M{:.0f},{:.0f} H{:.0f} V{:.0f} H{:.0f}".format(x1, y1, gx, y2, x1 + 8)
+            lx, ly = gx + 4, (y1 + y2) / 2
+            cls = "edge exception" if e["kind"] == "exception" else "edge"
+            o.append('<path class="{}" d="{}" marker-end="url(#arr)" style="color:var(--ink2)">'
+                     '<title>{}</title></path>'.format(cls, d, _e(e.get("label") or e["id"])))
+            if e.get("label"):
+                o.append('<text class="el" x="{:.0f}" y="{:.0f}">{}</text>'.format(
+                    lx, ly, _e(e["label"])))
+            continue
+        if x2 <= x1:
+            x1, x2 = sx + NODE_W / 2, dx + NODE_W / 2
+            y1, y2 = sy + NODE_H, dy + NODE_H
+            low = max(y1, y2) + 18
+            d = "M{:.0f},{:.0f} C{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f}".format(
+                x1, y1, x1, low, x2, low, x2, y2)
+            lx, ly = (x1 + x2) / 2, low
+        else:
+            mx = (x1 + x2) / 2
+            d = "M{:.0f},{:.0f} C{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f}".format(
+                x1, y1, mx, y1, mx, y2, x2, y2)
+            lx, ly = mx, (y1 + y2) / 2 - 4
+        cls = "edge exception" if e["kind"] == "exception" else "edge"
+        o.append('<path class="{}" d="{}" marker-end="url(#arr)" style="color:var(--ink2)">'
+                 '<title>{}</title></path>'.format(cls, d, _e(e.get("label") or e["id"])))
+        if e.get("label"):
+            o.append('<text class="el" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
+                     .format(lx, ly, _e(e["label"])))
+    for n in sorted(m["nodes"], key=lambda n: n["id"]):
+        x, y = pos[n["id"]]
+        cls = "node " + n["kind"] + (" unknown" if n["marker"] == "UNKNOWN" else "")
+        o.append('<g><title>{} — {} ({})</title>'.format(_e(n["label"]),
+                                                        _e(KIND_LABEL[n["kind"]]), _e(n["id"])))
+        if n["kind"] == "decision":
+            cx, cy = x + NODE_W / 2, y + NODE_H / 2
+            o.append('<polygon class="{}" points="{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f} '
+                     '{:.0f},{:.0f}"/>'.format(cls, cx, y - 4, x + NODE_W + 6, cy, cx,
+                                                y + NODE_H + 4, x - 6, cy))
+        else:
+            rx = 28 if n["kind"] == "trigger" else 6
+            o.append('<rect class="{}" x="{}" y="{}" width="{}" height="{}" rx="{}"/>'.format(
+                cls, x, y, NODE_W, NODE_H, rx))
+        lines = _wrap(n["label"])
+        top = y + NODE_H / 2 - (len(lines) - 1) * 7 - (6 if n["marker"] != "OBSERVED" else 0)
+        for i, line in enumerate(lines):
+            o.append('<text class="nt" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
+                     .format(x + NODE_W / 2, top + i * 14 + 4, _e(line)))
+        if n["marker"] != "OBSERVED":
+            o.append('<text class="nm" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
+                     .format(x + NODE_W / 2, y + NODE_H - 8, _e(MARK_LABEL[n["marker"]])))
+        num = lay["number"][n["id"]]
+        o.append('<circle class="num" cx="{}" cy="{}" r="10"/><text class="numt" x="{}" y="{}" '
+                 'text-anchor="middle">{}</text>'.format(x, y, x, y + 4, num))
+        if n["id"] in gap_on:
+            o.append('<text class="q" x="{}" y="{}">?</text>'.format(x + NODE_W - 12, y + 16))
+        o.append('</g>')
+    o.append('</svg>')
+    return "".join(o)
+
+
+def _refs_html(evs) -> str:
+    return "<br>".join("<code>{}</code>".format(_e(ev["ref"])) for ev in evs) or \
+        '<span class="empty">—</span>'
+
+
+def render_html(eng) -> str:
+    """A página completa do mapa publicado, em linguagem de negócio. Mesmos inputs, mesmos
+    bytes: nenhum relógio, nenhum id aleatório. Mostra a incompletude com ou sem
+    validação — a aprovação nunca esconde uma dúvida."""
+    eng = Path(eng)
+    cur = load(eng)
+    if cur["status"] != "ok":
+        raise ValueError("sem mapa publicado legível ({}): {}".format(cur["status"],
+                                                                    cur["detail"]))
+    m = cur["map"]
+    val = validation(eng)
+    incomplete = incomplete_sources(eng)
+    lay = layout(m)
+    lanes = {la["id"]: la for la in m["lanes"]}
+    by_num = sorted(m["nodes"], key=lambda n: lay["number"][n["id"]])
+    details_on: dict = {}
+    for d in m["details"]:
+        for a in d["attaches_to"]:
+            details_on.setdefault(a, []).append(d)
+    count = {k: sum(1 for n in m["nodes"] if n["kind"] == k) for k in KIND_LABEL}
+    unknown = sum(1 for c in ("nodes", "edges", "details") for el in m[c]
+                  if el["marker"] == "UNKNOWN")
+    open_orphans = [o for o in m["orphans"] if o["reason"] != "out_of_scope"]
+    build = _sha_text(canonical({"map": cur["digest"], "validation": val["status"],
+                                 "decision": val.get("decision", ""),
+                                 "incomplete": incomplete}))[:12]
+    o = ['<!DOCTYPE html>\n<html lang="pt">\n<head>\n<meta charset="utf-8">\n'
+         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+         '<title>Mapa do processo</title>\n<!-- process-map {} · {} · build {} -->\n'
+         '<style>{}</style>\n</head>\n<body>\n<main>\n'.format(
+             _e(m["version"]), _e(cur["digest"][:12]), build, CSS)]
+    o.append('<h1>Mapa do processo — {}</h1>'.format(_e(m["engagement_id"])))
+    o.append('<p class="sub">Processo actual, versão {} · <span class="badge">{}</span>{}</p>'
+             .format(_e(m["version"][4:]), _e(VALIDATION_LABEL[val["status"]]),
+                     " — {}".format(_e(val["detail"])) if val["detail"] else
+                     " ({}{})".format(_e(val.get("decision", "")),
+                                      ", âmbito: " + _e(val["scope"]) if val.get("scope")
+                                      else "")))
+    o.append('<div class="stats">')
+    for k in ("step", "decision", "exception", "output"):
+        o.append('<span class="stat"><b>{}</b>{}</span>'.format(
+            count[k], {"step": "passos", "decision": "decisões", "exception": "exceções",
+                       "output": "saídas"}[k]))
+    o.append('<span class="stat"><b>{}</b>dúvidas por esclarecer</span>'.format(
+        len(m["gaps"]) + len(open_orphans)))
+    o.append('<span class="stat"><b>{}</b>por saber</span></div>'.format(unknown))
+    o.append('<div class="legend"><span>① … = passo da tabela</span><span>contorno '
+             'tracejado = exceção ou desvio</span><span>? = há dúvida por esclarecer</span>'
+             '<span>inferido / hipótese / por saber (INFERRED / HYPOTHESIS / UNKNOWN) = '
+             'o que a evidência ainda não mostra directamente</span></div>')
+    o.append('<div class="flow">{}</div>'.format(render_svg(m)))
+
+    o.append('<h2>Passos</h2><div class="tbl"><table><thead><tr><th>Nº</th><th>O que '
+             'acontece</th><th>Quem / onde</th><th>Tipo</th><th>Como se sabe</th>'
+             '<th>Fontes</th><th>Detalhe</th></tr></thead><tbody>')
+    for n in by_num:
+        mine = details_on.get(n["id"], [])
+        det = "".join("<div>{}: {} <code>{}</code>{}</div>".format(
+            _e(d["kind"]), _e(d["label"]), _e(d["ref"]["ref"]),
+            " (×{})".format(d["count"]) if d.get("count") else "")
+            for d in mine) or '<span class="empty">—</span>'
+        if len(mine) > 3:
+            det = "<details><summary>{} detalhes</summary>{}</details>".format(len(mine), det)
+        o.append('<tr><td>{}</td><td>{} <span class="empty">({})</span>{}</td><td>{}</td>'
+                 '<td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+                     lay["number"][n["id"]], _e(n["label"]), _e(n["id"]),
+                     "<br>prazo: " + _e(n["sla"]) if n.get("sla") else "",
+                     _e(lanes[n["lane"]]["label"]), _e(KIND_LABEL[n["kind"]]),
+                     _e(MARK_LABEL[n["marker"]]), _refs_html(n["evidence"]), det))
+    o.append('</tbody></table></div>')
+
+    o.append('<h2>Ligações</h2><div class="tbl"><table><thead><tr><th>De</th><th>Para</th>'
+             '<th>O que passa</th><th>Tipo</th><th>Como se sabe</th><th>Fontes</th></tr>'
+             '</thead><tbody>')
+    for e in sorted(m["edges"], key=lambda e: e["id"]):
+        carries = ", ".join(e.get("carries") or []) or e.get("label", "") or "—"
+        o.append('<tr><td>{}</td><td>{}</td><td>{} <span class="empty">({})</span></td>'
+                 '<td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+                     lay["number"].get(e["src"], "?"), lay["number"].get(e["dst"], "?"),
+                     _e(carries), _e(e["id"]),
+                     {"normal": "caminho normal", "exception": "exceção",
+                      "branch": "ramo de decisão"}[e["kind"]],
+                     _e(MARK_LABEL[e["marker"]]), _refs_html(e["evidence"])))
+    o.append('</tbody></table></div>')
+
+    o.append('<h2>A confirmar</h2>')
+    groups = questions(eng)
+    if not any(g["items"] for g in groups):
+        o.append('<p class="empty">Sem dúvidas registadas no mapa.</p>')
+    for g in groups:
+        if not g["items"]:
+            continue
+        o.append('<h3>{}</h3><ul class="q">'.format(_e(g["title"])))
+        for it in g["items"]:
+            about = ", ".join(str(lay["number"].get(a, a)) for a in it["about"])
+            o.append('<li>{}{}{} <span class="empty">({})</span></li>'.format(
+                _e(it["question"]), " — sobre " + _e(about) if about else "",
+                " — responde: " + _e(it["respondent"]) if it["respondent"] else "",
+                _e(it["id"])))
+        o.append('</ul>')
+
+    o.append('<h2>Fora do mapa</h2>')
+    if not m["orphans"]:
+        o.append('<p class="empty">Tudo o que a captura produziu tem lugar no mapa.</p>')
+    else:
+        o.append('<div class="tbl"><table><thead><tr><th>O quê</th><th>Situação</th>'
+                 '<th>Importância</th><th>Porquê</th></tr></thead><tbody>')
+        for orp in m["orphans"]:
+            o.append('<tr><td><code>{}</code></td><td>{}</td><td>{}</td><td>{}{}</td></tr>'
+                     .format(_e(orp["ref"]), _e(ORPHAN_LABEL[orp["reason"]]),
+                             _e({"material": "material", "not-material": "não material",
+                                 "undetermined": "por avaliar"}[orp["materiality"]]),
+                             _e(orp["note"]),
+                             " (decisão {})".format(_e(orp["decision_ref"]))
+                             if orp.get("decision_ref") else ""))
+        o.append('</tbody></table></div>')
+
+    o.append('<h2>Fontes</h2>')
+    if incomplete:
+        o.append('<p><b>Leitura incompleta:</b></p><ul class="q">')
+        for s in incomplete:
+            o.append('<li><code>{}</code> — {}{}</li>'.format(
+                _e(s["path"]), _e(s["status"]), " — " + _e(s["reason"]) if s["reason"] else ""))
+        o.append('</ul>')
+    o.append('<div class="tbl"><table><thead><tr><th>Fonte consumida</th><th>Impressão '
+             'digital</th></tr></thead><tbody>')
+    for s in sorted(m["based_on"], key=lambda s: s["path"]):
+        o.append('<tr><td><code>{}</code></td><td><code>{}</code></td></tr>'.format(
+            _e(s["path"]), _e(s["sha256"][:12])))
+    o.append('</tbody></table></div>\n</main>\n</body>\n</html>\n')
+    return "".join(o)
+
+
+def render(eng) -> Path:
+    """Escreve `<engagement>/process-map.html` — vista derivada, nunca fonte de verdade;
+    escrita atómica e só quando os bytes mudam."""
+    eng = Path(eng)
+    html_text = render_html(eng)
+    out = eng / RENDER_REL
+    if out.is_file() and out.read_text(encoding="utf-8") == html_text:
+        return out
+    _mod("operation")["_atomic_write"](out, html_text)
+    return out
+
+
 # ============================================================= CLI
 
 def utf8_console() -> None:
@@ -734,11 +1322,17 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="process_map.py",
                                  description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("check", "stamp", "publish", "status"):
+    for name in ("check", "stamp", "publish", "status", "render", "questions",
+                 "approval-block"):
         p = sub.add_parser(name)
         p.add_argument("--engagement", required=True)
-        if name != "status":
+        if name in ("check", "stamp", "publish"):
             p.add_argument("--draft", required=True)
+        if name == "approval-block":
+            p.add_argument("--scope", required=True)
+            p.add_argument("--conditions", required=True)
+            p.add_argument("--validated-by", required=True)
+            p.add_argument("--timestamp")
         p.add_argument("--json", action="store_true")
     utf8_console()
     args = ap.parse_args(argv)
@@ -748,9 +1342,34 @@ def main(argv=None) -> int:
             st = load(eng)
             st = {k: v for k, v in st.items() if k != "map"} | {
                 "version": (st["map"] or {}).get("version", "")}
+            val = validation(eng) if st["status"] == "ok" else {"status": "no_map",
+                                                                 "detail": ""}
+            st["validation"] = {k: v for k, v in val.items() if k != "blocks"}
             _print(st, args.json, ["mapa publicado: {} {} {}".format(
-                st["status"], st["version"], st["detail"]).rstrip()])
+                st["status"], st["version"], st["detail"]).rstrip(),
+                "validação: {} {}".format(val["status"], val.get("detail", "")).rstrip()])
             return EXIT_OK if st["status"] in ("ok", "absent") else EXIT_ERROR
+        if args.cmd == "render":
+            out = render(eng)
+            _print({"path": str(out)}, args.json, ["vista: {}".format(out)])
+            return EXIT_OK
+        if args.cmd == "questions":
+            qs = questions(eng)
+            lines = []
+            for g in qs:
+                lines.append("{} — {}".format(g["title"], g["validates"] or ""))
+                lines += ["  - {} ({})".format(i["question"], i["id"]) for i in g["items"]]
+            _print(qs, args.json, lines or ["sem mapa publicado"])
+            return EXIT_OK
+        if args.cmd == "approval-block":
+            try:
+                text = approval_block(eng, args.scope, args.conditions, args.validated_by,
+                                      args.timestamp)
+            except ValueError as exc:
+                print(str(exc), file=sys.stderr)
+                return EXIT_ERROR
+            _print({"block": text}, args.json, [text])
+            return EXIT_OK
         draft = read_draft(args.draft)
         if args.cmd == "check":
             v = check(eng, draft, args.draft)
