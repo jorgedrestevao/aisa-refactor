@@ -109,14 +109,21 @@ Dependências de desenvolvimento: `pip install -r requirements-dev.txt`. Também
 | Suite completa em `2474a41` (durante o M0) | `files=115 ok=114 tests=3110 failures=1 errors=0 skips=34 expected_failures=3`. A falha é o T02 de `test_handoff_f0.py`, causado pelos ficheiros novos do M0 ainda por registar |
 | Subset stdlib em `2474a41` (durante o M0) | `files=96 ok=95 tests=2312 failures=1 skips=28`. Mesma causa |
 | `test_handoff_f0.py` depois de registar em `consumer-matrix.json` | OK (17 testes) |
-| Suite completa no fecho (`aa64054` + este relatório) | ver §6.1 |
+| Suite completa no fecho (`a306b4e`) | ver §6.1 |
 | Suite completa em `origin/main` `e64b0fc` | `files=115 ok=108 fail_files=7 tests=3002 failures=1 errors=8`. As 7 falhas vêm da remoção de docs: `test_coverage_inventory`, `test_delegation_boundary` (`docs/handoff-v1/README.md`), `test_f8_tools` (`docs/handoff-v1/F8/tools/f8.py`), `test_handoff_f0`, `test_handoff_workflow` (`docs/handoff-v1/plan/examples/*`), `test_p8_comparator` e `test_p8_report_schema` (`docs/evolution/p8/*`) |
 
 O erro dos cartões F8 do diagnóstico anterior **não se reproduz** em `2474a41` (`test_f8_tools.py`: 28 OK). O erro de `test_f7_compat.py` num clone raso desaparece com o clone completo.
 
 ### 6.1 Fecho
 
-Preenchido depois da última execução, antes do commit final.
+Execução sobre `a306b4e` (M0 completo, sem alterações de runtime), ambiente com `requirements-dev.txt` + `cffi`:
+
+| Execução | Resultado |
+|---|---|
+| `python .github/run_tests.py` | `files=115 ok=115 fail_files=0 tests=3110 failures=0 errors=0 skips=34 expected_failures=3 wall=95.5s` |
+| `python .github/run_tests.py --list .github/stdlib-tests.txt` | `files=96 ok=96 fail_files=0 tests=2312 failures=0 errors=0 skips=28 wall=98.3s` |
+
+Os skips e as falhas esperadas não mudaram face à execução inicial (34/3 e 28/0). O subset stdlib correu no ambiente instalado: não demonstra isolamento num Python sem pacotes. Not-run: nenhum.
 
 ## 7. Política para engagements sem mapa
 
