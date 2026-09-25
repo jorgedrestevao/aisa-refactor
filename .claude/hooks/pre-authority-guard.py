@@ -70,13 +70,17 @@ ESTADO = ("_state.json", "_state.json.tmp")
 # Nenhum dos dois é escrito por um agente no seu trabalho normal: quem lá escreve é
 # `operation.py`, em Python, que não passa por este hook. Uma escrita pela ferramenta Write
 # ou Edit nestes caminhos é, por construção, uma edição à mão de estado coordenado.
-DIRECTORIOS_AUTORIDADE = ("_graph/", "_ops/", "_migration/", "_work/", "_design/")
+DIRECTORIOS_AUTORIDADE = ("_graph/", "_ops/", "_migration/", "_work/", "_design/", "_map/")
 
 # `_migration/` (manifesto e backups do `migrate.py`), `_work/` (checkpoint) e `_design/`
 # (contratos funcionais) juntaram-se em handoff-v1 F1.4: todos têm um escritor em Python
 # pelo coordenador. E a recusa passou a ser SEMPRE, não só com o bootstrap por pronto
 # (F0 D05): uma escrita por ferramenta nestes caminhos é edição à mão de estado
 # coordenado, esteja o engagement reconstruído ou não.
+#
+# `_map/` (o mapa de conhecimento do processo: revisão corrente e histórico imutável) juntou-se
+# no process-map M1: publica-o `process_map.py` pelo coordenador; a vista `process-map.html`
+# é derivada e fica fora (docs/process-map/PLANO.md §4).
 
 
 def engagements_root() -> Path:
