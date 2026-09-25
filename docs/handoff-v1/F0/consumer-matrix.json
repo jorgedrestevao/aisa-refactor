@@ -1033,6 +1033,16 @@
      "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M1 do mapa de conhecimento do processo: descreve o motor, a publicação coordenada, a guarda de _map/ e as relações previstas com SU, decisões e estado. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2227,6 +2237,16 @@
      "mechanism": "Cópia de staging do motor process_map.py (M1), carregada pelos testes enquanto library/ não a tiver; lê decisions.md (cabeçalhos D-NNN) e declara a SU como autoridade dos factos. Não é runtime.",
      "via": "",
      "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M1 do mapa de conhecimento do processo: descreve o motor, a publicação coordenada, a guarda de _map/ e as relações previstas com SU, decisões e estado. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -6686,6 +6706,16 @@
      "mechanism": "Cópia de staging do motor process_map.py (M1), carregada pelos testes enquanto library/ não a tiver; lê decisions.md (cabeçalhos D-NNN) e declara a SU como autoridade dos factos. Não é runtime.",
      "via": "",
      "evidence": "docs/process-map/M1/staging/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M1/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M1 do mapa de conhecimento do processo: descreve o motor, a publicação coordenada, a guarda de _map/ e as relações previstas com SU, decisões e estado. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M1/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
