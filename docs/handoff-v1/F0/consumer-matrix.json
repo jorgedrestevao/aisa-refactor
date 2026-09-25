@@ -2379,6 +2379,36 @@
      "evidence": "docs/process-map/M2/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M3 do mapa de processo: descreve a coluna elementos, a cobertura das unidades do mapa e a propagação ao release. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M3/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/demo-output.txt",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Saída da demonstração M3 (cita ids, decisões, desenho e veredictos de cobertura das cópias da fixture).",
+     "via": "",
+     "evidence": "docs/process-map/M3/demo-output.txt",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M3 sobre cópias temporárias da fixture F06: lê SU, decisões, blueprint e registos de cobertura das cópias; nunca um engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M3/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -3397,6 +3427,16 @@
      "evidence": "docs/process-map/M0/reproduce.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M3 sobre cópias temporárias da fixture F06: lê SU, decisões, blueprint e registos de cobertura das cópias; nunca um engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M3/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -4282,6 +4322,26 @@
      "mechanism": "process_coverage (process-map M3): lê pelo coverage.coverage_state a reconciliação corrente e a revisão do desenho aprovado; ausente/stale/inválida/com lacuna mantém o nível preliminary; empacota os dois registos lidos. Não escreve registos.",
      "via": "",
      "evidence": "library/kernel/tools/release.py process_coverage, readiness, build",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M3 do mapa de processo: descreve a coluna elementos, a cobertura das unidades do mapa e a propagação ao release. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M3/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M3/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M3 sobre cópias temporárias da fixture F06: lê SU, decisões, blueprint e registos de cobertura das cópias; nunca um engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M3/demo.py",
      "confidence": "verified",
      "source": "inventory"
     }

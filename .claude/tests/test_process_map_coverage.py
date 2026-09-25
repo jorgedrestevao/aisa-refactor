@@ -289,9 +289,12 @@ class MAP18_CorrigidaOuExcluida(F06Base):
                                       "rationale": "o Resumo Aditivos sai do âmbito da entrega",
                                       "acceptance_basis_refs": []},
                           required_action="nenhuma — exclusão", responsible_role="dono")
+                rec["semantic_review"]["findings"].append(it["id"])
             return edit
         install(self.eng, recon(self.eng, edit=exclude(["D-002"])))
-        self.assertNotIn("COV-EXCLUSION-NO-DECISION", self.codes(self.state()))
+        st = self.state()
+        self.assertNotIn("COV-EXCLUSION-NO-DECISION", self.codes(st))
+        self.assertEqual(st["coverage"], "complete", self.codes(st))
         install(self.eng, recon(self.eng, edit=exclude([])))
         (self.eng / "_coverage" / "coverage_v01.json").unlink()
         rec = recon(self.eng, edit=exclude([]))

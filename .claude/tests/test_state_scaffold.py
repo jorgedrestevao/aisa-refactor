@@ -78,9 +78,12 @@ class TestScaffoldMatchesContract(unittest.TestCase):
     def test_unknown_column_order_is_the_contract_order(self):
         self.assertEqual(
             scaffold_columns("Unknown"),
-            # handoff-v1 F1.5 (decisao Q3): as colunas da admissao entram na tabela
+            # handoff-v1 F1.5 (decisao Q3): as colunas da admissao entram na tabela;
+            # process-map M3: `elementos` é a penúltima, antes de `ronda` (a última coluna
+            # leva os marcadores `resolved →`, que os leitores procuram lá)
             ["id", "lens", "pergunta", "tipo", "impacto", "âmbito", "quem responde", "fecho",
-             "bloqueio", "criticidade", "custo", "swing", "referências", "ronda"])
+             "bloqueio", "criticidade", "custo", "swing", "referências", "elementos",
+             "ronda"])
 
     def test_separator_row_width_matches_the_header(self):
         for state in self.STATES:
@@ -210,7 +213,7 @@ class TestNoMigration(unittest.TestCase):
         self.assertEqual(meta["sections"]["Unknown"]["columns"],
                          ["id", "lens", "pergunta", "tipo", "impacto", "âmbito",
                           "quem responde", "fecho", "bloqueio", "criticidade", "custo",
-                          "swing", "referências", "ronda"])
+                          "swing", "referências", "elementos", "ronda"])
 
 
 if __name__ == "__main__":

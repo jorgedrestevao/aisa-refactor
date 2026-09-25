@@ -1,0 +1,10 @@
+mapa mp-v01 publicado sobre a F06: 19 unidades do mapa entram no denominador (passos, ligações, detalhes, dúvidas)
+1a. reconciliação sem destino para «Resumo Aditivos»: cobertura=gaps · _map/map.json#MAPG-001, _map/map.json#MAPN-007
+1b. com destino (item C-007 ← MAPN-007, MAPG-001): cobertura=complete · actual=current
+2. desenho v01: estrutura 0 bloqueio(s) — válido; cobertura=gaps · elegível=False
+   lacuna C-007 (missing): Concretizar a publicacao diaria e a consulta no desenho. — origem: _map/map.json#MAPG-001 «O Resumo Aditivos tem consumidor a jusante?»; _map/map.json#MAPN-007 «Resumo Aditivos»
+   lacuna C-010 (missing): Desenhar o ponto de imposicao no armazenamento. — origem: —
+   entrega pronta=False — cobertura do processo: revisão do desenho aprovado com lacunas
+3. desenho v03 (publica e consulta o Resumo Aditivos) revisto: cobertura do processo complete · razões: nenhuma
+4. excluir «Resumo Aditivos» com a decisão D-002: cobertura=complete · aceite
+4. excluir «Resumo Aditivos» sem autoridade: cobertura=gaps · COV-EXCLUSION-NO-DECISION
