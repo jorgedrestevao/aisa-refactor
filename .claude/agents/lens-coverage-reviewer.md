@@ -1,6 +1,6 @@
 ---
 name: lens-coverage-reviewer
-description: Independent reader of a Discovery passagem's perspective coverage (handoff-v1 F3, T19). Invoked once by /round when the passagem closes, with fresh context — never the analyst's reasoning. Reads the published Shared Understanding and the draft `lens` coverage record, and returns one verdict per perspective. Writes nothing.
+description: Independent reader of a Discovery passagem's perspective coverage. Invoked once by /round when the passagem closes, with fresh context — never the analyst's reasoning. Reads the published Shared Understanding and the draft `lens` coverage record, and returns one verdict per perspective. Writes nothing.
 tools: [Read, Grep, Glob]
 ---
 

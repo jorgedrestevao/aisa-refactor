@@ -1,6 +1,6 @@
 ---
 name: chairman-synthesis
-description: Synthesize the returns of a phase into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame (the integrated analyst's proposal + one independent reviewer's findings) and by aisa-options (the published candidates + the published specialist reviews, handoff-v1 F5). The only writer of the phase's Shared Understanding rows, always into the caller's draft. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
+description: Synthesize the returns of a phase into Shared Understanding rows, an audit-trail synthesis log, and the phase artefact (frame.md / options.md). Invoked by aisa-frame (the integrated analyst's proposal + one independent reviewer's findings) and by aisa-options (the published candidates + the published specialist reviews). The only writer of the phase's Shared Understanding rows, always into the caller's draft. (Decision is user-driven — see aisa-decide; no council synthesis runs there.)
 ---
 
 # chairman-synthesis
@@ -26,7 +26,7 @@ You are executing the **chairman** role described in `.claude/agents/chairman.md
 
 `<engagement>` resolves to `$AISA_ENGAGEMENTS_ROOT/<slug>` if set, otherwise `projects/<slug>`. `<pack>` is read from `_state.json.pack`.
 
-## Framing inputs (handoff-v1 F3, decisions Q4/Q5)
+## Framing inputs
 
 In Framing there is no council. The calling skill (`aisa-frame` steps 5–5b) hands you **two** returns:
 
@@ -39,10 +39,10 @@ Read every step below with "persona" meaning either of the two, and apply the sa
 - **A `fact` finding with a locator** that contradicts a claim is a correction by evidence (`library/kernel/states.md` → *Correction by evidence*): a transition, never an in-place edit.
 - **A `fact` finding without a locator** that contradicts a claim is a `Conflicted` row, `partes = analista∧revisor`. Never pick a winner.
 - **A `recommendation` finding** (the sentence's wording, scope or emphasis) is not settled here: list it under `## For the owner to decide` in the synthesis log, and `aisa-frame` step 7 puts it to the owner through `AskUserQuestion`. The sentence you write in `frame.md` is the analyst's, with the corrections by evidence applied.
-- **Step 2b does not run in Framing**: there is no antithesis round (Q5).
+- **Step 2b does not run in Framing**: there is no antithesis round.
 - In `frame.md` → *Anchors*, the *Source persona(s)* column reads `analista`, `revisor` or both.
 
-## Options inputs in a handoff-v1 engagement (F5.3)
+## Options inputs in a handoff-v1 engagement
 
 When `_state.json` has the `workflow` block, Options runs no persona council. You read **published reviews**, never votes: `python3 library/kernel/tools/review.py show-reviews --engagement <engagement> --json` lists, over the current candidate revision (`_design/candidates.json`), each mandate (`mandated` · `current` · `stale`), its findings (target, severity, kind, last disposition) and the open divergences.
 

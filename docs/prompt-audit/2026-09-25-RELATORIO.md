@@ -392,8 +392,19 @@ Os limites que **ficam** (e porquê):
 ## Fora deste plano (pendentes, por esta ordem)
 
 1. ~~Guardar este relatório no repo~~ — este ficheiro.
-2. L1 — as ~30 citações `handoff-v1 Fx` / `Qn` / `P-18` em skills e agentes: remover as que só datam, manter as que apontam para onde está o porquê.
+2. ~~L1 — citações de fase~~ — feito (ver *Ponto 2*, abaixo).
 3. L2/L7 — a camada de tradução «persona» em `chairman-synthesis` (esquema de retorno e linha 47, com teste).
 4. L5 — auditoria linha a linha de `chairman-synthesis`, `aisa-render`, `aisa-blueprint`.
 5. Validação comportamental de M16–M20 (`/round`, `/retro` num engagement de fixture).
 6. Verificação A do mapa (cálculo absorvido), à espera da v01 e da calc-chain da corrida 1.
+
+## Ponto 2 — citações de fase (L1)
+
+- **Removidas: 30 etiquetas que só datam, em 14 ficheiros.** Eram `(handoff-v1 Fx)`, `(handoff-v1 Fx, Qn)`, `(F5.3)`, `(Q5)`, `(F0 D02: …)`, em skills, agentes e `CLAUDE.md`. Onde havia um ponteiro útil ao lado (um ficheiro de `library/kernel/…`, uma ferramenta, «read-only»), o ponteiro fica.
+- **Mais um fóssil apanhado:** `aisa-options:199` «The six Discovery personas are retired (handoff-v1 F5.4, Q4); their perspectives live in…» passou a «The Discovery perspectives live in…».
+- **Mantidas:**
+  - referências a secções de documentos de desenho (`docs/handoff-v1/F3/DESENHO.md` Q1–Q3, `§0 and Q3`, `§0, Q1`): apontam para o porquê;
+  - `handoff-v1` como valor do perfil e no nome de secção *Options inputs in a handoff-v1 engagement*, que é âncora citada;
+  - os ids `P-`/`T-` (`P-0`, `P-1`, `P-21`, `T19`, `T43`…): quase todos são itens com nome no kernel ou tokens literais que se escrevem nos dados, e mexer-lhes partiria formatos.
+- **Fora do âmbito:** `library/kernel/orchestration.md` e o pack mantêm `(handoff-v1 F3/F5)` nos títulos, que os testes verificam.
+- **Verificação** (`enforce`): completa 3227/0, stdlib 2429/0.

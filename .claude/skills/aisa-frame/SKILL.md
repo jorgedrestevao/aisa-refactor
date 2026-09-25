@@ -16,7 +16,7 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 
 - **From**: `phase: discovery`.
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
-- **Mode**: integrated analyst + one independent reviewer (`handoff-v1` F3, decision Q4; `library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
+- **Mode**: integrated analyst + one independent reviewer (`library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
 
 The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
 
@@ -167,7 +167,7 @@ evidence rules (`chairman-synthesis` → *Framing inputs*): agreement between th
 factual finding with a locator is a correction by evidence; a factual divergence without a locator
 becomes `Conflicted` (`partes = analista∧revisor`); a recommendation divergence (wording, scope,
 emphasis of the sentence) is **not** settled by the synthesis — it is listed for the owner and asked in
-step 7. There is no antithesis round (Q5). It writes `frame.md`, the new SU rows and the synthesis log.
+step 7. There is no antithesis round. It writes `frame.md`, the new SU rows and the synthesis log.
 
 Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads _map/map.json context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' 'lens-outputs/_council-prep/*' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 

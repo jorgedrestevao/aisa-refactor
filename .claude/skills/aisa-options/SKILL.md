@@ -16,7 +16,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 - **From**: `phase: framing`.
 - **To**: `phase: options`, `round: O-01` (subsequent options rounds become `O-02`, `O-03`, …).
-- **Mode** (handoff-v1 F5): the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`).
+- **Mode**: the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`).
 
 ## Inputs (read)
 
@@ -196,7 +196,7 @@ A seguir: ensaiar antes de escolher → `/simulate`; o obituário do projecto �
 
 ## Notes
 
-- **Subagents** (README → *Regras de execução*; `docs/handoff-v1/F5/DESENHO.md` §0): the author and the chairman run inline — they need the session's context and their detail is the product. The specialist reviewers are subagents, one per published mandate, in parallel with each other and never with the author, who publishes first; they must **not** have the author's context nor each other's, and only their findings come back. The six Discovery personas are retired (handoff-v1 F5.4, Q4); their perspectives live in `library/kernel/lens-checklists.md` (Discovery) and `library/kernel/specialists.md` (Options).
+- **Subagents** (README → *Regras de execução*; `docs/handoff-v1/F5/DESENHO.md` §0): the author and the chairman run inline — they need the session's context and their detail is the product. The specialist reviewers are subagents, one per published mandate, in parallel with each other and never with the author, who publishes first; they must **not** have the author's context nor each other's, and only their findings come back. The Discovery perspectives live in `library/kernel/lens-checklists.md` (Discovery) and `library/kernel/specialists.md` (Options).
 - **Reviews, not votes.** How many reviewers agree never changes an epistemic state; a factual finding changes the SU only through a locator (`chairman-synthesis` → *Framing inputs*, the same rules).
 - **Domain knowledge is pulled, never preloaded.** The author pulls what it needs; a reviewer reads only the pack units its mandate lists, with their `sha256`.
 - **The technical author is the lone vendor-naming surface** before the reviews; a specialist names a technology only as the candidates already name it.
