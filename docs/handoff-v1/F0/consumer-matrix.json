@@ -1003,6 +1003,16 @@
      "evidence": "docs/process-map/M0/reproduce.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M0/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M0/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2157,6 +2167,16 @@
      "mechanism": "Script de prova M0: copia a fixture fx-coverage-f06 para um directório temporário e lê SU, decisões, blueprint e registos de cobertura dessa cópia; nunca escreve num engagement.",
      "via": "",
      "evidence": "docs/process-map/M0/reproduce.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M0/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M0/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -4012,6 +4032,16 @@
      "mechanism": "Script de prova M0: copia a fixture fx-coverage-f06 para um directório temporário e lê SU, decisões, blueprint e registos de cobertura dessa cópia; nunca escreve num engagement.",
      "via": "",
      "evidence": "docs/process-map/M0/reproduce.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M0/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M0/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -6556,6 +6586,16 @@
      "mechanism": "Plano faseado (v3 + adenda v3.1) do mapa de conhecimento do processo: propõe a coluna `elementos` na SU, o bloco de validação em decisions.md, unidades de mapa na cobertura e o mapa nos inputs da retoma. Proposta, não runtime.",
      "via": "",
      "evidence": "docs/process-map/PLANO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M0/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M0 do mapa de conhecimento do processo: descreve integrações previstas com a SU, decisões, blueprint, cobertura, release e retoma. Documentação de preparação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M0/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
