@@ -2449,6 +2449,16 @@
      "evidence": "docs/process-map/M5/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M5/RELATORIO-M5.1.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M5.1 do mapa de processo: cita validações D-NNN do piloto e as verificações do mapa por código. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M5/RELATORIO-M5.1.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [

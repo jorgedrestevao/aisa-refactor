@@ -151,7 +151,7 @@ class MAP24_DesenhoLegivel(unittest.TestCase):
             self.assertIn('class="lane-t" x="12" y="{}">{}</text>'.format(
                 lay["band_y"][{"Humano": "actor", "Ferramenta": "tool",
                                "Quem recebe": "consumer"}[titulo]][0] + 26, titulo), svg)
-        self.assertNotIn("Publicação", svg)
+        self.assertNotIn(">Canal</text>", svg)
 
     def test_a_step_says_who_does_it_only_when_it_is_not_the_bands_default(self):
         svg = P["render_svg"](_desenho())
@@ -170,6 +170,20 @@ class MAP24_DesenhoLegivel(unittest.TestCase):
         self.assertEqual(lay["number"]["MAPN-006"], 8,
                          "a exceção lateral numera-se depois do caminho principal")
         self.assertEqual(lay["number"]["MAPN-004"], 4, "o ramo da decisão é caminho")
+
+    def test_side_exceptions_sit_below_the_whole_main_path_of_their_band(self):
+        # piloto M5, corrida 2: numa coluna sem passos principais a exceção subia ao topo
+        # e lia-se como caminho
+        d = _desenho()
+        d["nodes"].append({"id": "MAPN-009", "kind": "exception", "label": "falha", "lane":
+                           "MAPL-001", "order": 8, "marker": "OBSERVED", "evidence": []})
+        d["edges"].append({"id": "MAPE-009", "src": "MAPN-005", "dst": "MAPN-009",
+                           "kind": "exception", "marker": "OBSERVED", "evidence": []})
+        lay = P["layout"](d)
+        pos = lay["pos"]
+        main_actor = [pos[n][1] for n in ("MAPN-002", "MAPN-004", "MAPN-007")]
+        self.assertGreater(pos["MAPN-009"][1], max(main_actor))
+        self.assertEqual(pos["MAPN-009"][0], pos["MAPN-005"][0])
 
     def test_edges_are_right_angled(self):
         svg = P["render_svg"](_desenho())

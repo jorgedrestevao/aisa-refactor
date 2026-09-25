@@ -1419,7 +1419,7 @@ COL_W, NODE_W, NODE_H, LANE_LBL, PAD_Y, GAP_Y = 200, 164, 66, 170, 18, 26
 # As faixas desenham-se agrupadas pelo tipo (`lane.kind`), por esta ordem e com estes nomes;
 # o subtítulo diz quem ou o quê. O mapa guarda as faixas como estão: agrupar é só da vista.
 BAND_ORDER = ("actor", "tool", "channel", "consumer", "downstream")
-BAND_TITLE = {"actor": "Humano", "tool": "Ferramenta", "channel": "Publicação",
+BAND_TITLE = {"actor": "Humano", "tool": "Ferramenta", "channel": "Canal",
               "consumer": "Quem recebe", "downstream": "Sistema a jusante"}
 
 
@@ -1465,7 +1465,8 @@ def _ranks(m: dict) -> dict:
 def layout(m: dict) -> dict:
     """Posições deterministas. Faixas agrupadas pelo tipo (`BAND_ORDER`), só as que têm nós;
     coluna pela posição no fluxo (`_ranks`); na mesma faixa e coluna, empilhados por `order`
-    e id, as exceções por baixo. A numeração segue o caminho principal e depois as exceções.
+    e id; as exceções laterais em linhas próprias por baixo de todo o caminho principal da
+    faixa. A numeração segue o caminho principal e depois as exceções.
     Mesmos inputs, mesmas posições."""
     used = {n["lane"] for n in m["nodes"]}
     kinds = [k for k in BAND_ORDER if any(la["kind"] == k and la["id"] in used
@@ -1482,22 +1483,29 @@ def layout(m: dict) -> dict:
     label_of = {la["id"]: la["label"] for la in m["lanes"]}
     members = {k: [label_of[lid] for lid in member_ids[k]] for k in kinds}
     rank = _ranks(m)
-    stacks: dict = {}
-    for n in sorted(m["nodes"], key=lambda n: (n["kind"] == "exception", n["order"], n["id"])):
-        stacks.setdefault((band_of[n["lane"]], rank[n["id"]]), []).append(n["id"])
-    depth = {k: max([len(v) for (b, _r), v in stacks.items() if b == k] or [1]) for k in kinds}
+    # exceção lateral = só alcançada por ligação de exceção (ou por nenhuma): vai para as
+    # linhas de exceção da faixa, por baixo de todo o caminho principal
+    reached = {e["dst"] for e in m["edges"] if e["kind"] != "exception"}
+    exc = {n["id"] for n in m["nodes"] if n["kind"] == "exception" and n["id"] not in reached}
+    main: dict = {}
+    side: dict = {}
+    for n in sorted(m["nodes"], key=lambda n: (n["order"], n["id"])):
+        (side if n["id"] in exc else main).setdefault(
+            (band_of[n["lane"]], rank[n["id"]]), []).append(n["id"])
+    main_d = {k: max([len(v) for (b, _r), v in main.items() if b == k] or [0]) for k in kinds}
+    side_d = {k: max([len(v) for (b, _r), v in side.items() if b == k] or [0]) for k in kinds}
     y, band_y = 0, {}
     for k in kinds:
-        h = PAD_Y * 2 + depth[k] * NODE_H + (depth[k] - 1) * GAP_Y
+        rows = max(1, main_d[k] + side_d[k])
+        h = PAD_Y * 2 + rows * NODE_H + (rows - 1) * GAP_Y
         band_y[k] = (y, h)
         y += h
     pos = {}
-    for (k, r), ids in stacks.items():
-        top = band_y[k][0] + PAD_Y
-        for i, nid in enumerate(ids):
-            pos[nid] = (LANE_LBL + 20 + r * COL_W, top + i * (NODE_H + GAP_Y))
-    reached = {e["dst"] for e in m["edges"] if e["kind"] != "exception"}
-    exc = {n["id"] for n in m["nodes"] if n["kind"] == "exception" and n["id"] not in reached}
+    for stacks, first in ((main, lambda k: 0), (side, lambda k: main_d[k])):
+        for (k, r), ids in stacks.items():
+            top = band_y[k][0] + PAD_Y
+            for i, nid in enumerate(ids):
+                pos[nid] = (LANE_LBL + 20 + r * COL_W, top + (first(k) + i) * (NODE_H + GAP_Y))
     number = {nid: i + 1 for i, nid in enumerate(sorted(
         pos, key=lambda n: (n in exc, rank[n], pos[n][1], n)))}
     cols = max(rank.values(), default=0) + 1
