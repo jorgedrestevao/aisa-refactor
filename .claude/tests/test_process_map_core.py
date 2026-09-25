@@ -7,8 +7,8 @@ CALC iguais em workbooks diferentes), MAP-06 (transferência), MAP-09 (repetiç�
 verificação estrutural de MAP-01/02 (o P-0 tem de constar das fontes consumidas). MAP-25
 vive em `test_process_map_guard.py`.
 
-O motor carrega-se de `library/kernel/tools/process_map.py`; enquanto não estiver lá,
-do staging `docs/process-map/M1/staging/kernel/tools/` (a guarda de `library/` impede esta
+O motor carrega-se do kernel (`process_map.py` ao lado dos outros motores); enquanto não
+estiver lá, do staging `docs/process-map/M1/staging/kernel/tools/` (a guarda de `library/` impede esta
 sessão de o escrever — o mantenedor copia; ver docs/process-map/M1/RELATORIO.md).
 
     python .claude/tests/test_process_map_core.py

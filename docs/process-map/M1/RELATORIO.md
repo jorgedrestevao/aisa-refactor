@@ -57,7 +57,7 @@ Ambiente: `requirements-dev.txt` + `cffi`, clone completo.
 | Mutação: desligar a transferência e a verificação de digest actual | 3 testes falham, depois de reposto 29 OK: os testes detectam a regressão |
 | **Instalação simulada** (worktree limpa + `install.py`), suite completa | `files=117 ok=117 tests=3144 failures=0 errors=0 skips=34 expected_failures=3` |
 | Instalação simulada, subset stdlib | `files=98 ok=98 tests=2346 failures=0 errors=0 skips=28` |
-| Repositório sem instalação (motor lido do staging), suite completa | ver §3.1 |
+| Repositório sem instalação (motor lido do staging) | ver §3.1 |
 
 Pelo caminho, a instalação simulada revelou duas falhas, ambas corrigidas antes do commit:
 - `test_windows_console`: o CLI tem de proteger a consola; acrescentado `utf8_console()`.
@@ -65,7 +65,13 @@ Pelo caminho, a instalação simulada revelou duas falhas, ambas corrigidas ante
 
 ### 3.1 Repositório sem instalação
 
-Preenchido no fecho.
+| Execução | Resultado |
+|---|---|
+| Suite completa (1.ª execução) | `files=117 ok=116 tests=3144 failures=1`: `test_pp_pack_integrity` P15 viu uma referência de runtime partida, porque a docstring de `test_process_map_core.py` citava o caminho do motor em `library/`, que ainda não existe |
+| Correcção | docstring reformulada; `test_pp_pack_integrity.py` e `test_process_map_core.py` OK |
+| Subset stdlib | `files=98 ok=98 tests=2346 failures=0 errors=0 skips=28` |
+
+Skips e falhas esperadas iguais à baseline do M0 (34/3 e 28/0). Not-run: nenhum.
 
 Testes de fecho do plano:
 
