@@ -1,5 +1,5 @@
 ---
-description: Transition Discovery → Framing (council-independent synthesis of the single problem sentence).
+description: Transition Discovery → Framing — the integrated analyst proposes the single problem sentence, one independent reviewer contests it, the chairman synthesizes.
 argument-hint: "[--override \"<reason>\"]"
 ---
 

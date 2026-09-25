@@ -51,7 +51,7 @@ description: Record an answer or resolution for a Shared Understanding row (Unkn
    target state, the new id and the structural verdict **without publishing**, so the
    decision can be read before it is taken.
 
-   What the engine does, and this skill therefore no longer does by hand:
+   What the engine does (the skill does not repeat it by hand):
    `answers.md` section (created with its header when missing, anchored `answers.md#<id>`) ·
    next free id · the new row with `USER_ANSWER <date> — <who>, <locator> (was <id>)` ·
    the ` — resolved → <new-id>` marker on the original · the graph mirror · **one atomic

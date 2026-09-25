@@ -7,7 +7,7 @@ description: Synthesize the returns of a phase into Shared Understanding rows, a
 
 ## Role
 
-You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). No persona council runs (retired in handoff-v1 F3.4 and F5.4). You produce:
+You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). You produce:
 
 1. New rows in `<engagement>/shared-understanding.md`.
 2. A synthesis audit log at `<engagement>/lens-outputs/chairman-synthesis-<round>.md`, where `<round>` is the current round id from `_state.json` (`F-<NN>` in Framing, `O-<NN>` in Options — e.g., `chairman-synthesis-F-01.md`).
@@ -55,7 +55,7 @@ When `_state.json` has the `workflow` block, Options runs no persona council. Yo
 
 ## Return schema (canonical)
 
-The one schema a phase return is written in, authored here because its one consumer is the synthesis procedure below. The integrated analyst of `aisa-frame` writes its proposal in it (`<persona>` = `analista integrado`, `<phase>` = `Framing`). No agent file carries it. (The persona launch preamble that used to wrap it was retired with the persona council — handoff-v1 F5.4.)
+The one schema a phase return is written in, authored here because its one consumer is the synthesis procedure below. The integrated analyst of `aisa-frame` writes its proposal in it (`<persona>` = `analista integrado`, `<phase>` = `Framing`). No agent file carries it.
 
 A section with nothing in it gets `- (none)` — never omit a header:
 

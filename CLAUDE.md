@@ -48,7 +48,7 @@ Aplicação por fase: `library/kernel/orchestration.md` (*Mode declaration*, *Wh
 - `library/kernel/tools/` — motores determinísticos de conteúdo, **read and executed** at runtime (`xlsx_extract.py`, `text_extract.py`, `dashboard.py`, `fields_draft.py` — L1 → rascunho de campos/contratos, invocado por `/blueprint`; `coverage.py` — a conferência de que o que se produz responde ao que foi pedido, em três etapas (`reconciliation` · `blueprint` · `render`), invocada por `/blueprint` (passos 1b e 13b), `/render` (passos 2b e 9b), `/answer`, `/capture` e `/status`; contrato em `library/kernel/coverage-contract.md`). Executing is not writing: the read-only rule covers runtime *edits* — e `finalize` é a única operação de escrita do motor: publica em `<engagement>/_coverage/` pelo coordenador (recibo em `_ops/`), idempotente e sem reutilizar números de versão.
 - `library/packs/<id>/` — domain-specific (PP, OS, Mendix). Read-only at runtime.
 - `.claude/skills/` — lenses + commands + synthesis + render.
-- `.claude/agents/` — the independent reviewers (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer`) and the author/chairman mandates (`solution-architect`, `chairman`). The six Discovery personas are retired (handoff-v1 F5.4).
+- `.claude/agents/` — the independent reviewers (`lens-coverage-reviewer`, `frame-reviewer`, `fc-reviewer`, `specialist-reviewer`) and the author/chairman mandates (`solution-architect`, `chairman`).
 - `.claude/hooks/` — programmatic enforcement.
 - `projects/<slug>/` — engagement state (mount point to private repo).
 - `projects/<slug>/_graph/` · `_ops/` · `_migration/` · `_work/` · `_design/` — **estado coordenado. Nunca editar à mão.** O grafo é autoridade operacional (o contexto é construído dele); `_ops/` é a barreira (marcador de pendência + recibos); `_work/` é o checkpoint do trabalho em curso; `_design/` guarda contratos funcionais, candidatos, pareceres, âmbito e inventário (handoff-v1). Quem lá escreve é `operation.py`, em Python, através dos motores. O hook `pre-authority-guard.py` recusa `Write`/`Edit` nestes caminhos — uma escrita por ferramenta aqui é, por construção, edição à mão de estado coordenado.
@@ -88,7 +88,7 @@ O vocabulário do kernel é preciso e **fica**: nos ficheiros, ids, colunas e co
 - Todo o output de comando termina com `A seguir: <passo humano, se houver> → `/comando args``. O utilizador não decora comandos.
 - Os templates de output nas skills vão em blocos ```user-output; `.claude/tests/test_user_language.py` lê-os contra o glossário — termo ou id fora de parênteses é falha.
 - Excepção: os ficheiros. `shared-understanding.md`, `_state.json`, logs e artefactos de fase mantêm o vocabulário do kernel intacto.
-- Deslizes frequentes (observados na validação, step-9e): «blueprint v06» → *o desenho dos ecrãs, versão 06*; «ronda» → *passagem*; «spike» → *trabalho técnico*; «tripwire» → *condição de revisão*; uma lista de ids solta («linhas materiais: U-032, U-036») → *entre parênteses* («linhas materiais (U-032, U-036)»). Ids em crase não são parênteses.
+- Deslizes frequentes: «blueprint v06» → *o desenho dos ecrãs, versão 06*; «ronda» → *passagem*; «spike» → *trabalho técnico*; «tripwire» → *condição de revisão*; uma lista de ids solta («linhas materiais: U-032, U-036») → *entre parênteses* («linhas materiais (U-032, U-036)»). Ids em crase não são parênteses.
 
 ## Entrada sem comando (P-14)
 

@@ -92,9 +92,7 @@ Cada parágrafo com conteúdo de uma fonte de texto curta (extracção LT `ok`, 
 parágrafos; as transcrições com tempo `.vtt`/`.srt` ficam de fora) também tem destino: é
 citado num elemento ou disposto em `orphans` — `MAP-PASSAGE-UNPLACED` diz quais faltam, por
 fonte e em intervalos. É a pergunta «o que diz esta fonte que o mapa não mostra?», feita a
-todas as frases de uma nota, uma citação ou um e-mail do dono — foi assim que uma exceção
-dita textualmente pelo dono ficou fora do mapa no piloto M5, apesar de o process-model a
-citar como «complexidade».
+todas as frases de uma nota, uma citação ou um e-mail do dono.
 
 - Metadados (data, autor, cabeçalho) dispõem-se em bloco: `out_of_scope`, `not-material`,
   com a nota.

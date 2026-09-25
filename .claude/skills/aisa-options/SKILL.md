@@ -16,7 +16,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 - **From**: `phase: framing`.
 - **To**: `phase: options`, `round: O-01` (subsequent options rounds become `O-02`, `O-03`, …).
-- **Mode** (handoff-v1 F5): the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`). No persona council runs.
+- **Mode** (handoff-v1 F5): the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`).
 
 ## Inputs (read)
 
@@ -185,7 +185,7 @@ A seguir: lê `options.md`; ensaiar cada alternativa → `/simulate`; escrever o
 
 ### 7b. Story
 
-Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as opções na mesa`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as opções na mesa`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 
 ### 8. Wrap-up output
 

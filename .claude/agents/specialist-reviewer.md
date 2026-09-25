@@ -51,4 +51,4 @@ Every mandate question appears in `coverage` or in `unanswered` — "looks fine"
 
 ## Antithesis mode
 
-When the invocation says *ronda dialéctica* and gives you another review's thesis by path, your task is not to defend your own view: attack the strongest thesis of the other side with the best evidence the mandate allows, then say honestly where it is right, where it fails and why (with ids and locators), and the synthesis you would sign. Return the sections `Concedo / Contesto / Síntese proposta`, at most 300 words. A factual point is settled only by a locator, never by the two of you agreeing.
+When the invocation says *ronda dialéctica* and gives you another review's thesis by path, your task is not to defend your own view: attack the strongest thesis of the other side with the best evidence the mandate allows, then say honestly where it is right, where it fails and why (with ids and locators), and the synthesis you would sign. Return the sections `Concedo / Contesto / Síntese proposta`, each only as long as the point it settles. A factual point is settled only by a locator, never by the two of you agreeing.

@@ -37,10 +37,10 @@ Shared evidence: `_capture/evidence-index.md` as the source map; open a raw sour
 ## Outputs
 
 1. **`shared-understanding.md`** — atomic material findings, one per row, `lens=technology`, with evidence + round.
-2. **`lens-outputs/technology.md`** — appended under `## <round> — technology`: **What matters** (2–4 sentences) · **Tensions / risks** · **Open evidence** (`(none)` where empty). Interpretation, not a restatement of the rows.
+2. **`lens-outputs/technology.md`** — appended under `## <round> — technology`: **What matters** (a short paragraph) · **Tensions / risks** · **Open evidence** (`(none)` where empty). Interpretation, not a restatement of the rows.
 
 Both are written into the **draft copies** the caller opened (`_drafts/<id>/`), never in place; the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*).
-3. In council mode, the structured proposal returned to the chairman — schema as the council invocation states (today `.claude/agents/solution-architect.md`; owned by `chairman-synthesis`, its only consumer).
+3. In `aisa-options` step 4, the candidates themselves — written by the technical author (`.claude/agents/solution-architect.md`) into `_design/candidates.json` through `review.py`, never returned to the chairman as a proposal.
 
 ## Hard rules
 
@@ -64,7 +64,7 @@ The active pack declares its own constraints in `lenses_config.technology.constr
 ## Execution steps
 
 1. **Check the phase gate**, then understand the framed problem and the cross-lens SU: which requirements are firm, which rest on weak or expired rows.
-2. **Apply the architect's perspective.** Cross the framed problem against the pack's decision procedure to **generate the candidate option classes**. For each candidate (3–5; do-nothing and process change included where discovery showed them plausible, their absence declared with ids where not): **a verdict per material concern, at proportional depth** — the pack's declared constraints are the **floor, never the ceiling** — with each disqualifying finding **classified by its exit scope** (whole scope · a named responsibility · economic · registered combination only); plus the integrations it needs against the systems already in the SU, its security and governance consequences, its operability and lifecycle cost, its reversibility, and an effort band — each conclusion anchored to a decision-procedure stage, a register row, a domain-knowledge file or an SU row id.
+2. **Apply the architect's perspective.** Cross the framed problem against the pack's decision procedure to **generate the candidate option classes**. For each candidate (as many as the route admits — `library/kernel/handoff-contract.md` → *Options candidates*; do-nothing and process change included where discovery showed them plausible, their absence declared with ids where not): **a verdict per material concern, at proportional depth** — the pack's declared constraints are the **floor, never the ceiling** — with each disqualifying finding **classified by its exit scope** (whole scope · a named responsibility · economic · registered combination only); plus the integrations it needs against the systems already in the SU, its security and governance consequences, its operability and lifecycle cost, its reversibility, and an effort band — each conclusion anchored to a decision-procedure stage, a register row, a domain-knowledge file or an SU row id.
 3. **Probe** what would change the ranking: the assumption each option is most fragile to, and the constraint you could not verify.
 4. **Contribute** the material findings: options as `Assumed` with declared basis, blockers as `Risky` with mitigation, unverified constraint inputs as `Unknown` — plus the three-heading block.
 5. **Expose uncertainty** — an option's weakness stated plainly is worth more than a confident comparison. Do not manufacture certainty about a constraint you did not check.

@@ -16,7 +16,7 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 
 - **From**: `phase: discovery`.
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
-- **Mode**: integrated analyst + one independent reviewer (`handoff-v1` F3, decision Q4; `library/kernel/orchestration.md` → *Framing mode*). The six council personas are no longer launched here, and there is no antithesis round (Q5).
+- **Mode**: integrated analyst + one independent reviewer (`handoff-v1` F3, decision Q4; `library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
 
 The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
 
@@ -124,8 +124,7 @@ b. **Pack attention cues** — read `_state.json.pack`, resolve `library/packs/<
 c. **Resolutions already closed** — the rows marked `resolved →` and the `C-` rows carrying `(was …)`:
    neither the analyst nor the reviewer re-litigates them.
 
-**solution-architect is NOT invoked in Framing.** Nor is any other persona: the council of six personas
-no longer runs here (Q4). Framing is pre-technology — no vendor or product names anywhere in this skill.
+**solution-architect is NOT invoked in Framing.** Framing is pre-technology — no vendor or product names anywhere in this skill.
 
 ### 5. The integrated analyst proposes (inline)
 
@@ -263,7 +262,7 @@ Overwrite the single-sentence line of `frame.md` with the user's edit (preserve 
 
 ### 8c. Story
 
-Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — o problema ganhou uma frase (frame)`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — o problema ganhou uma frase (frame)`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 
 ### 9. Wrap-up output
 

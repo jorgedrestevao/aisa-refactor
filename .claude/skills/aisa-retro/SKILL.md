@@ -21,7 +21,7 @@ description: Close-of-engagement retro — each role that worked the engagement 
    (c) padrões que espera rever noutros engagements;
    (d) um conselho ao seu futuro eu.
    Sem nomes de pessoas ou de cliente; domínio genérico (ex.: "procurement de mid-cap").
-   Formato: ## <slug-anonimizado> — <data>. Máx. 250 palavras.
+   Formato: ## <slug-anonimizado> — <data>. Curto: uma entrada que o curador lê de uma vez.
    ```
 
 2. **Stage** each entry in `<engagement>/_retro/diary-<role>.md`. Nothing touches agent-memory yet.

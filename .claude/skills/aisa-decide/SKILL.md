@@ -152,7 +152,7 @@ Immediately invoke the `aisa-synthesize` skill. Wait for it to return; it produc
 
 ### 5c. Story
 
-Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — a decisão (e porquê)`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — a decisão (e porquê)`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 
 ### 6. Wrap-up output
 
@@ -191,6 +191,6 @@ downstream reads the `(scope, outcome)` pairs and the selected solution instead.
 
 ## Notes
 
-- The decision is the only point where the *user* (not the council) must say a sentence. Everything else has been council + chairman.
+- The decision is the user's. Before it, the analysis proposes, the reviewers contest and the chairman synthesizes; none of them chooses.
 - **Append-only** on `decisions.md` and the SU — D-NNN ids monotonically increase across re-decisions.
 - No council runs in Decision. `chairman-synthesis` is invoked by `aisa-frame` and `aisa-options` only; the decision block is written fresh by this skill from the user's answers (plus the optional `--consult` review).

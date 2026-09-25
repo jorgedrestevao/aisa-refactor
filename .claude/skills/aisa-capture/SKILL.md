@@ -1,6 +1,6 @@
 ---
 name: aisa-capture
-description: Process-capture pipeline for engagement inputs — the structured xlsx tier (L1 deterministic extraction + L3 replay + L2 process model) plus the capture-lite text tier (LT, deterministic .docx/.pdf/.vtt/.srt/.txt/.md/.csv extraction). Runs at the end of aisa-start, on stale hashes in aisa-round step 3.5, or manually via /capture. Produces the _capture/ shared evidence surface (entry point evidence-index.md) that lenses and council personas read.
+description: Process-capture pipeline for engagement inputs — the structured xlsx tier (L1 deterministic extraction + L3 replay + L2 process model) plus the capture-lite text tier (LT, deterministic .docx/.pdf/.vtt/.srt/.txt/.md/.csv extraction). Runs at the end of aisa-start, on stale hashes in aisa-round step 3.5, or manually via /capture. Produces the _capture/ shared evidence surface (entry point evidence-index.md) that the Discovery analysis, the technical author and the reviewers read.
 ---
 
 # aisa-capture
