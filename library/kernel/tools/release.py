@@ -136,6 +136,99 @@ def _state_digest(eng: Path) -> dict:
     return out
 
 
+def process_coverage(eng) -> dict:
+    """process-map M3: a cobertura do processo, lida dos motores — o mapa, a reconciliação
+    e a revisão do desenho aprovado. Nunca declarada.
+
+    Sem mapa publicado é capacidade **não avaliada** (engagement anterior ao mapa): não
+    bloqueia o que já passava, e diz-se. Com mapa, a entrega só fica pronta quando a
+    reconciliação e a revisão do desenho aprovado existem, são válidas, estão actuais e não
+    têm lacunas — ausente, `stale`, inválida ou com lacuna bloqueante nunca é completa.
+    A validação do mapa pelo dono acompanha como limitação; nunca é inventada."""
+    eng = Path(eng)
+    P, C, F = _mod("process_map"), _mod("coverage"), _mod("functional")
+    st = P["load"](eng)
+    out = {"evaluated": False, "map": st["status"], "map_version": "", "validation": "",
+           "reconciliation": {}, "blueprint": {}, "reasons": [], "limitations": []}
+    if st["status"] == "absent":
+        out["limitations"].append("sem mapa do processo: a cobertura do processo não foi "
+                                  "avaliada")
+        return out
+    out["evaluated"] = True
+    if st["status"] != "ok":
+        out["reasons"].append("mapa do processo {} ({})".format(st["status"], st["detail"]))
+        return out
+    out["map_version"] = st["map"].get("version", "")
+    val = P["validation"](eng)
+    out["validation"] = val["status"]
+    if val["status"] != "validated":
+        out["limitations"].append("mapa do processo {} não validado pelo dono ({})".format(
+            out["map_version"], val["status"]))
+
+    labels = {el["id"]: el.get("label") or el.get("question", "")
+              for c in ("nodes", "edges", "details", "gaps") for el in st["map"].get(c) or []}
+
+    def verdict(stage, target):
+        try:
+            r = C["coverage_state"](eng, stage, target)
+        except Exception as exc:                                    # noqa: BLE001
+            return {"state": "unexpected", "detail": "{}: {}".format(type(exc).__name__,
+                                                                    exc)}
+        rec = r.get("record") or {}
+        if not rec:
+            state = "absent"
+        elif r.get("contract_validity") in ("invalid", "unsupported"):
+            state = "invalid"
+        elif r.get("freshness") != "current":
+            state = "stale"
+        elif r.get("coverage") == "gaps":
+            state = "gaps"
+        elif r.get("coverage") == "complete":
+            state = "complete"
+        else:
+            state = "not_evaluated"
+        return {"state": state, "record": rec.get("file", ""),
+                "contract_validity": r.get("contract_validity"),
+                "freshness": r.get("freshness"), "coverage": r.get("coverage"),
+                "gaps": [dict(g) for g in r.get("gaps") or []]}
+
+    out["reconciliation"] = verdict("reconciliation", None)
+    bp = F["approved_blueprint"](eng)
+    if bp:
+        out["blueprint"] = verdict("blueprint", {"file": bp, "identity":
+                                                 C["target_identity"](eng, "blueprint", bp)})
+    else:
+        out["blueprint"] = {"state": "absent", "detail": "sem desenho aprovado"}
+    # A origem de cada lacuna do desenho: as unidades do mapa (e da captura) que a
+    # reconciliação ligou à mesma obrigação — o achado diz de onde a funcionalidade veio.
+    origin: dict = {}
+    rrel = out["reconciliation"].get("record")
+    if rrel:
+        try:
+            rrec = json.loads((eng / rrel).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            rrec = {}
+        for item in rrec.get("coverage") or []:
+            key = tuple(sorted(set(str(x) for x in item.get("requirement_refs") or [])))
+            origin.setdefault(key, set()).update(str(u) for u in
+                                                 item.get("source_unit_refs") or [])
+    for g in out["blueprint"].get("gaps") or []:
+        key = tuple(sorted(set(str(x) for x in g.get("requirement_refs") or [])))
+        units = sorted(origin.get(key, set()))
+        g["origin"] = [{"unit": u, "label": labels.get(u.split("#", 1)[-1], "")}
+                       for u in units]
+    label = {"absent": "ausente", "stale": "desactualizada", "invalid": "inválida",
+             "gaps": "com lacunas", "not_evaluated": "não avaliada",
+             "unexpected": "não avaliável"}
+    for stage, name in (("reconciliation", "reconciliação"),
+                        ("blueprint", "revisão do desenho aprovado")):
+        s = out[stage].get("state")
+        if s != "complete":
+            out["reasons"].append("cobertura do processo: {} {}".format(name,
+                                                                        label.get(s, s)))
+    return out
+
+
 def readiness(eng) -> dict:
     """O que o nível de entrega exige, lido dos motores (nunca declarado)."""
     eng = Path(eng)
@@ -181,7 +274,10 @@ def readiness(eng) -> dict:
     ap = F["blueprint_approval_state"](eng)
     if ap["state"] != "current":
         motivos.append("aprovação do desenho {}".format(ap["state"]))
+    pc = process_coverage(eng)
+    motivos += pc["reasons"]
     return {"ready": not motivos, "reasons": motivos, "delivery": gate["delivery"],
+            "process_coverage": pc,
             "trace_findings": trace["findings"], "gate": gate, "render_checks": checks,
             "blueprint_approval": ap, "spec": spec, "estimate": est,
             "proofs": trace["proofs"], "viability_blockers": trace["viability_blockers"]}
@@ -268,6 +364,15 @@ def build(eng, out: str | None = None) -> dict:
     rels += [r for r in (rd["spec"], rd["estimate"]) if r]
     rels += sorted(p.relative_to(eng).as_posix() for p in (eng / "inputs").glob("*")
                    if p.is_file())
+    # process-map M3: o mapa efectivamente consumido (a revisão corrente e o seu snapshot),
+    # a vista, e os registos de cobertura que o veredicto leu — o pacote interpreta-se sem
+    # voltar ao engagement. A validação do dono já viaja em decisions.md.
+    pc = rd["process_coverage"]
+    if pc["map"] == "ok":
+        rels += [r for r in ("_map/map.json", "_map/history/{}.json".format(pc["map_version"]),
+                             "process-map.html") if (eng / r).is_file()]
+        rels += [r for r in (pc["reconciliation"].get("record"),
+                             pc["blueprint"].get("record")) if r and (eng / r).is_file()]
     repo_rels = list(CONTRACTS) + sorted(
         "library/kernel/schemas/" + p.name for p in (REPO / "library/kernel/schemas").glob(
             "handoff-*.schema.json"))

@@ -212,3 +212,9 @@ T39 e T41 são deliberadamente **dois** cenários e não um: alterar um template
 a revisão `stale` (a base mudou, relê-se); alterar o significado deste contrato torna-a
 `unsupported` (o motor deixou de saber ler aquele schema). Confundir os dois deixaria uma
 mudança de contrato passar por «basta rever».
+
+## Exercitados fora desta fixture
+
+| código | onde | o que prova |
+|---|---|---|
+| `COV-MAP-UNPLACED` | `.claude/tests/test_process_map_coverage.py` (engagement sintético com mapa publicado, process-map M3) | um passo do mapa lido como material sem item de cobertura torna a reconciliação incompleta; com o item, a cadeia existente leva-o até ao desenho |

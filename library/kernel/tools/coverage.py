@@ -86,6 +86,7 @@ COV_KNOWN_GAP = "COV-KNOWN-GAP"
 COV_CAPTURE_LIMIT = "COV-CAPTURE-LIMIT"
 COV_AUTHORITY_MISMATCH = "COV-AUTHORITY-MISMATCH"
 COV_UNEXPECTED = "COV-UNEXPECTED"
+COV_MAP_UNPLACED = "COV-MAP-UNPLACED"
 
 # ------------------------------------------------------------------ caminhos e base
 # §6.3: excluídos da base por serem histórico ou derivados. Lista EXPLÍCITA -- um padrão
@@ -95,7 +96,19 @@ DERIVED_FILES = (
     "_capture/_capture-log.md", "_blueprint/blueprint-log.md",
     "_render/render-log.md", "_render/render-gaps.md",
     "_synthesis/_synthesis-checks.md",
+    # process-map M3: a vista do mapa é derivada; a fonte é `_map/map.json`.
+    "process-map.html",
 )
+# process-map M3: o histórico do mapa é imutável e está contido na revisão corrente
+# (`_map/map.json`); contá-lo outra vez faria de cada publicação duas mudanças de base.
+MAP_HISTORY_DIR = "_map/history/"
+MAP_REL = "_map/map.json"
+# As classes de unidade que o mapa traz ao denominador (process-map M3). Uma unidade
+# destas declarada `material` — ou de materialidade por determinar — na reconciliação tem
+# de ter destino num item de `coverage[]` (`COV-MAP-UNPLACED`): é o elo que impede uma
+# funcionalidade identificada no processo de desaparecer antes do desenho.
+MAP_UNIT_CLASSES = ("process-map-node", "process-map-edge", "process-map-detail",
+                    "process-map-question", "calculation", "synopsis-label")
 DERIVED_SUFFIXES = (".tmp", ".bak")
 DERIVED_DIRS = ("__pycache__/",)
 
@@ -894,6 +907,22 @@ def build_inventory(eng: Path, readers: ReaderAdapter | None = None) -> dict:
             for pid in sorted(set(re.findall(r"\bPM-\d{3}\b", pm))):
                 units.append(_unit("_capture/process-model.md#" + pid, "process-rule",
                                    digest(_id_lines(pm, pid))))
+        # process-map M3: o que a L2 produziu e o mapa tem de colocar entra também como
+        # unidade — cada `CALC-NNN` qualificado pelo seu workbook (o mesmo id existe
+        # noutros) e cada etiqueta material da §4. A mesma enumeração que o `check` do
+        # mapa usa (`process_map.transfer_units`), para que os dois nunca discordem.
+        if pm:
+            for key, cls in sorted(_PM()["transfer_units"](eng).items()):
+                if cls in ("synopsis-label", "calculation"):
+                    r = _PM()["resolve_ref"](eng, key)
+                    if r["status"] == "ok":
+                        units.append(_unit(key, cls, r["digest"]))
+        else:
+            for key, cls in sorted(_PM()["transfer_units"](eng).items()):
+                if cls == "calculation":
+                    r = _PM()["resolve_ref"](eng, key)
+                    if r["status"] == "ok":
+                        units.append(_unit(key, cls, r["digest"]))
         if "_capture/evidence-index.md" in readable:
             sha, st = guarded_sha256(eng, "_capture/evidence-index.md", pack)
             if st == "ok":
@@ -926,6 +955,26 @@ def build_inventory(eng: Path, readers: ReaderAdapter | None = None) -> dict:
                 rel, "text-extraction", sha,
                 "{} passagem(ns) determinística(s), citáveis por locator; a unidade é o "
                 "documento".format(n)))
+
+    # ------------------------------------------------ mapa do processo (process-map M3)
+    # Uma unidade por nó, ligação, detalhe e dúvida da revisão publicada; as faixas são
+    # agrupamento e não entram. O digest é o do elemento canónico: renomear um passo muda
+    # a unidade, reordenar o ficheiro não.
+    if MAP_REL in readable:
+        st = _PM()["load"](eng)
+        if st["status"] == "ok":
+            for coll, cls in (("nodes", "process-map-node"), ("edges", "process-map-edge"),
+                              ("details", "process-map-detail"),
+                              ("gaps", "process-map-question")):
+                for el in st["map"].get(coll) or []:
+                    units.append(_unit("{}#{}".format(MAP_REL, el["id"]), cls,
+                                       hashlib.sha256(_PM()["canonical"](el)
+                                                      .encode("utf-8")).hexdigest()))
+        else:
+            diagnostics.append({"level": "error", "blocking": True, "where": MAP_REL,
+                                "message": "mapa do processo {} — os seus elementos "
+                                           "ficaram fora do denominador: {}".format(
+                                               st["status"], st["detail"])})
 
     # --------------------------------------------------------- fontes auxiliares §6.1
     for name in AUX_ARTEFACTS:
@@ -1014,6 +1063,8 @@ def _manifest_use(rel: str, stage: str, synthesis_authorities: set[str]) -> str 
     if rel.startswith(COVERAGE_DIR) or rel.startswith(TARGET_DIRS):
         return None
     if rel.startswith(OPERATIONAL_DIRS) or rel.startswith(GRAPH_DIR):
+        return None
+    if rel.startswith(MAP_HISTORY_DIR):
         return None
     if rel.startswith(SYNTHESIS_DIR):
         return "freshness" if (stage == "render" and rel in synthesis_authorities) else None
@@ -1477,7 +1528,41 @@ def resolve_target(eng: Path, target: dict, readers: ReaderAdapter | None = None
 def resolve_unit(eng: Path, unit_key: str, readers: ReaderAdapter | None = None) -> dict:
     """Resolve uma chave de unidade `<caminho>[#<selector>]`."""
     rel, _, selector = unit_key.partition("#")
+    if rel == MAP_REL or (selector and (selector.startswith("§4:") or
+                                        (rel.endswith(".calc-chain.json")))):
+        return _map_unit(eng, rel, selector)
     return resolve_target(eng, {"file": rel, "selector": selector}, readers)
+
+
+_PM_CACHE: dict = {}
+
+
+def _PM() -> dict:
+    """O motor do mapa (process-map M3), carregado uma vez e só quando é preciso."""
+    if "m" not in _PM_CACHE:
+        _PM_CACHE["m"] = runpy.run_path(str(Path(__file__).resolve().parent
+                                            / "process_map.py"))
+    return _PM_CACHE["m"]
+
+
+def _map_unit(eng: Path, rel: str, selector: str) -> dict:
+    """As unidades do mapa e da captura qualificada: um elemento do mapa publicado, um
+    `CALC-NNN` de um workbook, uma etiqueta da §4. Um resultado por chave, nunca ambíguo."""
+    if rel == MAP_REL:
+        st = _PM()["load"](eng)
+        if st["status"] != "ok":
+            return {"ok": False, "count": 0, "code": COV_INVALID_TARGET,
+                    "reason": "mapa {}".format(st["status"])}
+        hits = [el for c in ("nodes", "edges", "details", "gaps", "lanes")
+                for el in st["map"].get(c) or [] if el["id"] == selector]
+        if len(hits) == 1:
+            return {"ok": True, "count": 1, "code": "", "reason": ""}
+        return {"ok": False, "count": len(hits), "code": COV_INVALID_TARGET,
+                "reason": "{} não existe no mapa".format(selector)}
+    r = _PM()["resolve_ref"](eng, "{}#{}".format(rel, selector))
+    if r["status"] == "ok":
+        return {"ok": True, "count": 1, "code": "", "reason": ""}
+    return {"ok": False, "count": 0, "code": COV_INVALID_TARGET, "reason": r["detail"]}
 
 
 # ==================================================== registos: leitura e selecção §3
@@ -3058,6 +3143,7 @@ def validate_record(record: dict, inventory: dict, eng: Path | None = None,
     cov = _check_coverage(record, ctx, eng, readers, sr, diags)
     _check_links(record, ctx, cov, diags)
     _check_not_hollow(record, sr, cov, diags)
+    _check_map_units(record, inventory, sr, diags)
     inh = _check_inheritance(record, chain or {}, cov, diags)
     dl = _check_deliverable(record, eng, chain or {}, diags, readers, cov)
     sem = _check_semantic(record, cov, diags)
@@ -3073,6 +3159,36 @@ def validate_record(record: dict, inventory: dict, eng: Path | None = None,
             "source_units": sr["units"], "source_review_ok": sr["ok"],
             "coverage_ok": cov["ok"], "semantic_review": sem,
             "inheritance_ok": inh["review"], "deliverable_ok": dl["review"]}
+
+
+def _check_map_units(record: dict, inventory: dict, sr: dict, diags: list) -> None:
+    """process-map M3 (§4.3, *Unidades do mapa*). Na reconciliação, uma unidade do mapa —
+    um passo, uma ligação, um detalhe, uma dúvida, um cálculo qualificado ou uma etiqueta
+    material da §4 — lida e declarada `material`, ou de materialidade por determinar, tem de
+    ter DESTINO: aparecer em `source_unit_refs` de pelo menos um item de `coverage[]`, com a
+    disposição que tiver (preservar, alterar, retirar com autoridade, esclarecer). Ler e
+    não dar destino é a perda silenciosa que o mapa existe para impedir. `not-material`
+    com razão escrita não precisa de item."""
+    if record.get("stage") != "reconciliation":
+        return
+    classes = {u["unit_key"]: u["class"] for u in inventory.get("units", [])}
+    placed: set[str] = set()
+    for item in record.get("coverage") or []:
+        if isinstance(item, dict):
+            placed.update(str(x) for x in _as_list(item.get("source_unit_refs")))
+    for unit, info in sorted(sr.get("by_unit", {}).items()):
+        if classes.get(unit) not in MAP_UNIT_CLASSES or unit in placed:
+            continue
+        if info.get("assessment") != "reviewed":
+            continue
+        if info.get("materiality") in ("material", "undetermined"):
+            diags.append(_diag(COV_MAP_UNPLACED, "error",
+                               "{} ({}) foi lida como {} e não tem destino em nenhum item "
+                               "de cobertura — requisito, exclusão autorizada ou lacuna "
+                               "explícita".format(unit, classes[unit], info["materiality"]),
+                               locator=unit, item=info.get("id", ""),
+                               resolves="criar ou completar o item de `coverage[]` que a "
+                                        "trata, ou declará-la `not-material` com razão"))
 
 
 # ========================================================== resultado computado §7
@@ -3671,7 +3787,7 @@ def coverage_state(eng: Path, stage: str, target: dict | None = None,
     # ---- cobertura
     blocking = {COV_UNREVIEWED, COV_DEAD_REF, COV_MISSING_TARGET, COV_INVALID_TARGET,
                 COV_EXCLUSION_NO_DECISION, COV_REVIEW_INCOMPLETE, COV_CAPTURE_LIMIT,
-                COV_AUTHORITY_MISMATCH}
+                COV_AUTHORITY_MISMATCH, COV_MAP_UNPLACED}
     has_block = any(d["code"] in blocking and d["severity"] == "error" for d in diags)
     if result["contract_validity"] in ("invalid", "unsupported"):
         result["coverage"] = "not_evaluated"

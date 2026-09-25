@@ -378,7 +378,15 @@ def parse_tables(md: str) -> list[Table]:
                 cur = lines[j]
                 shape = _row_shape(cur, len(headers))
                 if shape:
-                    cells, bad = fit_row(split_row(cur), len(headers))
+                    raw_cells = split_row(cur)
+                    # process-map M3: uma linha escrita sem a coluna `elementos` (um
+                    # escritor anterior a ela) tem exactamente uma célula a menos — a vazia
+                    # entra no sítio de `elementos` (não avaliada), não no fim, para que
+                    # `ronda` e os marcadores da última coluna fiquem onde estão.
+                    ei = _elementos_index(headers)
+                    if ei is not None and len(raw_cells) == len(headers) - 1:
+                        raw_cells = raw_cells[:ei] + [""] + raw_cells[ei:]
+                    cells, bad = fit_row(raw_cells, len(headers))
                     tbl.rows.append((j + 1, cells))
                     if bad:
                         tbl.malformed_lines.append(j + 1)
@@ -402,6 +410,39 @@ def parse_tables(md: str) -> list[Table]:
             continue
         i += 1
     return tables
+
+
+def _elementos_index(headers: list[str]):
+    """O índice da coluna `elementos` (process-map M3), ou None quando a tabela não a tem."""
+    for i, h in enumerate(headers):
+        if norm_key(h) == "elementos":
+            return i
+    return None
+
+
+ELEMENT_TOKEN_RE = re.compile(r"^MAP[LNED]-\d{3,}$")
+
+
+def parse_elementos(cell: str, has_column: bool) -> tuple[list[str], str]:
+    """`(ids, forma)` da célula `elementos` (states.md → *The `elementos` column*).
+
+    forma: `ausente` (a secção não tem a coluna: SU anterior) · `vazia` (não avaliada) ·
+    `ids` · `global` · `na` (`N/A — <razão>`) · `na-sem-razao` · `invalida`. Nenhuma forma
+    é cobertura por si: só `ids` liga a linha a elementos do mapa."""
+    if not has_column:
+        return [], "ausente"
+    v = re.sub(r"[`*]", "", cell or "").strip()
+    if not v:
+        return [], "vazia"
+    if v.upper() == "GLOBAL":
+        return [], "global"
+    if re.match(r"^N/?A\b", v, re.I):
+        rest = re.sub(r"^N/?A\s*[—–-]?\s*", "", v, flags=re.I).strip()
+        return [], "na" if rest else "na-sem-razao"
+    ids = [x.strip() for x in v.split(",") if x.strip()]
+    if ids and all(ELEMENT_TOKEN_RE.match(x) for x in ids):
+        return sorted(set(ids)), "ids"
+    return [], "invalida"
 
 
 def _row_shape(line: str, n_cols: int) -> str:
@@ -477,6 +518,8 @@ COLUMN_ALIASES = {
     "bloqueio": "bloqueio",
     "referencias": "referencias",
     "quem decide": "quem_decide",
+    # process-map M3: os elementos do mapa a que a linha pertence (states.md).
+    "elementos": "elementos",
 }
 QUESTION_SECTIONS = ("Unknown", "Conflicted")
 QUESTION_ALIASES = {"impacto": "impacto"}
@@ -717,7 +760,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
             rec = {k: "" for k in ("id", "lens", "claim", "support", "extra",
                                    "criticidade", "verificado_em", "validade",
                                    "custo", "swing", "ronda", "tipo", "impacto", "ambito",
-                                   "fecho", "bloqueio", "referencias", "quem_decide")}
+                                   "fecho", "bloqueio", "referencias", "quem_decide",
+                                   "elementos")}
             raw_map: dict[str, str] = {}
             for key, head, cell in zip(canon, tbl.headers, cells):
                 raw_map[head] = cell
@@ -809,6 +853,9 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 "bloqueio": norm_key(re.sub(r"[*`]", "", rec["bloqueio"])).replace(" ", "_"),
                 "referencias": rec["referencias"].strip(),
                 "quem_decide": rec["quem_decide"].strip(),
+                "elementos_raw": rec["elementos"].strip(),
+                "elementos": parse_elementos(rec["elementos"], "elementos" in canon)[0],
+                "elementos_forma": parse_elementos(rec["elementos"], "elementos" in canon)[1],
                 "was": WAS_RE.findall(rec["claim"] or ""),
                 "expired": False,
                 "expires_on": "",

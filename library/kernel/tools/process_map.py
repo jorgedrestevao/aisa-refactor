@@ -29,6 +29,10 @@ Understanding é. Escreve-o só este motor, pelo coordenador (`operation.run`); 
     questions --engagement <slug|caminho> [--json]
             as dúvidas do mapa agrupadas por tema, estrutura primeiro — a validação pelo
             dono pergunta por grupo, nunca por célula.
+    project --engagement <slug|caminho> [--json]
+            as linhas da SU organizadas pelo mapa: por elemento, sem associação avaliada,
+            GLOBAL, N/A, elementos sem linhas (sinal, não lacuna), ids desconhecidos e
+            retirados (com sucessores). Nunca escreve.
     approval-block --engagement --scope --conditions --validated-by [--timestamp]
             o texto do bloco `D-NNN — Mapa do processo mp-vNN validado` com o digest da
             versão publicada; quem o escreve em decisions.md é `resolve.py draft/publish`.
@@ -926,6 +930,93 @@ def questions(eng) -> list:
     return out
 
 
+# ============================================================= projecção SU ↔ mapa
+
+SU_FILE = "shared-understanding.md"
+KNOWLEDGE = ("Confirmed", "Assumed")
+
+
+def successors(m: dict) -> dict:
+    """{id retirado: [ids que o dizem em `was`]} — a linhagem, para reapontar."""
+    out: dict = {}
+    for c in COLLECTIONS:
+        for el in m.get(c) or []:
+            for w in el.get("was") or []:
+                out.setdefault(w, []).append(el["id"])
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def project(eng) -> dict:
+    """As linhas da SU organizadas pelo mapa publicado. Nunca escreve e nunca julga
+    completude: `dark` (elemento sem linha) é sinal para investigar, não lacuna — um início
+    ou uma ligação visual podem não precisar de linha própria.
+
+    `elements`: por elemento, as linhas abertas que o citam e a contagem por estado.
+    `unevaluated`: linhas sem associação avaliada (vazia, ausente, N/A sem razão, inválida).
+    `global` / `na`: as linhas transversais e as que não têm lugar no processo — listadas
+    para revisão, nunca destino por defeito.
+    `dead`: ids citados que o mapa não conhece. `retired`: ids retirados ainda citados, com
+    os sucessores — reapontar é do escritor, nunca automático."""
+    eng = Path(eng)
+    cur = load(eng)
+    D = _mod("dashboard")
+    try:
+        md = (eng / SU_FILE).read_text(encoding="utf-8")
+    except OSError:
+        md = ""
+    _h, rows, _s, _d = D["parse_su"](md)
+    live_rows = [r for r in rows if not r["resolved"]]
+    out = {"map_status": cur["status"], "map_version": "", "elements": {}, "dark": [],
+           "unevaluated": [], "global": [], "na": [], "dead": [], "retired": [],
+           "rows": len(live_rows)}
+    if cur["status"] != "ok":
+        out["unevaluated"] = sorted(r["id"] for r in live_rows)
+        return out
+    m = cur["map"]
+    out["map_version"] = m.get("version", "")
+    kinds = {}
+    for c in COLLECTIONS:
+        for el in m[c]:
+            kinds[el["id"]] = (c, el.get("kind", ""), el.get("label") or el.get("question", ""))
+    retired = {r["id"] for r in m["retired_ids"]}
+    succ = successors(m)
+    for eid, (c, kind, label) in sorted(kinds.items()):
+        if c == "gaps":
+            continue
+        out["elements"][eid] = {"collection": c, "kind": kind, "label": label, "rows": [],
+                                "by_state": {}}
+    for r in live_rows:
+        forma = r.get("elementos_forma", "ausente")
+        if forma == "global":
+            out["global"].append(r["id"])
+            continue
+        if forma == "na":
+            out["na"].append(r["id"])
+            continue
+        if forma != "ids":
+            out["unevaluated"].append(r["id"])
+            continue
+        for eid in r["elementos"]:
+            if eid in out["elements"]:
+                e = out["elements"][eid]
+                e["rows"].append(r["id"])
+                e["by_state"][r["state"]] = e["by_state"].get(r["state"], 0) + 1
+            elif eid in retired:
+                out["retired"].append({"row": r["id"], "element": eid,
+                                       "successors": succ.get(eid, [])})
+            elif eid in kinds:
+                continue                      # uma dúvida (MAPG) citada: é dela, não conta
+            else:
+                out["dead"].append({"row": r["id"], "element": eid})
+    for eid, e in out["elements"].items():
+        if not e["rows"] and not (e["collection"] == "nodes" and e["kind"] == "trigger") \
+                and e["collection"] != "lanes":
+            out["dark"].append(eid)
+    for k in ("unevaluated", "global", "na", "dark"):
+        out[k] = sorted(set(out[k]))
+    return out
+
+
 # ============================================================= render (vista derivada)
 
 KIND_LABEL = {"trigger": "início", "step": "passo", "decision": "decisão",
@@ -1323,7 +1414,7 @@ def main(argv=None) -> int:
                                  description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("check", "stamp", "publish", "status", "render", "questions",
-                 "approval-block"):
+                 "approval-block", "project"):
         p = sub.add_parser(name)
         p.add_argument("--engagement", required=True)
         if name in ("check", "stamp", "publish"):
@@ -1352,6 +1443,15 @@ def main(argv=None) -> int:
         if args.cmd == "render":
             out = render(eng)
             _print({"path": str(out)}, args.json, ["vista: {}".format(out)])
+            return EXIT_OK
+        if args.cmd == "project":
+            pr = project(eng)
+            _print(pr, args.json, [
+                "mapa {} {}: {} linhas abertas · sem associação avaliada {} · GLOBAL {} · "
+                "N/A {} · elementos sem linhas {} · ids desconhecidos {} · ids retirados {}"
+                .format(pr["map_status"], pr["map_version"], pr["rows"],
+                        len(pr["unevaluated"]), len(pr["global"]), len(pr["na"]),
+                        len(pr["dark"]), len(pr["dead"]), len(pr["retired"]))])
             return EXIT_OK
         if args.cmd == "questions":
             qs = questions(eng)

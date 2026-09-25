@@ -71,11 +71,38 @@ The row **stays** — it is audit, and a question someone once thought material 
 
 | Section | Columns |
 |---|---|
-| `## Confirmed` | `id \| lens \| claim \| evidência \| verificado_em \| validade \| ronda` |
-| `## Assumed` | `id \| lens \| claim \| base da assumption \| verificado_em \| validade \| ronda` |
-| `## Unknown` | `id \| lens \| pergunta \| tipo \| impacto \| âmbito \| quem responde \| fecho \| bloqueio \| criticidade (Low/Med/Critical) \| custo \| swing \| referências \| ronda` |
-| `## Conflicted` | `id \| lens \| conflito \| partes \| impacto \| âmbito \| quem decide \| fecho \| bloqueio \| criticidade \| referências \| ronda` |
-| `## Risky` | `id \| lens \| risco \| impacto \| mitigação proposta \| ronda` |
+| `## Confirmed` | `id \| lens \| claim \| evidência \| verificado_em \| validade \| elementos \| ronda` |
+| `## Assumed` | `id \| lens \| claim \| base da assumption \| verificado_em \| validade \| elementos \| ronda` |
+| `## Unknown` | `id \| lens \| pergunta \| tipo \| impacto \| âmbito \| quem responde \| fecho \| bloqueio \| criticidade (Low/Med/Critical) \| custo \| swing \| referências \| elementos \| ronda` |
+| `## Conflicted` | `id \| lens \| conflito \| partes \| impacto \| âmbito \| quem decide \| fecho \| bloqueio \| criticidade \| referências \| elementos \| ronda` |
+| `## Risky` | `id \| lens \| risco \| impacto \| mitigação proposta \| elementos \| ronda` |
+
+### The `elementos` column (process-map M3)
+
+Where the row lives in the process: the elements of the process map (`_map/map.json`,
+`library/kernel/capture-templates/process-map.guide.md`) the fact, assumption, question,
+conflict or risk is **about**. It organises the row; it never changes its state, its
+evidence or its authority — the SU stays the authority of the fact, the map the structure.
+
+| Value | Means |
+|---|---|
+| `MAPN-004` · `MAPN-004, MAPE-002` | the row is about those elements (nodes `MAPN`, edges `MAPE`, details `MAPD`, lanes `MAPL`) — one rule may touch several steps, and is written **once** with all of them |
+| `GLOBAL` | the row is about the process as a whole — a capacity premise, a security constraint, an economic decision. Never a default: `project` lists every `GLOBAL` row for review |
+| `N/A — <razão>` | the row has no place in the process (e.g. a fact about the organisation), with the reason. Without a reason it is `na-sem-razao` and reads as not evaluated |
+| empty | **not evaluated** — the association was never made. Never coverage |
+
+- It is the **second-to-last** column, before `ronda`: the last column carries the
+  `resolved →`, withdrawal and parking markers, and the readers find them there.
+- Written by every writer of new rows (the six perspectives, `chairman-synthesis`,
+  `/answer`, `/decide`). A transition **inherits** the old row's value (`resolve.py`);
+  the writer corrects it when the answer moves the row to another element.
+- Compatibility: a SU without the column is read as written — every row `ausente`, never
+  migrated. A row written without the cell in a section that has the column (a writer
+  older than it) is read with the empty cell in its place (not evaluated), `ronda` and the
+  markers unchanged. Absence is never coverage (`coverage-contract.md`).
+- An id that does not exist in the published map, or points to a retired element, is
+  reported by `process_map.py project` (`dead` / `retired`): the row is re-pointed by its
+  writer, never automatically to every successor.
 
 ### The form of `quem responde` (P-21 / F1.1)
 

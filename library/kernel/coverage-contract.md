@@ -645,6 +645,35 @@ sem tratamento visível — e é a etapa que diz sobre que conjunto se mede. Um 
 não é obrigado a carregar todos os requisitos: o denominador de `render` é o que o seu
 próprio contrato de projecção selecciona, e a ausência legítima é *not applicable*.
 
+#### 6.1.1 As unidades do mapa do processo (process-map M3)
+
+Quando o engagement tem mapa publicado (`_map/map.json`, `process_map.py`), o denominador
+ganha:
+
+| classe | unit key | origem |
+|---|---|---|
+| `process-map-node` · `process-map-edge` · `process-map-detail` · `process-map-question` | `_map/map.json#MAPN-004` (e `MAPE`, `MAPD`, `MAPG`) | a revisão publicada; as faixas são agrupamento e não entram |
+| `calculation` | `_capture/<wb>.calc-chain.json#CALC-003` | cada bloco, **qualificado pelo workbook** — o mesmo id existe noutros |
+| `synopsis-label` | `_capture/process-model.md#§4:<etiqueta>` | as linhas materiais da síntese (§4) |
+
+- Os digests são do elemento ou do bloco, não do ficheiro. `process-map.html` (vista) e
+  `_map/history/` (contido na revisão corrente) não entram na base.
+- **Destino obrigatório:** na reconciliação, uma destas unidades lida (`reviewed`) como
+  `material` ou `undetermined` tem de aparecer em `source_unit_refs` de pelo menos um item
+  de `coverage[]`. O item pode ter qualquer disposição (`preserve`, `change`, `retire` com
+  a autoridade de âmbito, `clarify`), mas tem de existir. Senão é `COV-MAP-UNPLACED`.
+  `not-material` precisa de razão e dispensa o item.
+- **A identidade da obrigação não muda:** continua a ser o conjunto de `requirement_refs`
+  (ids da SU ou de decisões, §4.4.4). Uma obrigação partilhada por dois elementos é **um**
+  item com as duas unidades em `source_unit_refs`, nunca dois itens com o mesmo requisito:
+  o esforço e a estimativa contam-na uma vez.
+- **Necessidade nova sem origem no processo actual:** é um item com `source_unit_refs`
+  vazio e o requisito da SU ou a decisão em `requirement_refs`. Nunca se inventa uma origem
+  no Excel.
+- A partir daqui a cadeia existente carrega a unidade até ao fim: o desenho trata todas as
+  obrigações (`COV-UNREVIEWED`), `covered` só com `role: implementation` na versão revista
+  (§4.4.3), e o render e o release consomem o veredicto.
+
 ### 6.2 Granularidade
 
 - **Excel**: todas as folhas e colunas do inventário, aliases, entradas de dicionário sem
@@ -947,6 +976,7 @@ do achado é separada da elegibilidade por acção**: produzir para discussão n
 | `COV-CAPTURE-LIMIT` | fonte não verificável ou limite de captura | mostrar impacto; **nunca** transformar em coberto |
 | `COV-AUTHORITY-MISMATCH` | target ou revisão usa versão/autoridade errada | bloquear o consumo correspondente |
 | `COV-UNEXPECTED` | falha interna de avaliação | não avaliado; **nunca** sucesso silencioso |
+| `COV-MAP-UNPLACED` | na reconciliação, unidade do mapa (passo, ligação, detalhe, dúvida, cálculo qualificado, etiqueta da §4) lida como `material` ou `undetermined` sem destino em nenhum item de `coverage[]` (§6.1.1) | reconciliação incompleta; a funcionalidade identificada não chega ao desenho em silêncio |
 
 ### 8.1 Entrada e saída do desenho
 

@@ -59,6 +59,7 @@
 .claude/tests/test_pp_architecture_templates.py
 .claude/tests/test_process_map_capture.py
 .claude/tests/test_process_map_core.py
+.claude/tests/test_process_map_coverage.py
 .claude/tests/test_process_map_guard.py
 .claude/tests/test_process_map_validation.py
 .claude/tests/test_projection_ux.py

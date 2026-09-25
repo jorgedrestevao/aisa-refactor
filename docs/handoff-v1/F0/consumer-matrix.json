@@ -4254,6 +4254,36 @@
      "evidence": "docs/process-map/M1/staging/install.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": ".github/stdlib-tests.txt",
+     "kind": "ci",
+     "role": "reader",
+     "mechanism": "Lista do job stdlib do CI; nomeia test_process_map_coverage.py (process-map M3), que exercita a cobertura do processo. Não lê nem escreve registos de cobertura.",
+     "via": "",
+     "evidence": ".github/stdlib-tests.txt",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "library/kernel/states.md",
+     "kind": "kernel-contract",
+     "role": "declares-contract",
+     "mechanism": "Secção *The `elementos` column* (process-map M3): declara que a ausência de associação nunca é cobertura e remete para coverage-contract.md.",
+     "via": "",
+     "evidence": "library/kernel/states.md → The `elementos` column",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "mechanism": "process_coverage (process-map M3): lê pelo coverage.coverage_state a reconciliação corrente e a revisão do desenho aprovado; ausente/stale/inválida/com lacuna mantém o nível preliminary; empacota os dois registos lidos. Não escreve registos.",
+     "via": "",
+     "evidence": "library/kernel/tools/release.py process_coverage, readiness, build",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [

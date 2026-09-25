@@ -184,6 +184,7 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
 1. Read the template. Parse the frontmatter: `canonical_deliverable`, `activation` / `blocked_when` / `not_applicable_when`, `authority_sources`, `conditional_sources`, `forbidden_sources`, `permitted_transformations`, `forbidden_transformations`, `required_slots`, `conditional_slots`, `optional_slots`, `slot_conditions`, `slot_sources`, `sub_templates`, and (Estimate only) `owns_calculation` + `input_modes`.
 2. Evaluate activation. `not applicable` → **skip**, log the reason to `render-log.md`, continue. `blocked` → log the block + what would unblock it, continue.
 2b. **Pre-render — the authorities this deliverable needs, before producing anything.**
+   **With a process map**: an obligation that came from the map (`coverage-contract.md` §6.1.1) reaches the render through the same chain — the review of the approved blueprint must be complete for it, and a gap is returned upstream to the design author, never filled here. The render never reopens `inputs/` or the Excel to write the behaviour that went missing; the map in the package is the AS-IS, read with the decisions.
    `coverage-contract.md` §8.2 requires the authorities **that** deliverable declares to be
    current, and §8.3 requires the version it reads to be the one its own template names. Run
    it explicitly — the hook is a convenience, never the mechanism:

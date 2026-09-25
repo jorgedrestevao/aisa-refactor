@@ -230,7 +230,45 @@ def mark_resolved(md, row_id, successors):
     return "\n".join(out) + ("\n" if md.endswith("\n") else "")
 
 
-def append_row(md, state, cells):
+def _elementos_at(headers):
+    for i, h in enumerate(headers):
+        if h.strip().lower() == "elementos":
+            return i
+    return None
+
+
+def _fit_elementos(headers, cells, elementos=""):
+    """process-map M3: as transições montam as células sem `elementos`; numa secção que
+    tem a coluna, a relação da linha antiga passa para a nova (vazia = não avaliada)."""
+    ei = _elementos_at(headers)
+    if ei is not None and len(cells) == len(headers) - 1:
+        return cells[:ei] + [elementos or ""] + cells[ei:]
+    return cells
+
+
+def _column_index(headers, cells, k):
+    """O índice da coluna `k` nas células da linha: numa linha escrita sem `elementos`
+    (uma célula a menos), as colunas a seguir a ela recuam uma posição."""
+    ei = _elementos_at(headers)
+    if ei is not None and len(cells) - 1 == len(headers) - 1 and k > ei:
+        return k - 1
+    return k
+
+
+def _section_headers(md, state):
+    lines = md.splitlines()
+    heading = "## " + state
+    start = next((i for i, l in enumerate(lines) if l.strip() == heading), -1)
+    for line in lines[start + 1:] if start >= 0 else []:
+        if line.startswith("## "):
+            break
+        if line.lstrip().startswith("|"):
+            return [c.strip() for c in line.strip().strip("|").split("|")]
+    return []
+
+
+def append_row(md, state, cells, elementos=""):
+    cells = _fit_elementos(_section_headers(md, state), list(cells), elementos)
     lines = md.splitlines()
     heading = "## " + state
     start = next((i for i, l in enumerate(lines) if l.strip() == heading), -1)
@@ -293,7 +331,8 @@ def plan(eng, row_id, answer_text, answered_by, locator="", inference=False,
     claim_text = claim or (answer_text.strip().splitlines() or [""])[0]
     cells = [new_id, lens, claim_text, basis, when, "organizacional", ronda]
 
-    su_new = append_row(mark_resolved(md, row_id, [new_id]), state, cells)
+    su_new = append_row(mark_resolved(md, row_id, [new_id]), state, cells,
+                        elementos=row.get("elementos_raw", ""))
 
     ans_old = lido[ANSWERS_FILE]["text"] or "# Respostas\n"
     ans_new = ans_old.rstrip("\n") + "\n" + answers_section(row_id, answer_text, answered_by, when)
@@ -643,6 +682,7 @@ def set_cell(md, row_id, coluna, valor):
     k = headers.index(coluna)
     linhas = md.splitlines()
     cells = linhas[i].rstrip().rstrip("|").split("|")
+    k = _column_index(headers, cells, k)
     # `split("|")` sobre `| a | b |` da um primeiro elemento vazio: o indice da coluna k
     # esta em k+1.
     cells[k + 1] = " {} ".format(valor)
@@ -660,6 +700,7 @@ def append_cell(md, row_id, coluna, sufixo):
     k = headers.index(coluna)
     linhas = md.splitlines()
     cells = linhas[i].rstrip().rstrip("|").split("|")
+    k = _column_index(headers, cells, k)
     actual = cells[k + 1].strip()
     if sufixo in actual:
         return md                      # ja la esta: repetir nao acrescenta informacao
@@ -924,7 +965,8 @@ def plan_resolve_conflict(eng, row_id, sides, by_owner, by=None, today=""):
         base = "RESOLUCAO {w} — {q} (was {old}), {af}#{old}".format(
             w=when, q=quem, old=row_id, af=ANSWERS_FILE)
         cells = [novo_id, lens, str(lado), base, when, "organizacional", ronda]
-        su_new = append_row(su_new, estado_alvo, cells)
+        su_new = append_row(su_new, estado_alvo, cells,
+                            elementos=row.get("elementos_raw", ""))
         novos.append(novo_id)
     su_new = mark_resolved(su_new, row_id, novos)
 
@@ -1217,7 +1259,7 @@ CITED_FILES = ("answers.md", "enquadramento.md", "decisions.md", "context.json",
                SU_FILE)
 CITED_DIRS_RE = re.compile(
     r"(?<![\w/.-])((?:_capture|inputs|_blueprint|_synthesis|_simulation|_render|_coverage|"
-    r"lens-outputs)/[^\s`|)#,;'\"<>]+)")
+    r"lens-outputs|_map)/[^\s`|)#,;'\"<>]+)")
 CITED_NAME_RE = re.compile(r"(?<![\w/.-])([\w.\-]+\.(?:xlsx|xlsm|docx|pdf|vtt|srt|txt|csv))",
                            re.I)
 CITED_IDS = (
@@ -1227,6 +1269,10 @@ CITED_IDS = (
     (re.compile(r"\bO-\d{3,}\b"), "options.md"),
     (re.compile(r"\bM-\d+\b"), "enquadramento.md"),
     (re.compile(r"\b[CAUXR]-\d{3,}\b"), SU_FILE),
+    # process-map M3: os elementos do mapa (`MAPN-004`), citados na coluna `elementos` e
+    # nas respostas às dúvidas (`MAPG-…`). `MAP-D-001` nunca foi um id do mapa: seria
+    # lido como a decisão `D-001` (docs/process-map/M0) — por isso os prefixos não têm hífen.
+    (re.compile(r"\bMAP[LNEDG]-\d{3,}\b"), "_map/map.json"),
 )
 # handoff-v1 F5: os candidatos `O-NNN` têm autoridade em `_design/candidates.json`;
 # `options.md` é a sua projecção legível. Declarar qualquer dos dois cobre a citação.
