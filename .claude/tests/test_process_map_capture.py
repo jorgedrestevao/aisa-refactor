@@ -175,6 +175,23 @@ class ExtraccaoIncompleta(Base):
         self.assertIn("palavra-passe", html)
 
 
+class VistaDepoisDaValidacao(Base):
+
+    def test_a_page_built_before_the_block_is_stale_and_a_rebuild_shows_it(self):
+        self.published()
+        antes = P["render"](self.eng).read_text(encoding="utf-8")
+        self.assertIn("por validar", antes)
+        dec = self.eng / "decisions.md"
+        dec.write_text(dec.read_text(encoding="utf-8") + P["approval_block"](
+            self.eng, "processo diário", "MAPG-001 por esclarecer",
+            "owner (Responsável de Pricing, via AskUserQuestion)", "2026-09-25T11:19:46Z"),
+            encoding="utf-8")
+        self.assertEqual((self.eng / "process-map.html").read_text(encoding="utf-8"), antes,
+                         "o bloco sozinho não muda a página já gerada")
+        depois = P["render"](self.eng).read_text(encoding="utf-8")
+        self.assertNotIn("nenhuma validação do dono registada", depois)
+
+
 class LigacaoDasSkills(unittest.TestCase):
 
     def test_capture_authors_publishes_renders_and_asks_the_owner(self):
@@ -185,6 +202,15 @@ class LigacaoDasSkills(unittest.TestCase):
                       "never one question per cell"):
             self.assertIn(frase, CAPTURE)
         self.assertLess(CAPTURE.index("5. **L2 — process model**"), CAPTURE.index("5d. **Process map"))
+
+    def test_the_validation_step_rebuilds_the_page_after_the_block(self):
+        # Piloto M5: a página gerada antes do bloco continuou «por validar» depois de o dono
+        # validar — o passo 5e.d publicava o bloco sem voltar a gerar a vista.
+        passo = CAPTURE[CAPTURE.index("5e. **Owner validation of the map**"):
+                        CAPTURE.index("6. **Evidence index**")]
+        depois = passo[passo.index("process_map.py approval-block"):]
+        self.assertIn("process_map.py render --engagement <slug>", depois)
+        self.assertIn("dashboard.py --engagement <slug> --quiet", depois)
 
     def test_round_reads_the_map_status_before_the_passagem(self):
         self.assertIn("2b. **Process map check**", ROUND)
