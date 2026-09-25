@@ -2439,6 +2439,16 @@
      "evidence": "docs/process-map/M4/demo.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M5/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M5 do mapa de processo (piloto, corte captura+mapa): cita as validações D-NNN do piloto e os achados de cobertura por id. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M5/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
