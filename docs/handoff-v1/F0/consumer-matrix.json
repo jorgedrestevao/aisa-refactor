@@ -1043,6 +1043,16 @@
      "evidence": "docs/process-map/M1/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/process_map.py",
+     "kind": "engine",
+     "role": "declares-contract",
+     "mechanism": "Motor do mapa de conhecimento do processo: declara que o mapa organiza conhecimento e referências e que a SU continua a ser a autoridade dos factos; não lê nem escreve a SU no M1 (a coluna `elementos` chega no M3).",
+     "via": "",
+     "evidence": "library/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2247,6 +2257,16 @@
      "mechanism": "Relatório M1 do mapa de conhecimento do processo: descreve o motor, a publicação coordenada, a guarda de _map/ e as relações previstas com SU, decisões e estado. Documentação, não runtime.",
      "via": "",
      "evidence": "docs/process-map/M1/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/process_map.py",
+     "kind": "engine",
+     "role": "reader",
+     "mechanism": "Lê os cabeçalhos `## D-NNN` de decisions.md para validar o `decision_ref` de um órfão `out_of_scope` material; nunca escreve decisões.",
+     "via": "",
+     "evidence": "library/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -6716,6 +6736,16 @@
      "mechanism": "Relatório M1 do mapa de conhecimento do processo: descreve o motor, a publicação coordenada, a guarda de _map/ e as relações previstas com SU, decisões e estado. Documentação, não runtime.",
      "via": "",
      "evidence": "docs/process-map/M1/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/process_map.py",
+     "kind": "engine",
+     "role": "reader",
+     "mechanism": "Resolve `--engagement` pelo `find_engagement` do coverage.py, que reconhece um engagement pelo `_state.json`; não lê nem escreve o estado.",
+     "via": "",
+     "evidence": "library/kernel/tools/process_map.py",
      "confidence": "verified",
      "source": "inventory"
     }

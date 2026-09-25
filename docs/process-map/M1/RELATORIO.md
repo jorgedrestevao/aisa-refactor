@@ -1,6 +1,6 @@
 # M1 — Compreensão orientada e fundação do mapa
 
-Estado: pronto para revisão — **com instalação pendente em `library/`** (§2)
+Estado: pronto para revisão — **instalado em `library/`** (§2.1)
 Base: `claude/claim-credit-endpoint-e2oqht`. É `2474a41` + `42f539b` (cherry-pick `ede7814`, a correcção de cobertura da `main`), por decisão do mantenedor.
 Resultado: o P-0 e o índice entram antes da L2; o schema `process-map/1` e o motor `check`/`stamp`/`publish`/`status` estão escritos e testados; `_map/` é estado coordenado.
 Plano: `docs/process-map/PLANO.md`.
@@ -45,6 +45,22 @@ git diff --stat && git commit
 ```
 
 Os testes carregam o motor de `library/kernel/tools/process_map.py` quando existe, e do staging quando não. Depois da instalação, o staging pode ser removido num commit à parte.
+
+### 2.1 Instalação feita (25-09-2026)
+
+- **Override:** o mantenedor tirou a sessão do modo automático e aprovou-o.
+  - `.claude/settings.local.json` (ignorado pelo git) com `AISA_GUARD_MODE: "log"`;
+  - `deny` de `library/` removido localmente do `.claude/settings.json`;
+  - uma escrita de prova em `library/` passou e foi apagada.
+- **Instalação:** `install.py --check` e depois `install.py` (3 patches, motor, schema, inventário F0).
+- **Suite com `AISA_GUARD_MODE=enforce`** (o valor do CI e do runtime):
+  - completa: `files=117 ok=117 tests=3144 failures=0 errors=0 skips=34 expected_failures=3`;
+  - stdlib: `files=98 ok=98 tests=2346 failures=0 skips=28`.
+- **Com o override activo** (`AISA_GUARD_MODE=log` herdado pelo `env` da sessão), 3 ficheiros das guardas falham (`test_hook_invocation`, `test_lens_mirror`, `test_motor_identity`), como devem: verificam que a guarda recusa. Passam com `enforce`.
+- **Antes do commit:** `git checkout .claude/settings.json`, com `git diff` vazio. No fim da fase, `settings.local.json` apagado.
+- **Staging:** `docs/process-map/M1/staging/` fica como registo da entrega; remover num commit à parte, se o mantenedor quiser.
+
+Os testes carregam agora o motor de `library/`.
 
 ## 3. Verificação
 

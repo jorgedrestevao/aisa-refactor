@@ -32,6 +32,7 @@ synthesis_prompt: |
 
 > Sources: {{files + sha256 first 8 chars, comma-separated}}  |  Generated: {{ISO-8601}}  |  Capture run: {{N}}
 > Source dispositions: {{per source — USED | CHECKED | TARGETED (named sections) — mirrored in `_capture-log.md`}}
+> P-0: {{consumed (T1–T7) | absent — no enquadramento.md | absent — "não declarado"}} — read before interpretation (`aisa-capture` step 5a0); divergences between the owner's declaration and the sources are §4 lines citing both sides
 
 ## 1. File map
 
