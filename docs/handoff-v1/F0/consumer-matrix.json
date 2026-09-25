@@ -1103,6 +1103,16 @@
      "evidence": "docs/process-map/M2/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -4404,6 +4414,16 @@
      "evidence": "docs/process-map/M4/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -7006,6 +7026,16 @@
      "mechanism": "Resolve `--engagement` pelo `find_engagement` do coverage.py, que reconhece um engagement pelo `_state.json`; não lê nem escreve o estado.",
      "via": "",
      "evidence": "library/kernel/tools/process_map.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }
