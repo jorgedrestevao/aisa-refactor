@@ -69,7 +69,7 @@ paralelo.
   - `_capture/<wb>.calc-chain.json#CALC-003` (**sempre** pelo ficheiro: o mesmo `CALC-003`
     existe noutros workbooks);
   - `_capture/<f>.extraction.json#sheets[name=<folha>]`;
-  - `_capture/<f>.text.md#¶12`;
+  - `_capture/<f>.text.md#¶12`, ou um intervalo `#¶6–9` (cobre todos os parágrafos do intervalo);
   - `enquadramento.md#T4`.
 - Nunca se inventa uma referência para passar no `check`.
 
@@ -85,6 +85,24 @@ Cada `PM-NNN`, cada `PM-U-NNN`, cada `CALC-NNN` de cada workbook e cada etiqueta
 | `out_of_scope` | Não pertence ao processo a entregar | Justificação obrigatória; se for material, só com a decisão (`D-NNN`) que a autoriza |
 
 Um órfão não é cobertura. Os abertos acompanham a validação, o Discovery e o blueprint.
+
+### Fontes curtas: parágrafo a parágrafo
+
+Cada parágrafo com conteúdo de uma fonte de texto curta (extracção LT `ok`, até 60
+parágrafos; as transcrições com tempo `.vtt`/`.srt` ficam de fora) também tem destino: é
+citado num elemento ou disposto em `orphans` — `MAP-PASSAGE-UNPLACED` diz quais faltam, por
+fonte e em intervalos. É a pergunta «o que diz esta fonte que o mapa não mostra?», feita a
+todas as frases de uma nota, uma citação ou um e-mail do dono — foi assim que uma exceção
+dita textualmente pelo dono ficou fora do mapa no piloto M5, apesar de o process-model a
+citar como «complexidade».
+
+- Metadados (data, autor, cabeçalho) dispõem-se em bloco: `out_of_scope`, `not-material`,
+  com a nota.
+- Uma dor, uma exceção ou uma dependência dita pelo dono é **um elemento** (ou uma dúvida
+  presa a um), não um órfão — citar o parágrafo num detalhe genérico para o calar é
+  satisfazer o validador.
+- Uma fonte mais longa aparece como lacuna `MAP-SOURCE-UNITEMIZED`: não foi verificada
+  parágrafo a parágrafo, e a validação do dono sabe-o.
 
 ## Identidade e linhagem
 

@@ -6103,7 +6103,7 @@ CSS = """
 .pmap .lane-t{fill:var(--ink);font:600 12px var(--f-ui)}.pmap .lane-k{fill:var(--ink2);font:11px var(--f-ui)}
 .pmap .node{fill:var(--panel);stroke:var(--ink2);stroke-width:1.2}.pmap .node.exception{stroke:var(--warn);stroke-dasharray:5 3}
 .pmap .node.unknown{stroke-dasharray:2 3}.pmap .node.output{stroke:var(--brand);stroke-width:2}.pmap .node.decision{fill:var(--a-tint)}
-.pmap .nt{fill:var(--ink);font:12px var(--f-ui)}.pmap .nm{fill:var(--warn);font:italic 11px var(--f-ui)}
+.pmap .nt{fill:var(--ink);font:12px var(--f-ui)}.pmap .nm{fill:var(--warn);font:italic 11px var(--f-ui)}.pmap .ns{fill:var(--ink2);font:11px var(--f-ui)}
 .pmap .num{fill:var(--accent)}.pmap .numt{fill:#FFFFFF;font:600 11px var(--f-ui)}
 .pmap .edge{fill:none;stroke:var(--ink2);stroke-width:1.3}.pmap .edge.exception{stroke:var(--warn);stroke-dasharray:6 4}
 .pmap .el{fill:var(--ink2);font:11px var(--f-ui)}.pmap .q{fill:var(--warn);font:700 13px var(--f-ui)}

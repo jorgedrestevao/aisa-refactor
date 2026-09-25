@@ -101,6 +101,7 @@ MAP_ID_REUSED = "MAP-ID-REUSED"
 MAP_WAS_UNKNOWN = "MAP-WAS-UNKNOWN"
 MAP_PUBLISHED_INVALID = "MAP-PUBLISHED-INVALID"
 MAP_DRAFT_INSIDE = "MAP-DRAFT-INSIDE"
+MAP_PASSAGE_UNPLACED = "MAP-PASSAGE-UNPLACED"
 
 EXIT_OK, EXIT_ERROR, EXIT_GAPS, EXIT_INTERNAL = 0, 2, 4, 5
 
@@ -111,6 +112,13 @@ SYN_LINE_RE = re.compile(r"^- (OBSERVED|INFERRED|HYPOTHESIS|UNKNOWN)\b(.*)$")
 SYN_LABEL_RE = re.compile(r"^\s*(?:\([^)]*\)\s*)?—\s*`([^`]+)`")
 SHEET_SEL_RE = re.compile(r"^sheets\[name=(?P<name>[^\]]+)\]$")
 HEADING_RE = re.compile(r"^(#{1,6})\s")
+# parágrafos das fontes de texto (extracção LT): `[¶N] texto` e a âncora `¶N` ou `¶N–M`
+PARA_LINE_RE = re.compile(r"^\[¶(\d+)\]\s?(.*)$")
+PARA_ANCHOR_RE = re.compile(r"^¶(\d+)(?:[–-](\d+))?$")
+# fonte curta = até este número de parágrafos; transcrições com tempo (.vtt/.srt) ficam
+# de fora — são falas, não parágrafos, e o mapa cita-as por intervalo de tempo
+PASSAGE_LIMIT = 60
+TIMED_FORMATS = (".vtt", ".srt")
 
 
 def _repo_tools() -> Path:
@@ -294,7 +302,7 @@ def resolve_ref(eng, ref: str) -> dict:
     eng = Path(eng)
     rel, anchor = split_ref(ref)
     out = {"status": "unresolved", "path": rel, "anchor": anchor, "digest": "",
-           "verified_anchor": False, "detail": "", "unit": ""}
+           "verified_anchor": False, "detail": "", "unit": "", "units": []}
     if any(rel.startswith(d) for d in FORBIDDEN_REF_DIRS):
         out["detail"] = "fonte não admitida: `{}` é estado coordenado".format(rel)
         return out
@@ -351,6 +359,24 @@ def resolve_ref(eng, ref: str) -> dict:
             out.update(status="ok", digest=_sha_text("\n".join(hit)), verified_anchor=True,
                        unit="{}#§4:{}".format(PM_REL, label))
             return out
+        para = PARA_ANCHOR_RE.match(anchor) if rel.endswith(".text.md") else None
+        if para and para.group(2):
+            lo, hi = int(para.group(1)), int(para.group(2))
+            by_n = {}
+            for line in lines:
+                pm = PARA_LINE_RE.match(line)
+                if pm:
+                    by_n[int(pm.group(1))] = line
+            want = list(range(lo, hi + 1))
+            if hi < lo or any(k not in by_n for k in want):
+                out["detail"] = "parágrafos `{}` não existem todos em `{}`".format(anchor, rel)
+                return out
+            out.update(status="ok", digest=_sha_text("\n".join(by_n[k] for k in want)),
+                       verified_anchor=True,
+                       units=["{}#¶{}".format(rel, k) for k in want])
+            return out
+        if para:
+            out["units"] = ["{}#¶{}".format(rel, para.group(1))]
         if rel == PM_REL and CALC_RE.fullmatch(anchor):
             owners = [c for c in calc_chain_files(eng) if _calc_block(eng, c, anchor)]
             if len(owners) > 1:
@@ -370,7 +396,7 @@ def resolve_ref(eng, ref: str) -> dict:
             hit = [line for line in lines if tok.search(line)]
             if not hit:
                 out["detail"] = "âncora `{}` não encontrada em `{}`".format(anchor, rel)
-                out["unit"] = ""
+                out["unit"], out["units"] = "", []
                 return out
             out.update(status="ok", digest=_sha_text("\n".join(hit)), verified_anchor=True)
         if rel == PM_REL and (PM_RULE_RE.fullmatch(anchor) or PM_Q_RE.fullmatch(anchor)):
@@ -409,6 +435,49 @@ def transfer_units(eng) -> dict:
             if isinstance(b, dict) and CALC_RE.fullmatch(str(b.get("id", ""))):
                 units["{}#{}".format(rel, b["id"])] = "calculation"
     return units
+
+
+def passage_units(eng) -> dict:
+    """`{units: {chave: texto}, unitemized: [caminho]}` — os parágrafos com conteúdo das
+    fontes de texto curtas (extracção LT com estado `ok`, até `PASSAGE_LIMIT` parágrafos,
+    sem as transcrições com tempo). Cada um tem de ter destino no mapa: citado num elemento
+    ou disposto em `orphans`. Uma fonte mais longa não se verifica parágrafo a parágrafo, e o
+    `check` di-lo (lacuna explícita)."""
+    eng = Path(eng)
+    out = {"units": {}, "unitemized": []}
+    cap = eng / "_capture"
+    if not cap.is_dir():
+        return out
+    for p in sorted(cap.glob("*.extraction.json")):
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(data, dict) or data.get("artefact") != "aisa.capture.text-extraction":
+            continue
+        if data.get("status") != "ok":
+            continue
+        ident = data.get("identity") or {}
+        if str(ident.get("format", "")).lower() in TIMED_FORMATS:
+            continue
+        name = (data.get("output") or {}).get("text_md") or ""
+        text_p = cap / name
+        if not name or not text_p.is_file():
+            continue
+        rel = "_capture/" + name
+        paras = {}
+        for line in text_p.read_text(encoding="utf-8", errors="replace").splitlines():
+            pm = PARA_LINE_RE.match(line)
+            if pm:
+                body = pm.group(2).lstrip("> ").strip()
+                if re.search(r"\w", body):
+                    paras[int(pm.group(1))] = body
+        if len(paras) > PASSAGE_LIMIT:
+            out["unitemized"].append(rel)
+            continue
+        for n, body in sorted(paras.items()):
+            out["units"]["{}#¶{}".format(rel, n)] = body
+    return out
 
 
 # ============================================================= check
@@ -519,6 +588,7 @@ def check(eng, draft: dict, draft_path=None) -> dict:
         referenced_files.add(r["path"])
         if r["unit"]:
             covered_units.add(r["unit"])
+        covered_units.update(r["units"])
         if "sha256" not in ev:
             errors.append(_diag(MAP_REF_UNSTAMPED, "referência sem digest: `stamp` preenche "
                                                    "o que falta", where))
@@ -541,6 +611,7 @@ def check(eng, draft: dict, draft_path=None) -> dict:
             referenced_files.add(r["path"])
             if r["unit"]:
                 covered_units.add(r["unit"])
+            covered_units.update(r["units"])
         if o["reason"] == "out_of_scope":
             if not o["note"].strip():
                 errors.append(_diag(MAP_ORPHAN_UNJUSTIFIED, "fora de âmbito sem justificação",
@@ -635,12 +706,43 @@ def check(eng, draft: dict, draft_path=None) -> dict:
         gaps.append(_diag("MAP-SOURCE-INCOMPLETE", "extracção `{}`: {}{}".format(
             s["path"], s["status"], " — " + s["reason"] if s["reason"] else ""),
             s["path"], "gap"))
-    return _verdict(errors, gaps, warnings, units, missing)
+
+    # ---- fontes curtas: cada parágrafo com conteúdo tem destino no mapa ou disposição
+    pas = passage_units(eng)
+    open_pas: dict = {}
+    for key in pas["units"]:
+        if key not in covered_units:
+            rel, n = key.rsplit("#¶", 1)
+            open_pas.setdefault(rel, []).append(int(n))
+    for rel in sorted(open_pas):
+        errors.append(_diag(MAP_PASSAGE_UNPLACED, "`{}`: {} sem destino no mapa — citar num "
+                            "elemento ou dispor em `orphans` (âncora `¶N` ou `¶N–M`)".format(
+                                rel, _para_ranges(open_pas[rel])), rel))
+    for rel in pas["unitemized"]:
+        gaps.append(_diag("MAP-SOURCE-UNITEMIZED", "`{}` tem mais de {} parágrafos: não se "
+                          "verifica parágrafo a parágrafo".format(rel, PASSAGE_LIMIT),
+                          rel, "gap"))
+    return _verdict(errors, gaps, warnings, units, missing,
+                    {"units": len(pas["units"]),
+                     "missing": sorted("{}#¶{}".format(r, n) for r, ns in open_pas.items()
+                                       for n in ns)})
 
 
-def _verdict(errors, gaps, warnings, units, missing) -> dict:
+def _verdict(errors, gaps, warnings, units, missing, passages=None) -> dict:
     return {"valid": not errors, "errors": errors, "gaps": gaps, "warnings": warnings,
-            "transfer": {"units": len(units), "missing": missing}}
+            "transfer": {"units": len(units), "missing": missing},
+            "passages": passages or {"units": 0, "missing": []}}
+
+
+def _para_ranges(ns) -> str:
+    """[1,2,3,5] → «¶1–3, ¶5»."""
+    ns, out = sorted(set(ns)), []
+    for n in ns:
+        if out and n == out[-1][1] + 1:
+            out[-1][1] = n
+        else:
+            out.append([n, n])
+    return ", ".join("¶{}".format(a) if a == b else "¶{}–{}".format(a, b) for a, b in out)
 
 
 # ============================================================= stamp
@@ -1296,6 +1398,7 @@ svg .node.output{stroke:var(--brand);stroke-width:2}
 svg .node.decision{fill:var(--a-tint)}
 svg .nt{fill:var(--ink);font:12px var(--f-ui)}
 svg .nm{fill:var(--warn);font:italic 11px var(--f-ui)}
+svg .ns{fill:var(--ink2);font:11px var(--f-ui)}
 svg .num{fill:var(--accent)}svg .numt{fill:#FFFFFF;font:600 11px var(--f-ui)}
 svg .edge{fill:none;stroke:var(--ink2);stroke-width:1.3}
 svg .edge.exception{stroke:var(--warn);stroke-dasharray:6 4}
@@ -1311,7 +1414,13 @@ ul.q{margin:4px 0 12px;padding-left:20px}
 .empty{color:var(--ink2)}
 """
 
-COL_W, NODE_W, NODE_H, LANE_LBL, PAD_Y, GAP_Y = 210, 170, 62, 150, 14, 10
+COL_W, NODE_W, NODE_H, LANE_LBL, PAD_Y, GAP_Y = 200, 164, 66, 170, 18, 26
+
+# As faixas desenham-se agrupadas pelo tipo (`lane.kind`), por esta ordem e com estes nomes;
+# o subtítulo diz quem ou o quê. O mapa guarda as faixas como estão: agrupar é só da vista.
+BAND_ORDER = ("actor", "tool", "channel", "consumer", "downstream")
+BAND_TITLE = {"actor": "Humano", "tool": "Ferramenta", "channel": "Publicação",
+              "consumer": "Quem recebe", "downstream": "Sistema a jusante"}
 
 
 def _e(text) -> str:
@@ -1336,36 +1445,95 @@ def _wrap(label: str, width: int = 24, lines: int = 3) -> list:
     return out or [""]
 
 
+def _ranks(m: dict) -> dict:
+    """Coluna de cada nó = a sua posição no fluxo: 0 para quem não tem antecessor, senão
+    um a mais do que o antecessor mais adiantado. Só contam ligações para a frente (pela
+    `order`, empate pelo id) — um retorno nunca empurra a coluna. Uma exceção alcançada só
+    por ligação de exceção fica na coluna de onde sai, junto do passo que a origina."""
+    key = {n["id"]: (n["order"], n["id"]) for n in m["nodes"]}
+    fwd = [e for e in m["edges"] if e["src"] in key and e["dst"] in key
+           and key[e["src"]] < key[e["dst"]]]
+    rank: dict = {}
+    for nid in sorted(key, key=lambda n: key[n]):
+        into = [e for e in fwd if e["dst"] == nid]
+        flow = [rank[e["src"]] + 1 for e in into if e["kind"] != "exception"]
+        side = [rank[e["src"]] for e in into if e["kind"] == "exception"]
+        rank[nid] = max(flow) if flow else (max(side) if side else 0)
+    return rank
+
+
 def layout(m: dict) -> dict:
-    """Posições deterministas: faixa → linha, `order` → coluna; empates pelo id."""
-    lanes = [la["id"] for la in m["lanes"]]
-    orders = sorted({n["order"] for n in m["nodes"]})
-    col = {o: i for i, o in enumerate(orders)}
+    """Posições deterministas. Faixas agrupadas pelo tipo (`BAND_ORDER`), só as que têm nós;
+    coluna pela posição no fluxo (`_ranks`); na mesma faixa e coluna, empilhados por `order`
+    e id, as exceções por baixo. A numeração segue o caminho principal e depois as exceções.
+    Mesmos inputs, mesmas posições."""
+    used = {n["lane"] for n in m["nodes"]}
+    kinds = [k for k in BAND_ORDER if any(la["kind"] == k and la["id"] in used
+                                          for la in m["lanes"])]
+    band_of = {la["id"]: la["kind"] for la in m["lanes"]}
+    count = {}
+    for n in m["nodes"]:
+        count[n["lane"]] = count.get(n["lane"], 0) + 1
+    # membros por frequência (empate pela ordem das faixas): o primeiro é o de omissão —
+    # os passos dele não repetem o nome; os dos outros dizem quem os faz
+    order = {la["id"]: i for i, la in enumerate(m["lanes"])}
+    member_ids = {k: sorted((la["id"] for la in m["lanes"] if la["kind"] == k and la["id"] in used),
+                            key=lambda lid: (-count[lid], order[lid])) for k in kinds}
+    label_of = {la["id"]: la["label"] for la in m["lanes"]}
+    members = {k: [label_of[lid] for lid in member_ids[k]] for k in kinds}
+    rank = _ranks(m)
     stacks: dict = {}
-    for n in sorted(m["nodes"], key=lambda n: (n["order"], n["id"])):
-        stacks.setdefault((n["lane"], n["order"]), []).append(n["id"])
-    depth = {la: max([len(v) for (l2, _o), v in stacks.items() if l2 == la] or [1])
-             for la in lanes}
-    y, lane_y = 0, {}
-    for la in lanes:
-        h = PAD_Y * 2 + depth[la] * NODE_H + (depth[la] - 1) * GAP_Y
-        lane_y[la] = (y, h)
+    for n in sorted(m["nodes"], key=lambda n: (n["kind"] == "exception", n["order"], n["id"])):
+        stacks.setdefault((band_of[n["lane"]], rank[n["id"]]), []).append(n["id"])
+    depth = {k: max([len(v) for (b, _r), v in stacks.items() if b == k] or [1]) for k in kinds}
+    y, band_y = 0, {}
+    for k in kinds:
+        h = PAD_Y * 2 + depth[k] * NODE_H + (depth[k] - 1) * GAP_Y
+        band_y[k] = (y, h)
         y += h
     pos = {}
-    for (la, o), ids in stacks.items():
-        top = lane_y[la][0] + PAD_Y
+    for (k, r), ids in stacks.items():
+        top = band_y[k][0] + PAD_Y
         for i, nid in enumerate(ids):
-            pos[nid] = (LANE_LBL + 20 + col[o] * COL_W, top + i * (NODE_H + GAP_Y))
-    number = {nid: i + 1 for i, nid in enumerate(
-        sorted(pos, key=lambda n: (col[next(x["order"] for x in m["nodes"] if x["id"] == n)],
-                                   lanes.index(next(x["lane"] for x in m["nodes"]
-                                                    if x["id"] == n)), n)))}
-    width = LANE_LBL + 40 + max(1, len(orders)) * COL_W
+            pos[nid] = (LANE_LBL + 20 + r * COL_W, top + i * (NODE_H + GAP_Y))
+    reached = {e["dst"] for e in m["edges"] if e["kind"] != "exception"}
+    exc = {n["id"] for n in m["nodes"] if n["kind"] == "exception" and n["id"] not in reached}
+    number = {nid: i + 1 for i, nid in enumerate(sorted(
+        pos, key=lambda n: (n in exc, rank[n], pos[n][1], n)))}
+    cols = max(rank.values(), default=0) + 1
+    width = LANE_LBL + 40 + cols * COL_W - (COL_W - NODE_W)
     back = any(e["src"] in pos and e["dst"] in pos and pos[e["dst"]][0] < pos[e["src"]][0]
                for e in m["edges"])
-    return {"pos": pos, "lane_y": lane_y, "width": width,
-            "height": max(y, 1) + (40 if back else 0),
-            "number": number}
+    return {"pos": pos, "band_y": band_y, "bands": kinds, "members": members,
+            "named": {lid for k in kinds for lid in member_ids[k][1:]}, "band_of": band_of,
+            "width": width, "height": max(y, 1) + (30 if back else 0), "number": number}
+
+
+def _edge_path(sx, sy, dx, dy, height):
+    """Ligação em ângulo recto entre dois nós; `(d, lx, ly, anchor)`."""
+    if sx == dx:
+        if dy > sy:     # mesma coluna, por baixo: desce a direito
+            x = sx + NODE_W / 2
+            return ("M{:.0f},{:.0f} V{:.0f}".format(x, sy + NODE_H, dy),
+                    x + 6, (sy + NODE_H + dy) / 2 + 4, "start")
+        gx = sx + NODE_W + (COL_W - NODE_W) / 2   # por cima: contorna pela direita
+        return ("M{:.0f},{:.0f} H{:.0f} V{:.0f} H{:.0f}".format(
+            sx + NODE_W, sy + NODE_H / 2, gx, dy + NODE_H / 2, sx + NODE_W),
+            gx + 4, (sy + dy) / 2 + NODE_H / 2, "start")
+    if dx > sx:
+        x1, y1, x2, y2 = sx + NODE_W, sy + NODE_H / 2, dx, dy + NODE_H / 2
+        mx = x2 - (COL_W - NODE_W) / 2
+        if abs(y1 - y2) < 1:
+            return ("M{:.0f},{:.0f} H{:.0f}".format(x1, y1, x2),
+                    (x1 + x2) / 2, y1 - 6, "middle")
+        return ("M{:.0f},{:.0f} H{:.0f} V{:.0f} H{:.0f}".format(x1, y1, mx, y2, x2),
+                mx + 4, (y1 + y2) / 2, "start")
+    # para trás: por baixo do diagrama, sem atravessar os nós
+    x1, x2 = sx + NODE_W / 2, dx + NODE_W / 2
+    low = height - 12
+    return ("M{:.0f},{:.0f} V{:.0f} H{:.0f} V{:.0f}".format(x1, sy + NODE_H, low, x2,
+                                                         dy + NODE_H),
+            (x1 + x2) / 2, low - 4, "middle")
 
 
 def render_svg(m: dict) -> str:
@@ -1379,59 +1547,32 @@ def render_svg(m: dict) -> str:
     for d in m["details"]:
         if d["id"] in gap_on:
             gap_on.update(d["attaches_to"])
+    lane_label = {la["id"]: la["label"] for la in m["lanes"]}
     o = ['<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 {} {}" '
          'role="img" aria-label="Fluxograma do processo por faixas">'.format(W, H, W, H),
          '<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
          'markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" '
          'fill="currentColor"/></marker></defs>']
-    for i, la in enumerate(m["lanes"]):
-        y, h = lay["lane_y"][la["id"]]
+    for i, k in enumerate(lay["bands"]):
+        y, h = lay["band_y"][k]
         if i % 2 == 0:
             o.append('<rect class="lane-bg" x="0" y="{}" width="{}" height="{}"/>'.format(y, W, h))
         o.append('<line class="lane-sep" x1="0" y1="{0}" x2="{1}" y2="{0}"/>'.format(y + h, W))
-        lab = _wrap(la["label"], 18, 2)
-        for j, line in enumerate(lab):
-            o.append('<text class="lane-t" x="12" y="{}">{}</text>'.format(y + 24 + j * 15,
+        o.append('<text class="lane-t" x="12" y="{}">{}</text>'.format(y + 26, _e(BAND_TITLE[k])))
+        for j, line in enumerate(_wrap(" · ".join(lay["members"][k]), 24, 3)):
+            o.append('<text class="lane-k" x="12" y="{}">{}</text>'.format(y + 43 + j * 14,
                                                                           _e(line)))
-        o.append('<text class="lane-k" x="12" y="{}">{}</text>'.format(
-            y + 40 + (len(lab) - 1) * 15, _e(LANE_LABEL.get(la["kind"], la["kind"]))))
     for e in sorted(m["edges"], key=lambda e: e["id"]):
         if e["src"] not in pos or e["dst"] not in pos:
             continue
         (sx, sy), (dx, dy) = pos[e["src"]], pos[e["dst"]]
-        x1, y1 = sx + NODE_W, sy + NODE_H / 2
-        x2, y2 = dx, dy + NODE_H / 2
-        if sx == dx:
-            # mesma coluna, outra linha: por fora, à direita, sem atravessar o que está
-            # empilhado entre os dois
-            gx = sx + NODE_W + 22
-            d = "M{:.0f},{:.0f} H{:.0f} V{:.0f} H{:.0f}".format(x1, y1, gx, y2, x1 + 8)
-            lx, ly = gx + 4, (y1 + y2) / 2
-            cls = "edge exception" if e["kind"] == "exception" else "edge"
-            o.append('<path class="{}" d="{}" marker-end="url(#arr)" style="color:var(--ink2)">'
-                     '<title>{}</title></path>'.format(cls, d, _e(e.get("label") or e["id"])))
-            if e.get("label"):
-                o.append('<text class="el" x="{:.0f}" y="{:.0f}">{}</text>'.format(
-                    lx, ly, _e(e["label"])))
-            continue
-        if x2 <= x1:
-            x1, x2 = sx + NODE_W / 2, dx + NODE_W / 2
-            y1, y2 = sy + NODE_H, dy + NODE_H
-            low = max(y1, y2) + 18
-            d = "M{:.0f},{:.0f} C{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f}".format(
-                x1, y1, x1, low, x2, low, x2, y2)
-            lx, ly = (x1 + x2) / 2, low
-        else:
-            mx = (x1 + x2) / 2
-            d = "M{:.0f},{:.0f} C{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f}".format(
-                x1, y1, mx, y1, mx, y2, x2, y2)
-            lx, ly = mx, (y1 + y2) / 2 - 4
+        d, lx, ly, anchor = _edge_path(sx, sy, dx, dy, H)
         cls = "edge exception" if e["kind"] == "exception" else "edge"
         o.append('<path class="{}" d="{}" marker-end="url(#arr)" style="color:var(--ink2)">'
                  '<title>{}</title></path>'.format(cls, d, _e(e.get("label") or e["id"])))
         if e.get("label"):
-            o.append('<text class="el" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
-                     .format(lx, ly, _e(e["label"])))
+            o.append('<text class="el" x="{:.0f}" y="{:.0f}" text-anchor="{}">{}</text>'
+                     .format(lx, ly, anchor, _e(e["label"])))
     for n in sorted(m["nodes"], key=lambda n: n["id"]):
         x, y = pos[n["id"]]
         cls = "node " + n["kind"] + (" unknown" if n["marker"] == "UNKNOWN" else "")
@@ -1440,20 +1581,29 @@ def render_svg(m: dict) -> str:
         if n["kind"] == "decision":
             cx, cy = x + NODE_W / 2, y + NODE_H / 2
             o.append('<polygon class="{}" points="{:.0f},{:.0f} {:.0f},{:.0f} {:.0f},{:.0f} '
-                     '{:.0f},{:.0f}"/>'.format(cls, cx, y - 4, x + NODE_W + 6, cy, cx,
-                                                y + NODE_H + 4, x - 6, cy))
+                     '{:.0f},{:.0f}"/>'.format(cls, cx, y - 10, x + NODE_W + 10, cy, cx,
+                                                y + NODE_H + 10, x - 10, cy))
         else:
             rx = 28 if n["kind"] == "trigger" else 6
             o.append('<rect class="{}" x="{}" y="{}" width="{}" height="{}" rx="{}"/>'.format(
                 cls, x, y, NODE_W, NODE_H, rx))
-        lines = _wrap(n["label"])
-        top = y + NODE_H / 2 - (len(lines) - 1) * 7 - (6 if n["marker"] != "OBSERVED" else 0)
+        sub = []
+        if n["marker"] != "OBSERVED":
+            sub.append(MARK_LABEL[n["marker"]])
+        if n["lane"] in lay["named"]:
+            sub.append(lane_label[n["lane"]])
+        dec = n["kind"] == "decision"
+        sub_line = _wrap(" · ".join(sub), 20 if dec else 27, 1)[0] if sub else ""
+        lines = _wrap(n["label"], 18 if dec else 24, 2 if sub_line else 3)
+        top = y + NODE_H / 2 - (len(lines) - 1) * 7 - (7 if sub_line else 0)
         for i, line in enumerate(lines):
             o.append('<text class="nt" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
                      .format(x + NODE_W / 2, top + i * 14 + 4, _e(line)))
-        if n["marker"] != "OBSERVED":
-            o.append('<text class="nm" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
-                     .format(x + NODE_W / 2, y + NODE_H - 8, _e(MARK_LABEL[n["marker"]])))
+        if sub_line:
+            cls_s = "nm" if n["marker"] != "OBSERVED" else "ns"
+            o.append('<text class="{}" x="{:.0f}" y="{:.0f}" text-anchor="middle">{}</text>'
+                     .format(cls_s, x + NODE_W / 2, y + NODE_H - (4 if dec else 9),
+                             _e(sub_line)))
         num = lay["number"][n["id"]]
         o.append('<circle class="num" cx="{}" cy="{}" r="10"/><text class="numt" x="{}" y="{}" '
                  'text-anchor="middle">{}</text>'.format(x, y, x, y + 4, num))

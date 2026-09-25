@@ -105,6 +105,84 @@ class IncompletudeVisivel(Base):
         self.assertEqual(svg.count('class="numt"'), 43)
 
 
+def _desenho():
+    """Mapa só para o desenho (não passa pelo `check`): duas pessoas, duas ferramentas, uma
+    faixa sem nós, uma decisão com ramo de exceção e uma exceção lateral."""
+    def n(i, kind, lane, order, label=None):
+        return {"id": "MAPN-{:03d}".format(i), "kind": kind, "label": label or "passo {}".format(i),
+                "lane": lane, "order": order, "marker": "OBSERVED", "evidence": []}
+
+    def e(i, s, d, kind="normal", label=None):
+        out = {"id": "MAPE-{:03d}".format(i), "src": "MAPN-{:03d}".format(s),
+               "dst": "MAPN-{:03d}".format(d), "kind": kind, "marker": "OBSERVED",
+               "evidence": []}
+        if label:
+            out["label"] = label
+        return out
+    return {
+        "lanes": [{"id": "MAPL-001", "label": "Operador", "kind": "actor"},
+                  {"id": "MAPL-002", "label": "Folha de cálculo", "kind": "tool"},
+                  {"id": "MAPL-003", "label": "Comité", "kind": "actor"},
+                  {"id": "MAPL-004", "label": "Correio", "kind": "channel"},
+                  {"id": "MAPL-005", "label": "Clientes", "kind": "consumer"}],
+        "nodes": [n(1, "trigger", "MAPL-002", 0), n(2, "step", "MAPL-001", 1),
+                  n(3, "decision", "MAPL-002", 2), n(4, "exception", "MAPL-001", 3),
+                  n(5, "step", "MAPL-002", 4), n(6, "exception", "MAPL-002", 5),
+                  n(7, "step", "MAPL-003", 6), n(8, "output", "MAPL-005", 7)],
+        "edges": [e(1, 1, 2), e(2, 2, 3), e(3, 3, 5, "branch", "sim"),
+                  e(4, 3, 4, "branch", "não"), e(5, 4, 5), e(6, 2, 6, "exception"),
+                  e(7, 5, 7), e(8, 7, 8)],
+        "details": [], "gaps": [], "orphans": [], "retired_ids": []}
+
+
+class MAP24_DesenhoLegivel(unittest.TestCase):
+    """Piloto M5: 10 faixas e curvas longas tornavam o mapa ilegível. O desenho agrupa por
+    tipo de faixa, põe cada passo na sua posição do fluxo e liga em ângulo recto — sem
+    mudar o conteúdo do mapa."""
+
+    def test_lanes_are_grouped_by_kind_in_a_fixed_order_and_empty_bands_are_dropped(self):
+        lay = P["layout"](_desenho())
+        self.assertEqual(lay["bands"], ["actor", "tool", "consumer"],
+                         "o canal sem passos não ocupa uma faixa")
+        self.assertEqual(lay["members"]["actor"], ["Operador", "Comité"],
+                         "o membro com mais passos vem primeiro")
+        svg = P["render_svg"](_desenho())
+        for titulo in ("Humano", "Ferramenta", "Quem recebe"):
+            self.assertIn('class="lane-t" x="12" y="{}">{}</text>'.format(
+                lay["band_y"][{"Humano": "actor", "Ferramenta": "tool",
+                               "Quem recebe": "consumer"}[titulo]][0] + 26, titulo), svg)
+        self.assertNotIn("Publicação", svg)
+
+    def test_a_step_says_who_does_it_only_when_it_is_not_the_bands_default(self):
+        svg = P["render_svg"](_desenho())
+        self.assertIn('class="ns"', svg)
+        self.assertEqual(svg.count(">Comité</text>"), 1, "o passo do comité diz quem o faz")
+        self.assertNotIn(">Operador</text>", svg, "o operador é o de omissão: não se repete")
+
+    def test_columns_follow_the_flow_and_side_exceptions_sit_under_their_source(self):
+        lay = P["layout"](_desenho())
+        pos = lay["pos"]
+        self.assertEqual(pos["MAPN-006"][0], pos["MAPN-002"][0],
+                         "exceção só alcançada por exceção fica na coluna de onde sai")
+        self.assertGreater(pos["MAPN-004"][0], pos["MAPN-003"][0],
+                           "o ramo «não» da decisão avança no fluxo")
+        self.assertGreater(pos["MAPN-005"][0], pos["MAPN-004"][0])
+        self.assertEqual(lay["number"]["MAPN-006"], 8,
+                         "a exceção lateral numera-se depois do caminho principal")
+        self.assertEqual(lay["number"]["MAPN-004"], 4, "o ramo da decisão é caminho")
+
+    def test_edges_are_right_angled(self):
+        svg = P["render_svg"](_desenho())
+        paths = [p for p in svg.split('<path class="edge')[1:]]
+        self.assertTrue(paths)
+        for p in paths:
+            d = p.split('d="', 1)[1].split('"', 1)[0]
+            self.assertNotIn("C", d, "sem curvas: {}".format(d))
+
+    def test_the_drawing_is_deterministic(self):
+        self.assertEqual(P["render_svg"](_desenho()), P["render_svg"](_desenho()))
+
+
 class MAP07_OrfaoMaterial(Base):
 
     def test_a_material_undetermined_orphan_publishes_and_stays_open(self):
