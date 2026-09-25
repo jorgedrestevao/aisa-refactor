@@ -7,7 +7,7 @@ description: Synthesize the returns of a phase into Shared Understanding rows, a
 
 ## Role
 
-You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). You produce:
+You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). A **return** is what one author handed in — in Framing the analyst's proposal or the reviewer's findings; in Options the technical author's published candidates or one specialist review. Every rule below is about returns. You produce:
 
 1. New rows in `<engagement>/shared-understanding.md`.
 2. A synthesis audit log at `<engagement>/lens-outputs/chairman-synthesis-<round>.md`, where `<round>` is the current round id from `_state.json` (`F-<NN>` in Framing, `O-<NN>` in Options — e.g., `chairman-synthesis-F-01.md`).
@@ -28,39 +28,39 @@ You are executing the **chairman** role described in `.claude/agents/chairman.md
 
 ## Framing inputs
 
-In Framing there is no council. The calling skill (`aisa-frame` steps 5–5b) hands you **two** returns:
+The calling skill (`aisa-frame` steps 5–5b) hands you **two** returns:
 
 - the **integrated analyst**'s proposal (`lens-outputs/_council-prep/F-<NN>-analyst.md`), in the six-section return schema below;
 - the **independent reviewer**'s findings (`lens-outputs/_council-prep/F-<NN>-reviewer.md`, from the `frame-reviewer` agent): per finding, target, severity, kind (`fact` | `recommendation`), premise/evidence, failure scenario, closing condition; the coverage of its review; optionally an alternative sentence. It may be absent — the review was not done — and then the log says so.
 
-Read every step below with "persona" meaning either of the two, and apply the same evidence rules:
+Apply the same evidence rules to both:
 
 - **Agreement is not evidence.** The analyst and the reviewer agreeing never raises a state; only a locator of the *Confirmed threshold* does.
 - **A `fact` finding with a locator** that contradicts a claim is a correction by evidence (`library/kernel/states.md` → *Correction by evidence*): a transition, never an in-place edit.
 - **A `fact` finding without a locator** that contradicts a claim is a `Conflicted` row, `partes = analista∧revisor`. Never pick a winner.
 - **A `recommendation` finding** (the sentence's wording, scope or emphasis) is not settled here: list it under `## For the owner to decide` in the synthesis log, and `aisa-frame` step 7 puts it to the owner through `AskUserQuestion`. The sentence you write in `frame.md` is the analyst's, with the corrections by evidence applied.
 - **Step 2b does not run in Framing**: there is no antithesis round.
-- In `frame.md` → *Anchors*, the *Source persona(s)* column reads `analista`, `revisor` or both.
+- In `frame.md` → *Anchors*, the *Source author(s)* column reads `analista`, `revisor` or both.
 
 ## Options inputs in a handoff-v1 engagement
 
-When `_state.json` has the `workflow` block, Options runs no persona council. You read **published reviews**, never votes: `python3 library/kernel/tools/review.py show-reviews --engagement <engagement> --json` lists, over the current candidate revision (`_design/candidates.json`), each mandate (`mandated` · `current` · `stale`), its findings (target, severity, kind, last disposition) and the open divergences.
+You read **published reviews**, never votes: `python3 library/kernel/tools/review.py show-reviews --engagement <engagement> --json` lists, over the current candidate revision (`_design/candidates.json`), each mandate (`mandated` · `current` · `stale`), its findings (target, severity, kind, last disposition) and the open divergences.
 
 - **A review is pinned to the revision it read.** A `stale` review closes nothing of the current revision; its findings marked `revalidate` need a new mandate, the others are not affected and are not copied into the new revision.
 - **Every finding of a current review gets a disposition** through `review.py dispose` — `accepted` (with `--corrected-by` the `FC-NNNN`, `D-NNN`, SU row or file that already corrects it — a correction still to come is `delegated` or `deferred`), `rejected` (with evidence), `delegated` (envelope and owner), `escalated` (to whom), `deferred` (with the impact). The ledger is append-only and the review is immutable: a minority opinion is never deleted.
 - **Agreement is not evidence.** Two reviewers agreeing never raises a state; a `fact` finding changes the SU only by the rules of *Framing inputs* above (locator → correction by evidence; none → `Conflicted`), published by the coordinator.
 - **Material divergence** → `review.py diverge` opens it and `review.py dialectic-call` records each antithesis call; the engine keeps the cap (3 divergences × 2 calls per revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a `fact` divergence is never synthesised without a locator. Escalated divergences go to the owner through `AskUserQuestion`.
 - `options.md` projects the published candidates and the dispositions; the recommendation is aisa's, never the decision.
-- Read every step below with "persona" meaning the technical author (its published candidates) or a specialist review (by role); *Step 2b* hands divergences back to `aisa-options` step 5b, which runs them through `review.py diverge` / `dialectic-call`.
+- *Step 2b* hands divergences back to `aisa-options` step 5b, which runs them through `review.py diverge` / `dialectic-call`.
 
 ## Return schema (canonical)
 
-The one schema a phase return is written in, authored here because its one consumer is the synthesis procedure below. The integrated analyst of `aisa-frame` writes its proposal in it (`<persona>` = `analista integrado`, `<phase>` = `Framing`). No agent file carries it.
+The one schema a phase return is written in, authored here because its one consumer is the synthesis procedure below. The integrated analyst of `aisa-frame` writes its proposal in it (`<author>` = `analista integrado`, `<phase>` = `Framing`). No agent file carries it.
 
 A section with nothing in it gets `- (none)` — never omit a header:
 
 ```
-## <persona> — Round <round> / Phase <phase>
+## <author> — Round <round> / Phase <phase>
 
 ### Headline
 <one sentence — your stance this round>
@@ -86,28 +86,28 @@ option set for solution-architect (Options)>
 
 1. **Append-only to `shared-understanding.md`.** Never delete or rewrite existing rows. State transitions add a new row that references the prior id (`was X-NNN`).
 2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to the technical author's published candidate that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
-3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven personas saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the personas' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
+3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven returns saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the returns' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
 4. **Surface contradictions as Conflicted rows.** Never silently pick a winner. The user resolves at `/decide` time.
 5. **Through the coordinator, never in place.** The SU rows, the `_state.json` round and the `council-log.md` line go into the **draft copies** the calling skill opened for you (`_drafts/<id>/`), and the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*). The phase artefact and the synthesis log are written directly. A refusal on publish (`INTEGRITY_FAILURE` — e.g. a `Confirmed` without a resolvable locator) comes back to you to fix in the copy.
 6. **`costs <Z> today` follows the funding gate** (P-4). Read `context.json.funding_gate` (absent = `true`). With `false`, the engagement's go-ahead does not depend on a third party's budget approval, so the clause is **stated with its basis, not monetized**: name what the situation costs the business in its own terms — rework, exposure, dependency, time of the people named in the SU — anchored to the rows that carry it, and write *«enunciado com base, não monetizado»* in the Anchors table for that clause. Never invent a figure to fill the slot, and never mark the frame incomplete for the absence of one. With `true`, the clause carries the figure the financial lens established, or the clause stays open as an `Unknown`.
-7. **Epistemic columns.** Every row you write carries `elementos` — the process-map elements it is about (`MAPN-…, MAPE-…`), `GLOBAL`, or `N/A — <razão>`; empty only when no map exists (`library/kernel/states.md` → *The `elementos` column*; the ids come from `process_map.py project --engagement <slug> --json`, never invented). Every Confirmed/Assumed row you write carries `verificado_em` = today (ISO date) and a `validade` decay class (`library/kernel/states.md` → *Epistemic half-lives*; in doubt: `organizacional`). An **expired** row (past its half-life) reads as *Assumed fraca*: a persona claim anchored only on expired rows never becomes Confirmed — keep it Assumed and raise the re-question as an Unknown.
+7. **Epistemic columns.** Every row you write carries `elementos` — the process-map elements it is about (`MAPN-…, MAPE-…`), `GLOBAL`, or `N/A — <razão>`; empty only when no map exists (`library/kernel/states.md` → *The `elementos` column*; the ids come from `process_map.py project --engagement <slug> --json`, never invented). Every Confirmed/Assumed row you write carries `verificado_em` = today (ISO date) and a `validade` decay class (`library/kernel/states.md` → *Epistemic half-lives*; in doubt: `organizacional`). An **expired** row (past its half-life) reads as *Assumed fraca*: a claim anchored only on expired rows never becomes Confirmed — keep it Assumed and raise the re-question as an Unknown.
 
 ## Synthesis procedure
 
-### Step 1 — Read the persona outputs
+### Step 1 — Read the returns
 
-Load each persona's returned Markdown. Parse the six sections of the return schema (`Headline`, `Evidence anchors`, `Proposal`, `Open questions / Unknowns flagged`, `Conflicts seen`, `Risks`). If a section is malformed or missing → record a warning in the audit log but proceed.
+Load each return's Markdown. Parse the six sections of the return schema (`Headline`, `Evidence anchors`, `Proposal`, `Open questions / Unknowns flagged`, `Conflicts seen`, `Risks`). If a section is malformed or missing → record a warning in the audit log but proceed.
 
 ### Step 2 — Build the synthesis map (do not write yet)
 
 Maintain a working table per category:
 
-- **Overlap candidates** → claims anchored independently by ≥2 personas (count anchors per claim).
-- **Single-persona claims** → only one persona proposed it, with or without an anchor.
-- **Contradictions** → personas explicitly disagree (claim vs counter-claim) OR a persona's `Conflicts seen` lists another persona/lens.
-- **Open questions** → union of personas' `Open questions / Unknowns flagged` (dedupe by question text).
-- **Risks** → union of personas' `Risks` (dedupe; merge if same risk with different mitigations).
-- **Material divergences** (explicit output of this step): the contradictions above whose resolution would change the phase artefact (the frame sentence, an option's viability/ranking). List each as `persona A: <tese com ids> vs persona B: <tese com ids>`.
+- **Overlap candidates** → claims anchored independently by ≥2 returns (count anchors per claim).
+- **Single-return claims** → only one return proposed it, with or without an anchor.
+- **Contradictions** → returns explicitly disagree (claim vs counter-claim) OR a return's `Conflicts seen` lists another return/lens.
+- **Open questions** → union of the returns' `Open questions / Unknowns flagged` (dedupe by question text).
+- **Risks** → union of the returns' `Risks` (dedupe; merge if same risk with different mitigations).
+- **Material divergences** (explicit output of this step): the contradictions above whose resolution would change the phase artefact (the frame sentence, an option's viability/ranking). List each as `author A: <tese com ids> vs author B: <tese com ids>`.
 
 ### Step 2b — Dialectic hand-back (when ≥1 material divergence)
 
@@ -119,14 +119,14 @@ Walk the working table and assign state per row:
 
 | Working-table category | SU state | Notes |
 |---|---|---|
-| Any claim whose anchor is a locator of the *Confirmed threshold* classes, at the claim's level (however many personas raised it) | **Confirmed** | evidência = the locator itself (`<file>#<anchor>`, `answers.md#…`, `enquadramento.md#M-n`); persona names may follow, never stand in for it |
-| Overlap with ≥2 personas but anchors are inferential | **Assumed** | base = the personas' bases |
-| Single persona, anchored by document/SU id | **Assumed** | base = "proposed by `<persona>` (source: `<…>`); no second anchor this round" |
-| Single persona, no anchor | **Unknown** | quem responde = the persona's suggested **role** (`role: <role>`) or the source to consult (`fonte: <artefacto/sistema>`), prefixed per part and never a person; empty where neither is known; criticidade = persona's flag; the row carries the admission fields of Step 4b |
-| Contradiction | **Conflicted** | partes = `<persona∧persona>` or `<lens∧lens>` |
-| Persona-flagged risk | **Risky** | impacto + mitigação from the persona; if two personas raised the same risk with different mitigations, merge mitigações |
+| Any claim whose anchor is a locator of the *Confirmed threshold* classes, at the claim's level (however many returns raised it) | **Confirmed** | evidência = the locator itself (`<file>#<anchor>`, `answers.md#…`, `enquadramento.md#M-n`); author names may follow, never stand in for it |
+| Overlap with ≥2 returns but anchors are inferential | **Assumed** | base = the returns' bases |
+| Single return, anchored by document/SU id | **Assumed** | base = "proposed by `<author>` (source: `<…>`); no second anchor this round" |
+| Single return, no anchor | **Unknown** | quem responde = the return's suggested **role** (`role: <role>`) or the source to consult (`fonte: <artefacto/sistema>`), prefixed per part and never a person; empty where neither is known; criticidade = the return's flag; the row carries the admission fields of Step 4b |
+| Contradiction | **Conflicted** | partes = `<author∧author>` or `<lens∧lens>` |
+| Return-flagged risk | **Risky** | impacto + mitigação from the return; if two returns raised the same risk with different mitigations, merge mitigações |
 
-A synopsis line (`_capture/process-model.md` §4) is evidence a persona may anchor on, never a row by itself: an `OBSERVED` line with its locator supports Confirmed like any document citation; an `INFERRED` line supports Assumed with that basis; a `HYPOTHESIS` line never becomes Confirmed or Assumed — it becomes the `Unknown` that would settle it, or stays in the synopsis.
+A synopsis line (`_capture/process-model.md` §4) is evidence a return may anchor on, never a row by itself: an `OBSERVED` line with its locator supports Confirmed like any document citation; an `INFERRED` line supports Assumed with that basis; a `HYPOTHESIS` line never becomes Confirmed or Assumed — it becomes the `Unknown` that would settle it, or stays in the synopsis.
 
 ### Step 4 — Allocate ids
 
@@ -141,19 +141,19 @@ they never pass through 5f.
 
 Per candidate `Unknown`: does its answer move at least one of the five aspects (`solucao` · `funcional` ·
 `aceitacao` · `operacao` · `viabilidade`)? Then fill `tipo`, `impacto`, `âmbito`, `quem responde`, `fecho`,
-`bloqueio` and `referências` from the persona returns and the rows they cite. A field the returns do not
+`bloqueio` and `referências` from the returns and the rows they cite. A field the returns do not
 support stays **empty** and is named in your log — never filled by invention. Then:
 
 | Case | Do |
 |---|---|
-| no aspect moves | **do not write the row** — the content stays in the persona's return and in your log |
+| no aspect moves | **do not write the row** — the content stays in the return and in your log |
 | `fact_gap` | write it, with no invented second answer |
 | `design_choice` with fewer than 2 real alternatives | write it as `fact_gap` when what is missing is a fact; otherwise do not write it |
 | referent, on a `decisivo` | write it `dimensionante` |
 | only answer is an identity, a signature, an approval or a third party's paper | **do not write it** (P-21) — reformulate by role, operation and enforcement plane, or drop |
 
 Record every decision in `lens-outputs/chairman-synthesis-<round>.md` under **Admissão de perguntas**:
-one line per candidate — the id (or the persona's question text where no row was written), the `tipo`, the
+one line per candidate — the id (or the return's question text where no row was written), the `tipo`, the
 aspects it moves, the fields left empty, and why it was or was not written. Silence here is the defect this
 step exists to prevent.
 
@@ -176,12 +176,12 @@ Branch on `_state.json.phase`:
 
 ## Anchors
 
-| Clause | Source persona(s) | SU id(s) / input citation |
+| Clause | Source author(s) | SU id(s) / input citation |
 |---|---|---|
-| The problem is <X> | <persona, persona> | <C-007, C-012 or inputs/<file>:<locator>> |
-| Felt by <Y> | <persona> | <…> |
-| Costs <Z> today | <persona> | <…> |
-| Evidence is <W> | <persona> | <…> |
+| The problem is <X> | <author, author> | <C-007, C-012 or inputs/<file>:<locator>> |
+| Felt by <Y> | <author> | <…> |
+| Costs <Z> today | <author> | <…> |
+| Evidence is <W> | <author> | <…> |
 
 ## Open questions still material to Framing
 
@@ -212,17 +212,17 @@ Branch on `_state.json.phase`:
 - <C-NNN / A-NNN / U-NNN> — <an output family, user task, transformation or exception whose omission would reshape the option space>
 ```
 
-Synthesize the single sentence from the overlap of `Headline` and `Proposal` sections across personas. If the sentence does not converge cleanly → write the best version available AND list the divergences in `Open questions`.
+Synthesize the single sentence from the overlap of `Headline` and `Proposal` sections across the returns. If the sentence does not converge cleanly → write the best version available AND list the divergences in `Open questions`.
 
 **Rules for the survival block** (`library/kernel/orchestration.md` → *Comprehension survival*):
 
 - **ID-anchored or explicit Unknown.** Every entry names an SU id that exists in `shared-understanding.md`; an entry with no id, or with an id the SU does not carry, is a defect — the block may not create new factual authority.
-- **SU first, then project.** If, while framing, a material invariant, constraint, output family or task is found in the synopsis, a persona output or the evidence and has no row → write the row in Step 5 (with the persona/synopsis anchor and the right state), then project its id here. Never maintain independent free-text constraint or invariant truth in `frame.md`.
+- **SU first, then project.** If, while framing, a material invariant, constraint, output family or task is found in the synopsis, a return or the evidence and has no row → write the row in Step 5 (with the return/synopsis anchor and the right state), then project its id here. Never maintain independent free-text constraint or invariant truth in `frame.md`.
 - **`(none) — <reason>` is a legitimate entry only as a substantive conclusion** — *no material item of this semantic class exists for this engagement* ("no material structural constraint: single internal population, data already owned by the sponsor's team, no residency or entitlement condition recorded — C-0xx, C-0yy"). It is valid only when all four hold: (1) the category was evaluated; (2) no known material SU item belongs to it; (3) no material synopsis line requiring disposition remains unresolved for it; (4) no comprehension-survival gate failure on that category is being hidden by the entry. Otherwise the entry is a defect. An empty sub-list is not valid either.
 - **Override ≠ evidence, ≠ resolution, ≠ absence.** A `/frame --override` changes whether execution proceeds, never what is known. If a category holds a known unresolved material gap (a gate `missing understanding` line, an `undisposed` synopsis line, an open Unknown), the entry is the **id** of that gap — the SU `Unknown` or unresolved material trace, written to the SU first through the existing authority model when it does not yet exist — never `(none) — <override reason>`. The override itself is recorded where it already lives (`decisions.md` D-001 `Override used at /frame`), not as a survival-block entry: no new field, no new state.
 - **Generic, technology-neutral.** A structural constraint is stated as a condition ("pricing data must remain in the system of record already operated by another team"), never as a candidate consequence — that evaluation is Options'. Pre-Options entitlement facts are the user population / identity class, the existing entitlement boundary and the willingness to acquire incremental entitlement — never a product-licensing question.
 - **HYPOTHESIS never enters as fact.** A synopsis `HYPOTHESIS` about an output family, transformation or consumer projects here only as the `Unknown` that would settle it.
-- **Options reads it; it does not re-decide it.** Personas in Options reason against the block; the Options blocking set remains the candidate-specific check.
+- **Options reads it; it does not re-decide it.** In Options the technical author reads the block; the Options blocking set remains the candidate-specific check.
 
 #### Options → `<engagement>/options.md` (overwrite if exists)
 
@@ -370,22 +370,22 @@ Write `<engagement>/lens-outputs/chairman-synthesis-<round>.md` (e.g., `chairman
 ```markdown
 # Chairman Synthesis — Round <round> / Phase <phase>
 
-## Personas heard
-- <comma-separated list of persona names that returned — in Framing: `analista integrado`, `frame-reviewer` (or `revisão não feita — <razão>`)>
+## Returns heard
+- <comma-separated list of the authors that returned — in Framing: `analista integrado`, `frame-reviewer` (or `revisão não feita — <razão>`)>
 
 ## Overlaps → strengthened
-- "<claim>" — anchored by <personas> → <SU id> (<state>)
+- "<claim>" — anchored by <authors> → <SU id> (<state>)
 
 ## Gaps → carried as Assumed/Unknown
-- "<claim>" — proposed by <persona> only → <SU id> (<state>)
+- "<claim>" — proposed by <author> only → <SU id> (<state>)
 
 ## Contradictions → Conflicted
-- "<conflict>" — <persona∧persona> → <X-NNN>
+- "<conflict>" — <author∧author> → <X-NNN>
 
 ## Admissão de perguntas
-<One line per candidate `Unknown` this round — written or not written (Step 4b). Empty only when no persona
+<One line per candidate `Unknown` this round — written or not written (Step 4b). Empty only when no return
 raised an open question at all; "none missing" is written as such, never by omission.>
-- <U-NNN | "<persona question text>"> — <admitida | não escrita: sem impacto demonstrável | não escrita: pergunta de pessoa ou de papel (P-21)> — tipo: <tipo> — impacto: <aspectos> — por preencher: <campos, ou —>
+- <U-NNN | "<question text from the return>"> — <admitida | não escrita: sem impacto demonstrável | não escrita: pergunta de pessoa ou de papel (P-21)> — tipo: <tipo> — impacto: <aspectos> — por preencher: <campos, ou —>
 
 ## Risks captured
 - <R-NNN> — <one-line>
@@ -418,7 +418,7 @@ written explicitly here** — this is the record that makes an omitted field in 
 by its **form in products** (surface + store), one entry per form.>
 
 ### <O-NNN> — <name>   ·   <option class>   ·   <technology: the form in products>
-- **Anchored by**: <personas — solution-architect always for technology options>
+- **Anchored by**: <authors — solution-architect always for technology options>
 - **Scope**: <whole solution | the named responsibility>   ·   renders as `scope: <…>`
 - **Viability**: viable | viable with preconditions | disqualified (settled) | disqualified (provisional — rests on assumption <SU id>) | not assessable (evidence)
 - **Outcome**: <the outcome, in its render template from the pack's outcome register. An economic outcome states explicitly whether it is economically **infeasible** or economically **unattractive** — never the disjunction where the evidence supports one.>
@@ -438,7 +438,7 @@ by its **form in products** (surface + store), one entry per form.>
 - **Concern notes**: <the assessment that decided something> | (none)
 
 ## Parser warnings (if any)
-- <persona> output: <what was malformed>
+- <author> return: <what was malformed>
 ```
 
 **The log is written before the artefact is compressed, not after.** `options.md` is a projection of

@@ -149,7 +149,7 @@ Os limites que **ficam** (e porquê):
 **Contratos entre skills verificados e coerentes:** `aisa-round` escreve `lens-outputs/<perspective>.md`, e `aisa-synthesize` e `aisa-status` lêem esses mesmos ficheiros. Nada a mudar.
 
 **Mais flags (sem diff):**
-- L7: `chairman-synthesis:47` «When `_state.json` has the `workflow` block, Options runs no persona council.» é 1d, mas `test_pp_discovery_runtime.py` verifica a frase. Mudá-la obriga a mudar o teste; decide-se junto com L1/L2.
+- L7: `chairman-synthesis:47` «When `_state.json` has the `workflow` block, Options runs no persona council.» é 1d. **Correcção:** `test_pp_discovery_runtime.py:192` só tem a frase num comentário, não a verifica. Tratado no ponto 3.
 - L8: `.claude/rules/no-tech-mention-before-options.md` diz «Lenses in Discovery (`business`, …)» e «Lens `technology` enters…». Já não são lentes separadas, são perspectivas de uma análise; mas a regra continua certa e é carregada em todas as sessões, por isso fica. Baixa.
 
 ### Achados — baixa confiança / flag (sem diff)
@@ -393,7 +393,7 @@ Os limites que **ficam** (e porquê):
 
 1. ~~Guardar este relatório no repo~~ — este ficheiro.
 2. ~~L1 — citações de fase~~ — feito (ver *Ponto 2*, abaixo).
-3. L2/L7 — a camada de tradução «persona» em `chairman-synthesis` (esquema de retorno e linha 47, com teste).
+3. ~~L2/L7 — «persona» no `chairman-synthesis`~~ — feito (ver *Ponto 3*, abaixo).
 4. L5 — auditoria linha a linha de `chairman-synthesis`, `aisa-render`, `aisa-blueprint`.
 5. Validação comportamental de M16–M20 (`/round`, `/retro` num engagement de fixture).
 6. Verificação A do mapa (cálculo absorvido), à espera da v01 e da calc-chain da corrida 1.
@@ -408,3 +408,19 @@ Os limites que **ficam** (e porquê):
   - os ids `P-`/`T-` (`P-0`, `P-1`, `P-21`, `T19`, `T43`…): quase todos são itens com nome no kernel ou tokens literais que se escrevem nos dados, e mexer-lhes partiria formatos.
 - **Fora do âmbito:** `library/kernel/orchestration.md` e o pack mantêm `(handoff-v1 F3/F5)` nos títulos, que os testes verificam.
 - **Verificação** (`enforce`): completa 3227/0, stdlib 2429/0.
+
+## Ponto 3 — «persona» no `chairman-synthesis` (L2/L7)
+
+- **Definição única em *Role*:** um *return* é o que um autor entregou (em Framing a proposta do analista ou os achados do revisor; em Options os candidatos do autor técnico ou uma revisão de especialista). Saíram as duas linhas de tradução («Read every step below with "persona" meaning…»).
+- **Vocabulário:**
+  - `persona(s)` → `return(s)` quando é o que foi entregue;
+  - `<persona>` → `<author>` quando é quem o escreveu: no cabeçalho do esquema de retorno, em `partes = <author∧author>`, na coluna *Source author(s)* de `frame.md`, em `## Returns heard` e em *Anchored by*.
+  - O plano previa *Source return(s)*. Ficou *Source author(s)*, porque a coluna leva nomes de autores (`analista`, `revisor`).
+- **Frases que já não se aplicam, retiradas:**
+  - «In Framing there is no council.»;
+  - «When `_state.json` has the `workflow` block, Options runs no persona council.»;
+  - «Personas in Options reason against the block», que passou a «In Options the technical author reads the block».
+- **`chairman.md` alinhado:** `partes: <return∧return …>` passou a `<author∧author …>`, igual à skill.
+- **Nenhum parser** lê estas estruturas (procurei em hooks, tools, templates e testes). `aisa-frame` escreve o cabeçalho como `## analista integrado — Round …`, sem mudança.
+- **Pendente novo, fora deste ponto:** `library/kernel/tools/workflow.py:349` diz «concordância entre personas não é evidência». É uma mensagem do motor, verificada por `test_handoff_evidence.py:123`, e mudá-la exige o override de `library/` e o teste.
+- **Verificação** (`enforce`): completa 3227/0, stdlib 2429/0; `grep -i persona` na skill não devolve nada.
