@@ -1,0 +1,14 @@
+preparado: mapa mp-v01 publicado e validado (dono de teste); sessão fechada.
+1. retoma fria num processo novo:
+   processo: 3 passos — 1. Dia útil (Fixador) → 2. Calcula o preço (Fixador) → 3. Resumo diário (Comerciais)
+   mapa mp-v01 · validação validated (D-002) · fontes current
+   a seguir: /status — sem trabalho em curso no checkpoint; o marco da fase diz o passo seguinte
+2. uma fonte mudou entre sessões (nota editorial no modelo do processo); retoma:
+   processo: 3 passos — 1. Dia útil (Fixador) → 2. Calcula o preço (Fixador) → 3. Resumo diário (Comerciais)
+   mapa mp-v01 · validação validated (D-002) · fontes stale
+   bloqueio [source] _capture/process-model.md mudou (âncoras iguais — revalidar)
+   a seguir: process_map.py revalidate --engagement novo --source _capture/process-model.md --assessment "<o que mudou>" --by "<papel>" --out <rascunho> — fontes do mapa mudaram desde a versão mp-v01: _capture/process-model.md (âncoras iguais) — registar a reavaliação antes de o usar
+3. revalidação registada → mp-v02; retoma:
+   processo: 3 passos — 1. Dia útil (Fixador) → 2. Calcula o preço (Fixador) → 3. Resumo diário (Comerciais)
+   mapa mp-v02 · validação validated (D-002) · fontes current
+   a seguir: /status — sem trabalho em curso no checkpoint; o marco da fase diz o passo seguinte

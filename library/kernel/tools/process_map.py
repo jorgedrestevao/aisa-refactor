@@ -33,6 +33,15 @@ Understanding é. Escreve-o só este motor, pelo coordenador (`operation.run`); 
             as linhas da SU organizadas pelo mapa: por elemento, sem associação avaliada,
             GLOBAL, N/A, elementos sem linhas (sinal, não lacuna), ids desconhecidos e
             retirados (com sucessores). Nunca escreve.
+    summary --engagement <slug|caminho> [--task resume|framing|options|blueprint|handoff]
+            [--budget N] [--json]
+            o mapa em contexto compacto (retoma): versão, validação, actualidade, bloqueios
+            (nunca truncados), estado por bloco; detalhe só para o que a tarefa pede;
+            acima do orçamento declara-se parcial e diz como expandir.
+    revalidate --engagement --source <rel> [--source …] --assessment "<o que se viu>"
+            --by "<papel>" [--reviewed MAPN-…] --out <rascunho fora do engagement>
+            regista a reavaliação de fontes que mudaram: actualiza `based_on` e só as
+            referências dos elementos revistos; os afectados por rever continuam stale.
     approval-block --engagement --scope --conditions --validated-by [--timestamp]
             o texto do bloco `D-NNN — Mapa do processo mp-vNN validado` com o digest da
             versão publicada; quem o escreve em decisions.md é `resolve.py draft/publish`.
@@ -818,6 +827,31 @@ def validation(eng) -> dict:
                     scope=b["fields"]["Scope"], conditions=b["fields"]["Conditions"],
                     validated_by=b["fields"]["Validated by"],
                     timestamp=b["fields"]["Timestamp"], detail="")
+    # process-map M4: uma revisão que só revalidou fontes (mesma representação) mantém a
+    # validação — desde que cada fonte que mudou desde a versão validada tenha a sua
+    # entrada em `revalidations`. Trocar digests sem esse registo nunca a transporta.
+    for b in reversed(good):
+        hist = eng / HISTORY_DIR / (b["version"] + ".json")
+        try:
+            old_map = json.loads(hist.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if structural_digest(old_map) != structural_digest(cur["map"]):
+            continue
+        before = {s["path"]: s["sha256"] for s in old_map.get("based_on") or []}
+        now = {s["path"]: s["sha256"] for s in cur["map"].get("based_on") or []}
+        moved = {p for p in set(before) | set(now) if before.get(p) != now.get(p)}
+        logged = {s for r in cur["map"].get("revalidations") or []
+                  if _version_number(r.get("from_version")) >= _version_number(b["version"])
+                  for s in r.get("sources") or []}
+        if moved and moved <= logged:
+            return dict(base, status="validated", decision=b["decision"], version=version,
+                        scope=b["fields"]["Scope"], conditions=b["fields"]["Conditions"],
+                        validated_by=b["fields"]["Validated by"],
+                        timestamp=b["fields"]["Timestamp"], carried_from=b["version"],
+                        detail="validação de {} transportada: a representação é a mesma e "
+                               "as fontes que mudaram foram revalidadas ({})".format(
+                                   b["version"], ", ".join(sorted(moved))))
     bad_here = [b for b in blocks if b["version"] == version and b["problems"]]
     if bad_here:
         b = bad_here[-1]
@@ -1017,6 +1051,204 @@ def project(eng) -> dict:
     return out
 
 
+# ============================================================= actualidade e revalidação (M4)
+
+STRUCTURAL_EXCLUDE = ("version", "base", "based_on", "revalidations")
+
+
+def structural_digest(m: dict) -> str:
+    """O digest do que o dono valida — a representação —, sem a base, as fontes consumidas
+    nem o registo de revalidações. Duas versões com o mesmo digest estrutural dizem o
+    mesmo processo; só mudou a evidência sobre a qual o disseram."""
+    return _sha_text(canonical({k: v for k, v in m.items() if k not in STRUCTURAL_EXCLUDE}))
+
+
+def freshness(eng, m: dict) -> dict:
+    """A actualidade do mapa publicado face às fontes que consumiu (`based_on`).
+
+    Por fonte que mudou: `anchors: unchanged` (as âncoras citadas resolvem com o mesmo
+    digest — mudança fora do que o mapa diz, p. ex. o carimbo de uma recaptura) ou
+    `changed`, com os elementos afectados. Uma mudança editorial continua a pedir registo
+    (`revalidate`); nunca volta a «actual» por troca de hash."""
+    eng = Path(eng)
+    refs_by_file: dict = {}
+    for where, ev in _all_refs(m):
+        refs_by_file.setdefault(split_ref(ev["ref"])[0], []).append((where, ev))
+    changed = []
+    for s in m.get("based_on") or []:
+        target = _safe_rel(eng, s["path"])
+        cur = _sha(target.read_bytes()) if target is not None and target.is_file() else ""
+        if cur == s["sha256"]:
+            continue
+        affected = []
+        for where, ev in refs_by_file.get(s["path"], []):
+            r = resolve_ref(eng, ev["ref"])
+            if r["status"] != "ok" or r["digest"] != ev.get("sha256"):
+                el = where.split("/")[1]
+                if el not in affected:
+                    affected.append(el)
+        changed.append({"source": s["path"], "missing": not cur,
+                        "anchors": "changed" if (affected or not cur) else "unchanged",
+                        "affected": sorted(affected)})
+    return {"state": "stale" if changed else "current", "changed": changed}
+
+
+def revalidate(eng, sources, assessment: str, assessed_by: str, reviewed=(),
+               date: str | None = None) -> dict:
+    """O rascunho que regista a reavaliação das fontes que mudaram (não publica).
+
+    Actualiza o digest em `based_on` das fontes nomeadas e, **só** nos elementos listados
+    em `reviewed`, o digest das referências para essas fontes. Um elemento afectado que
+    ninguém reviu fica com o digest antigo: o `check` recusa (`MAP-REF-STALE`) até ele ser
+    visto. A entrada em `revalidations` diz o quê, porquê, quem e sobre que versão."""
+    import datetime
+    eng = Path(eng)
+    cur = load(eng)
+    if cur["status"] != "ok":
+        raise ValueError("sem mapa publicado legível ({})".format(cur["status"]))
+    if not str(assessment).strip() or not str(assessed_by).strip():
+        raise ValueError("a revalidação diz o que se avaliou e quem avaliou")
+    m = copy.deepcopy(cur["map"])
+    fr = freshness(eng, m)
+    moved = {c["source"]: c for c in fr["changed"]}
+    sources = list(sources)
+    unknown = [s for s in sources if s not in moved]
+    if unknown:
+        raise ValueError("fonte(s) sem mudança face ao mapa publicado: {}".format(
+            ", ".join(unknown)))
+    reviewed = set(reviewed)
+    previous = {}
+    for s in m["based_on"]:
+        if s["path"] in sources:
+            target = _safe_rel(eng, s["path"])
+            previous[s["path"]] = s["sha256"]
+            s["sha256"] = _sha(target.read_bytes()) if target is not None and \
+                target.is_file() else s["sha256"]
+    affected = sorted({e for s in sources for e in moved[s]["affected"]})
+    for where, ev in _all_refs(m):
+        el = where.split("/")[1]
+        if split_ref(ev["ref"])[0] in sources and el in reviewed:
+            r = resolve_ref(eng, ev["ref"])
+            if r["status"] == "ok":
+                ev["sha256"] = r["digest"]
+    m.pop("version", None)
+    m["base"] = cur["digest"]
+    m.setdefault("revalidations", []).append({
+        "sources": sorted(sources), "previous": previous, "affected": affected,
+        "reviewed": sorted(reviewed), "assessment": str(assessment).strip(),
+        "assessed_by": str(assessed_by).strip(),
+        "date": date or datetime.date.today().isoformat(),
+        "from_version": cur["map"].get("version", "mp-v01")})
+    return m
+
+
+# ============================================================= resumo para a retoma (M4)
+
+TASK_DETAIL = {
+    "resume": (),
+    "framing": ("output",),
+    "options": ("output", "exception", "decision"),
+    "blueprint": ("trigger", "step", "decision", "exception", "output"),
+    "handoff": ("output", "exception"),
+}
+SUMMARY_BUDGET = 40
+
+
+def summary(eng, task: str = "resume", raw: bytes | None = None,
+            budget: int = SUMMARY_BUDGET) -> dict:
+    """O mapa em contexto compacto, para uma sessão nova ou uma tarefa.
+
+    `raw`: os bytes de `_map/map.json` que o snapshot da retoma leu — o resumo sai desses
+    bytes e de mais nenhuns (leitura consistente). Nível 0 sempre: versão, validação,
+    actualidade, bloqueios e o estado de cada bloco. O detalhe (nível 1) só para os tipos
+    de bloco que a tarefa pede (`TASK_DETAIL`). Acima do orçamento: `partial`, com o que
+    ficou de fora e como expandir. Os bloqueios nunca se truncam."""
+    eng = Path(eng)
+    if raw is not None:
+        try:
+            m = json.loads(raw.decode("utf-8"))
+            digest = _sha(raw)
+            status = "ok" if isinstance(m, dict) and m.get("schema_version") == SCHEMA \
+                else "unsupported"
+        except (UnicodeDecodeError, ValueError):
+            m, digest, status = None, _sha(raw), "invalid"
+    else:
+        cur = load(eng)
+        m, digest, status = cur["map"], cur["digest"], cur["status"]
+    out = {"status": status, "task": task, "version": "", "digest": digest,
+           "validation": {}, "freshness": {}, "blockers": [], "blocks": [],
+           "partial": False, "omitted": [], "expand": ""}
+    if status != "ok":
+        if status != "absent":
+            out["blockers"].append({"kind": "map", "detail": "mapa {}".format(status)})
+        return out
+    out["version"] = m.get("version", "")
+    val = validation(eng)
+    out["validation"] = {k: val.get(k, "") for k in ("status", "decision", "version",
+                                                     "detail")}
+    fr = freshness(eng, m)
+    out["freshness"] = fr
+    pr = project(eng)
+    if val["status"] != "validated":
+        out["blockers"].append({"kind": "validation",
+                                "detail": "mapa {} {}".format(out["version"], val["status"])})
+    for c in fr["changed"]:
+        out["blockers"].append({"kind": "source", "detail": "{} mudou ({}){}".format(
+            c["source"], "âncoras iguais — revalidar" if c["anchors"] == "unchanged"
+            else "elementos afectados", ": " + ", ".join(c["affected"]) if c["affected"]
+            else "")})
+    for o in m["orphans"]:
+        if o["reason"] != "out_of_scope" and o["materiality"] != "not-material":
+            out["blockers"].append({"kind": "orphan",
+                                    "detail": "{} ({}): {}".format(o["ref"], o["reason"],
+                                                                   o["note"])})
+    for c in ("nodes", "edges", "details"):
+        for el in m[c]:
+            if el["marker"] == "UNKNOWN":
+                out["blockers"].append({"kind": "unknown", "detail": "{} «{}» por saber"
+                                        .format(el["id"], el["label"])})
+    for d in pr["dead"]:
+        out["blockers"].append({"kind": "dead", "detail": "{} cita {}, que o mapa não tem"
+                                .format(d["row"], d["element"])})
+    for d in pr["retired"]:
+        out["blockers"].append({"kind": "retired", "detail": "{} cita {} (retirado → {})"
+                                .format(d["row"], d["element"],
+                                        ", ".join(d["successors"]) or "sem sucessor")})
+    lay = layout(m)
+    gaps_on: dict = {}
+    for g in m["gaps"]:
+        for a in g["attaches_to"]:
+            gaps_on.setdefault(a, []).append(g["id"])
+    details_on: dict = {}
+    for d in m["details"]:
+        for a in d["attaches_to"]:
+            details_on.setdefault(a, []).append(d)
+    lanes = {la["id"]: la["label"] for la in m["lanes"]}
+    detail_kinds = TASK_DETAIL.get(task, ())
+    blocks = []
+    for n in sorted(m["nodes"], key=lambda n: lay["number"][n["id"]]):
+        e = pr["elements"].get(n["id"], {})
+        b = {"n": lay["number"][n["id"]], "id": n["id"], "kind": n["kind"],
+             "label": n["label"], "lane": lanes.get(n["lane"], n["lane"]),
+             "marker": n["marker"], "rows": e.get("by_state", {}),
+             "gaps": gaps_on.get(n["id"], []),
+             "dark": n["id"] in pr["dark"]}
+        if n["kind"] in detail_kinds:
+            b["detail"] = [{"id": d["id"], "kind": d["kind"], "label": d["label"],
+                            "ref": d["ref"]["ref"]} for d in details_on.get(n["id"], [])]
+            b["evidence"] = [ev["ref"] for ev in n["evidence"]]
+        blocks.append(b)
+    if len(blocks) > budget:
+        out["partial"] = True
+        out["omitted"] = [b["id"] for b in blocks[budget:]]
+        blocks = blocks[:budget]
+        out["expand"] = ("python library/kernel/tools/process_map.py summary --engagement {} "
+                         "--task {} --budget {} --json".format(eng.name, task,
+                                                             budget + len(out["omitted"])))
+    out["blocks"] = blocks
+    return out
+
+
 # ============================================================= render (vista derivada)
 
 KIND_LABEL = {"trigger": "início", "step": "passo", "decision": "decisão",
@@ -1157,9 +1389,12 @@ def render_svg(m: dict) -> str:
         if i % 2 == 0:
             o.append('<rect class="lane-bg" x="0" y="{}" width="{}" height="{}"/>'.format(y, W, h))
         o.append('<line class="lane-sep" x1="0" y1="{0}" x2="{1}" y2="{0}"/>'.format(y + h, W))
-        o.append('<text class="lane-t" x="12" y="{}">{}</text>'.format(y + 24, _e(la["label"])))
+        lab = _wrap(la["label"], 18, 2)
+        for j, line in enumerate(lab):
+            o.append('<text class="lane-t" x="12" y="{}">{}</text>'.format(y + 24 + j * 15,
+                                                                          _e(line)))
         o.append('<text class="lane-k" x="12" y="{}">{}</text>'.format(
-            y + 40, _e(LANE_LABEL.get(la["kind"], la["kind"]))))
+            y + 40 + (len(lab) - 1) * 15, _e(LANE_LABEL.get(la["kind"], la["kind"]))))
     for e in sorted(m["edges"], key=lambda e: e["id"]):
         if e["src"] not in pos or e["dst"] not in pos:
             continue
@@ -1414,11 +1649,20 @@ def main(argv=None) -> int:
                                  description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("check", "stamp", "publish", "status", "render", "questions",
-                 "approval-block", "project"):
+                 "approval-block", "project", "summary", "revalidate"):
         p = sub.add_parser(name)
         p.add_argument("--engagement", required=True)
         if name in ("check", "stamp", "publish"):
             p.add_argument("--draft", required=True)
+        if name == "summary":
+            p.add_argument("--task", default="resume", choices=sorted(TASK_DETAIL))
+            p.add_argument("--budget", type=int, default=SUMMARY_BUDGET)
+        if name == "revalidate":
+            p.add_argument("--source", action="append", required=True)
+            p.add_argument("--assessment", required=True)
+            p.add_argument("--by", required=True)
+            p.add_argument("--reviewed", action="append", default=[])
+            p.add_argument("--out", required=True)
         if name == "approval-block":
             p.add_argument("--scope", required=True)
             p.add_argument("--conditions", required=True)
@@ -1443,6 +1687,30 @@ def main(argv=None) -> int:
         if args.cmd == "render":
             out = render(eng)
             _print({"path": str(out)}, args.json, ["vista: {}".format(out)])
+            return EXIT_OK
+        if args.cmd == "summary":
+            s = summary(eng, args.task, budget=args.budget)
+            lines = ["mapa {} {} · validação {} · actualidade {} · {} bloco(s){}".format(
+                s["status"], s["version"], (s["validation"] or {}).get("status", "—"),
+                (s["freshness"] or {}).get("state", "—"), len(s["blocks"]),
+                " (parcial: {} fora)".format(len(s["omitted"])) if s["partial"] else "")]
+            lines += ["  bloqueio [{}] {}".format(b["kind"], b["detail"]) for b in s["blockers"]]
+            _print(s, args.json, lines)
+            return EXIT_OK
+        if args.cmd == "revalidate":
+            if _inside(eng, Path(args.out)):
+                print("recusado: o rascunho tem de ficar fora do engagement", file=sys.stderr)
+                return EXIT_ERROR
+            try:
+                d = revalidate(eng, args.source, args.assessment, args.by, args.reviewed)
+            except ValueError as exc:
+                print(str(exc), file=sys.stderr)
+                return EXIT_ERROR
+            Path(args.out).write_text(canonical(d), encoding="utf-8")
+            _print({"draft": args.out, "revalidation": d["revalidations"][-1]}, args.json,
+                   ["rascunho de revalidação: {} (afectados {}, revistos {})".format(
+                       args.out, d["revalidations"][-1]["affected"],
+                       d["revalidations"][-1]["reviewed"])])
             return EXIT_OK
         if args.cmd == "project":
             pr = project(eng)

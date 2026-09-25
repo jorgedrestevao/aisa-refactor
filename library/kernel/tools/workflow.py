@@ -869,8 +869,10 @@ def resume(eng, budget=None) -> dict:
                                                             "reason": "so leitura"}])[0])
         return out
 
-    # 2. bootstrap, com o checkpoint no read-set: uma escrita nele a meio repete a leitura
-    boot = B["bootstrap"](eng, budget, inputs=(CHECKPOINT,))
+    # 2. bootstrap, com o checkpoint no read-set: uma escrita nele a meio repete a leitura.
+    # process-map M4: o mapa entra no mesmo read-set, e o resumo sai dos bytes cujo digest
+    # esta revisao validou — nunca de uma segunda leitura fora da janela.
+    boot = B["bootstrap"](eng, budget, inputs=(CHECKPOINT, MAP_FILE))
     out["input_revision"] = (boot.get("snapshot") or {}).get("input_revision")
     out["limitations"] = boot.get("limitations", [])
     if not boot.get("ready"):
@@ -958,6 +960,9 @@ def resume(eng, budget=None) -> dict:
                       "estao em `blockers`, o texto nao coube".format(
                           len(ctx["omitted_critical"]))}
 
+    # 6b. o mapa do processo (process-map M4), no orcamento que sobrou do contexto
+    out["process_map"] = _process_map_context(eng, boot, budget - out["context"]["included"])
+
     # 7. proxima accao, e porque e segura
     if out["reconcile_proposal"]:
         out["next_action"] = {"action": "workflow.py task reconcile --engagement {}".format(
@@ -976,12 +981,58 @@ def resume(eng, budget=None) -> dict:
                  r["result"], ", ".join(r["changed"]) or "a base")})
     elif data is not None and data["next_actions"]:
         out["next_action"] = data["next_actions"][0]
+    elif (out["process_map"] or {}).get("status") == "ok" and \
+            (out["process_map"].get("freshness") or {}).get("state") == "stale":
+        mudou = out["process_map"]["freshness"]["changed"]
+        out["next_action"] = {
+            "action": "process_map.py revalidate --engagement {} {} --assessment \"<o que "
+                      "mudou>\" --by \"<papel>\"{} --out <rascunho>".format(
+                          eng.name, " ".join("--source " + c["source"] for c in mudou),
+                          "".join(" --reviewed " + e for c in mudou for e in c["affected"])),
+            "reason": "fontes do mapa mudaram desde a versão {}: {} — registar a "
+                      "reavaliação antes de o usar".format(
+                          out["process_map"]["version"], "; ".join(
+                              "{} ({})".format(c["source"], "âncoras iguais"
+                                               if c["anchors"] == "unchanged" else
+                                               "afecta " + ", ".join(c["affected"]))
+                              for c in mudou))}
+    elif (out["process_map"] or {}).get("status") == "ok" and \
+            (out["process_map"].get("validation") or {}).get("status") != "validated":
+        out["next_action"] = {"action": "/capture",
+                              "reason": "o mapa do processo {} está {}: rever com o dono antes "
+                                        "de o usar como validado".format(
+                                            out["process_map"]["version"],
+                                            out["process_map"]["validation"]["status"])}
     else:
         out["next_action"] = {"action": "/status",
                               "reason": "sem trabalho em curso no checkpoint; o marco da "
                                         "fase diz o passo seguinte"}
     out["ok"] = True
     return out
+
+
+MAP_FILE = "_map/map.json"
+
+
+def _process_map_context(eng: Path, boot: dict, budget: int) -> dict:
+    """O resumo do mapa a partir dos bytes que o snapshot validou. Sem mapa: `absent` (a
+    capacidade não foi avaliada neste engagement). Bytes diferentes dos do snapshot (uma
+    escrita entre a validação e esta leitura): nada se resume — `retry`, nunca estado
+    misto."""
+    want = ((boot.get("snapshot") or {}).get("inputs") or {}).get(MAP_FILE, "")
+    p = Path(eng) / MAP_FILE
+    if not want:
+        return {"status": "absent", "detail": "sem mapa do processo: capacidade não avaliada"}
+    try:
+        raw = p.read_bytes()
+    except OSError:
+        return {"status": "retry", "detail": "o mapa desapareceu depois do snapshot"}
+    if hashlib.sha256(raw).hexdigest() != want:
+        return {"status": "retry", "detail": "o mapa mudou depois do snapshot — repetir a "
+                                             "retoma"}
+    if not hasattr(_process_map_context, "_pm"):
+        _process_map_context._pm = runpy.run_path(str(_HERE / "process_map.py"))
+    return _process_map_context._pm["summary"](eng, "resume", raw=raw, budget=max(budget, 0))
 
 # ------------------------------------------------------------------ CLI
 

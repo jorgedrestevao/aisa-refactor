@@ -31,6 +31,8 @@ any, then the exact command: `/answer <id> "…"`, `/round`, `/frame`, `/options
 `/blueprint`, `/blueprint --refresh`, `/synthesize` or `/render --all`, whichever the
 milestone actually names.
 
+**The process map** (process-map M4): when the resume carries `process_map` with `status: ok`, add ONE line to block 1 — the process in business words (how many steps, outputs and who receives them, from `process_map.blocks`), the owner's validation, and whatever blocks it (`process_map.blockers`). A map that moved under the read (`retry`) means repeating the resume; no map (`absent`) is said once as a capacity not evaluated.
+
 A fresh session needs no previous transcript: everything above is derived from
 `_state.json` and the repository state, through the same model `/status` reads.
 

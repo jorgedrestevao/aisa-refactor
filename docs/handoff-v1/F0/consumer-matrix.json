@@ -2409,6 +2409,36 @@
      "evidence": "docs/process-map/M3/demo.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M4/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M4: descreve a retoma, a revalidação proporcional e a validação transportada registada em decisions.md. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M4/RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M4/demo-output.txt",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Saída da demonstração M4: cita a validação (D-NNN) e o estado do mapa lidos pela retoma.",
+     "via": "",
+     "evidence": "docs/process-map/M4/demo-output.txt",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M4/demo.py",
+     "kind": "doc",
+     "role": "reader",
+     "mechanism": "Demonstração M4 (retoma fria) sobre engagement temporário da fixture do teste do mapa: escreve decisions.md (validação de teste) na cópia; nunca num engagement real.",
+     "via": "",
+     "evidence": "docs/process-map/M4/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -4342,6 +4372,16 @@
      "mechanism": "Demonstração M3 sobre cópias temporárias da fixture F06: lê SU, decisões, blueprint e registos de cobertura das cópias; nunca um engagement real.",
      "via": "",
      "evidence": "docs/process-map/M3/demo.py",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M4/RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório M4: descreve a retoma, a revalidação proporcional e a validação transportada registada em decisions.md. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M4/RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
     }

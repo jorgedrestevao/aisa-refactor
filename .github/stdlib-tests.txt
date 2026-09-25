@@ -61,6 +61,7 @@
 .claude/tests/test_process_map_core.py
 .claude/tests/test_process_map_coverage.py
 .claude/tests/test_process_map_guard.py
+.claude/tests/test_process_map_resume.py
 .claude/tests/test_process_map_validation.py
 .claude/tests/test_projection_ux.py
 .claude/tests/test_render_validate.py

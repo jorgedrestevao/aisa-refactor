@@ -2484,7 +2484,7 @@ def build_timeline(story, council, decisions, round_dates: dict, ids: dict,
 # ---------------------------------------------------------------- artefact index
 
 INDEX_DIRS = ["inputs", "_capture", "lens-outputs", "_simulation", "_synthesis",
-              "_blueprint", "_coverage", "_retro", "_render"]
+              "_blueprint", "_coverage", "_retro", "_render", "_map"]
 # `_coverage` is here for TWO reasons, and the second is the one that bites: this list
 # is also what `_needs_rebuild` scans. Left out of it, publishing a review changed the
 # model (`status.coverage`) while the page kept its old mtime verdict and never
@@ -5810,6 +5810,33 @@ def kernel_state(eng: Path) -> dict:
             "graph": boot.get("graph", {})}
 
 
+def process_map_state(eng: Path) -> dict:
+    """process-map M4: o separador Mapa lê o motor do mapa — o mesmo SVG da vista
+    `process-map.html` e o resumo da retoma —, nunca o reconstrói. Sem mapa: indisponível
+    (capacidade não avaliada), sem erro."""
+    rel = Path(__file__).resolve().parent / "process_map.py"
+    if not (eng / "_map" / "map.json").is_file() or not rel.is_file():
+        return {"available": False}
+    try:
+        P = _CACHE_PM.setdefault("m", runpy.run_path(str(rel)))
+        s = P["summary"](eng, "resume", budget=10 ** 6)
+        if s["status"] != "ok":
+            return {"available": False, "status": s["status"], "blockers": s["blockers"]}
+        m = P["load"](eng)["map"]
+        return {"available": True, "version": s["version"], "digest": s["digest"][:12],
+                "validation": s["validation"], "freshness": s["freshness"]["state"],
+                "blockers": s["blockers"], "blocks": s["blocks"],
+                "svg": P["render_svg"](m),
+                "view": (eng / "process-map.html").is_file()}
+    except Exception as exc:                                        # noqa: BLE001
+        return {"available": False, "status": "error",
+                "blockers": [{"kind": "map", "detail": "{}: {}".format(type(exc).__name__,
+                                                                       exc)}]}
+
+
+_CACHE_PM: dict = {}
+
+
 def memory_state(eng: Path, rows: list) -> dict:
     """A memoria do projecto, projectada para o que se mostra — e so isso.
 
@@ -6014,6 +6041,7 @@ def build_model(eng: Path, today: date) -> dict:
         },
         "kernel": kernel_state(eng),
         "memory": memory_state(eng, rows),
+        "process_map": process_map_state(eng),
         "health": health,
         "revalidate": revalidation_list(rows),
         "agenda": agenda,
@@ -6070,6 +6098,15 @@ def build_model(eng: Path, today: date) -> dict:
 # Every colour is a custom property on :root -- zero hard-coded hex below it.
 
 CSS = """
+.pmap{overflow-x:auto}.pmap svg{display:block}
+.pmap .lane-bg{fill:var(--surface)}.pmap .lane-sep{stroke:var(--line)}
+.pmap .lane-t{fill:var(--ink);font:600 12px var(--f-ui)}.pmap .lane-k{fill:var(--ink2);font:11px var(--f-ui)}
+.pmap .node{fill:var(--panel);stroke:var(--ink2);stroke-width:1.2}.pmap .node.exception{stroke:var(--warn);stroke-dasharray:5 3}
+.pmap .node.unknown{stroke-dasharray:2 3}.pmap .node.output{stroke:var(--brand);stroke-width:2}.pmap .node.decision{fill:var(--a-tint)}
+.pmap .nt{fill:var(--ink);font:12px var(--f-ui)}.pmap .nm{fill:var(--warn);font:italic 11px var(--f-ui)}
+.pmap .num{fill:var(--accent)}.pmap .numt{fill:#FFFFFF;font:600 11px var(--f-ui)}
+.pmap .edge{fill:none;stroke:var(--ink2);stroke-width:1.3}.pmap .edge.exception{stroke:var(--warn);stroke-dasharray:6 4}
+.pmap .el{fill:var(--ink2);font:11px var(--f-ui)}.pmap .q{fill:var(--warn);font:700 13px var(--f-ui)}
 :root{
   --bg:#EDE9DF; --panel:#FFFFFF; --surface:#F5F2EC; --hover:#EDE9DF; --hover-warm:#F9F6F1;
   --line:#D7CEC5; --line-soft:#E7E3DB; --deco:#B5AEA4;
@@ -7023,6 +7060,8 @@ TAB_SPEC = [
     ("outputs", "Etapas", "Outputs de fase: frame.md, options.md, premortem, síntese, blueprint"),
     ("agenda", "Agenda", "Meeting agenda: Unknown por custo e swing"),
     ("estado", "Registo", "Shared Understanding: Confirmed · Assumed · Unknown · Conflicted · Risky"),
+    ("mapa", "Mapa",
+     "O processo como está desenhado: passos, saídas, quem recebe, e o que se sabe de cada um"),
     ("memoria", "Memória",
      "De que pergunta veio cada facto, e se a memória do projecto bate certo com o registo"),
     ("narrativa", "Narrativa", "story.md, council-log.md, decisions.md"),
@@ -7473,6 +7512,7 @@ def render_html(model: dict, reload_secs: int) -> str:
         "panorama": "", "outputs": len(model["phase_docs"]), "agenda": n_ag,
         "estado": n_open, "narrativa": len(model["timeline"]),
         "memoria": len(model["memory"]["history"]) or "",
+        "mapa": len((model.get("process_map") or {}).get("blocks") or []) or "",
         "artefactos": len([x for x in model["artefacts"] if x["exists"]]),
     }
 
@@ -7760,6 +7800,56 @@ def render_html(model: dict, reload_secs: int) -> str:
       '<span class="m">Há {} linhas vivas. Tenta remover um filtro ou limpar a pesquisa.</span>'
       '<button class="btn solid" data-clear="1">Limpar filtros</button></div>'.format(n_open))
     a("</div></section>")
+
+    # ---------------- panel: mapa (process-map M4)
+    a('<section class="panel" role="tabpanel" id="panel-mapa" aria-labelledby="tab-mapa"'
+      ' tabindex="0" data-tab="mapa" data-title="Mapa do processo" hidden>')
+    pmap = model.get("process_map") or {}
+    a('<div><div class="eyebrow">O processo como está hoje</div>'
+      '<h1 class="pt">Mapa do processo</h1></div>')
+    if not pmap.get("available"):
+        a('<div class="blk"><p class="stamp">Este projecto ainda não tem mapa do processo '
+          'publicado — a leitura do processo por passos não foi feita.</p></div>')
+    else:
+        val = pmap.get("validation") or {}
+        val_txt = {"validated": "validado pelo dono", "stale": "validado noutra versão",
+                   "invalid": "com uma validação que não se aplica",
+                   "not_validated": "ainda não validado pelo dono"}.get(val.get("status"),
+                                                                       val.get("status", ""))
+        a('<div class="blk"><p>Versão {} · {} · {}.{}</p></div>'.format(
+            esc(pmap["version"][4:]), esc(val_txt),
+            "fontes actuais" if pmap["freshness"] == "current" else "há fontes que mudaram",
+            ' Vista completa: <code>process-map.html</code>.' if pmap.get("view") else ""))
+        if pmap["blockers"]:
+            a('<div class="kstate" role="alert"><b>O que falta resolver no mapa</b><ul>')
+            for b in pmap["blockers"]:
+                if b["kind"] == "validation":
+                    txt = "O mapa (versão {}) {}.".format(pmap["version"][4:], val_txt)
+                else:
+                    txt = {"source": "Uma fonte mudou desde o mapa: ",
+                           "orphan": "Ficou fora do mapa, por resolver: ",
+                           "unknown": "Por saber: ", "dead": "Linha do registo aponta para "
+                           "um passo que o mapa não tem: ", "retired": "Linha do registo "
+                           "aponta para um passo retirado: "}.get(b["kind"], "") + b["detail"]
+                a("<li>{}</li>".format(esc(txt)))
+            a("</ul></div>")
+        a('<div class="blk pmap">{}</div>'.format(pmap["svg"]))
+        a('<div class="blk"><h2 class="sec">Passos e o que se sabe de cada um '
+          '<span class="n">{}</span></h2>'.format(len(pmap["blocks"])))
+        a('<div class="tw"><table><thead><tr>'
+          '<th scope="col">nº</th><th scope="col">o que acontece</th>'
+          '<th scope="col">quem / onde</th><th scope="col">o que se sabe</th>'
+          '<th scope="col">dúvidas</th></tr></thead><tbody>')
+        for b in pmap["blocks"]:
+            sabe = " · ".join("{} {}".format(n, STATE_LABEL.get(s, s))
+                              for s, n in sorted(b["rows"].items())) or \
+                ("nada registado ainda" if b["dark"] else "—")
+            a('<tr><td>{}</td><td>{} <span class="stamp">({})</span></td><td>{}</td>'
+              '<td class="c-meta">{}</td><td class="c-meta">{}</td></tr>'.format(
+                  b["n"], esc(b["label"]), esc(b["id"]), esc(b["lane"]), esc(sabe),
+                  esc(", ".join(b["gaps"])) or "—"))
+        a("</tbody></table></div></div>")
+    a("</section>")
 
     # ---------------- panel: memoria
     a('<section class="panel" role="tabpanel" id="panel-memoria" aria-labelledby="tab-memoria"'

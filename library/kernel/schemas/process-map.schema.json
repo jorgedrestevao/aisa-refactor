@@ -20,7 +20,9 @@
     "details": {"type": "array", "items": {"$ref": "#/$defs/detail"}},
     "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}},
     "orphans": {"type": "array", "items": {"$ref": "#/$defs/orphan"}},
-    "retired_ids": {"type": "array", "items": {"$ref": "#/$defs/retired"}}
+    "retired_ids": {"type": "array", "items": {"$ref": "#/$defs/retired"}},
+    "revalidations": {"type": "array", "items": {"$ref": "#/$defs/revalidation"},
+                      "description": "process-map M4: cada fonte que mudou e foi reavaliada — as âncoras citadas, os elementos afectados e os que o autor reviu. Um digest nunca se actualiza sem esta entrada"}
   },
   "$defs": {
     "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -125,6 +127,21 @@
         "materiality": {"enum": ["material", "not-material", "undetermined"]},
         "note": {"type": "string"},
         "decision_ref": {"type": "string", "pattern": "^D-[0-9]{3,}$"}
+      }
+    },
+    "revalidation": {
+      "type": "object",
+      "required": ["sources", "previous", "affected", "reviewed", "assessment", "assessed_by",
+                   "date"],
+      "properties": {
+        "sources": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "previous": {"type": "object", "additionalProperties": {"$ref": "#/$defs/sha"}},
+        "affected": {"type": "array", "items": {"type": "string"}},
+        "reviewed": {"type": "array", "items": {"type": "string"}},
+        "assessment": {"type": "string", "minLength": 1},
+        "assessed_by": {"type": "string", "minLength": 1},
+        "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "from_version": {"type": "string", "pattern": "^mp-v[0-9]{2,}$"}
       }
     },
     "retired": {

@@ -27,6 +27,7 @@ The analyst proposes inline — it needs the whole engagement, and its detail is
 - `library/kernel/phases.md` (Framing entry criteria).
 - `<engagement>/_capture/evidence-index.md` (the shared evidence surface for the analyst and the reviewer).
 - `<engagement>/_capture/process-model.md` §4 (the process synopsis) and §6 (PM-U) — for the comprehension-survival soft gate (step 2) and the chairman's survival block; when absent, the gate runs on the SU alone and says so.
+- The process map, **global view** (process-map M4): `python library/kernel/tools/process_map.py summary --engagement <slug> --task framing --json` — objective, actors, steps, outputs and who receives them, and the scope gaps still open. The problem sentence must hold against it: an output or consumer of the map that the frame leaves out is named, not dropped. Absent map → the frame runs as before and says so.
 - `<engagement>/lens-outputs/*.md` `Open evidence` blocks — where the dispositions (`MAP` / `ADOPT` / `DISMISS`) live.
 - `library/packs/<pack>/pack.yaml` — `lenses_config.<lens>.extra_signals` only, as attention cues.
 - `library/kernel/lens-checklists.md` — the six perspectives the analyst frames across.
