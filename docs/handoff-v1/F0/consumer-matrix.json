@@ -2469,6 +2469,16 @@
      "evidence": "docs/process-map/M5/RELATORIO-M5.1.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [

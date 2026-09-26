@@ -116,7 +116,7 @@ Achado novo:
 | # | Local | Evidência | Padrão | Porque está obsoleto | Conf. | Acção |
 |---|---|---|---|---|---|---|
 | H4 | `lens-technology/SKILL.md:67` | `For each candidate (3–5; do-nothing and process change included…)` | G3: contrato ≠ comportamento | Mesma contagem velha de H3; a regra por rota está em `handoff-contract.md` | alta | rewrite |
-| M16 | `.claude/agents/specialist-reviewer.md:54` | `at most 300 words` | 1f tecto numérico | Tectos de saída afinados contra modelos palavrosos; o objectivo real é uma resposta que só contesta o ponto mais forte | média | rewrite |
+| M16 | `.claude/agents/specialist-reviewer.md:54` (**revertido após validação**, ponto 5) | `at most 300 words` | 1f tecto numérico | Tectos de saída afinados contra modelos palavrosos; o objectivo real é uma resposta que só contesta o ponto mais forte | média | rewrite |
 | M17 | `.claude/skills/aisa-retro/SKILL.md:24` | `Máx. 250 palavras.` | 1f | Idem: uma entrada de diário que o curador lê de uma vez | média | rewrite |
 | M18 | 6 skills: `aisa-round:87`, `aisa-frame:266`, `aisa-options:188`, `aisa-decide:155`, `aisa-blueprint:222`, `aisa-render:306` (+ `aisa-start:157` «4-6 frases») | `4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados` | 1f (a mesma coreografia em 7 sítios) | O intervalo de frases é um tecto numérico; o que importa é o público (sponsor), a língua e os ids. **«máx. 2 ids» fica**: é uma regra de linguagem de negócio (P-13), não de comprimento | média | rewrite (um bloco por ficheiro) |
 | M19 | `aisa-round:45` e `lens-technology:40` | `**What matters** (2–4 sentences)` | 1f | Idem | média | rewrite |
@@ -395,7 +395,7 @@ Os limites que **ficam** (e porquê):
 2. ~~L1 — citações de fase~~ — feito (ver *Ponto 2*, abaixo).
 3. ~~L2/L7 — «persona» no `chairman-synthesis`~~ — feito (ver *Ponto 3*, abaixo).
 4. ~~L5 — auditoria linha a linha de `chairman-synthesis`, `aisa-render`, `aisa-blueprint`~~ — feito (ver *Ponto 4*, abaixo).
-5. Validação comportamental de M16–M20 e P19 (`/round`, `/retro`, `/options` num engagement de fixture).
+5. ~~Validação comportamental de M16–M20 e P19~~ — feito (ver *Ponto 5*, abaixo).
 6. Verificação A do mapa (cálculo absorvido), à espera da v01 e da calc-chain da corrida 1.
 
 ## Ponto 2 — citações de fase (L1)
@@ -480,3 +480,28 @@ Leitura de ponta a ponta, com cada referência confrontada com o código, os tes
 - `aisa-options` 5b vem antes da invocação do chairman (passo 6) e depende dela.
 
 **Verificação** (`enforce`): completa 3227/0, stdlib 2429/0.
+
+## Ponto 5 — validação comportamental dos limites retirados (M16–M20, P19)
+
+**Montagem:**
+- engagement sintético `fx-coverage-f06`, sem dados reais;
+- 6 subagentes sem contexto: 3 com o texto antigo (A) e 3 com o novo (B), cada um a produzir as 6 peças;
+- medição por script (palavras, frases, ids, jargão, orçamento do `options.md`) e leitura de pares A/B.
+
+Os ficheiros do ensaio ficam fora do git.
+
+| Peça | A (antigo) | B (novo) | Decisão |
+|---|---|---|---|
+| Episódio da story (M18) | 170 palavras, 6–7 frases | 153, 5–7 | mais curto; 2 ids e zero jargão nos dois → fica |
+| «What matters» (M19) | 70 | 74 | igual → fica |
+| Página do /simulate (M20) | ~130 por opção | ~140 por opção | quase igual → fica |
+| `options.md` (P19) | 669 de prosa, ≤128 por entrada | 675, ≤131 | igual, dentro das 1 500 → fica |
+| Diário do /retro (M17) | 230 (colado ao limite de 250) | 323 (+38%) | mais falhas concretas no parágrafo (b) → fica, por decisão do mantenedor |
+| Antítese (M16) | 296 (colado ao limite de 300) | 529 (+80%) | os mesmos pontos (C-010, TW-1, localizadores) → **limite reposto**: «at most 300 words» |
+
+**Limitações:**
+- n = 3 por variante, e um só engagement;
+- peças produzidas fora do fluxo completo da skill;
+- o ganho de conteúdo foi julgado por leitura e por contagem de sinais, sem juiz cego.
+
+**Verificação** (`enforce`): completa e stdlib sem falhas.
