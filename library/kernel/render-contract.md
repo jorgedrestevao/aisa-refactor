@@ -208,7 +208,7 @@ Four classes. **Not every missing slot is decision-blocking**, and the epistemic
 owner ∈ { architecture | implementation | design | estimate | evidence | functional }
 ```
 
-The label generalizes the former *architecture work item*; the semantics, trigger and behaviour are unchanged. **No fifth class. No parallel taxonomy.** `functional` (handoff-v1 F4) is the functional author: a behaviour the deliverable needs and no authorised functional contract carries — or carries with a gap — goes back to that author with the `FC` and the field; the renderer never writes the value.
+**No fifth class. No parallel taxonomy.** `functional` (handoff-v1 F4) is the functional author: a behaviour the deliverable needs and no authorised functional contract carries — or carries with a gap — goes back to that author with the `FC` and the field; the renderer never writes the value.
 
 **Functional contracts and the final version** (handoff-v1 F4). Behaviour is read from `_design/functional-contracts.json` — the authorised, current items — never from synthesis prose. Before writing a real version of a deliverable that cites `FC-NNNN`, `functional.py render-gate --file <deliverable>` checks each cited contract: it exists, its authorisation covers the current item, it has no gap and no conflict, and the contracts rest on the approved blueprint version. Any failure blocks the final version, with its reason in `render-log.md`, and each gap goes to `render-gaps.md` with `owner: functional`; `--dry-run` previews stay allowed.
 

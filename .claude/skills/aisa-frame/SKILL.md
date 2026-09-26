@@ -18,7 +18,7 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
 - **Mode**: integrated analyst + one independent reviewer (`library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
 
-The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
+The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (`CLAUDE.md` → *Delegação a subagentes*; `docs/handoff-v1/F3/DESENHO.md` §0).
 
 ## Inputs (read)
 
@@ -78,7 +78,7 @@ Soft criteria from `phases.md`:
 4. Are the known structural constraints represented as rows?
 5. Are the suspected decision-changing structural constraints explicit `Unknown`s (`swing: decisivo`)?
 6. Are the material scope / user-task obligations visible as rows?
-7. Has every Critical `PM-U` row and every labelled material synopsis line received a disposition (`aisa-round` step 5e — `undisposed` must be empty)?
+7. Has every Critical `PM-U` row and every labelled material synopsis line received a disposition (`aisa-round` step 5b — `undisposed` must be empty)?
 
 A failing question is a red criterion. **Do not pretend comprehension is sufficient**: name the missing understanding concretely — shape: `output X has no identified consumer`, `material calculation chain Y is not reconstructed`, `structural question Z (where must the data live?) is still absent`, `PM-U-NNN (Critical) undisposed` — and route it through the existing mechanisms: another `/round <perspective>` to adopt or dismiss it into the SU, or `/answer` when the sponsor already answered. Never manufacture an SU row, a process model or an Options set from this gate. Few open Unknowns ≠ deep understanding: a 100% epistemic health with an untraced material output family still fails question 2.
 
@@ -96,7 +96,7 @@ override reason: <reason>
 proceed: allowed under existing soft-gate doctrine
 ```
 
-The missing item stays visible as what it honestly is — an SU `Unknown` (written first, through the existing authority model, if it does not yet exist), an unresolved material trace, or an `undisposed` line named by `aisa-round` step 5e — and the chairman projects **that id** into the survival block. The chairman never writes `(none) — <override reason>`: `(none) — <reason>` is reserved for the substantive conclusion that **no material item of that semantic class exists for this engagement** (`chairman-synthesis` → rules for the survival block). An override that hides a missing material trace behind `(none)` is a defect, not a projection.
+The missing item stays visible as what it honestly is — an SU `Unknown` (written first, through the existing authority model, if it does not yet exist), an unresolved material trace, or an `undisposed` line named by `aisa-round` step 5b — and the chairman projects **that id** into the survival block. The chairman never writes `(none) — <override reason>`: `(none) — <reason>` is reserved for the substantive conclusion that **no material item of that semantic class exists for this engagement** (`chairman-synthesis` → rules for the survival block). An override that hides a missing material trace behind `(none)` is a defect, not a projection.
 
 ### 3. Flip state to Framing (through the coordinator)
 
@@ -273,7 +273,7 @@ A seguir: comparar alternativas — aqui entra pela primeira vez a perspectiva t
 
 ## Notes
 
-- **Subagents** (README → *Regras de execução*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
+- **Subagents** (`CLAUDE.md` → *Delegação a subagentes*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
 - **One return schema.** The analyst writes its proposal in the schema `chairman-synthesis` owns (*Return schema* → the six sections), so the synthesis reads Framing as it reads any return.
 - **Only the synthesis writes the SU.** The reviewer has `tools: [Read, Grep, Glob]` and returns findings as text — it cannot write even if it tried.
 - **The survival block is a projection, not a second truth.** Semantic ownership of invariants, constraints, obligations and Unknowns stays in the SU; `frame.md` names ids. If the chairman notices a missing material item while framing, the SU row is written first and projected second (`chairman-synthesis` step 6). In Options the technical author reads the block (`aisa-options` step 4); the Options blocking set remains the primary candidate-specific check.

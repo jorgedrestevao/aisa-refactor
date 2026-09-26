@@ -1577,7 +1577,7 @@ def audit_confirmed_locators(rows: list[dict], eng: Path,
                              "ficheiro pertence ao span do proprio locator"),
         "julgamento": ("o motor verifica PRESENCA de locator e EXISTENCIA do alvo. Se a "
                        "afirmacao diz mais do que a evidencia -- a regra 2 do limiar -- e "
-                       "julgamento da segunda leitura do arbitro (aisa-round step 5f) e das "
+                       "julgamento da segunda leitura do arbitro (aisa-round step 5c) e das "
                        "Hard rules das lentes. Lista vazia significa 'toda a evidencia "
                        "aponta a algo que existe', nunca 'os factos estao certos'"),
         "calibracao": list(CALIBRACAO),
@@ -1591,7 +1591,7 @@ ENQ_LENS = "enquadramento"
 # --------------------------------------------------- round arbiter (P-1)
 # Presence check ONLY. It never reclassifies, never rewrites a question, never
 # judges materiality: it lists the open `Unknown` rows that carry NO declaration
-# of why they exist. The arbiter (aisa-round step 5f) decides what to do with the
+# of why they exist. The arbiter (aisa-round step 5c) decides what to do with the
 # list; the lens wrote the row. False negatives are accepted by design -- a row
 # that declares its divergence in words this regex does not know is left alone.
 
@@ -1795,7 +1795,7 @@ def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
     readable? `ronda` narrows it to the round just run.
 
     Presence only. Whether the question is material, whether the impact is true and whether
-    the alternatives are the real ones are the arbiter's reading (aisa-round step 5f), never
+    the alternatives are the real ones are the arbiter's reading (aisa-round step 5c), never
     this function's. It never edits a row. A row written before the columns existed is
     counted apart and never reclassified; a resolved, withdrawn or parked row is skipped.
     A `fact_gap` owes no alternatives (T06); a `design_choice` owes >= 2, read from the
@@ -1887,7 +1887,7 @@ def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
                              "adivinha o aspecto. Falsos POSITIVOS nao sao aceites"),
         "julgamento": ("o motor verifica PRESENCA dos campos; se a pergunta e material, se o "
                        "impacto e verdadeiro e se as alternativas sao as reais sao julgamento "
-                       "do arbitro (aisa-round step 5f). Lista vazia significa 'nada em falta "
+                       "do arbitro (aisa-round step 5c). Lista vazia significa 'nada em falta "
                        "que o motor saiba ver', nunca 'aprovado'"),
     }
 

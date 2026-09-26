@@ -505,3 +505,25 @@ Os ficheiros do ensaio ficam fora do git.
 - o ganho de conteúdo foi julgado por leitura e por contagem de sinais, sem juiz cego.
 
 **Verificação** (`enforce`): completa e stdlib sem falhas.
+
+## Ponto 7 — defeitos encontrados fora do âmbito (pedido do mantenedor)
+
+Os defeitos que os pontos 3 e 4 registaram fora do âmbito, corrigidos com autorização do mantenedor. A parte em `library/` foi feita pelo override administrativo, reposto antes do commit.
+
+| Local | Antes | Depois |
+|---|---|---|
+| `aisa-frame:81, :99` · `test_step8c` (docstring) | «`aisa-round` step 5e» | step 5b (disposição das `PM-U`) |
+| `library/kernel/tools/dashboard.py` (4×, duas são mensagens do motor) · `library/kernel/states.md` (4×) | «aisa-round step 5f» | step 5c (árbitro da admissão) |
+| `library/kernel/tools/workflow.py:349` · `test_handoff_evidence:123` | «concordância entre personas não é evidência» | «entre retornos» |
+| `library/kernel/render-contract.md:211` | «The label generalizes the former *architecture work item*…» | retirado; ficam «No fifth class. No parallel taxonomy.» (presas por teste) |
+| `aisa-options:199`, `aisa-frame:21, :276`, `aisa-round:39, :107` | «README → *Regras de execução*» | `CLAUDE.md` → *Delegação a subagentes* |
+| `aisa-options` 5b | «When chairman-synthesis reports…», antes da invocação do passo 6 | diz que corre por dentro do passo 6 (Step 2b do chairman) e que se volta a invocar o chairman com teses e antíteses, no mesmo rascunho |
+
+**Correcção a um achado:** «S8» não é só um fóssil. É o nome vivo da *economia de decisão* nos templates de síntese e do pack (`financial-story`, `estimate`, `executive-report`). O que está velho é «options.md S8», porque o `options.md` actual não tem secções S-. Mudar isto é um refactor de vocabulário no pack e fica como flag.
+
+**Ficam como flag:**
+- «PP» fixo nas skills de render e blueprint;
+- três numerações nas classes do render;
+- `docs/CONSOLIDATED_PLAN.md` cita o passo 5f, mas é histórico.
+
+**Verificação** (`enforce`): completa 3227/0, stdlib 2429/0.

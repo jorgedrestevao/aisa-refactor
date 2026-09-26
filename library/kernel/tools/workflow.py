@@ -346,7 +346,7 @@ def su_problems(eng, old_text: str, new_text: str, overlay: dict | None = None) 
         if falhas:
             fora.append(_reason(
                 "linha(s) `Confirmed` sem prova localizável: {} — concordância entre "
-                "personas não é evidência (`library/kernel/states.md` → *Confirmed "
+                "retornos não é evidência (`library/kernel/states.md` → *Confirmed "
                 "threshold*); escrever como `Assumed` com a base, ou `Unknown`".format(
                     "; ".join(falhas)), source_code="CONFIRMED_WITHOUT_LOCATOR"))
     return fora
