@@ -7,7 +7,7 @@ description: Synthesize the returns of a phase into Shared Understanding rows, a
 
 ## Role
 
-You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side — in Framing (`aisa-frame`) the integrated analyst's proposal and the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates and each published specialist review (*Options inputs in a handoff-v1 engagement*). A **return** is what one author handed in — in Framing the analyst's proposal or the reviewer's findings; in Options the technical author's published candidates or one specialist review. Every rule below is about returns. You produce:
+You are executing the **chairman** role described in `.claude/agents/chairman.md` — neutral synthesizer of a phase. You read the returns of the calling skill side by side. A **return** is what one author handed in — in Framing (`aisa-frame`) the integrated analyst's proposal or the independent reviewer's findings (*Framing inputs*); in Options (`aisa-options`) the technical author's published candidates or one published specialist review (*Options inputs in a handoff-v1 engagement*). Every rule below is about returns. You produce:
 
 1. New rows in `<engagement>/shared-understanding.md`.
 2. A synthesis audit log at `<engagement>/lens-outputs/chairman-synthesis-<round>.md`, where `<round>` is the current round id from `_state.json` (`F-<NN>` in Framing, `O-<NN>` in Options — e.g., `chairman-synthesis-F-01.md`).
@@ -22,7 +22,7 @@ You are executing the **chairman** role described in `.claude/agents/chairman.md
 - The returns collected by the calling skill: in Framing the analyst's proposal in the *Return schema* below and the reviewer's findings; in Options the published candidates and reviews (`review.py show-candidates` / `show-reviews`).
 - `<engagement>/context.json`, `<engagement>/shared-understanding.md`, `<engagement>/decisions.md`, `<engagement>/_state.json`.
 - `<engagement>/_capture/process-model.md` §4 (the process synopsis, when it exists) — in Framing, to project the *What must survive into Options* block from SU ids; the synopsis itself is evidence, never a source of frame.md entries without an SU row.
-- Pack metadata if needed: `library/packs/<pack>/pack.yaml`, plus `frame.md` (Options/Decision) and the previous round's synthesis log (if any).
+- Pack metadata if needed: `library/packs/<pack>/pack.yaml`, plus `frame.md` (Options) and the previous round's synthesis log (if any).
 
 `<engagement>` resolves to `$AISA_ENGAGEMENTS_ROOT/<slug>` if set, otherwise `projects/<slug>`. `<pack>` is read from `_state.json.pack`.
 
@@ -86,7 +86,7 @@ option set for solution-architect (Options)>
 
 1. **Append-only to `shared-understanding.md`.** Never delete or rewrite existing rows. State transitions add a new row that references the prior id (`was X-NNN`).
 2. **No vendor/product naming** in Framing. In Options/Decision, only when anchored to the technical author's published candidate that itself anchored it via the pack's `decision-tree.md` / `domain-knowledge/`.
-3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven returns saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the returns' anchors) or **Unknown**. In a `handoff-v1` engagement the write is refused otherwise (`pre-authority-guard.py`).
+3. **A Confirmed row needs a locator, never a head-count.** `Confirmed` only when the row carries a locator of the classes in `library/kernel/states.md` → *Confirmed threshold*, with a claim at its level. Two, three or seven returns saying the same thing is agreement, not evidence: without the locator the row is **Assumed** (basis = the returns' anchors) or **Unknown**. A `Confirmed` without a locator is refused on write (`pre-authority-guard.py`).
 4. **Surface contradictions as Conflicted rows.** Never silently pick a winner. The user resolves at `/decide` time.
 5. **Through the coordinator, never in place.** The SU rows, the `_state.json` round and the `council-log.md` line go into the **draft copies** the calling skill opened for you (`_drafts/<id>/`), and the caller publishes them in one operation (`library/kernel/orchestration.md` → *Writing an authority*). The phase artefact and the synthesis log are written directly. A refusal on publish (`INTEGRITY_FAILURE` — e.g. a `Confirmed` without a resolvable locator) comes back to you to fix in the copy.
 6. **`costs <Z> today` follows the funding gate** (P-4). Read `context.json.funding_gate` (absent = `true`). With `false`, the engagement's go-ahead does not depend on a third party's budget approval, so the clause is **stated with its basis, not monetized**: name what the situation costs the business in its own terms — rework, exposure, dependency, time of the people named in the SU — anchored to the rows that carry it, and write *«enunciado com base, não monetizado»* in the Anchors table for that clause. Never invent a figure to fill the slot, and never mark the frame incomplete for the absence of one. With `true`, the clause carries the figure the financial lens established, or the clause stays open as an `Unknown`.
@@ -135,9 +135,9 @@ Scan the current SU per section, find the highest existing id, and allocate the 
 ### Step 4b — Admission of the questions this round writes
 
 Before a single `Unknown` reaches the file. The rule is the kernel's and it binds **every** writer, this
-one included: `library/kernel/states.md` → *Admission of a question*. `aisa-round` step 5f arbitrates the
+one included: `library/kernel/states.md` → *Admission of a question*. `aisa-round` step 5c arbitrates the
 `R-` rounds; **the `F-` and `O-` rounds are checked here, by you, on the rows you are about to write** —
-they never pass through 5f.
+they never pass through 5c.
 
 Per candidate `Unknown`: does its answer move at least one of the five aspects (`solucao` · `funcional` ·
 `aceitacao` · `operacao` · `viabilidade`)? Then fill `tipo`, `impacto`, `âmbito`, `quem responde`, `fecho`,
@@ -149,7 +149,7 @@ support stays **empty** and is named in your log — never filled by invention. 
 | no aspect moves | **do not write the row** — the content stays in the return and in your log |
 | `fact_gap` | write it, with no invented second answer |
 | `design_choice` with fewer than 2 real alternatives | write it as `fact_gap` when what is missing is a fact; otherwise do not write it |
-| referent, on a `decisivo` | write it `dimensionante` |
+| `decisivo` with no named referent | write it `dimensionante` |
 | only answer is an identity, a signature, an approval or a third party's paper | **do not write it** (P-21) — reformulate by role, operation and enforcement plane, or drop |
 
 Record every decision in `lens-outputs/chairman-synthesis-<round>.md` under **Admissão de perguntas**:
@@ -212,7 +212,7 @@ Branch on `_state.json.phase`:
 - <C-NNN / A-NNN / U-NNN> — <an output family, user task, transformation or exception whose omission would reshape the option space>
 ```
 
-Synthesize the single sentence from the overlap of `Headline` and `Proposal` sections across the returns. If the sentence does not converge cleanly → write the best version available AND list the divergences in `Open questions`.
+The sentence is the analyst's proposal with the corrections by evidence applied (*Framing inputs*). The reviewer's recommendation findings, and its alternative sentence when it gave one, go to `## For the owner to decide` in the synthesis log — never into the sentence.
 
 **Rules for the survival block** (`library/kernel/orchestration.md` → *Comprehension survival*):
 
@@ -245,7 +245,7 @@ The complete per-option field set and the concern coverage live in the round's a
 
 ## Summary
 
-<≤8 lines: what the set spans · what redrew the option space this round · the outcome per scope.
+<A short paragraph: what the set spans · what redrew the option space this round · the outcome per scope.
 Nothing here that a per-option entry already says.>
 
 ## Comparison
@@ -253,7 +253,7 @@ Nothing here that a per-option entry already says.>
 ### O-001 — <name>   ·   <option class, in plain language>   ·   <technology: the form in products>
 - **Scope**: <whole solution | the named responsibility>
 - **Verdict**: <viability + the *(scope, outcome)* pairs, each outcome verbatim in its render template from the pack's outcome register>
-- **Why**: <≤3 bullets or clauses — the strengths, trade-offs and disqualifiers that actually decide, each with its SU anchor and, for a disqualifier, its scope and evidence grade>
+- **Why**: <the strengths, trade-offs and disqualifiers that actually decide, each with its SU anchor and, for a disqualifier, its scope and evidence grade>
 - **Preconditions**: <condition — owner — funded?> <SU ids>
 - **Risks**: <SU ids, one clause each>
 - **Proof required**: <published-limit arithmetic | bounded pilot | engineered test harness | production-like proof> — funded? <yes | no>
@@ -270,7 +270,7 @@ deletion, and this is where it is kept short without being hidden.>
 
 ## Recommendation
 
-<≤12 lines, and it is the aisa's reasoned recommendation — **never the decision**, which is the
+<The aisa's reasoned recommendation — **never the decision**, which is the
 owner's and is taken at `/decide`. Four parts, in this order:
 - **Recommended**: <the option id and name — or `no recommendation`, see below>
 - **Against its siblings**: <what separates it from its nearest alternatives, each claim SU-anchored;
@@ -327,9 +327,8 @@ a forced pick, and never a re-run of the per-option entries.>
   Each enters the set when discovery showed it plausible, generated with the candidate set and never
   appended here. Where one did not enter, the round's log records why, with ids (`Class coverage`,
   Step 7). An unexplained absence is the defect; a reasoned absence is a finding.
-  Plus the platform forms the solution-architect generated. If the architect returned no form-level
-  candidate for a platform class it put on the table → say so in `Summary` and raise it as an open
-  question; do not name a form the architect did not name.
+  If the published candidates carry a platform class with no form-level candidate → say so in
+  `Summary` and raise it as an open question; do not name a form the architect did not name.
 - **A declared imposed technology is the boundary the set is generated inside, not a candidate to
   argue with.** Where the engagement records the platform as a fixed constraint, every option is a
   pattern compatible with it — plus, where the organisation permits the boundary, external components.
@@ -382,6 +381,9 @@ Write `<engagement>/lens-outputs/chairman-synthesis-<round>.md` (e.g., `chairman
 ## Contradictions → Conflicted
 - "<conflict>" — <author∧author> → <X-NNN>
 
+## For the owner to decide   [Framing only]
+- <the reviewer's recommendation finding, or its alternative sentence> — <what it would change in the sentence>
+
 ## Admissão de perguntas
 <One line per candidate `Unknown` this round — written or not written (Step 4b). Empty only when no return
 raised an open question at all; "none missing" is written as such, never by omission.>
@@ -395,7 +397,7 @@ raised an open question at all; "none missing" is written as such, never by omis
 - …
 
 ## Phase artefact written
-- `<frame.md | options.md | decisions.md draft>` — <one-line summary>
+- `<frame.md | options.md>` — <one-line summary>
 
 ## Class coverage — round <round>   [Options only]
 <Exactly two lines, one per conditional option class. The marker is verbatim and never translated —
@@ -420,7 +422,7 @@ by its **form in products** (surface + store), one entry per form.>
 ### <O-NNN> — <name>   ·   <option class>   ·   <technology: the form in products>
 - **Anchored by**: <authors — solution-architect always for technology options>
 - **Scope**: <whole solution | the named responsibility>   ·   renders as `scope: <…>`
-- **Viability**: viable | viable with preconditions | disqualified (settled) | disqualified (provisional — rests on assumption <SU id>) | not assessable (evidence)
+- **Viability**: viable | viable with preconditions | viable if the rule is changed (rule with id · condition · impact · cost · risk · who can change it · status) | disqualified (settled) | disqualified (provisional — rests on assumption <SU id>) | not assessable (evidence)
 - **Outcome**: <the outcome, in its render template from the pack's outcome register. An economic outcome states explicitly whether it is economically **infeasible** or economically **unattractive** — never the disjunction where the evidence supports one.>
 - **High-level architecture**: <the main components, and per component whether it falls inside or outside the responsibility boundary — what this team builds and operates versus what another team, the platform or a third party does. High level only: the detailed architecture belongs to the chosen option, after the decision.> | (none)
 - **Assumptions**: <what the option rests on that is not Confirmed, by SU id — an expired or weak `Assumed` named as such> | (none)
@@ -450,4 +452,4 @@ this record: every claim it carries traces to a field here, and nothing material
 
 1. Update `_state.json.round` to the current round, in the draft copy (rule 5). For Framing rounds use the `F-NN` form, Options `O-NN`; the calling skill (`aisa-frame` / `aisa-options`) is responsible for the prefix, but if you find the prefix already correct in `_state.json`, leave it alone.
 2. Append a one-line summary to the draft copy of `council-log.md`: round, `agent: chairman`, what was produced.
-3. Return control to the calling skill with: "Chairman synthesis complete for `<phase>` round `<round>`. Wrote `<N>` SU rows; phase artefact `<frame.md | options.md | decisions.md draft>`."
+3. Return control to the calling skill with: "Chairman synthesis complete for `<phase>` round `<round>`. Wrote `<N>` SU rows; phase artefact `<frame.md | options.md>`."

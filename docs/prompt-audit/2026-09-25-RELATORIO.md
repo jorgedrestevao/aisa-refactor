@@ -394,8 +394,8 @@ Os limites que **ficam** (e porquê):
 1. ~~Guardar este relatório no repo~~ — este ficheiro.
 2. ~~L1 — citações de fase~~ — feito (ver *Ponto 2*, abaixo).
 3. ~~L2/L7 — «persona» no `chairman-synthesis`~~ — feito (ver *Ponto 3*, abaixo).
-4. L5 — auditoria linha a linha de `chairman-synthesis`, `aisa-render`, `aisa-blueprint`.
-5. Validação comportamental de M16–M20 (`/round`, `/retro` num engagement de fixture).
+4. ~~L5 — auditoria linha a linha de `chairman-synthesis`, `aisa-render`, `aisa-blueprint`~~ — feito (ver *Ponto 4*, abaixo).
+5. Validação comportamental de M16–M20 e P19 (`/round`, `/retro`, `/options` num engagement de fixture).
 6. Verificação A do mapa (cálculo absorvido), à espera da v01 e da calc-chain da corrida 1.
 
 ## Ponto 2 — citações de fase (L1)
@@ -424,3 +424,59 @@ Os limites que **ficam** (e porquê):
 - **Nenhum parser** lê estas estruturas (procurei em hooks, tools, templates e testes). `aisa-frame` escreve o cabeçalho como `## analista integrado — Round …`, sem mudança.
 - **Pendente novo, fora deste ponto:** `library/kernel/tools/workflow.py:349` diz «concordância entre personas não é evidência». É uma mensagem do motor, verificada por `test_handoff_evidence.py:123`, e mudá-la exige o override de `library/` e o teste.
 - **Verificação** (`enforce`): completa 3227/0, stdlib 2429/0; `grep -i persona` na skill não devolve nada.
+
+## Ponto 4 — linha a linha: `chairman-synthesis`, `aisa-render`, `aisa-blueprint` (L5)
+
+Leitura de ponta a ponta, com cada referência confrontada com o código, os testes e as skills que chamam. Aplicado P1–P19.
+
+**Contradições (alta):**
+
+| # | Local | O que estava errado | Correcção |
+|---|---|---|---|
+| P1 | `chairman-synthesis` 4b | cita «`aisa-round` step 5f», mas esse passo não existe; a admissão é o 5c | → 5c |
+| P2 | `chairman-synthesis` tabela 4b | «referent, on a `decisivo` → `dimensionante`» está invertido face ao `aisa-round` 5c.3 | «`decisivo` with no named referent» |
+| P3 | `chairman-synthesis` passo 6 (Framing) | «sintetizar a frase da sobreposição dos retornos» contradiz *Framing inputs* (a frase é a do analista, corrigida por evidência) | reescrito |
+| P4 | `chairman-synthesis` modelo do log | faltava `## For the owner to decide`, que a l.41 manda escrever e o `aisa-frame` passo 7 lê | acrescentada (só Framing) |
+| P5 | `chairman-synthesis` forma longa | *Viability* sem «viable if the rule is changed» (existe no `options.md`, nas regras e em `decision-tree.md` §14.1) | acrescentado, com os 7 campos |
+| P6 | `chairman-synthesis` passos 7 e 8 | «decisions.md draft» como artefacto, mas o Decision não corre síntese | retirado |
+| P7 | `aisa-render` *Phase gate* e `rules/render-on-decision-only.md` | três frases, três comportamentos («allowed», «stop», «will fail with warnings») | alinhado com o que corre: pára e aponta `--dry-run` |
+| P8 | `aisa-render` regra 4 | «the chairman … must fix» o `business-story.md`, mas quem o escreve é o `aisa-synthesize` | → `/synthesize` |
+
+**Fósseis e etiquetas (média):**
+- P9: frase dupla no *Role* do chairman (que o ponto 3 tinha deixado).
+- P10: «(Options/Decision)».
+- P11: «In a `handoff-v1` engagement».
+- P12: frase solta «Plus the platform forms…».
+- P13: «v3.0 scope … v3.1», e `--html` acrescentado ao *Usage*.
+- P14: voz de documento de desenho, retirada:
+  - «No new engine, no new skill…»;
+  - «No new machinery»;
+  - «none is added» (2×);
+  - «generalizes the former…»;
+  - «replacing the obsolete `branch` field».
+- P15: «external audit 2026-09-24» (3×).
+- P16: «each has already been the defect».
+- P17: «S8».
+- P18: o ponteiro «README → *Regras de execução*» passou a `CLAUDE.md` → *Delegação a subagentes*.
+- **P19 (1f):** saíram os tectos por secção do `options.md`: Summary ≤8 linhas, Why ≤3, Recommendation ≤12. O orçamento total testado (~1 500 / ≤120) fica. Junta-se à validação do ponto 5.
+
+**Testes ajustados:**
+- `test_pp_architecture_templates`: o teste das classes de lacuna pedia o nome antigo «architecture work item». Passou a pedir «open work item», o nome actual, que está no contrato e na skill. O comentário que citava a frase do `branch` foi actualizado.
+- P12: a frase «do not name a form the architect did not name» fica, porque `test_options_artefact` a verifica.
+
+**Ficam de propósito:** «not an inference engine», «No fifth class. No parallel taxonomy.», «no new approval state machine», «No dependency graph», «no three-source rule». Os testes prendem-nas e são regra para o executor.
+
+**Flags (sem diff):**
+- `aisa-render` 2b: a frase «With a process map…» está fora do sítio.
+- Três numerações convivem: outcome class 12, Category 3 e Class 3.
+- «PP» fixo nas duas skills. Hoje está certo, porque só o pack `pp` tem templates de arquitectura e de entregáveis.
+- O passo 8.1 do chairman é redundante.
+
+**Fora do âmbito, o mesmo defeito:**
+- `aisa-frame:81, :99` citam «step 5e», que hoje é o 5b;
+- `library/kernel/tools/dashboard.py` cita «step 5f» 3× (precisa do override);
+- `library/kernel/render-contract.md:77` cita «options.md S8» e :211 «generalizes the former»;
+- `aisa-options`, `aisa-frame` e `aisa-round` apontam «README → *Regras de execução*»;
+- `aisa-options` 5b vem antes da invocação do chairman (passo 6) e depende dela.
+
+**Verificação** (`enforce`): completa 3227/0, stdlib 2429/0.
