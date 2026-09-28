@@ -141,10 +141,14 @@ A primeira entrega **não** cumpre os critérios de aceitação do M5 (§7).
 
 ## Decisão do mantenedor
 
-Pendente:
-1. **Não aceitar ainda a primeira entrega.** Corrigir primeiro F7 e F3 (motor) e F11 (render), com testes.
-2. Depois, repetir só a etapa do desenho sobre este engagement, com a versão corrigida, e ver se F7 apanha a v01 sozinha.
-3. Verificação A: desenhar a regra com as duas ocorrências reais (corridas 1 e 3).
+**28-09-2026: primeira entrega do M5 aceite**, depois de cumpridas as três condições:
+1. F7, F3 e F11 corrigidos, com testes (seguimentos abaixo);
+2. a etapa do desenho repetida sobre este engagement com a versão corrigida (sessão B3): a omissão na v01 foi detectada pela cobertura;
+3. a verificação A foi feita com as ocorrências reais da corrida 3 (as da corrida 1 não chegaram), pela via «mostrar ao dono».
+
+Os achados médios e baixos também foram tratados; o F6 fica sem correcção, com o motivo. Integrado na `main` pelo PR #5.
+
+**O que a aceitação não cobre:** uma corrida nova de ponta a ponta sobre o código corrigido não foi feita. O M6 (desenho do processo futuro) precisa de autorização própria (PLANO).
 
 ## Retoma
 
