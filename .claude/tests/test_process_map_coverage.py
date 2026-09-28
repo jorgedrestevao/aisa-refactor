@@ -238,6 +238,52 @@ class MAP19_ElementoSemDestino(F06Base):
         self.assertNotIn("COV-MAP-UNPLACED", self.codes(self.state()))
 
 
+def _item_with(rec, unit):
+    return next(c for c in rec["coverage"] if MAPU + unit in c["source_unit_refs"])
+
+
+class MAP19_GraoDoDestino(F06Base):
+    """Corrida 3 do M5 (F7): ter destino não chega — o mapa inteiro num item «coberto» por
+    uma decisão escondeu três saídas que o desenho nunca concretizou."""
+
+    def test_two_outputs_in_one_item_are_refused(self):
+        def junta(rec):
+            alvo = _item_with(rec, "MAPN-006")
+            for eid in ("MAPN-007", "MAPN-008"):
+                _item_with(rec, eid)["source_unit_refs"].remove(MAPU + eid)
+                alvo["source_unit_refs"].append(MAPU + eid)
+        install(self.eng, recon(self.eng, edit=junta))
+        st = self.state()
+        agg = [d for d in st["diagnostics"] if d["code"] == "COV-MAP-AGGREGATED"]
+        self.assertEqual(len(agg), 1, agg)
+        for eid in ("MAPN-006", "MAPN-007", "MAPN-008"):
+            self.assertIn(eid, agg[0]["message"])
+        self.assertEqual(st["coverage"], "gaps")
+        self.assertFalse(st["eligible"])
+
+    def test_map_steps_under_a_decision_alone_are_refused(self):
+        def sob_decisao(rec):
+            _item_with(rec, "MAPN-005")["requirement_refs"] = ["D-002"]
+        install(self.eng, recon(self.eng, edit=sob_decisao))
+        st = self.state()
+        agg = [d for d in st["diagnostics"] if d["code"] == "COV-MAP-AGGREGATED"]
+        self.assertTrue(agg, st["diagnostics"][:5])
+        self.assertIn("D-002", agg[0]["message"])
+        self.assertFalse(st["eligible"])
+
+    def test_two_steps_serving_one_requirement_stay_one_item(self):
+        def dois_passos(rec):
+            _item_with(rec, "MAPN-005")["source_unit_refs"].append(MAPU + "MAPN-004")
+        install(self.eng, recon(self.eng, edit=dois_passos))
+        self.assertNotIn("COV-MAP-AGGREGATED", self.codes(self.state()))
+
+    def test_one_item_per_output_passes(self):
+        install(self.eng, recon(self.eng))
+        st = self.state()
+        self.assertNotIn("COV-MAP-AGGREGATED", self.codes(st))
+        self.assertEqual(st["coverage"], "complete")
+
+
 class MAP17_OmissaoNoDesenho(F06Base):
 
     def setUp(self):

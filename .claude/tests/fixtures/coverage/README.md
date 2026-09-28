@@ -218,3 +218,4 @@ mudança de contrato passar por «basta rever».
 | código | onde | o que prova |
 |---|---|---|
 | `COV-MAP-UNPLACED` | `.claude/tests/test_process_map_coverage.py` (engagement sintético com mapa publicado, process-map M3) | um passo do mapa lido como material sem item de cobertura torna a reconciliação incompleta; com o item, a cadeia existente leva-o até ao desenho |
+| `COV-MAP-AGGREGATED` | `.claude/tests/test_process_map_coverage.py` (`MAP19_GraoDoDestino`) | duas saídas num item, ou passos do mapa sob uma decisão sozinha, tornam a reconciliação incompleta; um requisito servido por dois passos continua um item |

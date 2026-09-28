@@ -663,6 +663,11 @@ ganha:
   de `coverage[]`. O item pode ter qualquer disposição (`preserve`, `change`, `retire` com
   a autoridade de âmbito, `clarify`), mas tem de existir. Senão é `COV-MAP-UNPLACED`.
   `not-material` precisa de razão e dispensa o item.
+- **O destino tem o grão do elemento:** uma saída ou uma exceção do mapa (`kind: output` ·
+  `exception`) tem item próprio, e um item que coloca passos do mapa nomeia pelo menos um
+  requisito que não seja uma decisão (`D-NNN`). Senão é `COV-MAP-AGGREGATED`: o mapa inteiro
+  num item «coberto» pela decisão faz de várias saídas uma obrigação, e o desenho que
+  concretiza uma dá todas por cobertas.
 - **A identidade da obrigação não muda:** continua a ser o conjunto de `requirement_refs`
   (ids da SU ou de decisões, §4.4.4). Uma obrigação partilhada por dois elementos é **um**
   item com as duas unidades em `source_unit_refs`, nunca dois itens com o mesmo requisito:
@@ -977,6 +982,7 @@ do achado é separada da elegibilidade por acção**: produzir para discussão n
 | `COV-AUTHORITY-MISMATCH` | target ou revisão usa versão/autoridade errada | bloquear o consumo correspondente |
 | `COV-UNEXPECTED` | falha interna de avaliação | não avaliado; **nunca** sucesso silencioso |
 | `COV-MAP-UNPLACED` | na reconciliação, unidade do mapa (passo, ligação, detalhe, dúvida, cálculo qualificado, etiqueta da §4) lida como `material` ou `undetermined` sem destino em nenhum item de `coverage[]` (§6.1.1) | reconciliação incompleta; a funcionalidade identificada não chega ao desenho em silêncio |
+| `COV-MAP-AGGREGATED` | na reconciliação, um item com mais de uma saída ou exceção do mapa, ou com passos do mapa sob uma decisão sem requisito da SU (§6.1.1) | reconciliação incompleta; cada saída ou exceção ganha item próprio, ligado ao requisito que a trata |
 
 ### 8.1 Entrada e saída do desenho
 

@@ -87,6 +87,7 @@ COV_CAPTURE_LIMIT = "COV-CAPTURE-LIMIT"
 COV_AUTHORITY_MISMATCH = "COV-AUTHORITY-MISMATCH"
 COV_UNEXPECTED = "COV-UNEXPECTED"
 COV_MAP_UNPLACED = "COV-MAP-UNPLACED"
+COV_MAP_AGGREGATED = "COV-MAP-AGGREGATED"
 
 # ------------------------------------------------------------------ caminhos e base
 # §6.3: excluídos da base por serem histórico ou derivados. Lista EXPLÍCITA -- um padrão
@@ -109,6 +110,13 @@ MAP_REL = "_map/map.json"
 # funcionalidade identificada no processo de desaparecer antes do desenho.
 MAP_UNIT_CLASSES = ("process-map-node", "process-map-edge", "process-map-detail",
                     "process-map-question", "calculation", "synopsis-label")
+# Ter destino não chega: o destino tem de ter o grão do elemento (`COV-MAP-AGGREGATED`).
+# Uma saída ou uma exceção é um comportamento próprio, com o seu requisito e o seu ponto no
+# desenho; juntá-las num item só faz de três saídas uma obrigação, e o desenho que entrega
+# uma cobre as três. E um passo do mapa é tratado por um requisito da SU, não por uma
+# decisão: «a decisão cobre o processo» não diz o que o desenho tem de concretizar.
+MAP_SINGLETON_KINDS = ("output", "exception")
+DECISION_ID_RE = re.compile(r"^D-\d{2,4}$")
 DERIVED_SUFFIXES = (".tmp", ".bak")
 DERIVED_DIRS = ("__pycache__/",)
 
@@ -3143,7 +3151,7 @@ def validate_record(record: dict, inventory: dict, eng: Path | None = None,
     cov = _check_coverage(record, ctx, eng, readers, sr, diags)
     _check_links(record, ctx, cov, diags)
     _check_not_hollow(record, sr, cov, diags)
-    _check_map_units(record, inventory, sr, diags)
+    _check_map_units(record, inventory, sr, diags, eng)
     inh = _check_inheritance(record, chain or {}, cov, diags)
     dl = _check_deliverable(record, eng, chain or {}, diags, readers, cov)
     sem = _check_semantic(record, cov, diags)
@@ -3161,7 +3169,8 @@ def validate_record(record: dict, inventory: dict, eng: Path | None = None,
             "inheritance_ok": inh["review"], "deliverable_ok": dl["review"]}
 
 
-def _check_map_units(record: dict, inventory: dict, sr: dict, diags: list) -> None:
+def _check_map_units(record: dict, inventory: dict, sr: dict, diags: list,
+                     eng: Path | None = None) -> None:
     """process-map M3 (§4.3, *Unidades do mapa*). Na reconciliação, uma unidade do mapa —
     um passo, uma ligação, um detalhe, uma dúvida, um cálculo qualificado ou uma etiqueta
     material da §4 — lida e declarada `material`, ou de materialidade por determinar, tem de
@@ -3189,6 +3198,60 @@ def _check_map_units(record: dict, inventory: dict, sr: dict, diags: list) -> No
                                locator=unit, item=info.get("id", ""),
                                resolves="criar ou completar o item de `coverage[]` que a "
                                         "trata, ou declará-la `not-material` com razão"))
+    _check_map_grain(record, classes, diags, eng)
+
+
+def _map_node_kinds(eng: Path | None) -> dict:
+    """O tipo de cada nó do mapa publicado (`output`, `exception`, …); vazio sem mapa."""
+    if eng is None:
+        return {}
+    st = _PM()["load"](eng)
+    if st.get("status") != "ok":
+        return {}
+    return {"{}#{}".format(MAP_REL, n["id"]): n.get("kind", "")
+            for n in st["map"].get("nodes") or []}
+
+
+def _check_map_grain(record: dict, classes: dict, diags: list,
+                     eng: Path | None) -> None:
+    """Ter destino não chega: o destino tem de ter o grão do elemento (corrida 3 do M5,
+    achado F7). Duas regras, na reconciliação:
+
+    - uma saída ou uma exceção do mapa (`MAP_SINGLETON_KINDS`) tem item próprio — um item
+      com duas saídas é uma obrigação onde havia duas, e o desenho que concretiza uma dá
+      as duas por cobertas;
+    - um item que coloca passos do mapa nomeia pelo menos um requisito que não seja uma
+      decisão (`D-NNN`): a decisão escolhe a solução, não diz o que o desenho concretiza.
+
+    Um requisito servido por dois passos continua a ser um item com as duas unidades."""
+    kinds = _map_node_kinds(eng)
+    for item in record.get("coverage") or []:
+        if not isinstance(item, dict):
+            continue
+        refs = [str(x) for x in _as_list(item.get("source_unit_refs"))]
+        nodes = [u for u in refs if classes.get(u) == "process-map-node"]
+        if not nodes:
+            continue
+        iid = str(item.get("id", ""))
+        single = sorted(u for u in nodes if kinds.get(u) in MAP_SINGLETON_KINDS)
+        if len(single) > 1:
+            diags.append(_diag(COV_MAP_AGGREGATED, "error",
+                               "o item {} junta {} saídas/exceções do mapa ({}) numa só "
+                               "obrigação — cada uma é um comportamento com o seu "
+                               "requisito e o seu destino no desenho".format(
+                                   iid, len(single), ", ".join(single)),
+                               locator=single[0], item=iid,
+                               resolves="um item por saída ou exceção, cada um com o "
+                                        "requisito da SU que a trata"))
+        reqs = [str(r) for r in _as_list(item.get("requirement_refs"))]
+        if not [r for r in reqs if not DECISION_ID_RE.match(r)]:
+            diags.append(_diag(COV_MAP_AGGREGATED, "error",
+                               "o item {} coloca {} passo(s) do mapa sob {} — uma decisão "
+                               "não é o requisito que o desenho concretiza".format(
+                                   iid, len(nodes), ", ".join(reqs) or "nenhum requisito"),
+                               locator=nodes[0], item=iid,
+                               resolves="ligar cada passo ao requisito da SU que o trata "
+                                        "(escrever a linha primeiro, se não existir)"))
 
 
 # ========================================================== resultado computado §7
@@ -3787,7 +3850,7 @@ def coverage_state(eng: Path, stage: str, target: dict | None = None,
     # ---- cobertura
     blocking = {COV_UNREVIEWED, COV_DEAD_REF, COV_MISSING_TARGET, COV_INVALID_TARGET,
                 COV_EXCLUSION_NO_DECISION, COV_REVIEW_INCOMPLETE, COV_CAPTURE_LIMIT,
-                COV_AUTHORITY_MISMATCH, COV_MAP_UNPLACED}
+                COV_AUTHORITY_MISMATCH, COV_MAP_UNPLACED, COV_MAP_AGGREGATED}
     has_block = any(d["code"] in blocking and d["severity"] == "error" for d in diags)
     if result["contract_validity"] in ("invalid", "unsupported"):
         result["coverage"] = "not_evaluated"

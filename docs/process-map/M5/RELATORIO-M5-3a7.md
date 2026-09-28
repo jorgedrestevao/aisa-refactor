@@ -151,3 +151,19 @@ Pendente:
 1. Ler este relatório e `RELATORIO-M5.1.md`.
 2. A sessão A tem o engagement no desenho v02, não aprovado, com o pacote r0001 preliminar.
 3. As avaliações por paragem estão no scratchpad da sessão avaliadora, fora do git.
+
+## Seguimento — F7 corrigido
+
+Novo diagnóstico `COV-MAP-AGGREGATED`, bloqueante, na reconciliação (`library/kernel/tools/coverage.py`):
+- uma saída ou exceção do mapa tem item próprio;
+- um item que coloca passos do mapa nomeia um requisito que não seja uma decisão (`D-NNN`);
+- um requisito servido por dois passos continua a ser um item.
+
+**Validação:**
+- aplicado aos registos reais da corrida 3, apanha o item agregado na v08 (7 saídas/exceções e 14 passos sob D-003) e na v11 (4 e 11);
+- 4 testes novos em `test_process_map_coverage.py` (`MAP19_GraoDoDestino`);
+- documentado em `coverage-contract.md` §6.1.1 e §7 e em `aisa-blueprint` 1e.
+
+**A continuidade para a etapa blueprint não precisou de regra nova.** A herança já é feita pela identidade da obrigação (`requirement_refs`, §4.4.4). Com cada saída ligada ao seu requisito da SU, a etapa blueprint tem de tratar esse requisito, e o requisito já não se perde dentro de uma decisão.
+
+**Verificação** (`enforce`): completa 3231/0, stdlib 2433/0.
