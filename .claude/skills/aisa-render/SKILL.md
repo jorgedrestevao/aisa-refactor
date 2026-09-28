@@ -263,7 +263,13 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    record or the deliverable changes. Where the hook did not fire, run it: `python .claude/hooks/render-validate.py
    --engagement <slug> --deliverable <id>`.
 
-9b. **Post-render — did the document carry what the contract selected?** Step 9 says the
+9b. **Post-render — did the document carry what the contract selected?** Required for
+   every deliverable written as a real version, one record per file. Skipping it is not
+   `not_evaluated`: that word describes an engagement with no coverage records (§10), never
+   a step left out. A file without its current, complete record is **not verified** — say so
+   in `render-log.md` and in the output, and never call it complete; `release.py build`
+   keeps the package `preliminary` while the specification or the estimate lacks one.
+   Step 9 says the
    file is sufficient by content. It says nothing about whether the obligations the projection
    contract selected survived into it. That is a **stage `render`** coverage review of the file
    just written, and it is written, not computed (`coverage-contract.md` §9): one
@@ -308,7 +314,7 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
     ```user-output
     Documentos finais: <N> de <M> produzidos em `_render/` (versão <NN>). Não aplicáveis a esta escolha: <N> (razão em `_render/render-log.md`).
     Lacunas — o que o registo ainda não sabe e os documentos precisavam: <N> (lista em `_render/render-gaps.md`) <| nenhuma>.
-    Do que foi pedido, ficou nos documentos: <N> de <M> temas <| ainda por verificar neste passo>.
+    Do que foi pedido, ficou nos documentos: <N> de <M> temas, conferido depois de cada documento<; sem essa conferência, não verificados: <documentos>>.
     <Um documento: «<nome>» versão <NN> em `_render/<ficheiro>` — lacunas: <N>. | Não aplicável: <razão>. | Bloqueado: <razão> — desbloqueia com <o quê>.>
     <Ensaio (--dry-run): o documento resolvido segue abaixo, truncado a 50 linhas, e a lista de lacunas; nada foi escrito.>
     A seguir: fecha as lacunas → `/answer <id> "…"` (ou uma passagem `/round`); depois `/render --all` outra vez — sai a versão seguinte.

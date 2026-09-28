@@ -1038,7 +1038,9 @@ já existem. **A cobertura não altera `D-nnn` nem emite outcome novo.**
   aplicabilidade dos seus slots. Não se exigem todos os requisitos em todos os documentos.
 - **Pós-render**: o registo da etapa `render` liga os itens e obrigações que o contrato
   seleccionou às secções e slots do documento. Verifica-se a referência **e** o julgamento de
-  preservação; se falhou, regista-se um render-gap e **não** se declara completo.
+  preservação; se falhou, regista-se um render-gap e **não** se declara completo. É devida por
+  cada documento produzido: sem ela o documento é *não verificado*, e o pacote de entrega
+  (`release.py`) fica `preliminary` enquanto a especificação ou a estimativa não a tiverem.
 - Reutilizam-se `applicability`, `authority_sources`, `slot_sources` e `sufficiency` que já
   existem. Só se acrescenta campo ao template quando indispensável e com definição normativa.
   **Não se cria uma tabela kernel «requisito → deliverable».**

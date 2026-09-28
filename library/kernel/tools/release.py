@@ -136,6 +136,38 @@ def _state_digest(eng: Path) -> dict:
     return out
 
 
+def _verdict(C, eng: Path, stage: str, target) -> dict:
+    """O veredicto de uma revisão de cobertura, lido do motor: absent · invalid · stale ·
+    gaps · complete · not_evaluated · unexpected."""
+    try:
+        r = C["coverage_state"](eng, stage, target)
+    except Exception as exc:                                    # noqa: BLE001
+        return {"state": "unexpected", "detail": "{}: {}".format(type(exc).__name__,
+                                                                exc)}
+    rec = r.get("record") or {}
+    if not rec:
+        state = "absent"
+    elif r.get("contract_validity") in ("invalid", "unsupported"):
+        state = "invalid"
+    elif r.get("freshness") != "current":
+        state = "stale"
+    elif r.get("coverage") == "gaps":
+        state = "gaps"
+    elif r.get("coverage") == "complete":
+        state = "complete"
+    else:
+        state = "not_evaluated"
+    return {"state": state, "record": rec.get("file", ""),
+            "contract_validity": r.get("contract_validity"),
+            "freshness": r.get("freshness"), "coverage": r.get("coverage"),
+            "gaps": [dict(g) for g in r.get("gaps") or []]}
+
+
+_LABEL = {"absent": "ausente", "stale": "desactualizada", "invalid": "inválida",
+          "gaps": "com lacunas", "not_evaluated": "não avaliada",
+          "unexpected": "não avaliável"}
+
+
 def process_coverage(eng) -> dict:
     """process-map M3: a cobertura do processo, lida dos motores — o mapa, a reconciliação
     e a revisão do desenho aprovado. Nunca declarada.
@@ -168,34 +200,10 @@ def process_coverage(eng) -> dict:
     labels = {el["id"]: el.get("label") or el.get("question", "")
               for c in ("nodes", "edges", "details", "gaps") for el in st["map"].get(c) or []}
 
-    def verdict(stage, target):
-        try:
-            r = C["coverage_state"](eng, stage, target)
-        except Exception as exc:                                    # noqa: BLE001
-            return {"state": "unexpected", "detail": "{}: {}".format(type(exc).__name__,
-                                                                    exc)}
-        rec = r.get("record") or {}
-        if not rec:
-            state = "absent"
-        elif r.get("contract_validity") in ("invalid", "unsupported"):
-            state = "invalid"
-        elif r.get("freshness") != "current":
-            state = "stale"
-        elif r.get("coverage") == "gaps":
-            state = "gaps"
-        elif r.get("coverage") == "complete":
-            state = "complete"
-        else:
-            state = "not_evaluated"
-        return {"state": state, "record": rec.get("file", ""),
-                "contract_validity": r.get("contract_validity"),
-                "freshness": r.get("freshness"), "coverage": r.get("coverage"),
-                "gaps": [dict(g) for g in r.get("gaps") or []]}
-
-    out["reconciliation"] = verdict("reconciliation", None)
+    out["reconciliation"] = _verdict(C, eng, "reconciliation", None)
     bp = F["approved_blueprint"](eng)
     if bp:
-        out["blueprint"] = verdict("blueprint", {"file": bp, "identity":
+        out["blueprint"] = _verdict(C, eng, "blueprint", {"file": bp, "identity":
                                                  C["target_identity"](eng, "blueprint", bp)})
     else:
         out["blueprint"] = {"state": "absent", "detail": "sem desenho aprovado"}
@@ -217,15 +225,45 @@ def process_coverage(eng) -> dict:
         units = sorted(origin.get(key, set()))
         g["origin"] = [{"unit": u, "label": labels.get(u.split("#", 1)[-1], "")}
                        for u in units]
-    label = {"absent": "ausente", "stale": "desactualizada", "invalid": "inválida",
-             "gaps": "com lacunas", "not_evaluated": "não avaliada",
-             "unexpected": "não avaliável"}
     for stage, name in (("reconciliation", "reconciliação"),
                         ("blueprint", "revisão do desenho aprovado")):
         s = out[stage].get("state")
         if s != "complete":
             out["reasons"].append("cobertura do processo: {} {}".format(name,
-                                                                        label.get(s, s)))
+                                                                        _LABEL.get(s, s)))
+    return out
+
+
+def render_coverage(eng, docs) -> dict:
+    """M5 F11: cada documento do pacote com a sua revisão de projecção (etapa `render`,
+    `aisa-render` passo 9b), actual e completa. Um documento que ninguém conferiu contra o
+    que o contrato seleccionou não é entrega pronta, por muito suficiente que seja por
+    conteúdo. Engagement sem a cadeia de cobertura do desenho (nenhum registo de
+    reconciliação, desenho ou render) é capacidade não avaliada: diz-se, não bloqueia (§10)."""
+    eng = Path(eng)
+    C = _mod("coverage")
+    out = {"evaluated": False, "documents": {}, "reasons": [], "limitations": []}
+    docs = [d for d in docs if d]
+    etapas = set()
+    for p in sorted((eng / "_coverage").glob("coverage_v*.json")):
+        try:
+            etapas.add(json.loads(p.read_text(encoding="utf-8")).get("stage"))
+        except (OSError, ValueError):
+            etapas.add("unreadable")
+    if not docs:
+        return out
+    if not etapas - {"lens"}:
+        out["limitations"].append("sem registos de cobertura do desenho: a cobertura dos "
+                                  "documentos não foi avaliada")
+        return out
+    out["evaluated"] = True
+    for rel in docs:
+        v = _verdict(C, eng, "render", {"file": rel, "identity":
+                                        C["target_identity"](eng, "render", rel)})
+        out["documents"][rel] = v
+        if v["state"] != "complete":
+            out["reasons"].append("cobertura do documento {}: revisão depois do render {}"
+                                  .format(Path(rel).name, _LABEL.get(v["state"], v["state"])))
     return out
 
 
@@ -276,8 +314,10 @@ def readiness(eng) -> dict:
         motivos.append("aprovação do desenho {}".format(ap["state"]))
     pc = process_coverage(eng)
     motivos += pc["reasons"]
+    rc = render_coverage(eng, [spec, est])
+    motivos += rc["reasons"]
     return {"ready": not motivos, "reasons": motivos, "delivery": gate["delivery"],
-            "process_coverage": pc,
+            "process_coverage": pc, "render_coverage": rc,
             "trace_findings": trace["findings"], "gate": gate, "render_checks": checks,
             "blueprint_approval": ap, "spec": spec, "estimate": est,
             "proofs": trace["proofs"], "viability_blockers": trace["viability_blockers"]}
@@ -373,6 +413,8 @@ def build(eng, out: str | None = None) -> dict:
                              "process-map.html") if (eng / r).is_file()]
         rels += [r for r in (pc["reconciliation"].get("record"),
                              pc["blueprint"].get("record")) if r and (eng / r).is_file()]
+    rels += sorted({v["record"] for v in rd["render_coverage"]["documents"].values()
+                    if v.get("record") and (eng / v["record"]).is_file()} - set(rels))
     repo_rels = list(CONTRACTS) + sorted(
         "library/kernel/schemas/" + p.name for p in (REPO / "library/kernel/schemas").glob(
             "handoff-*.schema.json"))
@@ -445,7 +487,8 @@ def build(eng, out: str | None = None) -> dict:
                                        "excludes": s.get("excludes"),
                                        "authorized_by": s.get("authorized_by")}
                              for s in scope.get("items") or []},
-        "limitations": list(rd["reasons"]),
+        "limitations": list(rd["reasons"]) + rd["process_coverage"]["limitations"]
+        + rd["render_coverage"]["limitations"],
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     # T43 R4: uma decisão com data posterior ao build é incoerência de relógio ou de registo
     try:

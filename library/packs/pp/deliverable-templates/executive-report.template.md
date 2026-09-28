@@ -50,6 +50,9 @@ permitted_transformations:
 forbidden_transformations:
   - creating any new option comparison, ranking, score or superiority claim
   - converting a condition into a satisfied state
+  - "stating the success the decision aims for as a result the delivery already guarantees —
+     the business case says what the decision is for; whether the design carries each outcome
+     is the Architecture Blueprint's to say, and this report does not read it"
   - dropping a marker (COMPARATIVE FIT UNEVALUATED · INCUMBENT FIT UNEVALUATED)
   - collapsing or re-wording a (scope, outcome) pair
   - re-grading a proof obligation (V1–V4), its method, owner or funded state
@@ -221,6 +224,10 @@ slot_sources:
 > por alternativa tal como ficaram registadas. Não explica porque é que uma arquitectura "ganhou".
 
 ## 1. Business case
+> O que a decisão procura, dito como **objectivo**. Um resultado que a decisão persegue não se diz
+> como garantido pela entrega: se o desenho o carrega, e em que medida, é o Blueprint de
+> Arquitectura que o diz.
+
 {{business_case}}
 
 ## 2. A decisão

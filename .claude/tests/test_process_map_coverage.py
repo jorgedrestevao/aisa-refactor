@@ -415,7 +415,8 @@ class MAP21_Variantes(unittest.TestCase):
     def reasons(self):
         rd = REL["readiness"](self.eng)
         self.assertFalse(rd["ready"])
-        others = [r for r in rd["reasons"] if not r.startswith("cobertura do processo")]
+        others = [r for r in rd["reasons"] if not r.startswith(("cobertura do processo",
+                                                                  "cobertura do documento"))]
         self.assertEqual(others, [], "a variante tem de ser a única razão")
         return rd["reasons"]
 
@@ -429,6 +430,19 @@ class MAP21_Variantes(unittest.TestCase):
             {"schema_version": 1, "version": "v01", "stage": "reconciliation"}),
             encoding="utf-8")
         self.assertIn("cobertura do processo: reconciliação inválida", self.reasons())
+
+    def test_m5_f11_each_document_in_the_package_needs_its_render_review(self):
+        (self.eng / "_coverage").mkdir()
+        (self.eng / "_coverage" / "coverage_v01.json").write_text(json.dumps(
+            {"schema_version": 1, "version": "v01", "stage": "reconciliation"}),
+            encoding="utf-8")
+        rd = REL["readiness"](self.eng)
+        docs = [r for r in rd["reasons"] if r.startswith("cobertura do documento")]
+        self.assertEqual(len(docs), 2, rd["reasons"])
+        self.assertTrue(all(r.endswith("revisão depois do render ausente") for r in docs))
+        self.assertTrue(any("implementation-spec" in r for r in docs))
+        self.assertTrue(any("estimate" in r for r in docs))
+        self.assertEqual(REL["build"](self.eng)["delivery_level"], "preliminary")
 
     def test_stale_coverage_is_named(self):
         inv = C["build_inventory"](self.eng)

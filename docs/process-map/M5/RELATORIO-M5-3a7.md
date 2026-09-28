@@ -195,3 +195,32 @@ Causa na corrida 3: o autor publicou a revisão 2 e depois a 3 antes de receber 
 A sequência da corrida 3 (mandatos da rev. 1 e depois publicação da rev. 2) é agora recusada no primeiro passo.
 
 **Verificação** (`enforce`): completa 3236/0, stdlib 2438/0.
+
+## Seguimento — F11 corrigido
+
+Causa na corrida 3, com duas partes:
+- a conferência depois do render (passo 9b) foi saltada, e o registo chamou-lhe `not_evaluated`. Nada o impedia;
+- o relatório executivo disse como resultado garantido um objectivo que o desenho só carrega em parte (C-009, `partial`). Esse documento não lê o desenho, por contrato, e por isso nem o 9b feito o apanharia de certeza.
+
+Escolha do mantenedor: motor + regra de texto.
+
+**Motor** (`library/kernel/tools/release.py`):
+- `render_coverage`: a especificação e a estimativa do pacote precisam cada uma do seu registo `render`, actual, válido e completo. Ausente, `stale`, inválido ou com lacuna → `preliminary`, com o motivo por documento. Os registos lidos vão no pacote;
+- engagement sem registos de cobertura do desenho → limitação «não avaliada», sem bloquear (§10);
+- as limitações de `process_coverage` (p. ex. mapa não validado pelo dono) não chegavam ao índice. Passam a chegar, junto com as do render.
+
+**Texto:**
+- `aisa-render` 9b: obrigatório por documento produzido. Saltá-lo não é `not_evaluated`; o documento sem registo diz-se não verificado. A variante «ainda por verificar» sai da linha final;
+- template do relatório executivo: nova proibição (dizer um objectivo como resultado garantido) e uma nota na secção 1;
+- `coverage-contract.md` §8.2 e `handoff-contract.md` (*Document coverage*).
+
+**Alcance real sobre a corrida 3:**
+- o pacote r0001 já saía `preliminary`, e não leva o relatório executivo (só a especificação e a estimativa, que estavam bloqueadas). O motor não teria mudado esse pacote;
+- sobre o relatório executivo, o que actua é a regra do template e o 9b obrigatório, e esses dependem do agente. Não há verificação determinista do conteúdo de um objectivo contra o desenho. Fica como limite.
+
+**Validação:**
+- 5 testes em `test_coverage_phase5.py` (`DocumentoNoPacote`): registo completo passa; ausente dá motivo; documento editado depois da revisão dá motivo; sem a cadeia de cobertura é limitação; texto da skill e do template;
+- 1 teste em `test_process_map_coverage.py`: o pacote fica `preliminary` com os dois documentos sem registo;
+- o filtro de `MAP21_Variantes` passa a aceitar os motivos «cobertura do documento».
+
+**Verificação** (`enforce`): completa 3242/0, stdlib 2444/0.
