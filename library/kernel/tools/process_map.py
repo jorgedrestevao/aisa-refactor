@@ -1018,6 +1018,46 @@ FIXED_QUESTIONS = {
 }
 
 
+def absorbed_calculations(eng, m: dict) -> list:
+    """Os passos que prendem cálculos de mais de uma folha do mesmo ficheiro. Não julga:
+    uma folha pode ser intermédia (as folhas de um livro lêem-se umas às outras, e as
+    cadeias partilham as mesmas tabelas de apoio, por isso nenhuma regra as separa sem
+    adivinhar). Diz ao dono o que o passo junta, para que ele diga se alguma folha é uma
+    saída que alguém recebe."""
+    eng = Path(eng)
+    chains: dict = {}
+    folhas: dict = {}
+    for d in m.get("details") or []:
+        ref = (d.get("ref") or {}).get("ref", "") if isinstance(d.get("ref"), dict) \
+            else str(d.get("ref") or "")
+        rel, calc = split_ref(ref)
+        if not rel.endswith(".calc-chain.json") or not CALC_RE.fullmatch(calc):
+            continue
+        if rel not in chains:
+            try:
+                data = json.loads((eng / rel).read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                data = {}
+            chains[rel] = {b.get("id"): b.get("sheet", "") for b in data.get("blocks") or []
+                           if isinstance(b, dict)}
+        sheet = chains[rel].get(calc)
+        if not sheet:
+            continue
+        for n in d.get("attaches_to") or []:
+            folhas.setdefault((n, rel), {}).setdefault(sheet, set()).add(calc)
+    label = {n["id"]: n.get("label", "") for n in m.get("nodes") or []}
+    kind = {n["id"]: n.get("kind") for n in m.get("nodes") or []}
+    out = []
+    for (n, rel), sheets in sorted(folhas.items()):
+        if kind.get(n) != "step" or len(sheets) < 2:
+            continue
+        out.append({"node": n, "label": label.get(n, ""),
+                    "workbook": rel.rsplit("/", 1)[-1].replace(".calc-chain.json", ""),
+                    "sheets": {k: len(v) for k, v in sorted(sheets.items())},
+                    "blocks": sum(len(v) for v in sheets.values())})
+    return out
+
+
 def questions(eng) -> list:
     """As dúvidas do mapa publicado agrupadas por tema, estrutura primeiro — o material da
     validação pelo dono (perguntas agrupadas, nunca uma por célula). Cada grupo abre com a
@@ -1050,6 +1090,16 @@ def questions(eng) -> list:
         items[group_of(g["attaches_to"])].append(
             {"id": g["id"], "question": g["question"], "about": g["attaches_to"],
              "respondent": g.get("respondent", ""), "pm_u_ref": g.get("pm_u_ref", "")})
+    for a in absorbed_calculations(eng, m):
+        items["saidas"].append(
+            {"id": a["node"], "about": [a["node"]], "respondent": "dono do processo",
+             "pm_u_ref": "", "sheets": a["sheets"],
+             "question": "O passo «{}» junta {} cálculos de {} folhas de {} ({}). Alguma "
+                         "destas folhas é uma saída que alguém recebe, e não só um cálculo "
+                         "intermédio?".format(a["label"], a["blocks"], len(a["sheets"]),
+                                              a["workbook"], " · ".join(
+                                                  "{}: {}".format(k, v)
+                                                  for k, v in a["sheets"].items()))})
     for o in m["orphans"]:
         if o["reason"] == "out_of_scope":
             continue

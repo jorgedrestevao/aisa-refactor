@@ -204,6 +204,54 @@ class PerguntasAgrupadas(Base):
         self.assertIn("o cálculo de 2024 ainda se usa?", items)
 
 
+
+class CalculosAbsorvidos(Base):
+    """Verificação A (M5): um passo que prende cálculos de várias folhas do mesmo ficheiro
+    vai ao dono como pergunta das saídas — nunca como recusa: uma folha pode ser intermédia."""
+
+    def livro(self, sheets, step="MAPN-002", kind=None):
+        blocks = [{"id": "CALC-%03d" % i, "sheet": sh, "anchor": "B%d" % i, "label": sh,
+                   "steps": [{"cell": "B%d" % i, "formula": "=1"}]}
+                  for i, sh in enumerate(sheets, 1)]
+        (self.eng / "_capture" / "livro.xlsx.calc-chain.json").write_text(json.dumps(
+            {"tool": {"name": "xlsx_extract", "pass": "calc-chain"}, "blocks": blocks}),
+            encoding="utf-8")
+
+        def attach(d):
+            if kind:
+                d["nodes"][1]["kind"] = kind
+            d["details"] += [{"id": "MAPD-%03d" % (10 + i), "attaches_to": [step],
+                              "kind": "calculation", "label": b["label"], "marker": "OBSERVED",
+                              "ref": {"ref": "_capture/livro.xlsx.calc-chain.json#" + b["id"]}}
+                             for i, b in enumerate(blocks)]
+        self.v2(attach)
+
+    def items(self):
+        return {i["id"]: (g["group"], i) for g in P["questions"](self.eng) for i in g["items"]}
+
+    def test_a_step_with_calculations_of_two_sheets_is_asked_among_the_outputs(self):
+        self.livro(["Relatório", "Relatório Bios", "Relatório"])
+        grupo, it = self.items()["MAPN-002"]
+        self.assertEqual(grupo, "saidas")
+        self.assertEqual(it["sheets"], {"Relatório": 2, "Relatório Bios": 1})
+        self.assertIn("junta 3 cálculos de 2 folhas de livro.xlsx", it["question"])
+        self.assertIn("saída que alguém recebe", it["question"])
+        self.assertIn("Relatório Bios: 1", P["render_html"](self.eng))
+
+    def test_one_sheet_or_two_workbooks_is_not_asked(self):
+        self.livro(["Relatório", "Relatório"])
+        self.assertNotIn("MAPN-002", self.items(),
+                         "uma folha, ou uma folha em cada ficheiro, não é junção de saídas")
+
+    def test_only_steps_are_asked(self):
+        self.livro(["Relatório", "Relatório Bios"], step="MAPN-003")
+        self.assertNotIn("MAPN-003", self.items(), "uma saída com várias folhas já é saída")
+
+    def test_the_question_does_not_block_the_map(self):
+        self.livro(["Relatório", "Relatório Bios"])
+        self.assertEqual(P["load"](self.eng)["status"], "ok")
+
+
 class CLI(Base):
 
     def run_cli(self, *args):

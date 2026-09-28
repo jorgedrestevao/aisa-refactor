@@ -266,3 +266,34 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 - n = 1, e sobre o mesmo engagement onde o defeito foi encontrado;
 - o autor B3 é outra instância do mesmo modelo, com as regras do F7 já no texto da skill. A detecção deve-se à regra, não a um revisor independente da regra;
 - a revisão semântica continua a ser do agente: um item com o grão certo e um juízo `covered` errado não é apanhado pelo motor.
+
+## Seguimento — verificação A (saída de cálculo presa num passo genérico)
+
+**Dados:** os da corrida 3 (`mp-v01`, `mp-v02` e a cadeia de cálculo). Os da corrida 1 nunca chegaram.
+
+**O caso real:**
+- na v01, um passo genérico de cálculo (MAPN-004) prende 58 dos 60 blocos, de 5 folhas;
+- entre eles, os 12 da cadeia do biocomponente, cuja saída ainda não estava no mapa;
+- foi o mesmo padrão da corrida 1, e nas duas quem o apanhou foi o dono.
+
+**Por que não há regra determinista que recuse:**
+- por células: os 58 blocos formam um só grupo, porque partilham as mesmas tabelas de apoio;
+- por folhas: as folhas lêem-se em ciclo. Só a da concorrência não é lida por outra;
+- a regra mais simples («passo com cálculos de 2+ folhas») assinala a v01, mas também a v02 corrigida e validada, e 2 das 5 folhas são intermédias. Como recusa, bloquearia um mapa correcto.
+
+**Escolha do mantenedor: mostrar ao dono.**
+- `process_map.py` ganha `absorbed_calculations`: os passos com cálculos de 2+ folhas do mesmo ficheiro, com a contagem por folha;
+- o resultado entra em `questions`, no grupo «Saídas e quem as recebe», como pergunta ao dono: essa folha é uma saída que alguém recebe? Aparece na validação do mapa (`aisa-capture` 5e) e na página `process-map.html`;
+- não recusa nem julga.
+
+**Nos dados reais:** na v01 lista MAPN-004 com as 5 folhas e 58 blocos, incluindo as 2 do biocomponente (12 blocos). Na v02 continua a listá-lo, porque a correcção só moveu 1 bloco para a saída nova, e fica como dúvida para o dono.
+
+**Testes:** 4 em `test_process_map_validation.py` (`CalculosAbsorvidos`):
+- 2 folhas → pergunta nas saídas, com contagens, e na página;
+- 1 folha, ou uma folha por ficheiro → nada;
+- só passos, nunca saídas;
+- a pergunta não bloqueia o mapa.
+
+**Limite:** a pergunta depende de o dono a ler e responder. Uma folha declarada intermédia por engano passa, e a cobertura do desenho só apanha a saída se ela chegar à SU.
+
+**Verificação** (`enforce`): completa 3246/0, stdlib 2448/0.
