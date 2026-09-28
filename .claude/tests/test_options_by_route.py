@@ -99,6 +99,21 @@ class RevisaoNoHook(unittest.TestCase):
             self.assertTrue(linha(eng, "cada papel mandatado")[0])
 
 
+
+class HistoriaComPoucosIds(unittest.TestCase):
+    """M5 F5: um episódio da story citou 3 ids; a regra das skills é no máximo 2."""
+
+    def test_the_phase_episode_carries_at_most_two_ids(self):
+        story = ("# Story\n\n## Episódio 3 — as opções na mesa\n\nA regra (C-001) e o "
+                 "prazo (U-002) pesam; a alternativa (O-001) também.\n\n"
+                 "## Episódio 4 — a decisão\n\nFicou a opção (O-002).\n")
+        ok, _t, det = PC["story_ids"](story, r"\bop[cç][oõ]es\b")
+        self.assertFalse(ok)
+        self.assertEqual(det, "3 ids: C-001, O-001, U-002")
+        self.assertTrue(PC["story_ids"](story, r"\bdecis[aã]o\b")[0],
+                        "o episódio de outra fase não conta")
+
+
 class TextoDoOptions(unittest.TestCase):
 
     def test_the_steps_run_in_order(self):

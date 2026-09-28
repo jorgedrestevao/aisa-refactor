@@ -68,8 +68,12 @@ paralelo.
   - `_capture/process-model.md#PM-012`, `#PM-U-003`, `#§4:<etiqueta>`;
   - `_capture/<wb>.calc-chain.json#CALC-003` (**sempre** pelo ficheiro: o mesmo `CALC-003`
     existe noutros workbooks);
+  - um intervalo `#CALC-005..CALC-012` do mesmo ficheiro, quando os cálculos formam um só
+    detalhe (cobre cada um; todos têm de existir);
   - `_capture/<f>.extraction.json#sheets[name=<folha>]`;
   - `_capture/<f>.text.md#¶12`, ou um intervalo `#¶6–9` (cobre todos os parágrafos do intervalo);
+  - numa transcrição (`.vtt`/`.srt`), `_capture/<f>.vtt.text.md#00:18:53–00:21:10` (as falas
+    que começam dentro do intervalo);
   - `enquadramento.md#T4`.
 - Nunca se inventa uma referência para passar no `check`.
 

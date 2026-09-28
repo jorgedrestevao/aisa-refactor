@@ -394,6 +394,61 @@ class MAP10_Concorrencia(Base):
                          (self.eng / "_map" / "history" / "mp-v01.json").read_bytes())
 
 
+
+class Intervalos(Base):
+    """M5 F1/F2: 57 detalhes, um por cálculo, porque não havia intervalo de `CALC`; e uma
+    transcrição só se citava fala a fala."""
+
+    def livro(self, n):
+        blocks = [{"id": "CALC-%03d" % i, "sheet": "Calc", "anchor": "B%d" % i,
+                   "label": "c%d" % i, "steps": [{"cell": "B%d" % i, "formula": "=1"}]}
+                  for i in range(1, n + 1)]
+        (self.eng / "_capture" / "livro.xlsx.calc-chain.json").write_text(json.dumps(
+            {"tool": {"name": "xlsx_extract", "pass": "calc-chain"}, "blocks": blocks}),
+            encoding="utf-8")
+
+    def test_a_calc_range_covers_each_calculation_of_the_workbook(self):
+        self.livro(4)
+        r = P["resolve_ref"](self.eng, "_capture/livro.xlsx.calc-chain.json#CALC-002..CALC-004")
+        self.assertEqual(r["status"], "ok", r["detail"])
+        self.assertEqual(r["units"], ["_capture/livro.xlsx.calc-chain.json#CALC-00%d" % i
+                                      for i in (2, 3, 4)])
+        um = P["resolve_ref"](self.eng, "_capture/livro.xlsx.calc-chain.json#CALC-002")
+        self.assertNotEqual(r["digest"], um["digest"])
+
+    def test_a_range_with_a_missing_or_reversed_calc_does_not_resolve(self):
+        self.livro(3)
+        for a in ("CALC-002..CALC-005", "CALC-003..CALC-001", "CALC-1..CALC-3"):
+            with self.subTest(a):
+                r = P["resolve_ref"](self.eng, "_capture/livro.xlsx.calc-chain.json#" + a)
+                self.assertEqual(r["status"], "unresolved")
+
+    def test_the_range_places_the_units_in_the_check(self):
+        self.livro(3)
+        d = draft_v1()
+        d["details"].append({"id": "MAPD-003", "attaches_to": ["MAPN-002"],
+                             "kind": "calculation", "label": "três cálculos", "count": 3,
+                             "marker": "OBSERVED",
+                             "ref": {"ref": "_capture/livro.xlsx.calc-chain.json"
+                                            "#CALC-001..CALC-003"}})
+        v = P["check"](self.eng, self.stamped(d))
+        falta = [u for u in v["transfer"]["missing"] if "livro" in u]
+        self.assertEqual(falta, [], v["transfer"])
+
+    def test_a_time_range_covers_the_talks_that_start_inside_it(self):
+        (self.eng / "_capture" / "reuniao.vtt.text.md").write_text(
+            "[00:18:02–00:18:34] **Dono:** o grande abastecimento\n\n"
+            "[00:18:53–00:21:10] **Dono:** vai para o separador de hedging\n\n"
+            "[00:25:14] outra coisa\n", encoding="utf-8")
+        r = P["resolve_ref"](self.eng, "_capture/reuniao.vtt.text.md#00:18:00–00:22:00")
+        self.assertEqual(r["status"], "ok", r["detail"])
+        so_um = P["resolve_ref"](self.eng, "_capture/reuniao.vtt.text.md#00:18:50–00:19:00")
+        self.assertEqual(so_um["status"], "ok")
+        self.assertNotEqual(r["digest"], so_um["digest"])
+        vazio = P["resolve_ref"](self.eng, "_capture/reuniao.vtt.text.md#00:30:00–00:31:00")
+        self.assertEqual(vazio["status"], "unresolved")
+
+
 class MAP11_FonteMuda(Base):
 
     def test_a_source_changed_after_stamping_refuses_and_keeps_the_draft(self):

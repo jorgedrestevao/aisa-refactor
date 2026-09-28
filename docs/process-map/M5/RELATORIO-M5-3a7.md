@@ -376,3 +376,28 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Teste:** 1 em `test_release.py`.
 
 **Verificação** (`enforce`): completa 3255/0, stdlib 2457/0. `release.py` registado na matriz F0 como leitor da autoridade `blueprint`.
+
+## Seguimento — F1 e F2 (intervalos de cálculo e de tempo)
+
+**Causa:**
+- F1: não havia âncora de intervalo para `CALC`, por isso a v01 teve 57 detalhes, um por cálculo;
+- F2: uma transcrição só se citava fala a fala.
+
+**Correcção** (`process_map.py`):
+- `…calc-chain.json#CALC-NNN..CALC-MMM`: cobre cada cálculo do intervalo do mesmo ficheiro (cada um conta como colocado no `check`). Um cálculo em falta, ou o intervalo ao contrário, não resolve;
+- `…vtt.text.md#HH:MM:SS–HH:MM:SS` (também `.srt`): as falas que começam dentro do intervalo. Sem nenhuma, não resolve;
+- `absorbed_calculations` (verificação A) expande os intervalos;
+- o guia do mapa lista as duas formas.
+
+**Testes:** 4 em `test_process_map_core.py` (`Intervalos`).
+
+## Seguimento — F5, F6, F10, F13 (baixos)
+
+| # | Decisão | O quê |
+|---|---|---|
+| F5 | corrigido em parte | O portão de fase (`phase-completeness`) confere o episódio da story de cada fase (frame, opções, decisão): no máximo 2 ids. O episódio da passagem de Discovery, onde o F5 aconteceu, não tem portão neste hook e fica só com a regra da skill. 1 teste |
+| F6 | **não corrigido** | Secções fora do modelo em `options.md`. O artefacto sai na língua do pacote, e uma lista de títulos em inglês daria recusas falsas (o mesmo defeito do P-19, registado no próprio hook). Fica a regra da skill: o que não cabe vai para o registo do chairman |
+| F10 | corrigido no glossário | Duas linhas novas em `glossary.md` com a frase de negócio: `eligible` («pode ir à aprovação do negócio») e `fact ≠ fit` («saber como as coisas são não decide se a solução serve»). «órfãos» já tinha tradução, e o deslize foi do agente |
+| F13 | coberto pelo F12 | Uma atribuição a uma linha que não diz aquilo (C-019) aparece na lista `cited_rows` da conferência 9b. «Revisor em Options» em vez de Framing fica ao juízo |
+
+**Verificação** (`enforce`, F1/F2/F5/F10): completa 3260/0, stdlib 2462/0.

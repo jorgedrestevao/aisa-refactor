@@ -108,12 +108,15 @@ EXIT_OK, EXIT_ERROR, EXIT_GAPS, EXIT_INTERNAL = 0, 2, 4, 5
 PM_RULE_RE = re.compile(r"\bPM-\d{3}\b")
 PM_Q_RE = re.compile(r"\bPM-U-\d{3}\b")
 CALC_RE = re.compile(r"\bCALC-\d{3,}\b")
+CALC_RANGE_RE = re.compile(r"^(CALC-(\d{3,}))\.\.(CALC-(\d{3,}))$")
 SYN_LINE_RE = re.compile(r"^- (OBSERVED|INFERRED|HYPOTHESIS|UNKNOWN)\b(.*)$")
 SYN_LABEL_RE = re.compile(r"^\s*(?:\([^)]*\)\s*)?—\s*`([^`]+)`")
 SHEET_SEL_RE = re.compile(r"^sheets\[name=(?P<name>[^\]]+)\]$")
 HEADING_RE = re.compile(r"^(#{1,6})\s")
 # parágrafos das fontes de texto (extracção LT): `[¶N] texto` e a âncora `¶N` ou `¶N–M`
 PARA_LINE_RE = re.compile(r"^\[¶(\d+)\]\s?(.*)$")
+TIME_RANGE_RE = re.compile(r"^(\d{2}:\d{2}:\d{2})\s*[–-]\s*(\d{2}:\d{2}:\d{2})$")
+CUE_LINE_RE = re.compile(r"^\[(\d{2}:\d{2}:\d{2})(?:–\d{2}:\d{2}:\d{2})?\]")
 PARA_ANCHOR_RE = re.compile(r"^¶(\d+)(?:[–-](\d+))?$")
 # fonte curta = até este número de parágrafos; transcrições com tempo (.vtt/.srt) ficam
 # de fora — são falas, não parágrafos, e o mapa cita-as por intervalo de tempo
@@ -251,6 +254,22 @@ def _calc_block(eng: Path, rel: str, calc_id: str):
     return None
 
 
+def calc_ids(anchor: str) -> list:
+    """Os `CALC-NNN` que uma âncora cobre: um só, ou todos os de `CALC-NNN..CALC-MMM`
+    (inclusive, pela ordem do número, com a largura do primeiro). Vazio se não é âncora de
+    cálculo, ou se o intervalo está ao contrário."""
+    if CALC_RE.fullmatch(anchor or ""):
+        return [anchor]
+    m = CALC_RANGE_RE.match(anchor or "")
+    if not m:
+        return []
+    lo, hi = int(m.group(2)), int(m.group(4))
+    if hi < lo:
+        return []
+    width = len(m.group(2))
+    return ["CALC-{:0{}d}".format(n, width) for n in range(lo, hi + 1)]
+
+
 def _md_section(lines: list, idx: int) -> list:
     level = len(HEADING_RE.match(lines[idx]).group(1))
     out = [lines[idx]]
@@ -318,15 +337,22 @@ def resolve_ref(eng, ref: str) -> dict:
         out.update(status="ok", digest=_sha(raw), verified_anchor=True)
         return out
     if rel.endswith(".calc-chain.json"):
-        if not CALC_RE.fullmatch(anchor):
-            out["detail"] = "âncora `{}` não é um CALC-NNN".format(anchor)
+        ids = calc_ids(anchor)
+        if not ids:
+            out["detail"] = "âncora `{}` não é um CALC-NNN nem um intervalo " \
+                            "CALC-NNN..CALC-MMM".format(anchor)
             return out
-        block = _calc_block(eng, rel, anchor)
-        if block is None:
-            out["detail"] = "`{}` não existe em `{}`".format(anchor, rel)
+        blocks = [_calc_block(eng, rel, i) for i in ids]
+        if any(b is None for b in blocks):
+            falta = [i for i, b in zip(ids, blocks) if b is None]
+            out["detail"] = "`{}` não existe em `{}`".format(", ".join(falta), rel)
             return out
-        out.update(status="ok", digest=_sha_text(canonical(block)), verified_anchor=True,
-                   unit="{}#{}".format(rel, anchor))
+        if len(ids) == 1:
+            out.update(status="ok", digest=_sha_text(canonical(blocks[0])),
+                       verified_anchor=True, unit="{}#{}".format(rel, anchor))
+        else:
+            out.update(status="ok", digest=_sha_text(canonical(blocks)), verified_anchor=True,
+                       units=["{}#{}".format(rel, i) for i in ids])
         return out
     if rel.endswith(".json"):
         m = SHEET_SEL_RE.match(anchor)
@@ -358,6 +384,17 @@ def resolve_ref(eng, ref: str) -> dict:
                 return out
             out.update(status="ok", digest=_sha_text("\n".join(hit)), verified_anchor=True,
                        unit="{}#§4:{}".format(PM_REL, label))
+            return out
+        tempo = TIME_RANGE_RE.match(anchor) \
+            if rel.endswith(tuple(f + ".text.md" for f in TIMED_FORMATS)) else None
+        if tempo:
+            lo, hi = tempo.group(1), tempo.group(2)
+            falas = [ln for ln in lines if CUE_LINE_RE.match(ln)
+                     and lo <= CUE_LINE_RE.match(ln).group(1) <= hi]
+            if hi < lo or not falas:
+                out["detail"] = "nenhuma fala começa entre {} e {} em `{}`".format(lo, hi, rel)
+                return out
+            out.update(status="ok", digest=_sha_text("\n".join(falas)), verified_anchor=True)
             return out
         para = PARA_ANCHOR_RE.match(anchor) if rel.endswith(".text.md") else None
         if para and para.group(2):
@@ -1030,8 +1067,8 @@ def absorbed_calculations(eng, m: dict) -> list:
     for d in m.get("details") or []:
         ref = (d.get("ref") or {}).get("ref", "") if isinstance(d.get("ref"), dict) \
             else str(d.get("ref") or "")
-        rel, calc = split_ref(ref)
-        if not rel.endswith(".calc-chain.json") or not CALC_RE.fullmatch(calc):
+        rel, anchor = split_ref(ref)
+        if not rel.endswith(".calc-chain.json") or not calc_ids(anchor):
             continue
         if rel not in chains:
             try:
@@ -1040,11 +1077,12 @@ def absorbed_calculations(eng, m: dict) -> list:
                 data = {}
             chains[rel] = {b.get("id"): b.get("sheet", "") for b in data.get("blocks") or []
                            if isinstance(b, dict)}
-        sheet = chains[rel].get(calc)
-        if not sheet:
-            continue
-        for n in d.get("attaches_to") or []:
-            folhas.setdefault((n, rel), {}).setdefault(sheet, set()).add(calc)
+        for calc in calc_ids(anchor):
+            sheet = chains[rel].get(calc)
+            if not sheet:
+                continue
+            for n in d.get("attaches_to") or []:
+                folhas.setdefault((n, rel), {}).setdefault(sheet, set()).add(calc)
     label = {n["id"]: n.get("label", "") for n in m.get("nodes") or []}
     kind = {n["id"]: n.get("kind") for n in m.get("nodes") or []}
     out = []
