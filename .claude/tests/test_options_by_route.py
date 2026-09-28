@@ -83,6 +83,21 @@ class RevisaoNoHook(unittest.TestCase):
             RV["dispose"](eng, "REV-0001.F01", "escalated", "o dono decide", to="dono")
             self.assertTrue(linha(eng, "achados dos pareceres")[0])
 
+    def test_m5_f3_a_role_reviewed_only_on_an_older_revision_does_not_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = DI["dois"](tmp)
+            m = DI["mandato"](eng)
+            RV["receive"](eng, m["task_id"], DI["parecer"](m))
+            DI["rev2"](eng)
+            self.assertTrue(linha(eng, "pareceres recebidos")[0])
+            self.assertTrue(linha(eng, "achados dos pareceres")[0], "stale não conta")
+            ok, _t, det = linha(eng, "cada papel mandatado")
+            self.assertFalse(ok)
+            self.assertIn("architecture-review (REV-0001)", det)
+            n = DI["mandato"](eng)
+            RV["receive"](eng, n["task_id"], DI["parecer"](n, findings=[]))
+            self.assertTrue(linha(eng, "cada papel mandatado")[0])
+
 
 class TextoDoOptions(unittest.TestCase):
 

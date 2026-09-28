@@ -126,7 +126,7 @@ The session runs the technical author's mandate, `.claude/agents/solution-archit
    | `change-impact` | the delta on a `baseline_ref`, with its `impact_refs` and the decisions to reopen |
 
 3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, a missing architecture or reversibility) stays visible and may be published.
-4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed.
+4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed. The next revision is refused (`BLOCKING_GAP`, `REVIEWS_PENDING`) while a mandate of the current revision has no received review: publishing first turns every return into `STALE_INPUT` and loses it. Receive every return (step 5a) before republishing; a review that will not come (the reviewer failed twice) is published with `--unreceived-reason "<why>"`, written to the ledger in the same operation and shown as `not_received`.
 
 ### 5. Route the review and publish the mandates
 
@@ -152,7 +152,7 @@ Invoke `chairman-synthesis` with phase = `options`, round = `O-<NN>`; it reads t
 
 Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads _map/map.json context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' '_design/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
-When a finding is accepted by changing a candidate, the author publishes the next revision (step 4); `show-reviews` then marks the old reviews `stale` and names the findings to revalidate — new mandates go only to the roles those findings belong to. A review of an earlier revision never becomes a review of the new one by copy.
+When a finding is accepted by changing a candidate, the author publishes the next revision (step 4); `show-reviews` then marks the old reviews `stale` and names the findings to revalidate — new mandates go only to the roles those findings belong to (`show-reviews` → `unreviewed_roles`). A review of an earlier revision never becomes a review of the new one by copy.
 
 Five contract checks before reporting to the user, all owned by `chairman-synthesis`:
 
@@ -160,7 +160,7 @@ Five contract checks before reporting to the user, all owned by `chairman-synthe
 2. **Every option carries an order of magnitude with its source marker**, or `ORDER OF MAGNITUDE UNAVAILABLE — <what is missing>`. A band with no source is invented; a blank cell is a contract breach.
 3. **The round closes with the recommendation** — the option, what separates it from its siblings, what it rests on, what would flip it. Where the terminal is *decision blocked* or *multiple defensible options*, `no recommendation — <what would produce one>`. The recommendation is the aisa's; the choice is the owner's, at `/decide`.
 4. **The artefact is within budget** (~1 500 words of prose, ≤120 per option). The full field set, the concern coverage and the `DO-NOTHING` / `PROCESS-CHANGE` class coverage live in `lens-outputs/chairman-synthesis-O-<NN>.md`.
-5. **Every finding of a current review has a disposition** (`show-reviews` → `open_findings` holds only `deferred` / `escalated` ones, shown to the user), and every mandate was received or is reported as not received.
+5. **Every finding of a current review has a disposition** (`show-reviews` → `open_findings` holds only `deferred` / `escalated` ones, shown to the user), every mandate was received or is `not_received` with the reason the engine recorded, and `show-reviews` → `unreviewed_roles` is empty. A process note in the synthesis never stands in for a received review.
 
 ### 7. Present options to the user
 

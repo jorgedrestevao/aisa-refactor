@@ -10,6 +10,7 @@ Desenho: `docs/handoff-v1/F5/DESENHO.md` §3.
          quarta divergência na mesma revisão já nasce `escalated`; nunca aceite por esgotamento
     zero confirmação por maioria: receber e dispor pareceres nunca escreve na SU
 """
+import json
 import runpy
 import tempfile
 import unittest
@@ -150,6 +151,67 @@ class Stale(unittest.TestCase):
             eng = dois(tmp)
             mandato(eng, "ux-process")
             self.assertEqual(RV["show_reviews"](eng)["reviews"][0]["state"], "mandated")
+
+
+def rev2(eng, unreceived_reason=""):
+    dr = RV["draft_candidates"](eng)
+    Path(dr["path"]).write_text(json.dumps(CA["conjunto"](
+        eng, [CA["cand"]("O-001", architecture="outra"), CA["cand"]("O-002")], 2, **IMPOSTA),
+        ensure_ascii=False), encoding="utf-8")
+    return RV["publish_candidates"](eng, dr["draft"], unreceived_reason)
+
+
+class PorReceber(unittest.TestCase):
+    """M5 F3: publicar a revisão seguinte antes do `receive` tornava todos os pareceres
+    `STALE_INPUT` — 11 devolvidos, 0 recebidos, 0 disposições, e as Opções fecharam."""
+
+    def test_publishing_over_an_unreceived_mandate_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = dois(tmp)
+            m = mandato(eng)
+            with self.assertRaises(RV["ReviewError"]) as err:
+                rev2(eng)
+            self.assertEqual(err.exception.code, "BLOCKING_GAP")
+            self.assertEqual(err.exception.detail["code"], "REVIEWS_PENDING")
+            self.assertEqual(err.exception.detail["tasks"], ["REV-0001"])
+            self.assertEqual(RV["read_candidates"](eng)["data"]["revision"], 1)
+            RV["receive"](eng, m["task_id"], parecer(m))
+            self.assertEqual(rev2(eng)["revision"], 2)
+
+    def test_a_review_that_never_comes_is_written_with_its_reason_in_the_same_operation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = dois(tmp)
+            mandato(eng, "ux-process")
+            r = rev2(eng, unreceived_reason="o revisor devolveu fora do contrato duas vezes")
+            led = RV["read_ledger"](eng)["data"]
+            self.assertEqual([(x["tasks"], x["candidate_revision"], x["superseded_by"])
+                              for x in led["unreceived"]], [(["REV-0001"], 1, 2)])
+            self.assertIn("_design/reviews/ledger.json", r["receipt"]["revision"])
+            s = RV["show_reviews"](eng)
+            self.assertEqual(s["reviews"][0]["state"], "not_received")
+            self.assertIn("fora do contrato", s["reviews"][0]["reason"])
+            self.assertEqual(s["unreviewed_roles"], [{"role": "ux-process",
+                                                      "tasks": ["REV-0001"]}])
+
+    def test_a_role_with_findings_to_revalidate_needs_a_current_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = dois(tmp)
+            m = mandato(eng)
+            RV["receive"](eng, m["task_id"], parecer(m))
+            rev2(eng)
+            self.assertEqual(RV["show_reviews"](eng)["unreviewed_roles"],
+                             [{"role": "architecture-review", "tasks": ["REV-0001"]}])
+            n = mandato(eng)
+            RV["receive"](eng, n["task_id"], parecer(n, findings=[]))
+            self.assertEqual(RV["show_reviews"](eng)["unreviewed_roles"], [])
+
+    def test_a_stale_review_with_nothing_to_revalidate_needs_no_new_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = dois(tmp)
+            m = mandato(eng)
+            RV["receive"](eng, m["task_id"], parecer(m, findings=[achado("O-002")]))
+            rev2(eng)
+            self.assertEqual(RV["show_reviews"](eng)["unreviewed_roles"], [])
 
 
 class Disposicoes(unittest.TestCase):

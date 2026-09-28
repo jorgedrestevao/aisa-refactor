@@ -245,9 +245,16 @@ def review_checks(eng: Path) -> list:
     except Exception as exc:                                            # noqa: BLE001
         return out + [(False, "estado da revisao legivel", str(exc)[:120])]
     por_receber = [r["task_id"] for r in s["reviews"] if r["state"] == "mandated"]
+    sem_parecer = [f"{r['task_id']} ({r.get('reason', '')})" for r in s["reviews"]
+                   if r["state"] == "not_received"]
     out.append((not por_receber, "pareceres recebidos para todos os mandatos",
                 "em falta: " + ", ".join(por_receber) if por_receber
-                else f"{len(s['reviews'])} mandato(s)"))
+                else f"{len(s['reviews'])} mandato(s)"
+                + ("; sem parecer, com motivo: " + ", ".join(sem_parecer) if sem_parecer
+                   else "")))
+    papeis = [f"{p['role']} ({', '.join(p['tasks'])})" for p in s.get("unreviewed_roles", [])]
+    out.append((not papeis, "cada papel mandatado com parecer sobre a revisao corrente",
+                "sem parecer corrente: " + ", ".join(papeis) if papeis else "todos"))
     closing = {"accepted", "rejected", "delegated", "deferred", "escalated"}
     sem = [f["id"] for r in s["reviews"] if r["state"] == "current"
            for f in r.get("findings", []) if f["disposition"] not in closing]

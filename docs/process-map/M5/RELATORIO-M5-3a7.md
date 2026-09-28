@@ -167,3 +167,31 @@ Novo diagnóstico `COV-MAP-AGGREGATED`, bloqueante, na reconciliação (`library
 **A continuidade para a etapa blueprint não precisou de regra nova.** A herança já é feita pela identidade da obrigação (`requirement_refs`, §4.4.4). Com cada saída ligada ao seu requisito da SU, a etapa blueprint tem de tratar esse requisito, e o requisito já não se perde dentro de uma decisão.
 
 **Verificação** (`enforce`): completa 3231/0, stdlib 2433/0.
+
+## Seguimento — F3 corrigido
+
+Causa na corrida 3: o autor publicou a revisão 2 e depois a 3 antes de receber os pareceres. Cada publicação tornou `STALE_INPUT` os pareceres da revisão anterior, e deixou de ser possível recebê-los. O portão passou porque a nota de processo do chairman contou como «reportado como não recebido».
+
+**Motor** (`library/kernel/tools/review.py`):
+- `publish-candidates` recusa (`BLOCKING_GAP`, `REVIEWS_PENDING`) enquanto um mandato da revisão corrente não tiver parecer recebido. Nenhum parecer chega entre a verificação e a escrita, porque o read-set o garante;
+- parecer que não vem → `--unreceived-reason "<motivo>"`. A entrada `unreceived` vai para o livro-razão na mesma operação da publicação, e o mandato aparece como `not_received`;
+- `show-reviews` → `unreviewed_roles`: papel com mandato sem parecer, ou com parecer `stale` com achado a revalidar, e sem parecer sobre a revisão corrente.
+
+**Portão** (`phase-completeness`): check novo «cada papel mandatado com parecer sobre a revisao corrente». Falha enquanto `unreviewed_roles` não estiver vazio. Os `not_received` aparecem no detalhe com o motivo.
+
+**Texto:**
+- `aisa-options` passos 4, 6 e check 5: a nota de processo deixa de substituir um parecer recebido;
+- `chairman-synthesis`: estados e `unreviewed_roles`. A passagem não fecha e volta ao `/options`;
+- `handoff-contract.md`.
+
+**Validação:**
+- 4 testes novos em `test_review_dispositions.py` (`PorReceber`):
+  - publicar sobre um mandato por receber é recusado;
+  - com motivo: publica, fica no livro-razão e o mandato aparece `not_received`;
+  - papel com achado a revalidar pede parecer corrente;
+  - `stale` sem nada a revalidar não pede;
+- 1 teste do portão em `test_options_by_route.py`.
+
+A sequência da corrida 3 (mandatos da rev. 1 e depois publicação da rev. 2) é agora recusada no primeiro passo.
+
+**Verificação** (`enforce`): completa 3236/0, stdlib 2438/0.
