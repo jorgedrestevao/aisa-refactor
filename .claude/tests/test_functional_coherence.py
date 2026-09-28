@@ -122,5 +122,49 @@ class DesenhoEmAprovacao(unittest.TestCase):
             self.assertEqual(len(json.loads(p.stdout)["conflicts"]), 1)
 
 
+
+class Presenca(unittest.TestCase):
+    """M5 F8: os contratos «adiados nesta versão» — o passo saltado por inteiro, em vez de
+    publicado com as lacunas — deixavam a conferência de coerência passar em vazio."""
+
+    V01, V02 = "_blueprint/ux-blueprint_v01.yaml", "_blueprint/ux-blueprint_v02.yaml"
+
+    def cli(self, eng, bp):
+        p = subprocess.run(
+            [sys.executable, str(TOOLS / "functional.py"), "conflicts", "--engagement",
+             str(eng), "--blueprint", bp], capture_output=True, text=True, timeout=300,
+            env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+        return p.returncode, json.loads(p.stdout)
+
+    def test_an_authorized_version_without_contracts_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = FC["engagement"](tmp)
+            self.assertEqual([x["code"] for x in F["presence"](eng, self.V01)], ["FC_MISSING"])
+            rc, out = self.cli(eng, self.V01)
+            self.assertEqual((rc, out["conflicts"]), (4, []))
+
+    def test_contracts_on_another_version_are_refused_and_on_this_one_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = FC["engagement"](tmp)
+            publish(eng, item(estado()))
+            self.assertEqual(F["presence"](eng, self.V01), [])
+            v1 = (eng / self.V01).read_text(encoding="utf-8")
+            (eng / self.V02).write_text(v1.replace("version: v01", "version: v02"),
+                                        encoding="utf-8")
+            p = F["presence"](eng, self.V02)
+            self.assertEqual([(x["code"], x["based_on"]) for x in p],
+                             [("FC_OTHER_VERSION", self.V01)])
+
+    def test_a_draft_or_an_unauthorized_version_owes_no_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = FC["engagement"](tmp)
+            v1 = (eng / self.V01).read_text(encoding="utf-8")
+            for texto in (v1.replace("draft: false", "draft: true"),
+                          v1.replace("authorization: authorized", "authorization: not-authorized")):
+                self.assertNotEqual(texto, v1, "a fixture mudou de forma")
+                (eng / self.V02).write_text(texto, encoding="utf-8")
+                self.assertEqual(F["presence"](eng, self.V02), [])
+
+
 if __name__ == "__main__":
     unittest.main()

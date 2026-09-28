@@ -79,6 +79,24 @@ def find_engagement(slug: str | None = None) -> Path | None:
     return max(engs, key=_activity_mtime) if engs else None
 
 
+STORY_ID_RE = re.compile(r"\b(?:PM-U-\d{3}|[CAUXRD]-\d{3,4}|M-\d{1,3}|O-\d{3}|TW-\d+)\b")
+
+
+def story_ids(story: str, header: str) -> tuple:
+    """A story fala na voz do sponsor, com no máximo 2 ids por episódio (as skills). Lê só
+    o episódio desta fase — o último cujo título casa `header` —, nunca os anteriores."""
+    eps = [m for m in re.finditer(r"^##\s+Epis[oó]dio[^\n]*$", story, re.M)
+           if re.search(header, m.group(0), re.I)]
+    if not eps:
+        return (True, "episodio da story com no maximo 2 ids", "sem episodio")
+    start = eps[-1].end()
+    nxt = re.search(r"^##\s", story[start:], re.M)
+    corpo = story[start:start + nxt.start()] if nxt else story[start:]
+    ids = sorted(set(STORY_ID_RE.findall(corpo)))
+    return (len(ids) <= 2, "episodio da story com no maximo 2 ids",
+            "{} ids: {}".format(len(ids), ", ".join(ids)) if ids else "nenhum id")
+
+
 def read_text(p: Path) -> str:
     try:
         return p.read_text(encoding="utf-8", errors="replace")
@@ -160,6 +178,7 @@ def check_framing(eng: Path, rnd: str, su: str) -> tuple[list, list]:
          "aprovacao de outra passagem — /options compara a impressao digital"),
         (bool(re.search(r"^##\s+Epis[oó]dio.*\b(frame|frase)\b", story, re.M | re.I)),
          "episodio da story sobre o frame", "step 8c"),
+        story_ids(story, r"\b(frame|frase)\b"),
     ]
     return council, validation
 
@@ -196,6 +215,7 @@ def check_options(eng: Path, rnd: str, su: str) -> tuple[list, list]:
     validation = [
         (bool(re.search(r"^##\s+Epis[oó]dio.*\bop[cç][oõ]es\b", story, re.M | re.I)),
          "episodio da story sobre as opcoes", "step story"),
+        story_ids(story, r"\bop[cç][oõ]es\b"),
     ]
     return council, validation
 
@@ -245,9 +265,16 @@ def review_checks(eng: Path) -> list:
     except Exception as exc:                                            # noqa: BLE001
         return out + [(False, "estado da revisao legivel", str(exc)[:120])]
     por_receber = [r["task_id"] for r in s["reviews"] if r["state"] == "mandated"]
+    sem_parecer = [f"{r['task_id']} ({r.get('reason', '')})" for r in s["reviews"]
+                   if r["state"] == "not_received"]
     out.append((not por_receber, "pareceres recebidos para todos os mandatos",
                 "em falta: " + ", ".join(por_receber) if por_receber
-                else f"{len(s['reviews'])} mandato(s)"))
+                else f"{len(s['reviews'])} mandato(s)"
+                + ("; sem parecer, com motivo: " + ", ".join(sem_parecer) if sem_parecer
+                   else "")))
+    papeis = [f"{p['role']} ({', '.join(p['tasks'])})" for p in s.get("unreviewed_roles", [])]
+    out.append((not papeis, "cada papel mandatado com parecer sobre a revisao corrente",
+                "sem parecer corrente: " + ", ".join(papeis) if papeis else "todos"))
     closing = {"accepted", "rejected", "delegated", "deferred", "escalated"}
     sem = [f["id"] for r in s["reviews"] if r["state"] == "current"
            for f in r.get("findings", []) if f["disposition"] not in closing]
@@ -343,6 +370,7 @@ def check_decision(eng: Path, rnd: str, su: str) -> tuple[list, list]:
     validation = [
         (bool(re.search(r"^##\s+Epis[oó]dio.*\bdecis[aã]o\b", story, re.M | re.I)),
          "episodio da story sobre a decisao", "step story"),
+        story_ids(story, r"\bdecis[aã]o\b"),
     ]
     return core, validation
 

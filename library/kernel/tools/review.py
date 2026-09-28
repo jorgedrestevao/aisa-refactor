@@ -224,6 +224,12 @@ def candidate_gaps(data: dict) -> list:
             out.append(_problem("NO_ORDER_OF_MAGNITUDE", c["id"],
                                 "ordem de grandeza sem fonte, nem declarada indisponível com o "
                                 "que falta"))
+        fonte = str(om.get("source") or "")
+        if re.search(r"\bANALOGY\b", fonte) and \
+                not re.search(r"\w{3,}", re.sub(r"\bANALOGY\b", "", fonte)):
+            out.append(_problem("ANALOGY_UNNAMED", c["id"],
+                                "`ANALOGY` sem o caso análogo nomeado — que engagement, o que "
+                                "é igual e porquê; senão outra fonte, ou indisponível"))
         for campo in ("architecture", "reversibility"):
             if not str(c.get(campo) or "").strip():
                 out.append(_problem("MISSING_" + campo.upper(), c["id"],
@@ -300,7 +306,17 @@ def check_candidates(eng, data: dict | None = None) -> dict:
     return dict(resp, integrity=inte, gaps=gaps)
 
 
-def publish_candidates(eng, draft_id: str) -> dict:
+def _pending_mandates(eng: Path, revision: int) -> list:
+    """Mandatos sobre `revision` ainda sem parecer publicado."""
+    return [rid for rid, mand, rev in _reviews(eng)
+            if not rev and mand["candidate_revision"] == revision]
+
+
+def publish_candidates(eng, draft_id: str, unreceived_reason: str = "") -> dict:
+    """Publica a revisão seguinte. Recusa (`BLOCKING_GAP`, `REVIEWS_PENDING`) enquanto um
+    mandato da revisão corrente não tiver parecer recebido: publicar primeiro torna o
+    parecer `STALE_INPUT` e perde-o. Um parecer que não vem fica escrito com o motivo
+    (`unreceived_reason`) no livro-razão, na mesma operação."""
     eng = Path(eng)
     W, O = _W(), _O()
     _workflow(eng)
@@ -323,15 +339,39 @@ def publish_candidates(eng, draft_id: str) -> dict:
         raise ReviewError("o rascunho viola a integridade dos candidatos: " + "; ".join(
             "{} {}".format(p["candidate"], p["detail"]).strip() for p in res["integrity"]),
             W["INTEGRITY_FAILURE"], {"draft": draft_id, "problems": res["integrity"]})
+    cur_rev = int(cur["data"].get("revision") or 0)
+    pendentes = _pending_mandates(eng, cur_rev)
+    motivo = str(unreceived_reason or "").strip()
+    if pendentes and not motivo:
+        raise ReviewError("pareceres por receber sobre a revisão {} ({}) — `receive` antes de "
+                          "publicar a seguinte; um parecer que não vem publica-se com "
+                          "`--unreceived-reason`".format(cur_rev, ", ".join(pendentes)),
+                          W["BLOCKING_GAP"], {"draft": draft_id, "code": "REVIEWS_PENDING",
+                                              "tasks": pendentes})
     # F7 (Q2): a impressão de cada linha citada, da SU que o read-set garante inalterada
     data = _mod("impact")["with_row_basis"](data, _mod("impact")["su_rows"](eng))
     texto = json.dumps(data, ensure_ascii=False, indent=1) + "\n"
     hist = "{}/candidates.r{:04d}.json".format(HISTORY_DIR, int(data["revision"]))
+    escrita = {CAND_PATH: texto, hist: texto}
+    base = {CAND_PATH: cur["digest"], hist: ""}
+    lidos = dict(man.get("reads") or {})
+    for rid in pendentes:                    # nenhum parecer chega entre a verificação e a escrita
+        lidos[_review_rel(rid)] = ""
+    if pendentes:
+        led = read_ledger(eng)
+        d = led["data"]
+        prev = d.get("unreceived") or []
+        ent = {"seq": len(prev) + 1, "tasks": pendentes, "reason": motivo,
+               "candidate_revision": cur_rev, "superseded_by": int(data["revision"]),
+               "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        nd = dict(d, unreceived=prev + [ent], revision=int(d["revision"]) + 1)
+        ltexto = json.dumps(nd, ensure_ascii=False, indent=1) + "\n"
+        lhist = "{}/review-ledger.r{:04d}.json".format(HISTORY_DIR, nd["revision"])
+        escrita.update({LEDGER_PATH: ltexto, lhist: ltexto})
+        base.update({LEDGER_PATH: led["digest"], lhist: ""})
     op_id = "candidates-{}".format(hashlib.sha256(
-        (cur["digest"] + texto).encode("utf-8")).hexdigest()[:16])
-    recibo = O["run"](eng, op_id, {CAND_PATH: texto, hist: texto},
-                      expected={CAND_PATH: cur["digest"], hist: ""},
-                      read_set=man.get("reads") or {})
+        (cur["digest"] + texto + escrita.get(LEDGER_PATH, "")).encode("utf-8")).hexdigest()[:16])
+    recibo = O["run"](eng, op_id, escrita, expected=base, read_set=lidos)
     man["published"] = op_id
     O["_atomic_write"](eng / DRAFTS_DIR / draft_id / DRAFT_MANIFEST,
                        json.dumps(man, ensure_ascii=False, indent=2))
@@ -802,18 +842,25 @@ def dialectic_call(eng, div_id: str, outcome: str, synthesis: str = "",
 
 def show_reviews(eng) -> dict:
     """Estado da revisão sobre a revisão corrente dos candidatos: pareceres `mandated` ·
-    `current` · `stale`, achados com a última disposição, o que revalidar, divergências."""
+    `not_received` (com o motivo do livro-razão) · `current` · `stale`, achados com a última
+    disposição, o que revalidar, divergências, e os papéis ainda sem parecer corrente
+    (`unreviewed_roles`): um papel com mandato sem parecer, ou com achado a revalidar, e
+    nenhum parecer sobre a revisão corrente."""
     eng = Path(eng)
     cur_rev = int(read_candidates(eng)["data"].get("revision") or 0)
     led = read_ledger(eng)["data"]
     ultima = {}
     for x in led["dispositions"]:
         ultima[x["finding"]] = x
+    sem_parecer = {t: x for x in led.get("unreceived") or [] for t in x["tasks"]}
     out, abertos = [], []
     for rid, mand, rev in _reviews(eng):
         if not rev:
-            out.append({"task_id": rid, "role": mand["role"], "state": "mandated",
-                        "candidate_revision": mand["candidate_revision"]})
+            item = {"task_id": rid, "role": mand["role"], "state": "mandated",
+                    "candidate_revision": mand["candidate_revision"]}
+            if rid in sem_parecer:
+                item.update(state="not_received", reason=sem_parecer[rid]["reason"])
+            out.append(item)
             continue
         state = "current" if rev["candidate_revision"] == cur_rev else "stale"
         fs = []
@@ -831,7 +878,17 @@ def show_reviews(eng) -> dict:
         out.append({"task_id": rid, "role": rev["role"], "state": state,
                     "candidate_revision": rev["candidate_revision"], "findings": fs,
                     "unanswered": [u["question"] for u in rev["unanswered"]]})
+    correntes = {r["role"] for r in out if r["state"] == "current"}
+    falta = {}
+    for r in out:
+        if r["role"] in correntes:
+            continue
+        if r["state"] in ("mandated", "not_received"):
+            falta.setdefault(r["role"], []).append(r["task_id"])
+        elif r["state"] == "stale" and any(f["revalidate"] for f in r["findings"]):
+            falta.setdefault(r["role"], []).append(r["task_id"])
     return {"candidate_revision": cur_rev, "reviews": out, "open_findings": abertos,
+            "unreviewed_roles": [{"role": k, "tasks": v} for k, v in sorted(falta.items())],
             "divergences": [{k: v for k, v in x.items() if k != "history"}
                             for x in led["divergences"]]}
 
@@ -873,6 +930,7 @@ def main(argv=None) -> int:
     ap.add_argument("--scope", action="append", default=[])
     ap.add_argument("--engagement", required=True)
     ap.add_argument("--draft", default="")
+    ap.add_argument("--unreceived-reason", default="")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     eng = Path(a.engagement)
@@ -887,7 +945,7 @@ def main(argv=None) -> int:
             out = check_candidates(eng, data)
             rc = 0 if out["ok"] else (4 if out["code"] == W["BLOCKING_GAP"] else 1)
         elif a.command == "publish-candidates":
-            out = publish_candidates(eng, a.draft)
+            out = publish_candidates(eng, a.draft, a.unreceived_reason)
             out = {k: v for k, v in out.items() if k != "receipt"} if not a.json else out
             rc = 0
         elif a.command == "route":

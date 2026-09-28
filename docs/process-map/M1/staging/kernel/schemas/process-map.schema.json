@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "process-map/1",
+  "title": "Mapa de conhecimento do processo (AS-IS)",
+  "description": "Estrutura do processo compreendido: faixas, nós, arestas, detalhes, dúvidas e órfãos, com referências verificáveis à evidência. Organiza conhecimento; não é autoridade de factos (a SU é). Publicado por process_map.py pelo coordenador. docs/process-map/PLANO.md §5.",
+  "type": "object",
+  "required": ["schema_version", "engagement_id", "perspective", "base", "based_on", "lanes",
+               "nodes", "edges", "details", "gaps", "orphans", "retired_ids"],
+  "properties": {
+    "schema_version": {"const": "process-map/1"},
+    "engagement_id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^mp-v[0-9]{2,}$"},
+    "perspective": {"enum": ["as_is"]},
+    "base": {"type": "string", "pattern": "^(|[0-9a-f]{64})$",
+             "description": "digest do _map/map.json sobre o qual o rascunho foi escrito; vazio quando não havia mapa"},
+    "based_on": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "lanes": {"type": "array", "items": {"$ref": "#/$defs/lane"}},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
+    "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}},
+    "details": {"type": "array", "items": {"$ref": "#/$defs/detail"}},
+    "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}},
+    "orphans": {"type": "array", "items": {"$ref": "#/$defs/orphan"}},
+    "retired_ids": {"type": "array", "items": {"$ref": "#/$defs/retired"}}
+  },
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "marker": {"enum": ["OBSERVED", "INFERRED", "HYPOTHESIS", "UNKNOWN"]},
+    "element_id": {"type": "string", "pattern": "^MAP[LNEDG]-[0-9]{3,}$"},
+    "source": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["ref"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha"},
+        "note": {"type": "string"}
+      }
+    },
+    "was": {"type": "array", "items": {"$ref": "#/$defs/element_id"}},
+    "lane": {
+      "type": "object",
+      "required": ["id", "label", "kind"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^MAPL-[0-9]{3,}$"},
+        "label": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["actor", "tool", "channel", "consumer", "downstream"]},
+        "was": {"$ref": "#/$defs/was"}
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "label", "lane", "order", "marker", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^MAPN-[0-9]{3,}$"},
+        "kind": {"enum": ["trigger", "step", "decision", "exception", "output"]},
+        "label": {"type": "string", "minLength": 1},
+        "lane": {"type": "string", "pattern": "^MAPL-[0-9]{3,}$"},
+        "order": {"type": "integer", "minimum": 0},
+        "marker": {"$ref": "#/$defs/marker"},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "sla": {"type": "string"},
+        "note": {"type": "string"},
+        "was": {"$ref": "#/$defs/was"}
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "src", "dst", "kind", "marker", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^MAPE-[0-9]{3,}$"},
+        "src": {"type": "string", "pattern": "^MAPN-[0-9]{3,}$"},
+        "dst": {"type": "string", "pattern": "^MAPN-[0-9]{3,}$"},
+        "kind": {"enum": ["normal", "exception", "branch"]},
+        "label": {"type": "string"},
+        "carries": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "marker": {"$ref": "#/$defs/marker"},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "note": {"type": "string"},
+        "was": {"$ref": "#/$defs/was"}
+      }
+    },
+    "detail": {
+      "type": "object",
+      "required": ["id", "attaches_to", "kind", "label", "ref", "marker"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^MAPD-[0-9]{3,}$"},
+        "attaches_to": {"type": "array", "minItems": 1,
+                        "items": {"type": "string", "pattern": "^MAP[NE]-[0-9]{3,}$"}},
+        "kind": {"enum": ["workflow", "table", "column", "calculation", "intermediate",
+                          "output", "rule"]},
+        "label": {"type": "string", "minLength": 1},
+        "ref": {"$ref": "#/$defs/evidence"},
+        "marker": {"$ref": "#/$defs/marker"},
+        "count": {"type": "integer", "minimum": 1},
+        "note": {"type": "string"},
+        "was": {"$ref": "#/$defs/was"}
+      }
+    },
+    "gap": {
+      "type": "object",
+      "required": ["id", "attaches_to", "question"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^MAPG-[0-9]{3,}$"},
+        "attaches_to": {"type": "array", "minItems": 1,
+                        "items": {"type": "string", "pattern": "^(GLOBAL|MAP[NED]-[0-9]{3,})$"}},
+        "question": {"type": "string", "minLength": 1},
+        "respondent": {"type": "string"},
+        "pm_u_ref": {"type": "string", "pattern": "^PM-U-[0-9]{3}$"},
+        "was": {"$ref": "#/$defs/was"}
+      }
+    },
+    "orphan": {
+      "type": "object",
+      "required": ["ref", "reason", "materiality", "note"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "reason": {"enum": ["gap_in_map", "out_of_scope", "undetermined"]},
+        "materiality": {"enum": ["material", "not-material", "undetermined"]},
+        "note": {"type": "string"},
+        "decision_ref": {"type": "string", "pattern": "^D-[0-9]{3,}$"}
+      }
+    },
+    "retired": {
+      "type": "object",
+      "required": ["id", "reason"],
+      "properties": {
+        "id": {"$ref": "#/$defs/element_id"},
+        "reason": {"type": "string", "minLength": 1},
+        "retired_in": {"type": "string", "pattern": "^mp-v[0-9]{2,}$"}
+      }
+    }
+  }
+}

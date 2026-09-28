@@ -123,7 +123,7 @@ If a revision has the orchestrator scoring evidence relevance, ranking signals, 
 
 ## Writing an authority (`handoff-v1`)
 
-The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place (`docs/handoff-v1/F2/DESENHO.md` §3). One protocol, every skill:
+The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place. One protocol, every skill:
 
 1. **Open a draft** for everything the step writes, authorities and their companions together (`lens-outputs/<lens>.md`, `council-log.md`, `story.md`), declaring what the step read to decide: `python library/kernel/tools/resolve.py draft --engagement <slug> --files <rel>... --reads <rel|glob>... --json`. The draft copies the files to `_drafts/<id>/` and records their base.
 2. **Edit the copies** under the returned `path` — Edit/Write on `_drafts/<id>/<rel>`, never on the engagement file. A draft is nobody's truth: no reader, gate or render consumes it.
@@ -139,6 +139,8 @@ A refusal leaves the draft as it was and prints a structured reason:
 | `CONCURRENT_WRITE` | another writer holds the engagement | publish again when it finishes |
 
 Never `mv` a `.tmp` over `_state.json`, never edit an authority with Bash, never Edit the SU in place. A direct edit that happened anyway is **preserved**: `on-su-mirror.py` reports it, the engagement stops being ready, and `python library/kernel/tools/resolve.py reconcile --engagement <slug>` shows the reconciliation (`--apply` publishes it). The `/answer` state transitions keep their own engine (`resolve.py --row …`), which publishes through the same coordinator. Phase artefacts (`frame.md`, `options.md`, `_blueprint/`, `_synthesis/`, `_render/`) stay tool-written until their phases (F4–F6).
+
+**The process map** (`_map/`, process-map M1 — `docs/process-map/PLANO.md`) is coordinated state with its own writer, not a seventh authority: `library/kernel/tools/process_map.py` publishes `_map/map.json` and the immutable `_map/history/mp-vNN.json` in one coordinator operation. The draft lives **outside** the engagement; `process_map.py check` separates errors (publication refused) from explicit gaps (published, still visible); `stamp` fills only what is missing (`base`, a reference's digest, a consumed source) and never replaces a value; `publish` uses the draft's `base` as `expected` (`BASE_CHANGED` — the map moved: reopen on the current version and reconcile, never bump the version) and `based_on` as `read_set` (`STALE_INPUT` — a source moved: re-read, re-evaluate the elements that cite it, stamp again). The map organises knowledge and references; facts stay in the SU, scope and exclusions in `decisions.md`. Write/Edit under `_map/` is refused by `pre-authority-guard.py`; `process-map.html` is a derived view.
 
 ## Pack context — Discovery vs Options
 

@@ -1,0 +1,14 @@
+captura real: 6 folhas extraídas, 15 blocos de cálculo; unidades a colocar no mapa: 21
+1. mapa mp-v01: válido=True · sem destino 0 · lacunas 2 → process-map.html
+   validação: not_validated
+2. perguntas ao dono, por grupo (uma chamada, não uma por célula):
+   [Passos e ligações] Os passos e a ordem estão certos, e nenhum falta?
+      · O que se faz quando não há cotações suficientes? (MAPG-002)
+   [Saídas e quem as recebe] As saídas e quem as recebe estão completas?
+      · Quem recebe o preço BIOS e com que cadência? (MAPG-001)
+   [Âmbito e temas transversais] O que está fora do mapa está bem fora do âmbito?
+3. resposta verbatim em answers.md (escritor real): «[dono simulado — dados de teste] Falta o passo em que o preço mínimo é carregado no sistema de vendas pela outra equipa.»
+4. correcção do dono → nova versão mp-v02 (histórico: ['mp-v01.json', 'mp-v02.json']); validação: not_validated
+5. validação registada em decisions.md (escritor real): validated D-001 mp-v02 — condições: MAPG-001 e MAPG-002 ficam por esclarecer; a decisão «Cotações suficientes?» é hipótese
+   a hipótese continua hipótese: HYPOTHESIS
+   HTML: process-map-v01.html · process-map-v02.html

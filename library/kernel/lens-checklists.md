@@ -1,6 +1,6 @@
 # Lens checklists — the six Discovery perspectives
 
-The single owner of the six Discovery perspectives (`business` · `operations` · `user` · `data` · `governance` · `financial`): the central question of each, what it privileges, its cues, its own rules, and the evidence that proves it was covered. `handoff-v1` F3 (`docs/handoff-v1/F3/DESENHO.md` Q1) replaced the six lens skills with this file. **One** integrated analyst applies all six in a `/round`; `/round <perspective>` goes deeper on one with the same analyst. Six perspectives never mean six documents or six executions.
+The single owner of the six Discovery perspectives (`business` · `operations` · `user` · `data` · `governance` · `financial`): the central question of each, what it privileges, its cues, its own rules, and the evidence that proves it was covered. `handoff-v1` F3 replaced the six lens skills with this file. **One** integrated analyst applies all six in a `/round`; `/round <perspective>` goes deeper on one with the same analyst. Six perspectives never mean six documents or six executions.
 
 The analyst does not restate the rules this file points to. Admission of a question and the `Confirmed` threshold live in `library/kernel/states.md`; the coverage record lives in `library/kernel/coverage-contract.md` §4.8. The Options perspective (`lens-technology`) is not here: it names vendors, and Discovery never does.
 

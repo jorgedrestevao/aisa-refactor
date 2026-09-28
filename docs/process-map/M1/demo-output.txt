@@ -1,0 +1,10 @@
+motor: docs/process-map/M1/staging/kernel/tools/process_map.py
+rascunho carimbado: 12 campos preenchidos (base, digests, fontes consumidas)
+1. check: válido=True · unidades 5 · sem destino 0 · lacunas 1
+   publish: publicado=True versão=mp-v01 operação=process-map-d0f0261111c84662
+   ficheiros: ['_map/history/mp-v01.json', '_map/map.json']
+2. fonte alterada depois do rascunho: publicado=False · MAP-CHECK-FAILED · MAP-SOURCE-STALE
+   mapa publicado continua mp-v01
+3. repetir a operação original: publicado=True repetição=True versão=mp-v01 · histórico ['mp-v01.json']
+4. CALC-001 em dois workbooks: _capture/precos.xlsx.calc-chain.json#CALC-001 → 0008861bf435… · _capture/precos-2024.xlsx.calc-chain.json#CALC-001 → 9f0eebc6d593…
+   sem qualificar pelo ficheiro: ambiguous — `CALC-001` existe em 2 cadeias de cálculo (_capture/precos-2024.xlsx.calc-chain.json, _capture/precos.xlsx.calc-chain.json): qualificar pelo ficheiro

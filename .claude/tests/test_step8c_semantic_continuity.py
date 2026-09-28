@@ -119,7 +119,7 @@ def dispositions(open_evidence_text):
 
 
 def undisposed(synopsis_text, pmu_text, disp):
-    """What aisa-round step 5e reports: Critical PM-U + labelled material lines with no disposition."""
+    """What aisa-round step 5b reports: Critical PM-U + labelled material lines with no disposition."""
     missing = []
     for label in sorted(material_labels(synopsis_text)):
         if label not in disp:

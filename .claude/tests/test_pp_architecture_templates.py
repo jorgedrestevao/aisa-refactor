@@ -32,8 +32,7 @@ RUNTIME_UNITS = [
 RETIRED = ["sharepoint-first.md", "dataverse-first.md", "hybrid.md"]
 
 # Obsolete branch-MODEL vocabulary. Bare "branch" is deliberately NOT a token: the runtime
-# files legitimately state "no branch" / "replacing the obsolete `branch` field" as
-# documentation of the removal. These tokens are the model itself.
+# files legitimately state "no branch" as documentation of the removal. These tokens are the model itself.
 OBSOLETE_BRANCH_MODEL = [
     "applies_to_branch",
     "available_after_outcome",
@@ -628,7 +627,7 @@ class TestCoreSections(unittest.TestCase):
         for path in (os.path.join(KERNEL, "render-contract.md"),
                      os.path.join(SKILLS, "aisa-render", "SKILL.md")):
             body = read(path)
-            for cls in ("not applicable", "optional", "architecture work item",
+            for cls in ("not applicable", "optional", "open work item",
                         "decision-blocking"):
                 self.assertIn(cls, body, "%s: missing gap class %s" % (path, cls))
 

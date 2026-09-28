@@ -1,6 +1,6 @@
 ---
 name: frame-reviewer
-description: Independent reviewer of a Framing proposal (handoff-v1 F3, decision Q4). Invoked once by /frame, after the integrated analyst wrote its proposal, with fresh context — never the analyst's reasoning. Contests the proposed problem sentence, its anchors and the confirmation of each owner invariant (M-n), and returns findings. Writes nothing.
+description: Independent reviewer of a Framing proposal. Invoked once by /frame, after the integrated analyst wrote its proposal, with fresh context — never the analyst's reasoning. Contests the proposed problem sentence, its anchors and the confirmation of each owner invariant (M-n), and returns findings. Writes nothing.
 tools: [Read, Grep, Glob]
 ---
 

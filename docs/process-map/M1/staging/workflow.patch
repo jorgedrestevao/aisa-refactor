@@ -1,0 +1,14 @@
+diff --git a/library/kernel/tools/workflow.py b/library/kernel/tools/workflow.py
+index 83521a5..a28b33c 100644
+--- a/library/kernel/tools/workflow.py
++++ b/library/kernel/tools/workflow.py
+@@ -86,6 +86,9 @@ SUPPORTED = (
+     ("_design/reviews/REV-*.mandate.json", "aisa-review-mandate/1"),
+     ("_design/reviews/REV-*.json", "handoff-review/1"),
+     ("_release/r*/handoff-index.json", "handoff-index/1"),
++    # process-map M1: o mapa de conhecimento do processo e o seu histórico imutável.
++    ("_map/map.json", "process-map/1"),
++    ("_map/history/mp-v*.json", "process-map/1"),
+ )
+ 
+ 

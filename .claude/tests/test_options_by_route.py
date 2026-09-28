@@ -83,6 +83,36 @@ class RevisaoNoHook(unittest.TestCase):
             RV["dispose"](eng, "REV-0001.F01", "escalated", "o dono decide", to="dono")
             self.assertTrue(linha(eng, "achados dos pareceres")[0])
 
+    def test_m5_f3_a_role_reviewed_only_on_an_older_revision_does_not_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = DI["dois"](tmp)
+            m = DI["mandato"](eng)
+            RV["receive"](eng, m["task_id"], DI["parecer"](m))
+            DI["rev2"](eng)
+            self.assertTrue(linha(eng, "pareceres recebidos")[0])
+            self.assertTrue(linha(eng, "achados dos pareceres")[0], "stale não conta")
+            ok, _t, det = linha(eng, "cada papel mandatado")
+            self.assertFalse(ok)
+            self.assertIn("architecture-review (REV-0001)", det)
+            n = DI["mandato"](eng)
+            RV["receive"](eng, n["task_id"], DI["parecer"](n, findings=[]))
+            self.assertTrue(linha(eng, "cada papel mandatado")[0])
+
+
+
+class HistoriaComPoucosIds(unittest.TestCase):
+    """M5 F5: um episódio da story citou 3 ids; a regra das skills é no máximo 2."""
+
+    def test_the_phase_episode_carries_at_most_two_ids(self):
+        story = ("# Story\n\n## Episódio 3 — as opções na mesa\n\nA regra (C-001) e o "
+                 "prazo (U-002) pesam; a alternativa (O-001) também.\n\n"
+                 "## Episódio 4 — a decisão\n\nFicou a opção (O-002).\n")
+        ok, _t, det = PC["story_ids"](story, r"\bop[cç][oõ]es\b")
+        self.assertFalse(ok)
+        self.assertEqual(det, "3 ids: C-001, O-001, U-002")
+        self.assertTrue(PC["story_ids"](story, r"\bdecis[aã]o\b")[0],
+                        "o episódio de outra fase não conta")
+
 
 class TextoDoOptions(unittest.TestCase):
 

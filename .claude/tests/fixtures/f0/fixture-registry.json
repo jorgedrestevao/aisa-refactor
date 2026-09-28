@@ -1,0 +1,176 @@
+{
+  "schema_version": "handoff-f0-fixture-registry/1",
+  "baseline_commit": "85baf1018ca2b238c41745f7f13dbb539589867f",
+  "required_scenarios": [
+    "1-solution-choice",
+    "2-pp-constrained",
+    "3-change-impact",
+    "4-headless",
+    "5-migration"
+  ],
+  "new_fixtures": [
+    {
+      "path": ".claude/tests/fixtures/handoff-v1/fx-hv1-01-solution-choice",
+      "route": "solution-choice",
+      "covers_required": [
+        "1-solution-choice"
+      ],
+      "scenario_ids": [
+        "T06",
+        "T08",
+        "T22"
+      ],
+      "provenance": "synthetic"
+    },
+    {
+      "path": ".claude/tests/fixtures/handoff-v1/fx-hv1-02-pp-constrained",
+      "route": "platform-constrained",
+      "covers_required": [
+        "2-pp-constrained"
+      ],
+      "scenario_ids": [
+        "T05",
+        "T06",
+        "T07",
+        "T20",
+        "T21",
+        "T23",
+        "T24",
+        "T27",
+        "T28"
+      ],
+      "provenance": "synthetic"
+    },
+    {
+      "path": ".claude/tests/fixtures/handoff-v1/fx-hv1-03-change-impact",
+      "route": "change-impact",
+      "covers_required": [
+        "3-change-impact"
+      ],
+      "scenario_ids": [
+        "T24",
+        "T39",
+        "T41",
+        "T42"
+      ],
+      "provenance": "synthetic",
+      "depends_on": [
+        "fx-hv1-02-pp-constrained"
+      ]
+    },
+    {
+      "path": ".claude/tests/fixtures/handoff-v1/fx-hv1-04-headless",
+      "route": "platform-constrained",
+      "covers_required": [
+        "4-headless"
+      ],
+      "scenario_ids": [
+        "T06",
+        "T07",
+        "T20",
+        "T31",
+        "T34",
+        "T37",
+        "T40"
+      ],
+      "provenance": "synthetic",
+      "depends_on": [
+        "fx-hv1-02-pp-constrained"
+      ]
+    },
+    {
+      "path": ".claude/tests/fixtures/handoff-v1/fx-hv1-05-migration",
+      "route": "platform-constrained",
+      "covers_required": [
+        "5-migration"
+      ],
+      "scenario_ids": [
+        "T38"
+      ],
+      "provenance": "synthetic"
+    }
+  ],
+  "reused_fixtures": [
+    {
+      "path": ".claude/tests/fixtures/su-schemas/pre-v2.3-shared-understanding.md",
+      "use": "SU em formato antigo: identificação de engagement legado e leitura sem migração implícita",
+      "scenario_ids": [
+        "T03",
+        "T35",
+        "T36"
+      ],
+      "provenance": "synthetic",
+      "note": "Conteúdo sintético; um comentário (linha 22) nomeia o engagement real de que copia a forma."
+    },
+    {
+      "path": ".claude/tests/fixtures/technical-decision-refocus/admission-cases.md",
+      "use": "casos de admissão P-26 do contrato actual; ponto de partida para adaptar à materialidade nova em F1",
+      "scenario_ids": [
+        "T05",
+        "T06",
+        "T07"
+      ],
+      "provenance": "synthetic",
+      "note": "Codifica a regra classic dos oito eixos técnicos; F1 adapta, não reutiliza tal como está."
+    },
+    {
+      "path": ".claude/tests/fixtures/coverage/fx-coverage-f06",
+      "use": "engagement sintético completo (SU, decisões, blueprint v01–v03, capture, render) para testes de integração de coverage, freshness e read-set",
+      "scenario_ids": [
+        "T10",
+        "T11",
+        "T17",
+        "T41",
+        "T42"
+      ],
+      "provenance": "synthetic",
+      "note": "Forma copiada de um caso real, conteúdo inventado (coverage/README.md). Achado de higiene F0-H1: _capture/*.extraction.json guarda um caminho local absoluto com nome de utilizador e nome de cliente. Não tem _graph/: um teste de bootstrap/read-set tem de migrar primeiro uma cópia temporária (bootstrap recusa engagements sem grafo)."
+    },
+    {
+      "path": ".claude/tests/fixtures/blueprints/valid_min_v01.yaml",
+      "use": "blueprint mínimo válido para testes estruturais e de referência blueprint↔FC",
+      "scenario_ids": [
+        "T21",
+        "T37"
+      ],
+      "provenance": "synthetic"
+    }
+  ],
+  "excluded_fixtures": [
+    {
+      "path": ".claude/tests/fixtures/step8c",
+      "reason": "Excertos pricing-marinha-* derivados de um engagement real; não servem como fixture sintética do perfil novo."
+    },
+    {
+      "path": ".claude/tests/fixtures/blueprints/snapshot-b81d39c.json",
+      "reason": "Snapshot do parse de blueprints de engagements reais (pricing-marinha-pilot-*); derivado de dados reais."
+    },
+    {
+      "path": ".claude/tests/fixtures/calc-capture",
+      "reason": "Fixtures dos extractores, congelados neste programa."
+    }
+  ],
+  "scaffold_helpers": [
+    {
+      "path": ".claude/tests/test_migration.py",
+      "helper": "make / NOVO (carregado por runpy em test_lens_mirror, test_windows_console, test_dashboard_kernel_state, test_dashboard_memory_tab, test_audit_findings, test_audit_round2)",
+      "note": "Extrair para módulo de fixture partilhado antes de alterar test_migration.py."
+    },
+    {
+      "path": ".claude/tests/fixtures/coverage/build_fixtures.py",
+      "helper": "constrói e hidrata fx-coverage-f06",
+      "note": "hydrate() está duplicado em três testes de coverage."
+    }
+  ],
+  "forbidden_identifiers": [
+    "pricing-marinha",
+    "pricing-bunkers",
+    "kam-onboarding",
+    "dpt-galp",
+    "cae-automation",
+    "marinha",
+    "bunkers",
+    "galp"
+  ],
+  "forbidden_identifiers_source": "slugs de engagements reais referenciados no repositório (grep de 'projects/<slug>' em ficheiros versionados, 2026-09-23)"
+}

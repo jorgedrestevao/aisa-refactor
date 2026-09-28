@@ -767,5 +767,50 @@ class WhatTheContractsSay(unittest.TestCase):
         self.assertIn("Coverage is neither authority nor eraser", SYNTH_SKILL)
 
 
+
+REL = runpy.run_path(str(ROOT / "library" / "kernel" / "tools" / "release.py"))
+
+
+class DocumentoNoPacote(Base):
+    """M5 F11: um documento que ninguém conferiu depois do render (passo 9b) não sai como
+    entrega pronta, por muito suficiente que seja por conteúdo."""
+
+    def test_a_document_with_its_complete_render_review_passes(self):
+        self.install(*CHAIN, "rec-v05-render-complete")
+        rc = REL["render_coverage"](self.eng, [RENDER_V02])
+        self.assertTrue(rc["evaluated"])
+        self.assertEqual(rc["documents"][RENDER_V02]["state"], "complete", rc)
+        self.assertEqual(rc["reasons"], [])
+
+    def test_a_document_without_its_render_review_is_a_reason(self):
+        self.install(*CHAIN)
+        rc = REL["render_coverage"](self.eng, [RENDER_V02])
+        self.assertEqual(rc["documents"][RENDER_V02]["state"], "absent")
+        self.assertEqual(rc["reasons"], ["cobertura do documento "
+                                         "fx-coverage-f06_solution-blueprint_v02.md: revisão "
+                                         "depois do render ausente"])
+
+    def test_a_document_edited_after_its_review_is_a_reason(self):
+        self.install(*CHAIN, "rec-v05-render-complete")
+        self.append(RENDER_V02, "\nfrase acrescentada depois da revisão\n")
+        rc = REL["render_coverage"](self.eng, [RENDER_V02])
+        self.assertNotEqual(rc["documents"][RENDER_V02]["state"], "complete")
+        self.assertEqual(len(rc["reasons"]), 1, rc)
+
+    def test_the_texts_require_it_and_the_executive_report_states_objectives(self):
+        self.assertIn("Required for\n   every deliverable written as a real version", RENDER_SKILL)
+        self.assertNotIn("ainda por verificar neste passo", RENDER_SKILL)
+        ex = (TEMPLATES / "executive-report.template.md").read_text(encoding="utf-8")
+        self.assertIn("stating the success the decision aims for as a result the delivery "
+                      "already guarantees", ex)
+        self.assertIn("dito como **objectivo**", ex)
+
+    def test_without_the_design_coverage_chain_it_is_a_limitation_not_a_block(self):
+        rc = REL["render_coverage"](self.eng, [RENDER_V02])
+        self.assertFalse(rc["evaluated"])
+        self.assertEqual(rc["reasons"], [])
+        self.assertTrue(rc["limitations"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

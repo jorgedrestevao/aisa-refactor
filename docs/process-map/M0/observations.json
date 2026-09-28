@@ -1,0 +1,57 @@
+{
+  "base_sha": "2474a414fdf82677f608173770910ae5ce910867",
+  "capture": {
+    "index_rebuilt_after_l2": true,
+    "index_rebuilt_line": 80,
+    "l2_reads_index_line": 62,
+    "mentions_enquadramento": false,
+    "template_mentions_enquadramento": false
+  },
+  "delivery": {
+    "functional_py_refers_coverage": true,
+    "release_py_refers_coverage": false,
+    "trace_py_refers_coverage": false
+  },
+  "f06": {
+    "coverage": "gaps",
+    "coverage_check_exit": 4,
+    "eligible": false,
+    "missing_in_record": [
+      "C-007",
+      "C-010"
+    ],
+    "note": "o registo semântico já vem escrito na fixture: prova o bloqueio de uma omissão CONHECIDA, não a descoberta autónoma pelo agente",
+    "structural_blocks_v01": 0,
+    "structural_issues_v01": 0
+  },
+  "ids": {
+    "MAP-D-001": {
+      "decisions.md": [
+        "D-001"
+      ]
+    },
+    "MAPD-001": {},
+    "MAPE-001": {},
+    "MAPG-001": {},
+    "MAPL-001": {},
+    "MAPN-001": {},
+    "_capture/registo-de-lotes.xlsx.calc-chain.json#CALC-003": {
+      "_capture/registo-de-lotes.xlsx.calc-chain.json": [
+        "_capture/registo-de-lotes.xlsx.calc-chain.json"
+      ]
+    },
+    "_map/map.json#MAPN-004": {}
+  },
+  "inventory": {
+    "calc_901_is_unit": false,
+    "calc_chain_units": [],
+    "out_m0_label_is_unit": false,
+    "pm_901_is_unit": true,
+    "probe": "PM-901 + CALC-901 (§4bis) + CALC-003 em dois calc-chain.json + etiqueta OUT-M0 (§4)",
+    "process_model_unit_kinds": [
+      "process-question",
+      "process-rule"
+    ],
+    "process_model_units": 10
+  }
+}

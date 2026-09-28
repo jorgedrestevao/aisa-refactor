@@ -40,7 +40,7 @@ class OFrameSemConselho(unittest.TestCase):
         for gone in ("Launch the 6 personas", "6 Task tool calls", "### 5b. Dialectic round",
                      "Concedo / Contesto", "_council-prep/F-<NN>-<persona>.md"):
             self.assertNotIn(gone, FRAME, gone)
-        self.assertIn("The six council personas are no longer launched here", FRAME)
+        self.assertIn("Nothing else runs in Framing: no other role, no antithesis round.", FRAME)
 
     def test_one_reviewer_once_after_the_proposal(self):
         f = flat(FRAME)

@@ -16,7 +16,7 @@ description: Transition Framing → Options. Checks Framing's exit gate, flips _
 
 - **From**: `phase: framing`.
 - **To**: `phase: options`, `round: O-01` (subsequent options rounds become `O-02`, `O-03`, …).
-- **Mode** (handoff-v1 F5): the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`). No persona council runs.
+- **Mode**: the technical author (`solution-architect` mandate) writes the candidates **inline** and publishes them; an explainable router picks the specialist reviewers the risk calls for; each runs as a subagent on its published mandate; `chairman-synthesis` disposes the findings. This is where vendor/product naming becomes allowed (via `lens-technology`).
 
 ## Inputs (read)
 
@@ -114,7 +114,7 @@ If a soft criterion is red and no `--override` was passed → stop with a one-li
 
 ### 4. Author the candidates (inline — the technical author)
 
-The session runs the technical author's mandate, `.claude/agents/solution-architect.md` — inline, not as a Task subagent: it needs the whole engagement, and the candidates are the product (`docs/handoff-v1/F5/DESENHO.md` §0, Q1). It reads the **full** Shared Understanding (resolved rows and their resolutions included — closed conflicts are not re-litigated), `frame.md`, `decisions.md`, `context.json`, the shared evidence (`<engagement>/_capture/evidence-index.md`; when absent, the explicit line *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*), the process synopsis when it exists (`_capture/process-model.md` §4 — the compact cross-source reconstruction; markers OBSERVED / INFERRED / HYPOTHESIS / UNKNOWN are evidence markers, not states; open its detail sections or a raw source only when material to your confidence), and its memory `.claude/agent-memory/_universal/architect/*.md` — a pointer, never contents in a prompt. Its pack access is pull-based and Options-only: the `decision-tree.md` stage it is executing and the `domain-knowledge/` it actually needs, cited. The technical author receives no Discovery `extra_signals`.
+The session runs the technical author's mandate, `.claude/agents/solution-architect.md` — inline, not as a Task subagent: it needs the whole engagement, and the candidates are the product. It reads the **full** Shared Understanding (resolved rows and their resolutions included — closed conflicts are not re-litigated), `frame.md`, `decisions.md`, `context.json`, the shared evidence (`<engagement>/_capture/evidence-index.md`; when absent, the explicit line *"no `_capture/evidence-index.md` — raw `inputs/` is the evidence surface"*), the process synopsis when it exists (`_capture/process-model.md` §4 — the compact cross-source reconstruction; markers OBSERVED / INFERRED / HYPOTHESIS / UNKNOWN are evidence markers, not states; open its detail sections or a raw source only when material to your confidence), the process map at the depth this step needs (process-map M4: `python library/kernel/tools/process_map.py summary --engagement <slug> --task options --json` — the calculations, volumes, exceptions and decisions each candidate must support, with the references to open when material), and its memory `.claude/agent-memory/_universal/architect/*.md` — a pointer, never contents in a prompt. Its pack access is pull-based and Options-only: the `decision-tree.md` stage it is executing and the `domain-knowledge/` it actually needs, cited. The technical author receives no Discovery `extra_signals`.
 
 1. `python library/kernel/tools/review.py draft-candidates --engagement <slug> --json` → edit the draft's `candidates.json` (`handoff-candidates/1`): each candidate `O-NNN` with its option class, technology and form, high-level architecture, order of magnitude with its source, risks, reversibility, premises (SU ids) and sources; at the set level the criteria, the exclusions with their reason and the route.
 2. The route is `_state.json.workflow.route`, and the engine enforces its rule (`library/kernel/handoff-contract.md` → *Options candidates*):
@@ -125,8 +125,8 @@ The session runs the technical author's mandate, `.claude/agents/solution-archit
    | `platform-constrained` | variations of architecture and implementation **inside** the imposed platform (`imposed_platform`, `imposition_ref` = the route's authority); one viable candidate is admitted with its reason — no artificial shortlist of platforms |
    | `change-impact` | the delta on a `baseline_ref`, with its `impact_refs` and the decisions to reopen |
 
-3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, a missing architecture or reversibility) stays visible and may be published.
-4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed.
+3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, an `ANALOGY` that names no analogous case — `ANALOGY_UNNAMED`, a missing architecture or reversibility) stays visible and may be published.
+4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed. The next revision is refused (`BLOCKING_GAP`, `REVIEWS_PENDING`) while a mandate of the current revision has no received review: publishing first turns every return into `STALE_INPUT` and loses it. Receive every return (step 5a) before republishing; a review that will not come (the reviewer failed twice) is published with `--unreceived-reason "<why>"`, written to the ledger in the same operation and shown as `not_received`.
 
 ### 5. Route the review and publish the mandates
 
@@ -144,15 +144,15 @@ Save each return as `<engagement>/lens-outputs/_council-prep/O-<NN>-REV-NNNN.jso
 
 ### 5b. Dialectic round (conditional, bounded by the engine)
 
-When chairman-synthesis reports a material divergence (two findings, or a finding against the author's candidate), open it — `review.py diverge --engagement <slug> --finding <REV-NNNN.Fnn> [--finding …] --subject "<…>"` — and run the antithesis: two `specialist-reviewer` Task calls in parallel, each receiving its own mandate path and the other side's review path, with the *Antithesis mode* of its agent file. Record each call: `review.py dialectic-call --divergence DIV-NN --outcome synthesis_accepted|contested [--synthesis "<…>"] [--locator <…>]`. The engine keeps the cap (3 divergences × 2 calls per candidate revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a factual divergence is never synthesised without a locator. An escalated divergence goes to the owner through `AskUserQuestion` — never accepted by exhaustion.
+This step runs from inside step 6: when chairman-synthesis returns a material divergence (its Step 2b — two findings, or a finding against the author's candidate), open it — `review.py diverge --engagement <slug> --finding <REV-NNNN.Fnn> [--finding …] --subject "<…>"` — and run the antithesis: two `specialist-reviewer` Task calls in parallel, each receiving its own mandate path and the other side's review path, with the *Antithesis mode* of its agent file. Record each call: `review.py dialectic-call --divergence DIV-NN --outcome synthesis_accepted|contested [--synthesis "<…>"] [--locator <…>]`. The engine keeps the cap (3 divergences × 2 calls per candidate revision): the fourth divergence is born `escalated`, two calls without an accepted synthesis escalate, and a factual divergence is never synthesised without a locator. An escalated divergence goes to the owner through `AskUserQuestion` — never accepted by exhaustion. Then re-invoke chairman-synthesis with the theses and antitheses, in the same draft.
 
 ### 6. Hand off to chairman-synthesis
 
 Invoke `chairman-synthesis` with phase = `options`, round = `O-<NN>`; it reads the published candidates and `review.py show-reviews` (*Options inputs in a handoff-v1 engagement*), disposes every finding of a current review through `review.py dispose`, and writes `options.md` and the new SU rows.
 
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' '_design/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads _map/map.json context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' '_design/*' 'inputs/**/*' 'lens-outputs/*.md' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
-When a finding is accepted by changing a candidate, the author publishes the next revision (step 4); `show-reviews` then marks the old reviews `stale` and names the findings to revalidate — new mandates go only to the roles those findings belong to. A review of an earlier revision never becomes a review of the new one by copy.
+When a finding is accepted by changing a candidate, the author publishes the next revision (step 4); `show-reviews` then marks the old reviews `stale` and names the findings to revalidate — new mandates go only to the roles those findings belong to (`show-reviews` → `unreviewed_roles`). A review of an earlier revision never becomes a review of the new one by copy.
 
 Five contract checks before reporting to the user, all owned by `chairman-synthesis`:
 
@@ -160,7 +160,7 @@ Five contract checks before reporting to the user, all owned by `chairman-synthe
 2. **Every option carries an order of magnitude with its source marker**, or `ORDER OF MAGNITUDE UNAVAILABLE — <what is missing>`. A band with no source is invented; a blank cell is a contract breach.
 3. **The round closes with the recommendation** — the option, what separates it from its siblings, what it rests on, what would flip it. Where the terminal is *decision blocked* or *multiple defensible options*, `no recommendation — <what would produce one>`. The recommendation is the aisa's; the choice is the owner's, at `/decide`.
 4. **The artefact is within budget** (~1 500 words of prose, ≤120 per option). The full field set, the concern coverage and the `DO-NOTHING` / `PROCESS-CHANGE` class coverage live in `lens-outputs/chairman-synthesis-O-<NN>.md`.
-5. **Every finding of a current review has a disposition** (`show-reviews` → `open_findings` holds only `deferred` / `escalated` ones, shown to the user), and every mandate was received or is reported as not received.
+5. **Every finding of a current review has a disposition** (`show-reviews` → `open_findings` holds only `deferred` / `escalated` ones, shown to the user), every mandate was received or is `not_received` with the reason the engine recorded, and `show-reviews` → `unreviewed_roles` is empty. A process note in the synthesis never stands in for a received review.
 
 ### 7. Present options to the user
 
@@ -185,7 +185,7 @@ A seguir: lê `options.md`; ensaiar cada alternativa → `/simulate`; escrever o
 
 ### 7b. Story
 
-Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as opções na mesa`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as opções na mesa`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 
 ### 8. Wrap-up output
 
@@ -196,7 +196,7 @@ A seguir: ensaiar antes de escolher → `/simulate`; o obituário do projecto �
 
 ## Notes
 
-- **Subagents** (README → *Regras de execução*; `docs/handoff-v1/F5/DESENHO.md` §0): the author and the chairman run inline — they need the session's context and their detail is the product. The specialist reviewers are subagents, one per published mandate, in parallel with each other and never with the author, who publishes first; they must **not** have the author's context nor each other's, and only their findings come back. The six Discovery personas are retired (handoff-v1 F5.4, Q4); their perspectives live in `library/kernel/lens-checklists.md` (Discovery) and `library/kernel/specialists.md` (Options).
+- **Subagents** (`CLAUDE.md` → *Delegação a subagentes*): the author and the chairman run inline — they need the session's context and their detail is the product. The specialist reviewers are subagents, one per published mandate, in parallel with each other and never with the author, who publishes first; they must **not** have the author's context nor each other's, and only their findings come back. The Discovery perspectives live in `library/kernel/lens-checklists.md` (Discovery) and `library/kernel/specialists.md` (Options).
 - **Reviews, not votes.** How many reviewers agree never changes an epistemic state; a factual finding changes the SU only through a locator (`chairman-synthesis` → *Framing inputs*, the same rules).
 - **Domain knowledge is pulled, never preloaded.** The author pulls what it needs; a reviewer reads only the pack units its mandate lists, with their `sha256`.
 - **The technical author is the lone vendor-naming surface** before the reviews; a specialist names a technology only as the candidates already name it.

@@ -1,6 +1,6 @@
 ---
 name: lens-coverage-reviewer
-description: Independent reader of a Discovery passagem's perspective coverage (handoff-v1 F3, T19). Invoked once by /round when the passagem closes, with fresh context — never the analyst's reasoning. Reads the published Shared Understanding and the draft `lens` coverage record, and returns one verdict per perspective. Writes nothing.
+description: Independent reader of a Discovery passagem's perspective coverage. Invoked once by /round when the passagem closes, with fresh context — never the analyst's reasoning. Reads the published Shared Understanding and the draft `lens` coverage record, and returns one verdict per perspective. Writes nothing.
 tools: [Read, Grep, Glob]
 ---
 
@@ -21,7 +21,7 @@ The invocation gives you paths, never conclusions:
 - `shared-understanding.md` (published) — the rows the refs point at;
 - `library/kernel/lens-checklists.md` — the central question and the evidence of coverage per perspective (*Coverage evidence*).
 
-Open what the refs point at: SU rows by id, `answers.md#…`, `enquadramento.md#…`, files under `_capture/` or `inputs/`. Read what you need, nothing more.
+Open what the refs point at: SU rows by id, `answers.md#…`, `enquadramento.md#…`, files under `_capture/` or `inputs/`. Read what you need, nothing more. When the engagement has a published process map (`_map/map.json`, read-only; the view is `process-map.html`), read it too: a perspective whose central question touches a step, an output and its consumer, or an exception of the map, and whose evidence never reaches that element (the rows' `elementos` column names what each row is about), is a finding — an element without rows is a signal to name, never proof of a gap on its own.
 
 ## Verdict per perspective
 

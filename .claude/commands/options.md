@@ -1,5 +1,5 @@
 ---
-description: Transition Framing → Options (generate 3-5 options, each with its technology, order of magnitude and risks; closes with the aisa's recommendation).
+description: Transition Framing → Options — the technical author writes the candidates by route (each with its technology, order of magnitude and risks), the specialists the risk calls for review them, and the synthesis closes with the aisa's recommendation.
 argument-hint: "[--override \"<reason>\"]"
 ---
 

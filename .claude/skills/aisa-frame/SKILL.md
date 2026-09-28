@@ -16,9 +16,9 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 
 - **From**: `phase: discovery`.
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
-- **Mode**: integrated analyst + one independent reviewer (`handoff-v1` F3, decision Q4; `library/kernel/orchestration.md` → *Framing mode*). The six council personas are no longer launched here, and there is no antithesis round (Q5).
+- **Mode**: integrated analyst + one independent reviewer (`library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
 
-The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (README → *Regras de execução*; `docs/handoff-v1/F3/DESENHO.md` §0).
+The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (`CLAUDE.md` → *Delegação a subagentes*).
 
 ## Inputs (read)
 
@@ -27,6 +27,7 @@ The analyst proposes inline — it needs the whole engagement, and its detail is
 - `library/kernel/phases.md` (Framing entry criteria).
 - `<engagement>/_capture/evidence-index.md` (the shared evidence surface for the analyst and the reviewer).
 - `<engagement>/_capture/process-model.md` §4 (the process synopsis) and §6 (PM-U) — for the comprehension-survival soft gate (step 2) and the chairman's survival block; when absent, the gate runs on the SU alone and says so.
+- The process map, **global view** (process-map M4): `python library/kernel/tools/process_map.py summary --engagement <slug> --task framing --json` — objective, actors, steps, outputs and who receives them, and the scope gaps still open. The problem sentence must hold against it: an output or consumer of the map that the frame leaves out is named, not dropped. Absent map → the frame runs as before and says so.
 - `<engagement>/lens-outputs/*.md` `Open evidence` blocks — where the dispositions (`MAP` / `ADOPT` / `DISMISS`) live.
 - `library/packs/<pack>/pack.yaml` — `lenses_config.<lens>.extra_signals` only, as attention cues.
 - `library/kernel/lens-checklists.md` — the six perspectives the analyst frames across.
@@ -77,7 +78,7 @@ Soft criteria from `phases.md`:
 4. Are the known structural constraints represented as rows?
 5. Are the suspected decision-changing structural constraints explicit `Unknown`s (`swing: decisivo`)?
 6. Are the material scope / user-task obligations visible as rows?
-7. Has every Critical `PM-U` row and every labelled material synopsis line received a disposition (`aisa-round` step 5e — `undisposed` must be empty)?
+7. Has every Critical `PM-U` row and every labelled material synopsis line received a disposition (`aisa-round` step 5b — `undisposed` must be empty)?
 
 A failing question is a red criterion. **Do not pretend comprehension is sufficient**: name the missing understanding concretely — shape: `output X has no identified consumer`, `material calculation chain Y is not reconstructed`, `structural question Z (where must the data live?) is still absent`, `PM-U-NNN (Critical) undisposed` — and route it through the existing mechanisms: another `/round <perspective>` to adopt or dismiss it into the SU, or `/answer` when the sponsor already answered. Never manufacture an SU row, a process model or an Options set from this gate. Few open Unknowns ≠ deep understanding: a 100% epistemic health with an untraced material output family still fails question 2.
 
@@ -95,7 +96,7 @@ override reason: <reason>
 proceed: allowed under existing soft-gate doctrine
 ```
 
-The missing item stays visible as what it honestly is — an SU `Unknown` (written first, through the existing authority model, if it does not yet exist), an unresolved material trace, or an `undisposed` line named by `aisa-round` step 5e — and the chairman projects **that id** into the survival block. The chairman never writes `(none) — <override reason>`: `(none) — <reason>` is reserved for the substantive conclusion that **no material item of that semantic class exists for this engagement** (`chairman-synthesis` → rules for the survival block). An override that hides a missing material trace behind `(none)` is a defect, not a projection.
+The missing item stays visible as what it honestly is — an SU `Unknown` (written first, through the existing authority model, if it does not yet exist), an unresolved material trace, or an `undisposed` line named by `aisa-round` step 5b — and the chairman projects **that id** into the survival block. The chairman never writes `(none) — <override reason>`: `(none) — <reason>` is reserved for the substantive conclusion that **no material item of that semantic class exists for this engagement** (`chairman-synthesis` → rules for the survival block). An override that hides a missing material trace behind `(none)` is a defect, not a projection.
 
 ### 3. Flip state to Framing (through the coordinator)
 
@@ -123,8 +124,7 @@ b. **Pack attention cues** — read `_state.json.pack`, resolve `library/packs/<
 c. **Resolutions already closed** — the rows marked `resolved →` and the `C-` rows carrying `(was …)`:
    neither the analyst nor the reviewer re-litigates them.
 
-**solution-architect is NOT invoked in Framing.** Nor is any other persona: the council of six personas
-no longer runs here (Q4). Framing is pre-technology — no vendor or product names anywhere in this skill.
+**solution-architect is NOT invoked in Framing.** Framing is pre-technology — no vendor or product names anywhere in this skill.
 
 ### 5. The integrated analyst proposes (inline)
 
@@ -167,9 +167,9 @@ evidence rules (`chairman-synthesis` → *Framing inputs*): agreement between th
 factual finding with a locator is a correction by evidence; a factual divergence without a locator
 becomes `Conflicted` (`partes = analista∧revisor`); a recommendation divergence (wording, scope,
 emphasis of the sentence) is **not** settled by the synthesis — it is listed for the owner and asked in
-step 7. There is no antithesis round (Q5). It writes `frame.md`, the new SU rows and the synthesis log.
+step 7. There is no antithesis round. It writes `frame.md`, the new SU rows and the synthesis log.
 
-Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' 'lens-outputs/_council-prep/*' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
+Before invoking it, **open the chairman's draft** — `python library/kernel/tools/resolve.py draft --engagement <slug> --files shared-understanding.md _state.json council-log.md --reads _map/map.json context.json decisions.md enquadramento.md answers.md frame.md options.md '_capture/*' 'inputs/**/*' 'lens-outputs/*.md' 'lens-outputs/_council-prep/*' '_simulation/**/*' --json` — and pass its `path`: chairman-synthesis writes the SU rows, the round and its log line into those copies (`library/kernel/orchestration.md` → *Writing an authority*). When it returns, **publish** it (`resolve.py publish --engagement <slug> --draft <id>`); an `INTEGRITY_FAILURE` goes back to chairman-synthesis to fix in the copy, a `STALE_INPUT` means reopening the draft on the current base.
 
 ### 7. Present the frame to the user and ask for validation
 
@@ -262,7 +262,7 @@ Overwrite the single-sentence line of `frame.md` with the user's edit (preserve 
 
 ### 8c. Story
 
-Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — o problema ganhou uma frase (frame)`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — o problema ganhou uma frase (frame)`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 
 ### 9. Wrap-up output
 
@@ -273,8 +273,8 @@ A seguir: comparar alternativas — aqui entra pela primeira vez a perspectiva t
 
 ## Notes
 
-- **Subagents** (README → *Regras de execução*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
+- **Subagents** (`CLAUDE.md` → *Delegação a subagentes*): the analysis runs inline; the reviewer is the one subagent, launched once, in sequence, after the proposal exists. No parallelism: the reviewer reviews what the analyst wrote.
 - **One return schema.** The analyst writes its proposal in the schema `chairman-synthesis` owns (*Return schema* → the six sections), so the synthesis reads Framing as it reads any return.
 - **Only the synthesis writes the SU.** The reviewer has `tools: [Read, Grep, Glob]` and returns findings as text — it cannot write even if it tried.
-- **The survival block is a projection, not a second truth.** Semantic ownership of invariants, constraints, obligations and Unknowns stays in the SU; `frame.md` names ids. If the chairman notices a missing material item while framing, the SU row is written first and projected second (`chairman-synthesis` step 6). `/options` personas read the block; the Options blocking set remains the primary candidate-specific check.
+- **The survival block is a projection, not a second truth.** Semantic ownership of invariants, constraints, obligations and Unknowns stays in the SU; `frame.md` names ids. If the chairman notices a missing material item while framing, the SU row is written first and projected second (`chairman-synthesis` step 6). In Options the technical author reads the block (`aisa-options` step 4); the Options blocking set remains the primary candidate-specific check.
 - **Idempotence**: re-running `/frame` is allowed (produces F-02, F-03, …). The previous `frame.md` is overwritten; chairman-synthesis-F-<NN>.md from each round is preserved.

@@ -120,6 +120,16 @@ class Publicacao(unittest.TestCase):
             self.assertIn("NO_ORDER_OF_MAGNITUDE", [g["code"] for g in r["gaps"]])
 
 
+    def test_m5_f4_an_analogy_names_its_case(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = engagement(tmp)
+            sem = cand("O-001", order_of_magnitude={"value": "dias", "source": "`ANALOGY`"})
+            com = cand("O-002", order_of_magnitude={
+                "value": "dias", "source": "ANALOGY — pedidos de compra 2024, mesmo volume"})
+            gaps = RV["candidate_gaps"](conjunto(eng, [sem, com]))
+            self.assertEqual([(g["code"], g["candidate"]) for g in gaps],
+                             [("ANALOGY_UNNAMED", "O-001")])
+
 class Rotas(unittest.TestCase):
 
     def test_solution_choice_never_shrinks_the_list_without_a_reason(self):

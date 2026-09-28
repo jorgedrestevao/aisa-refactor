@@ -120,7 +120,7 @@ class T08_ConcordanciaNaoEEvidencia(unittest.TestCase):
         p = corre(self.base, write(self.eng, su(c=POR_CONSENSO, u=U1)))
         self.assertTrue(negou(p), p.stderr)
         self.assertIn("C-001", razao(p))
-        self.assertIn("concordância entre personas não é evidência", razao(p))
+        self.assertIn("concordância entre retornos não é evidência", razao(p))
 
     def test_the_same_claim_with_a_locator_passes(self):
         p = corre(self.base, write(self.eng, su(c=COM_LOCATOR, u=U1)))

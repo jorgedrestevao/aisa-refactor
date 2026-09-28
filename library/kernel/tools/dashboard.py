@@ -378,7 +378,15 @@ def parse_tables(md: str) -> list[Table]:
                 cur = lines[j]
                 shape = _row_shape(cur, len(headers))
                 if shape:
-                    cells, bad = fit_row(split_row(cur), len(headers))
+                    raw_cells = split_row(cur)
+                    # process-map M3: uma linha escrita sem a coluna `elementos` (um
+                    # escritor anterior a ela) tem exactamente uma célula a menos — a vazia
+                    # entra no sítio de `elementos` (não avaliada), não no fim, para que
+                    # `ronda` e os marcadores da última coluna fiquem onde estão.
+                    ei = _elementos_index(headers)
+                    if ei is not None and len(raw_cells) == len(headers) - 1:
+                        raw_cells = raw_cells[:ei] + [""] + raw_cells[ei:]
+                    cells, bad = fit_row(raw_cells, len(headers))
                     tbl.rows.append((j + 1, cells))
                     if bad:
                         tbl.malformed_lines.append(j + 1)
@@ -402,6 +410,39 @@ def parse_tables(md: str) -> list[Table]:
             continue
         i += 1
     return tables
+
+
+def _elementos_index(headers: list[str]):
+    """O índice da coluna `elementos` (process-map M3), ou None quando a tabela não a tem."""
+    for i, h in enumerate(headers):
+        if norm_key(h) == "elementos":
+            return i
+    return None
+
+
+ELEMENT_TOKEN_RE = re.compile(r"^MAP[LNED]-\d{3,}$")
+
+
+def parse_elementos(cell: str, has_column: bool) -> tuple[list[str], str]:
+    """`(ids, forma)` da célula `elementos` (states.md → *The `elementos` column*).
+
+    forma: `ausente` (a secção não tem a coluna: SU anterior) · `vazia` (não avaliada) ·
+    `ids` · `global` · `na` (`N/A — <razão>`) · `na-sem-razao` · `invalida`. Nenhuma forma
+    é cobertura por si: só `ids` liga a linha a elementos do mapa."""
+    if not has_column:
+        return [], "ausente"
+    v = re.sub(r"[`*]", "", cell or "").strip()
+    if not v:
+        return [], "vazia"
+    if v.upper() == "GLOBAL":
+        return [], "global"
+    if re.match(r"^N/?A\b", v, re.I):
+        rest = re.sub(r"^N/?A\s*[—–-]?\s*", "", v, flags=re.I).strip()
+        return [], "na" if rest else "na-sem-razao"
+    ids = [x.strip() for x in v.split(",") if x.strip()]
+    if ids and all(ELEMENT_TOKEN_RE.match(x) for x in ids):
+        return sorted(set(ids)), "ids"
+    return [], "invalida"
 
 
 def _row_shape(line: str, n_cols: int) -> str:
@@ -477,6 +518,8 @@ COLUMN_ALIASES = {
     "bloqueio": "bloqueio",
     "referencias": "referencias",
     "quem decide": "quem_decide",
+    # process-map M3: os elementos do mapa a que a linha pertence (states.md).
+    "elementos": "elementos",
 }
 QUESTION_SECTIONS = ("Unknown", "Conflicted")
 QUESTION_ALIASES = {"impacto": "impacto"}
@@ -717,7 +760,8 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
             rec = {k: "" for k in ("id", "lens", "claim", "support", "extra",
                                    "criticidade", "verificado_em", "validade",
                                    "custo", "swing", "ronda", "tipo", "impacto", "ambito",
-                                   "fecho", "bloqueio", "referencias", "quem_decide")}
+                                   "fecho", "bloqueio", "referencias", "quem_decide",
+                                   "elementos")}
             raw_map: dict[str, str] = {}
             for key, head, cell in zip(canon, tbl.headers, cells):
                 raw_map[head] = cell
@@ -809,6 +853,9 @@ def parse_su(md: str) -> tuple[dict, list[dict], dict, list[dict]]:
                 "bloqueio": norm_key(re.sub(r"[*`]", "", rec["bloqueio"])).replace(" ", "_"),
                 "referencias": rec["referencias"].strip(),
                 "quem_decide": rec["quem_decide"].strip(),
+                "elementos_raw": rec["elementos"].strip(),
+                "elementos": parse_elementos(rec["elementos"], "elementos" in canon)[0],
+                "elementos_forma": parse_elementos(rec["elementos"], "elementos" in canon)[1],
                 "was": WAS_RE.findall(rec["claim"] or ""),
                 "expired": False,
                 "expires_on": "",
@@ -1530,7 +1577,7 @@ def audit_confirmed_locators(rows: list[dict], eng: Path,
                              "ficheiro pertence ao span do proprio locator"),
         "julgamento": ("o motor verifica PRESENCA de locator e EXISTENCIA do alvo. Se a "
                        "afirmacao diz mais do que a evidencia -- a regra 2 do limiar -- e "
-                       "julgamento da segunda leitura do arbitro (aisa-round step 5f) e das "
+                       "julgamento da segunda leitura do arbitro (aisa-round step 5c) e das "
                        "Hard rules das lentes. Lista vazia significa 'toda a evidencia "
                        "aponta a algo que existe', nunca 'os factos estao certos'"),
         "calibracao": list(CALIBRACAO),
@@ -1544,7 +1591,7 @@ ENQ_LENS = "enquadramento"
 # --------------------------------------------------- round arbiter (P-1)
 # Presence check ONLY. It never reclassifies, never rewrites a question, never
 # judges materiality: it lists the open `Unknown` rows that carry NO declaration
-# of why they exist. The arbiter (aisa-round step 5f) decides what to do with the
+# of why they exist. The arbiter (aisa-round step 5c) decides what to do with the
 # list; the lens wrote the row. False negatives are accepted by design -- a row
 # that declares its divergence in words this regex does not know is left alone.
 
@@ -1748,7 +1795,7 @@ def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
     readable? `ronda` narrows it to the round just run.
 
     Presence only. Whether the question is material, whether the impact is true and whether
-    the alternatives are the real ones are the arbiter's reading (aisa-round step 5f), never
+    the alternatives are the real ones are the arbiter's reading (aisa-round step 5c), never
     this function's. It never edits a row. A row written before the columns existed is
     counted apart and never reclassified; a resolved, withdrawn or parked row is skipped.
     A `fact_gap` owes no alternatives (T06); a `design_choice` owes >= 2, read from the
@@ -1840,7 +1887,7 @@ def arbiter_declarations(rows: list[dict], ronda: str | None = None) -> dict:
                              "adivinha o aspecto. Falsos POSITIVOS nao sao aceites"),
         "julgamento": ("o motor verifica PRESENCA dos campos; se a pergunta e material, se o "
                        "impacto e verdadeiro e se as alternativas sao as reais sao julgamento "
-                       "do arbitro (aisa-round step 5f). Lista vazia significa 'nada em falta "
+                       "do arbitro (aisa-round step 5c). Lista vazia significa 'nada em falta "
                        "que o motor saiba ver', nunca 'aprovado'"),
     }
 
@@ -2437,7 +2484,7 @@ def build_timeline(story, council, decisions, round_dates: dict, ids: dict,
 # ---------------------------------------------------------------- artefact index
 
 INDEX_DIRS = ["inputs", "_capture", "lens-outputs", "_simulation", "_synthesis",
-              "_blueprint", "_coverage", "_retro", "_render"]
+              "_blueprint", "_coverage", "_retro", "_render", "_map"]
 # `_coverage` is here for TWO reasons, and the second is the one that bites: this list
 # is also what `_needs_rebuild` scans. Left out of it, publishing a review changed the
 # model (`status.coverage`) while the page kept its old mtime verdict and never
@@ -4576,6 +4623,9 @@ def su_items(rows: list[dict], agenda: dict, bp: dict, tw: dict,
                 "source": cur_rel + "#architecture.open_architecture_choices",
                 "rule": "blueprint-contract.md regra 5 — bloqueia aprovação, nunca a "
                         "produção da versão",
+                # a resposta de quem tem a autoridade entra pela transição da linha, e a
+                # escolha fecha numa versão nova do desenho — há sempre um comando
+                "command": '/answer {} "…" → /blueprint'.format(rid),
             })
 
     for q in (bp.get("proof_obligations") or []):
@@ -5763,6 +5813,33 @@ def kernel_state(eng: Path) -> dict:
             "graph": boot.get("graph", {})}
 
 
+def process_map_state(eng: Path) -> dict:
+    """process-map M4: o separador Mapa lê o motor do mapa — o mesmo SVG da vista
+    `process-map.html` e o resumo da retoma —, nunca o reconstrói. Sem mapa: indisponível
+    (capacidade não avaliada), sem erro."""
+    rel = Path(__file__).resolve().parent / "process_map.py"
+    if not (eng / "_map" / "map.json").is_file() or not rel.is_file():
+        return {"available": False}
+    try:
+        P = _CACHE_PM.setdefault("m", runpy.run_path(str(rel)))
+        s = P["summary"](eng, "resume", budget=10 ** 6)
+        if s["status"] != "ok":
+            return {"available": False, "status": s["status"], "blockers": s["blockers"]}
+        m = P["load"](eng)["map"]
+        return {"available": True, "version": s["version"], "digest": s["digest"][:12],
+                "validation": s["validation"], "freshness": s["freshness"]["state"],
+                "blockers": s["blockers"], "blocks": s["blocks"],
+                "svg": P["render_svg"](m),
+                "view": (eng / "process-map.html").is_file()}
+    except Exception as exc:                                        # noqa: BLE001
+        return {"available": False, "status": "error",
+                "blockers": [{"kind": "map", "detail": "{}: {}".format(type(exc).__name__,
+                                                                       exc)}]}
+
+
+_CACHE_PM: dict = {}
+
+
 def memory_state(eng: Path, rows: list) -> dict:
     """A memoria do projecto, projectada para o que se mostra — e so isso.
 
@@ -5967,6 +6044,7 @@ def build_model(eng: Path, today: date) -> dict:
         },
         "kernel": kernel_state(eng),
         "memory": memory_state(eng, rows),
+        "process_map": process_map_state(eng),
         "health": health,
         "revalidate": revalidation_list(rows),
         "agenda": agenda,
@@ -6023,6 +6101,15 @@ def build_model(eng: Path, today: date) -> dict:
 # Every colour is a custom property on :root -- zero hard-coded hex below it.
 
 CSS = """
+.pmap{overflow-x:auto}.pmap svg{display:block}
+.pmap .lane-bg{fill:var(--surface)}.pmap .lane-sep{stroke:var(--line)}
+.pmap .lane-t{fill:var(--ink);font:600 12px var(--f-ui)}.pmap .lane-k{fill:var(--ink2);font:11px var(--f-ui)}
+.pmap .node{fill:var(--panel);stroke:var(--ink2);stroke-width:1.2}.pmap .node.exception{stroke:var(--warn);stroke-dasharray:5 3}
+.pmap .node.unknown{stroke-dasharray:2 3}.pmap .node.output{stroke:var(--brand);stroke-width:2}.pmap .node.decision{fill:var(--a-tint)}
+.pmap .nt{fill:var(--ink);font:12px var(--f-ui)}.pmap .nm{fill:var(--warn);font:italic 11px var(--f-ui)}.pmap .ns{fill:var(--ink2);font:11px var(--f-ui)}
+.pmap .num{fill:var(--accent)}.pmap .numt{fill:#FFFFFF;font:600 11px var(--f-ui)}
+.pmap .edge{fill:none;stroke:var(--ink2);stroke-width:1.3}.pmap .edge.exception{stroke:var(--warn);stroke-dasharray:6 4}
+.pmap .el{fill:var(--ink2);font:11px var(--f-ui)}.pmap .q{fill:var(--warn);font:700 13px var(--f-ui)}
 :root{
   --bg:#EDE9DF; --panel:#FFFFFF; --surface:#F5F2EC; --hover:#EDE9DF; --hover-warm:#F9F6F1;
   --line:#D7CEC5; --line-soft:#E7E3DB; --deco:#B5AEA4;
@@ -6976,6 +7063,8 @@ TAB_SPEC = [
     ("outputs", "Etapas", "Outputs de fase: frame.md, options.md, premortem, síntese, blueprint"),
     ("agenda", "Agenda", "Meeting agenda: Unknown por custo e swing"),
     ("estado", "Registo", "Shared Understanding: Confirmed · Assumed · Unknown · Conflicted · Risky"),
+    ("mapa", "Mapa",
+     "O processo como está desenhado: passos, saídas, quem recebe, e o que se sabe de cada um"),
     ("memoria", "Memória",
      "De que pergunta veio cada facto, e se a memória do projecto bate certo com o registo"),
     ("narrativa", "Narrativa", "story.md, council-log.md, decisions.md"),
@@ -7426,6 +7515,7 @@ def render_html(model: dict, reload_secs: int) -> str:
         "panorama": "", "outputs": len(model["phase_docs"]), "agenda": n_ag,
         "estado": n_open, "narrativa": len(model["timeline"]),
         "memoria": len(model["memory"]["history"]) or "",
+        "mapa": len((model.get("process_map") or {}).get("blocks") or []) or "",
         "artefactos": len([x for x in model["artefacts"] if x["exists"]]),
     }
 
@@ -7713,6 +7803,56 @@ def render_html(model: dict, reload_secs: int) -> str:
       '<span class="m">Há {} linhas vivas. Tenta remover um filtro ou limpar a pesquisa.</span>'
       '<button class="btn solid" data-clear="1">Limpar filtros</button></div>'.format(n_open))
     a("</div></section>")
+
+    # ---------------- panel: mapa (process-map M4)
+    a('<section class="panel" role="tabpanel" id="panel-mapa" aria-labelledby="tab-mapa"'
+      ' tabindex="0" data-tab="mapa" data-title="Mapa do processo" hidden>')
+    pmap = model.get("process_map") or {}
+    a('<div><div class="eyebrow">O processo como está hoje</div>'
+      '<h1 class="pt">Mapa do processo</h1></div>')
+    if not pmap.get("available"):
+        a('<div class="blk"><p class="stamp">Este projecto ainda não tem mapa do processo '
+          'publicado — a leitura do processo por passos não foi feita.</p></div>')
+    else:
+        val = pmap.get("validation") or {}
+        val_txt = {"validated": "validado pelo dono", "stale": "validado noutra versão",
+                   "invalid": "com uma validação que não se aplica",
+                   "not_validated": "ainda não validado pelo dono"}.get(val.get("status"),
+                                                                       val.get("status", ""))
+        a('<div class="blk"><p>Versão {} · {} · {}.{}</p></div>'.format(
+            esc(pmap["version"][4:]), esc(val_txt),
+            "fontes actuais" if pmap["freshness"] == "current" else "há fontes que mudaram",
+            ' Vista completa: <code>process-map.html</code>.' if pmap.get("view") else ""))
+        if pmap["blockers"]:
+            a('<div class="kstate" role="alert"><b>O que falta resolver no mapa</b><ul>')
+            for b in pmap["blockers"]:
+                if b["kind"] == "validation":
+                    txt = "O mapa (versão {}) {}.".format(pmap["version"][4:], val_txt)
+                else:
+                    txt = {"source": "Uma fonte mudou desde o mapa: ",
+                           "orphan": "Ficou fora do mapa, por resolver: ",
+                           "unknown": "Por saber: ", "dead": "Linha do registo aponta para "
+                           "um passo que o mapa não tem: ", "retired": "Linha do registo "
+                           "aponta para um passo retirado: "}.get(b["kind"], "") + b["detail"]
+                a("<li>{}</li>".format(esc(txt)))
+            a("</ul></div>")
+        a('<div class="blk pmap">{}</div>'.format(pmap["svg"]))
+        a('<div class="blk"><h2 class="sec">Passos e o que se sabe de cada um '
+          '<span class="n">{}</span></h2>'.format(len(pmap["blocks"])))
+        a('<div class="tw"><table><thead><tr>'
+          '<th scope="col">nº</th><th scope="col">o que acontece</th>'
+          '<th scope="col">quem / onde</th><th scope="col">o que se sabe</th>'
+          '<th scope="col">dúvidas</th></tr></thead><tbody>')
+        for b in pmap["blocks"]:
+            sabe = " · ".join("{} {}".format(n, STATE_LABEL.get(s, s))
+                              for s, n in sorted(b["rows"].items())) or \
+                ("nada registado ainda" if b["dark"] else "—")
+            a('<tr><td>{}</td><td>{} <span class="stamp">({})</span></td><td>{}</td>'
+              '<td class="c-meta">{}</td><td class="c-meta">{}</td></tr>'.format(
+                  b["n"], esc(b["label"]), esc(b["id"]), esc(b["lane"]), esc(sabe),
+                  esc(", ".join(b["gaps"])) or "—"))
+        a("</tbody></table></div></div>")
+    a("</section>")
 
     # ---------------- panel: memoria
     a('<section class="panel" role="tabpanel" id="panel-memoria" aria-labelledby="tab-memoria"'

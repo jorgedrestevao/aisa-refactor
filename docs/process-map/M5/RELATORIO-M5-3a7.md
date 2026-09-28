@@ -1,0 +1,403 @@
+# M5 — tarefas 3 a 7 (corrida 3 do piloto)
+
+Estado: pronto para revisão.
+Plano: `docs/process-map/PLANO.md` → M5, tarefas 3 a 7. Autorizado pelo mantenedor a 28-09-2026.
+Base: `21f7446`, a versão com o prompt audit aplicado. É a primeira corrida sem a frase do piloto no guia do mapa (M10).
+
+**Dados reais:** este relatório leva só veredictos, ids e contagens. Ficam fora do git:
+- as fontes;
+- os artefactos do engagement;
+- o pacote;
+- as avaliações detalhadas.
+
+## Resultado
+
+| Tarefa | O que se pediu | Resultado |
+|---|---|---|
+| 3 | Percurso até à decisão, com um requisito novo do dono sem origem no processo actual | **Feito.** O requisito entrou como linha própria, com a declaração do dono como evidência e sem origem inventada, e chegou ao desenho |
+| 4 (MAP-19) | Uma perda na compreensão, apanhada pela revisão de fontes | **Parcial.** A cópia com omissão plantada foi recusada pelo autor (ver §2). Das falhas naturais do mapa, 2 foram apanhadas pelo revisor independente e 3 não |
+| 5 (MAP-17) | Uma funcionalidade do mapa ausente do desenho: bloqueia, e fecha depois da correcção | **Parcial, e com um achado crítico.** Uma falha foi detectada pela cobertura. As 3 saídas do processo que faltavam **não** foram: detectou-as o dono. Fecharam na versão seguinte |
+| 6 | Retoma fria antes da entrega; especificação e estimativa calculadas | **Retoma feita.** A especificação e a estimativa ficaram **bloqueadas**, com o motivo certo: o desenho não está aprovado |
+| 7 | Pacote verificado fora da pasta original | **Feito.** `verify` `ok` em dois contentores; o pacote fica `preliminary`, com 8 motivos declarados |
+
+A primeira entrega **não** cumpre os critérios de aceitação do M5 (§7).
+
+## 1. Montagem
+
+- **Sessão A** (autor principal): checkout parcial sobre `21f7446`, sem `docs/`, testes nem histórico git, com as 6 fontes do piloto. O dono é o mantenedor.
+- **Sessão B1** (cópia com omissão para a tarefa 4): mesmas regras e mesmas fontes. Arquivada (§2).
+- **Avaliador:** esta sessão. Nenhum autor viu a referência nem o oráculo. As falhas que o avaliador encontrou não foram passadas às sessões de autor, com uma excepção: na tarefa 5, o dono reviu o desenho.
+
+## 2. Tarefa 3 — até à decisão
+
+**Captura e mapa:**
+- mp-v02 validado pelo dono em D-001;
+- cobre 10 de 14 expectativas. Os 4 parciais são:
+  - o canal onde a saída fica para os comerciais;
+  - as variantes por moeda e unidade, só como dúvida;
+  - quem carrega os preços no sistema a jusante;
+  - um produto com referência regulada.
+- a correcção do dono da v01 para a v02 separou em várias uma saída genérica que tinha absorvido as outras. É o mesmo padrão da corrida 1 e é dado para a verificação A (§8).
+
+**Verificação dos parágrafos (M5.1):** na primeira tentativa, 72 de 86 parágrafos ficaram sem destino. Na corrida 2 tinham sido 0, com o empurrão do guia. Sem o empurrão, a verificação disparou e o autor corrigiu. Isto responde à dúvida «efeito baralhado» do M5.1: **a verificação funciona sozinha.**
+
+**Requisito novo:**
+- C-010 ficou `Confirmed`, com evidência `answers.md#REQ-001` e `elementos: N/A — novo requisito sem origem no processo actual`;
+- passou para o frame (invariantes), para as opções e para a decisão (D-003), e chegou ao desenho: um estado próprio e a entidade do aviso.
+
+**Decisão:** D-003 (O-003), com 4 condições, 2 condições de revisão e 1 obrigação de prova.
+
+**Tarefa 4 — omissão plantada:** a B1 recusou esconder a necessidade dos ficheiros do engagement. Tratou a instrução como injectada, porque escondia uma limitação, e fez um engagement completo e honesto. A regra «nada se esconde» prevaleceu sobre a instrução do chat. A tarefa passou a usar as falhas naturais do mapa de A:
+- **Detectadas pelo revisor independente do frame:**
+  - quem carrega no sistema a jusante → U-016 → C-016;
+  - um fluxo semanal nunca capturado → U-017 (Critical) → C-015, fora de âmbito.
+- **Não detectadas:** o canal da saída, o produto com referência regulada e o uso das variantes pelos comerciais.
+- O dono não contou como detector, porque sabia das falhas.
+
+## 3. Tarefa 5 — desenho
+
+**v01:**
+- **Detectado:** a cobertura marcou `partial` a estimativa semanal (C-009) e não anunciou a versão como pronta.
+- **Não detectado:** 3 saídas do mapa sem destino funcional — o ficheiro para o sistema a jusante, o relatório de produtos com biocomponente e o preço por porto — mais um passo de comparação excluído com base numa decisão que não o exclui.
+- **Como passou:**
+  - a reconciliação (v08) juntou os 14 nós e as 13 arestas do mapa num só item «covered», com alvo num bloco de decisão;
+  - a etapa blueprint (v09) perdeu as unidades do mapa (`source_unit_refs: []`);
+  - o motor aceitou os dois.
+
+**v02**, depois da revisão do dono:
+- as 3 saídas ganharam destino, e na reconciliação (v11) cada uma tem item próprio com a unidade do mapa;
+- o autor diagnosticou sozinho a causa (o item agregado);
+- **ficou por corrigir:** o item agregado ainda junta 11 nós, e a etapa blueprint (v14) continua sem unidades do mapa.
+
+**Aprovação:** bloqueada, e bem. As respostas do dono sobre a topologia (A-007) e o limiar de delegação (A-008) ficaram `Assumed`, porque a autoridade é o IT e o Comité. As escolhas estruturais continuam abertas.
+
+## 4. Tarefa 6 — retoma e entregáveis
+
+**Retoma fria (`/clear` + `/resume`):**
+- recuperou a fase, as decisões, o estado do desenho e os 5 bloqueios certos, cada um com dono;
+- declarou a truncagem do contexto;
+- não perdeu nenhuma dúvida material.
+
+**`/render --all`:**
+- 3 de 6 produzidos;
+- especificação, guia de desenho e estimativa `blocked`, com o motivo e o desbloqueio;
+- estimativa sem placeholder: os modos A e B foram recusados com razão;
+- Confirmed expirados apresentados como obrigação de re-verificação;
+- achado próprio: a síntese de arquitectura estava em falta.
+
+## 5. Tarefa 7 — pacote
+
+**`release.py build` → r0001:**
+- 54 ficheiros;
+- `delivery_level: preliminary`, com 8 motivos (aprovação, especificação, estimativa, cobertura, gate de âmbito);
+- `receiver_acceptance: null`;
+- sem segredos;
+- nada declarado implementado.
+
+**`release.py verify`:** `ok`, o mesmo `index_sha256`, tanto na cópia fora do engagement no contentor do autor como neste contentor, com a mesma `code_version`.
+
+## 6. Achados
+
+| # | Grav. | Onde | O quê | Correcção proposta |
+|---|---|---|---|---|
+| F7 | **crítica** | `coverage.py` | A reconciliação aceita o mapa inteiro num só item «covered» com alvo de decisão. A etapa blueprint aceita itens sem as unidades do mapa que a reconciliação tinha. Um desenho sem 3 saídas passou como coberto | Cada nó `output` (e cada nó material) num item próprio, com alvo de implementação que não seja bloco de decisão; recusar itens que juntem nós de tipos diferentes; continuidade das unidades do mapa entre a reconciliação e a etapa blueprint |
+| F3 | alta | `review.py` + `aisa-options` | 11 pareceres devolvidos, nenhum `received`, 0 disposições; mesmo assim, fecharam as opções e a decisão. O autor publicou revisões novas dos candidatos antes do `receive` | `publish-candidates` recusa enquanto houver mandatos da revisão corrente por receber, ou exige a disposição; o portão das Opções não passa sem pareceres `current` |
+| F11 | média-alta | render + passo 9b | O relatório executivo promete um resultado (a estimativa semanal) que o desenho não carrega. A cobertura pós-render (9b) não correu | Tornar o 9b obrigatório para `--all`, ou marcar o documento como não verificado no próprio texto |
+| F8 | média | `aisa-blueprint` 13c | Contratos funcionais saltados por inteiro («adiados»), em vez de publicados com `BLOCKING_GAP` | A skill já o exige; falta um motor que o verifique |
+| F9 | média | `/resume` | Diz que a confirmação de uma linha `Assumed` é «fora do fluxo `/answer`» | Corrigir o texto: `/answer A-NNN` é o caminho |
+| F12 | média | render | Troca de id na projecção: A-008 apresentada como o headcount, que é U-019 | Coberto por F11 (9b) |
+| F14 | média | `release.py` / skill | O pacote preliminar não leva os entregáveis produzidos nem o desenho corrente, e sai sem inventário, ao contrário do que diz a skill (10b) | Decidir: incluir o que existe marcado como não aprovado, ou declarar a ausência nas limitações |
+| F4 | média | Opções | `ANALOGY` sem caso análogo nomeado | Um check sobre o marcador |
+| F1 | baixa | `process_map.py` | Não há âncora de intervalo para `CALC`: saíram 57 detalhes, um por cálculo | `CALC-NNN..CALC-MMM`, como o `¶N–M` |
+| F2 | baixa | `process_map.py` | Não há intervalo de tempo para `.vtt` | Idem |
+| F5, F6, F10, F13 | baixa | story, options, resume, render | Ids a mais, secções fora do modelo, termos de kernel soltos, pequenos erros de atribuição | — |
+
+**Positivos a manter:**
+- o vocabulário novo do chairman (audit) foi usado;
+- fact≠fit aplicado duas vezes;
+- correcção por evidência do revisor do frame;
+- o autor recusou esconder uma limitação;
+- a aprovação ficou bloqueada com escolhas estruturais abertas;
+- o pacote foi honesto sobre o estado.
+
+## 7. Critérios de aceitação da entrega (PLANO → M5)
+
+| Critério | Estado |
+|---|---|
+| Toda a necessidade material do âmbito tem destino ou pendência que impede a aprovação | **Não.** Na v01, 3 saídas sem destino passaram a cobertura (F7). Na v02 o destino existe, mas o agregado ainda esconde 11 nós |
+| Nenhuma exclusão sem autoridade | **Não.** Um passo de comparação excluído com base numa decisão que não o exclui |
+| A omissão no desenho bloqueia | **Parcial.** Bloqueou para C-009; não bloqueou para as 3 saídas |
+| Nenhuma dúvida desaparece na retoma | **Sim** |
+| Pacote verificável | **Sim** |
+| A estimativa corresponde ao trabalho autorizado | **Não avaliável.** Estimativa bloqueada, sem aprovação nem inventário |
+| Nenhuma limitação escondida | **Sim** nos logs e no pacote; **não** num relatório executivo (F11) |
+
+## 8. Limitações
+
+- n = 1: uma corrida, um processo, um dono.
+- Na tarefa 4 o dono não foi testado como detector, e a omissão plantada não chegou a existir.
+- As confirmações de IT e do Comité não existem. A cadeia aprovação → contratos → inventário → especificação → estimativa não correu, e a tarefa 6 fica sem especificação nem estimativa calculadas.
+- A verificação A continua por desenhar. Esta corrida dá uma segunda ocorrência real do padrão (saída absorvida corrigida pelo dono), com a v01 e a calc-chain guardadas fora do git.
+
+## Decisão do mantenedor
+
+Pendente:
+1. **Não aceitar ainda a primeira entrega.** Corrigir primeiro F7 e F3 (motor) e F11 (render), com testes.
+2. Depois, repetir só a etapa do desenho sobre este engagement, com a versão corrigida, e ver se F7 apanha a v01 sozinha.
+3. Verificação A: desenhar a regra com as duas ocorrências reais (corridas 1 e 3).
+
+## Retoma
+
+1. Ler este relatório e `RELATORIO-M5.1.md`.
+2. A sessão A tem o engagement no desenho v02, não aprovado, com o pacote r0001 preliminar.
+3. As avaliações por paragem estão no scratchpad da sessão avaliadora, fora do git.
+
+## Seguimento — F7 corrigido
+
+Novo diagnóstico `COV-MAP-AGGREGATED`, bloqueante, na reconciliação (`library/kernel/tools/coverage.py`):
+- uma saída ou exceção do mapa tem item próprio;
+- um item que coloca passos do mapa nomeia um requisito que não seja uma decisão (`D-NNN`);
+- um requisito servido por dois passos continua a ser um item.
+
+**Validação:**
+- aplicado aos registos reais da corrida 3, apanha o item agregado na v08 (7 saídas/exceções e 14 passos sob D-003) e na v11 (4 e 11);
+- 4 testes novos em `test_process_map_coverage.py` (`MAP19_GraoDoDestino`);
+- documentado em `coverage-contract.md` §6.1.1 e §7 e em `aisa-blueprint` 1e.
+
+**A continuidade para a etapa blueprint não precisou de regra nova.** A herança já é feita pela identidade da obrigação (`requirement_refs`, §4.4.4). Com cada saída ligada ao seu requisito da SU, a etapa blueprint tem de tratar esse requisito, e o requisito já não se perde dentro de uma decisão.
+
+**Verificação** (`enforce`): completa 3231/0, stdlib 2433/0.
+
+## Seguimento — F3 corrigido
+
+Causa na corrida 3: o autor publicou a revisão 2 e depois a 3 antes de receber os pareceres. Cada publicação tornou `STALE_INPUT` os pareceres da revisão anterior, e deixou de ser possível recebê-los. O portão passou porque a nota de processo do chairman contou como «reportado como não recebido».
+
+**Motor** (`library/kernel/tools/review.py`):
+- `publish-candidates` recusa (`BLOCKING_GAP`, `REVIEWS_PENDING`) enquanto um mandato da revisão corrente não tiver parecer recebido. Nenhum parecer chega entre a verificação e a escrita, porque o read-set o garante;
+- parecer que não vem → `--unreceived-reason "<motivo>"`. A entrada `unreceived` vai para o livro-razão na mesma operação da publicação, e o mandato aparece como `not_received`;
+- `show-reviews` → `unreviewed_roles`: papel com mandato sem parecer, ou com parecer `stale` com achado a revalidar, e sem parecer sobre a revisão corrente.
+
+**Portão** (`phase-completeness`): check novo «cada papel mandatado com parecer sobre a revisao corrente». Falha enquanto `unreviewed_roles` não estiver vazio. Os `not_received` aparecem no detalhe com o motivo.
+
+**Texto:**
+- `aisa-options` passos 4, 6 e check 5: a nota de processo deixa de substituir um parecer recebido;
+- `chairman-synthesis`: estados e `unreviewed_roles`. A passagem não fecha e volta ao `/options`;
+- `handoff-contract.md`.
+
+**Validação:**
+- 4 testes novos em `test_review_dispositions.py` (`PorReceber`):
+  - publicar sobre um mandato por receber é recusado;
+  - com motivo: publica, fica no livro-razão e o mandato aparece `not_received`;
+  - papel com achado a revalidar pede parecer corrente;
+  - `stale` sem nada a revalidar não pede;
+- 1 teste do portão em `test_options_by_route.py`.
+
+A sequência da corrida 3 (mandatos da rev. 1 e depois publicação da rev. 2) é agora recusada no primeiro passo.
+
+**Verificação** (`enforce`): completa 3236/0, stdlib 2438/0.
+
+## Seguimento — F11 corrigido
+
+Causa na corrida 3, com duas partes:
+- a conferência depois do render (passo 9b) foi saltada, e o registo chamou-lhe `not_evaluated`. Nada o impedia;
+- o relatório executivo disse como resultado garantido um objectivo que o desenho só carrega em parte (C-009, `partial`). Esse documento não lê o desenho, por contrato, e por isso nem o 9b feito o apanharia de certeza.
+
+Escolha do mantenedor: motor + regra de texto.
+
+**Motor** (`library/kernel/tools/release.py`):
+- `render_coverage`: a especificação e a estimativa do pacote precisam cada uma do seu registo `render`, actual, válido e completo. Ausente, `stale`, inválido ou com lacuna → `preliminary`, com o motivo por documento. Os registos lidos vão no pacote;
+- engagement sem registos de cobertura do desenho → limitação «não avaliada», sem bloquear (§10);
+- as limitações de `process_coverage` (p. ex. mapa não validado pelo dono) não chegavam ao índice. Passam a chegar, junto com as do render.
+
+**Texto:**
+- `aisa-render` 9b: obrigatório por documento produzido. Saltá-lo não é `not_evaluated`; o documento sem registo diz-se não verificado. A variante «ainda por verificar» sai da linha final;
+- template do relatório executivo: nova proibição (dizer um objectivo como resultado garantido) e uma nota na secção 1;
+- `coverage-contract.md` §8.2 e `handoff-contract.md` (*Document coverage*).
+
+**Alcance real sobre a corrida 3:**
+- o pacote r0001 já saía `preliminary`, e não leva o relatório executivo (só a especificação e a estimativa, que estavam bloqueadas). O motor não teria mudado esse pacote;
+- sobre o relatório executivo, o que actua é a regra do template e o 9b obrigatório, e esses dependem do agente. Não há verificação determinista do conteúdo de um objectivo contra o desenho. Fica como limite.
+
+**Validação:**
+- 5 testes em `test_coverage_phase5.py` (`DocumentoNoPacote`): registo completo passa; ausente dá motivo; documento editado depois da revisão dá motivo; sem a cadeia de cobertura é limitação; texto da skill e do template;
+- 1 teste em `test_process_map_coverage.py`: o pacote fica `preliminary` com os dois documentos sem registo;
+- o filtro de `MAP21_Variantes` passa a aceitar os motivos «cobertura do documento».
+
+**Verificação** (`enforce`): completa 3242/0, stdlib 2444/0.
+
+## Seguimento — etapa do desenho repetida sobre a v01 (sessão B3)
+
+**Montagem:**
+- sessão nova sobre `f50418b` (F7 + F3 + F11), sem memória do desenho nem dos achados;
+- cópia do engagement da A (`.tar.gz`, sha256 conferido), em `/tmp`. A linha principal fica intacta;
+- sem leitura dos registos de cobertura antigos, da versão 02 do desenho, dos documentos finais nem de `docs/`.
+
+Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resultado do piloto (commit `f50418b`).
+
+**1. Estado actual, motor novo (registo v11, o da v02):** inválido para passar, como devia.
+- `COV-MAP-AGGREGATED` ×2: um item com 4 saídas/exceções (MAPN-007/008/009/011) e 11 passos sob D-003;
+- 55 `COV-STALE`, porque o engagement mudou depois do registo;
+- `eligible: false`.
+
+**2. Reconciliação nova (v15), à primeira tentativa:**
+- 35 itens: 9 `covered`, 25 `partial` (lacunas declaradas com dono) e 1 `excluded`;
+- cada saída e cada exceção do mapa tem item próprio (MAPN-006/007/008/009/011/013/014 em 7 itens distintos);
+- a exclusão (MAPN-007) cita a autoridade do âmbito: a resposta do dono em C-015;
+- `eligible: true`.
+
+**3. Revisão da cobertura da v01 (v16), sobre a v15:**
+- as unidades do mapa passam para a etapa blueprint (na corrida 3, a v09 tinha-as perdido);
+- as 3 saídas que a corrida 3 não detectou ficam todas assinaladas:
+
+  | Saída | Nó | Estado |
+  |---|---|---|
+  | ficheiro para o sistema a jusante | MAPN-013 | `missing` |
+  | relatório de produtos com biocomponente | MAPN-014 | `missing` |
+  | preço por porto | MAPN-006 | `partial` |
+
+- o passo de comparação (MAPN-012), antes excluído sem autoridade, fica `partial`;
+- a estimativa semanal (C-009, MAPN-008) passa de `partial` a `missing`;
+- totais: 29 `partial`, 3 `missing`, 2 `covered`, 1 `excluded`;
+- `eligible: false`: a v01 já não pode ser posta à aprovação.
+
+**Veredicto MAP-17 (omissão no desenho):** detectado pela cobertura, sem o dono. Na corrida 3 não tinha sido.
+
+**Limitações:**
+- n = 1, e sobre o mesmo engagement onde o defeito foi encontrado;
+- o autor B3 é outra instância do mesmo modelo, com as regras do F7 já no texto da skill. A detecção deve-se à regra, não a um revisor independente da regra;
+- a revisão semântica continua a ser do agente: um item com o grão certo e um juízo `covered` errado não é apanhado pelo motor.
+
+## Seguimento — verificação A (saída de cálculo presa num passo genérico)
+
+**Dados:** os da corrida 3 (`mp-v01`, `mp-v02` e a cadeia de cálculo). Os da corrida 1 nunca chegaram.
+
+**O caso real:**
+- na v01, um passo genérico de cálculo (MAPN-004) prende 58 dos 60 blocos, de 5 folhas;
+- entre eles, os 12 da cadeia do biocomponente, cuja saída ainda não estava no mapa;
+- foi o mesmo padrão da corrida 1, e nas duas quem o apanhou foi o dono.
+
+**Por que não há regra determinista que recuse:**
+- por células: os 58 blocos formam um só grupo, porque partilham as mesmas tabelas de apoio;
+- por folhas: as folhas lêem-se em ciclo. Só a da concorrência não é lida por outra;
+- a regra mais simples («passo com cálculos de 2+ folhas») assinala a v01, mas também a v02 corrigida e validada, e 2 das 5 folhas são intermédias. Como recusa, bloquearia um mapa correcto.
+
+**Escolha do mantenedor: mostrar ao dono.**
+- `process_map.py` ganha `absorbed_calculations`: os passos com cálculos de 2+ folhas do mesmo ficheiro, com a contagem por folha;
+- o resultado entra em `questions`, no grupo «Saídas e quem as recebe», como pergunta ao dono: essa folha é uma saída que alguém recebe? Aparece na validação do mapa (`aisa-capture` 5e) e na página `process-map.html`;
+- não recusa nem julga.
+
+**Nos dados reais:** na v01 lista MAPN-004 com as 5 folhas e 58 blocos, incluindo as 2 do biocomponente (12 blocos). Na v02 continua a listá-lo, porque a correcção só moveu 1 bloco para a saída nova, e fica como dúvida para o dono.
+
+**Testes:** 4 em `test_process_map_validation.py` (`CalculosAbsorvidos`):
+- 2 folhas → pergunta nas saídas, com contagens, e na página;
+- 1 folha, ou uma folha por ficheiro → nada;
+- só passos, nunca saídas;
+- a pergunta não bloqueia o mapa.
+
+**Limite:** a pergunta depende de o dono a ler e responder. Uma folha declarada intermédia por engano passa, e a cobertura do desenho só apanha a saída se ela chegar à SU.
+
+**Verificação** (`enforce`): completa 3246/0, stdlib 2448/0.
+
+## Seguimento — F12 (id trocado no relatório executivo)
+
+**Causa:** a frase «Duas (topologia, headcount) receberam resposta do dono (A-007, A-008)». A-008 é o limiar de delegação; o headcount é U-019, que continua em aberto. O relatório dá como respondida uma pergunta em aberto.
+
+**O que é determinista e o que não é:** casar uma frase com uma linha é juízo. O motor não o faz, e o 9b agora obrigatório (F11) é onde se faz. Faltava o material para essa conferência ser barata.
+
+**Correcção:**
+- `render-validate.py` devolve `cited_rows`: cada linha da SU citada no documento, por ordem, com o estado e o texto. O hook escreve a contagem numa linha;
+- um id citado que a SU não tem passa a lacuna (`SU_ID_MISSING`, dono `render`);
+- `aisa-render` 9b ganha a regra «cada id diz o que a sua linha diz»: a linha certa, no estado dela. Uma pergunta em aberto nunca aparece como respondida, e dois ids depois de dois sujeitos seguem a mesma ordem;
+- `HOOKS.md` actualizado.
+
+**Nos dados reais:** o relatório v01 cita 18 linhas, e a listagem mostra U-019 `Unknown` ao lado do texto. As minhas cópias da SU são anteriores ao render e não têm A-007/A-008, por isso apareceram «sem linha». É defeito dos dados de avaliação, não achado.
+
+**Testes:** 3 em `test_render_validate.py` (`LinhasCitadas`).
+
+**Limite:** a troca de ids em si continua a depender do juízo no 9b.
+
+**Verificação** (`enforce`): completa 3249/0, stdlib 2451/0.
+
+## Seguimento — F9 (retoma sem comando para uma escolha estrutural)
+
+**Causa:** para a topologia (A-007) e o limiar do Comité (A-008), a retoma escreveu «sem comando SU ainda, confirmação directa fora do fluxo `/answer`». O modelo de estado dava, para cada escolha estrutural em aberto, o dono e o critério de fecho, mas nenhum comando. O agente preencheu o vazio e errou.
+
+**Correcção:**
+- `dashboard.py`: a obrigação `structural-choice` leva `command`: `/answer <id> "…" → /blueprint`. A resposta de quem tem a autoridade entra pela transição da linha, e a escolha fecha numa versão nova do desenho;
+- `/resume` (bloco 3): cada item tem comando. Uma escolha estrutural, ou um `Assumed` cuja autoridade é outra pessoa, fecha com `/answer <id>` e depois `/blueprint`. Nunca «sem comando».
+
+**Teste:** 1 em `test_status_model.py`.
+
+**Verificação** (`enforce`): completa 3250/0, stdlib 2452/0.
+
+## Seguimento — F8 (contratos funcionais saltados)
+
+**Causa:** nas versões v01 e v02 do desenho, o passo 13c foi registado como «adiado», porque as regras de cálculo ainda eram `Unknown` (U-004, U-018). A skill manda publicar com as lacunas (`BLOCKING_GAP`). A conferência de coerência do passo 15 (iii) passava em vazio: sem contratos não há conflitos.
+
+**Correcção:**
+- `functional.py` ganha `presence`, lida pelo mesmo `conflicts --blueprint`. Uma versão fora de rascunho e com âmbito autorizado precisa de contratos publicados sobre ela:
+  - nenhum → `FC_MISSING`;
+  - contratos sobre outra versão → `FC_OTHER_VERSION`;
+  - nos dois casos, saída 4: a aprovação é recusada;
+- rascunho, ou versão sem âmbito autorizado → não deve contratos;
+- `aisa-blueprint` 13c: regras `Unknown` não são motivo para saltar; publica-se com as lacunas. O passo 15 (iii) explica os dois códigos novos;
+- `handoff-contract.md` (*Coherence with the blueprint*).
+
+**Nos dados reais:** as v01 e v02 da corrida 3 são autorizadas e não têm contratos. Com o motor novo, a aprovação de qualquer delas teria mais esta recusa, além das escolhas estruturais em aberto.
+
+**Testes:** 3 em `test_functional_coherence.py` (`Presenca`).
+
+**Verificação** (`enforce`): completa 3253/0, stdlib 2455/0.
+
+## Seguimento — F4 (analogia sem caso nomeado)
+
+**Causa:** duas opções saíram com ordem de grandeza «`ANALOGY`» sem nomear o caso análogo. O contrato (`chairman-synthesis`) pede o engagement anterior, o que é igual e porquê.
+
+**Correcção:** `review.py candidate_gaps` ganha `ANALOGY_UNNAMED` (lacuna visível, não recusa) quando a fonte diz `ANALOGY` e mais nada que nomeie um caso. `aisa-options` passo 3 lista-o.
+
+**Limite:** o motor verifica que há um nome, não que a analogia se aguenta. «ANALOGY (sintético)» passa. O juízo continua do revisor de custo.
+
+**Teste:** 1 em `test_review_candidates.py`.
+
+**Verificação** (`enforce`): completa 3254/0, stdlib 2456/0.
+
+## Seguimento — F14 (pacote preliminar calado sobre o que não leva)
+
+**Causa:** na corrida 3 o pacote foi construído sem inventário de trabalho, fora do que o passo 10b prevê, e o motor não recusou. Saiu preliminar e honesto nos motivos, mas não disse que deixava de fora os 3 documentos produzidos e o desenho corrente (v02, não aprovado).
+
+**Escolha do mantenedor: declarar o que falta.**
+- `release.py absences` → `limitations` do índice:
+  - sem inventário de trabalho: o pacote é um retrato de estado, não uma entrega;
+  - desenho corrente fora do pacote, quando não é o aprovado;
+  - documentos produzidos fora do pacote, pelo nome;
+- o conteúdo do pacote não muda. Nada novo que o destinatário possa ler como desenho a construir;
+- `aisa-render` 10b e `handoff-contract.md` (*Release*).
+
+**Teste:** 1 em `test_release.py`.
+
+**Verificação** (`enforce`): completa 3255/0, stdlib 2457/0. `release.py` registado na matriz F0 como leitor da autoridade `blueprint`.
+
+## Seguimento — F1 e F2 (intervalos de cálculo e de tempo)
+
+**Causa:**
+- F1: não havia âncora de intervalo para `CALC`, por isso a v01 teve 57 detalhes, um por cálculo;
+- F2: uma transcrição só se citava fala a fala.
+
+**Correcção** (`process_map.py`):
+- `…calc-chain.json#CALC-NNN..CALC-MMM`: cobre cada cálculo do intervalo do mesmo ficheiro (cada um conta como colocado no `check`). Um cálculo em falta, ou o intervalo ao contrário, não resolve;
+- `…vtt.text.md#HH:MM:SS–HH:MM:SS` (também `.srt`): as falas que começam dentro do intervalo. Sem nenhuma, não resolve;
+- `absorbed_calculations` (verificação A) expande os intervalos;
+- o guia do mapa lista as duas formas.
+
+**Testes:** 4 em `test_process_map_core.py` (`Intervalos`).
+
+## Seguimento — F5, F6, F10, F13 (baixos)
+
+| # | Decisão | O quê |
+|---|---|---|
+| F5 | corrigido em parte | O portão de fase (`phase-completeness`) confere o episódio da story de cada fase (frame, opções, decisão): no máximo 2 ids. O episódio da passagem de Discovery, onde o F5 aconteceu, não tem portão neste hook e fica só com a regra da skill. 1 teste |
+| F6 | **não corrigido** | Secções fora do modelo em `options.md`. O artefacto sai na língua do pacote, e uma lista de títulos em inglês daria recusas falsas (o mesmo defeito do P-19, registado no próprio hook). Fica a regra da skill: o que não cabe vai para o registo do chairman |
+| F10 | corrigido no glossário | Duas linhas novas em `glossary.md` com a frase de negócio: `eligible` («pode ir à aprovação do negócio») e `fact ≠ fit` («saber como as coisas são não decide se a solução serve»). «órfãos» já tinha tradução, e o deslize foi do agente |
+| F13 | coberto pelo F12 | Uma atribuição a uma linha que não diz aquilo (C-019) aparece na lista `cited_rows` da conferência 9b. «Revisor em Options» em vez de Framing fica ao juízo |
+
+**Verificação** (`enforce`, F1/F2/F5/F10): completa 3260/0, stdlib 2462/0.

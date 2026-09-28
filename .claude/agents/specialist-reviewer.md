@@ -1,6 +1,6 @@
 ---
 name: specialist-reviewer
-description: Independent specialist reviewer of a published revision of the Options candidates (handoff-v1 F5, decision Q3). One agent for every role — architecture-review, data-integration, security-operation, ux-process, cost-estimate; the published mandate (`_design/reviews/REV-NNNN.mandate.json`) says which role, which questions, which inputs and which knowledge. Invoked by /options once per mandate, with fresh context and only the mandate path; returns the output contract as JSON. Writes nothing.
+description: Independent specialist reviewer of a published revision of the Options candidates. One agent for every role — architecture-review, data-integration, security-operation, ux-process, cost-estimate; the published mandate (`_design/reviews/REV-NNNN.mandate.json`) says which role, which questions, which inputs and which knowledge. Invoked by /options once per mandate, with fresh context and only the mandate path; returns the output contract as JSON. Writes nothing.
 tools: [Read, Grep, Glob]
 ---
 

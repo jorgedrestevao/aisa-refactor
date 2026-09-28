@@ -1,6 +1,6 @@
 ---
 name: aisa-retro
-description: Close-of-engagement retro — each role that worked the engagement (analyst, architect, and the specialist roles that reviewed) gets its diary entry for this engagement (what it got right, where it was naive, patterns to watch, one advice to its future self). Entries are STAGED in <engagement>/_retro/ for human curation; only after explicit user approval are they appended to .claude/agent-memory/_universal/<role>/diary.md (tracked — the append goes through the repo's normal git flow). The roles read their memory in future engagements (handoff-v1 F5.4, Q4/Q7/Q8).
+description: Close-of-engagement retro — each role that worked the engagement (analyst, architect, and the specialist roles that reviewed) gets its diary entry for this engagement (what it got right, where it was naive, patterns to watch, one advice to its future self). Entries are STAGED in <engagement>/_retro/ for human curation; only after explicit user approval are they appended to .claude/agent-memory/_universal/<role>/diary.md (tracked — the append goes through the repo's normal git flow). The roles read their memory in future engagements.
 ---
 
 # aisa-retro
@@ -21,7 +21,7 @@ description: Close-of-engagement retro — each role that worked the engagement 
    (c) padrões que espera rever noutros engagements;
    (d) um conselho ao seu futuro eu.
    Sem nomes de pessoas ou de cliente; domínio genérico (ex.: "procurement de mid-cap").
-   Formato: ## <slug-anonimizado> — <data>. Máx. 250 palavras.
+   Formato: ## <slug-anonimizado> — <data>. Curto: uma entrada que o curador lê de uma vez.
    ```
 
 2. **Stage** each entry in `<engagement>/_retro/diary-<role>.md`. Nothing touches agent-memory yet.

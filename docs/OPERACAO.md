@@ -20,7 +20,7 @@ O CI (`.github/workflows/tests.yml`) corre os dois jobs em Python 3.12 com `fetc
 ## 2. Manutenção
 
 - **`library/` só muda por commit.** Em runtime é só leitura (hook `pre-write-guard.py` + `settings.json deny`). Kernel, schemas, packs e motores mudam por uma alteração revista, com as duas suites verdes antes do push.
-- **Um motor novo que lê uma autoridade entra no inventário.** `docs/handoff-v1/F0/consumer-matrix.json`; o teste T02 (`test_handoff_f0.py`) falha se faltar.
+- **Um motor novo que lê uma autoridade entra no inventário.** `.claude/tests/fixtures/f0/consumer-matrix.json`; o teste T02 (`test_handoff_f0.py`) falha se faltar.
 - **Um teste novo que só precisa da stdlib entra em `.github/stdlib-tests.txt`.**
 - **Uma versão nova de um artefacto** (`schema_version`) muda `workflow.SUPPORTED` e o schema em `library/kernel/schemas/` no mesmo commit. O código anterior recusa a versão nova (`SCHEMA_UNSUPPORTED`) em vez de a ler à sorte. Não há migração automática: a versão histórica fica só leitura (decisão A da F0).
 - **Hooks**: `.claude/hooks/HOOKS.md` diz qual bloqueia e qual só regista.

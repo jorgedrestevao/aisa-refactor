@@ -36,7 +36,6 @@ def seccao(texto, titulo, fim="\n## "):
 CLAUDE = ler("CLAUDE.md")
 CAPTURE = ler(".claude", "skills", "aisa-capture", "SKILL.md")
 ORCH = ler("library", "kernel", "orchestration.md")
-README = ler("docs", "handoff-v1", "README.md")
 ARQ = ler("docs", "ARCHITECTURE.md")
 
 REGRA = "`CLAUDE.md` → *Delegação a subagentes*"
@@ -135,9 +134,6 @@ class Remissoes(unittest.TestCase):
         sec = flat(seccao(ORCH, "## Orchestrator boundaries"))
         self.assertIn("Coordinating execution is not delegating it", sec)
         self.assertIn(REGRA, sec)
-
-    def test_o_readme_do_refactor_remete_para_o_claude_md(self):
-        self.assertIn(REGRA, flat(seccao(README, "## Regras de execução")))
 
     def test_a_arquitectura_marca_o_council_como_historico(self):
         sec = flat(seccao(ARQ, "### 3.4 ", fim="\n### 3.5"))

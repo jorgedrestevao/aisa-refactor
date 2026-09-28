@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """F0 do plano handoff-v1 (docs/handoff-v1/plan): T02 e integridade das fixtures.
 
-T02 — a matriz `docs/handoff-v1/F0/consumer-matrix.json` lista, por autoridade (SU,
+T02 — a matriz `.claude/tests/fixtures/f0/consumer-matrix.json` lista, por autoridade (SU,
 decisoes, blueprint, coverage, implementation-spec, estimate, _state.json), quem cria,
 escreve, le, valida ou guarda. O varrimento usa o padrao declarado de cada autoridade e
 falha quando um ficheiro que a referencia nao esta na matriz: um consumidor novo obriga a
@@ -9,7 +9,9 @@ actualizar o inventario antes de F1 o adaptar. Globs de mencao historica nao pod
 caminhos de runtime.
 
 Fixtures — `.claude/tests/fixtures/handoff-v1/` sao sinteticas; o registo
-`docs/handoff-v1/F0/fixture-registry.json` nomeia-as e as ancoras citadas existem."""
+`.claude/tests/fixtures/f0/fixture-registry.json` nomeia-as e as ancoras citadas existem.
+Os 46 cenarios T01-T46 eram declarados no plano (`06_VALIDACAO.md`), removido do repositorio;
+o conjunto fica aqui como constante."""
 import fnmatch
 import json
 import os
@@ -19,11 +21,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-F0 = ROOT / "docs" / "handoff-v1" / "F0"
+F0 = ROOT / ".claude" / "tests" / "fixtures" / "f0"
 MATRIX_PATH = F0 / "consumer-matrix.json"
 REGISTRY_PATH = F0 / "fixture-registry.json"
 FIXTURES = ROOT / ".claude" / "tests" / "fixtures" / "handoff-v1"
-VALIDACAO = ROOT / "docs" / "handoff-v1" / "plan" / "06_VALIDACAO.md"
+SCENARIOS = {"T%02d" % i for i in range(1, 47)}
 
 REQUIRED = {"su", "decisions", "blueprint", "coverage", "implementation_spec", "estimate", "state"}
 WRITER_ROLES = {"creator", "writer", "appender", "mirror"}
@@ -75,10 +77,6 @@ def unlisted(matrix, root):
         if miss:
             out[key] = miss
     return out
-
-
-def scenario_ids():
-    return set(re.findall(r"^\| (T\d{2}) \|", VALIDACAO.read_text(encoding="utf-8"), re.M))
 
 
 class T02_InventarioCompleto(unittest.TestCase):
@@ -177,11 +175,8 @@ class F0_FixturesSinteticas(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.reg = load(REGISTRY_PATH)
-        cls.ids = scenario_ids()
+        cls.ids = SCENARIOS
         cls.dirs = sorted(p for p in FIXTURES.iterdir() if p.is_dir())
-
-    def test_plan_declares_46_scenarios(self):
-        self.assertEqual(self.ids, {"T%02d" % i for i in range(1, 47)})
 
     def test_every_new_fixture_is_registered_and_every_registered_path_exists(self):
         registered = {f["path"] for f in self.reg["new_fixtures"]}

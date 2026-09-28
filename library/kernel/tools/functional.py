@@ -228,6 +228,38 @@ def conflicts(eng, data: dict | None = None, blueprint: str = "") -> list:
     return out
 
 
+def presence(eng, blueprint: str) -> list:
+    """M5 F8: uma versão com âmbito autorizado que vai à aprovação tem os seus contratos
+    funcionais publicados sobre ela — com lacunas, se as há (`BLOCKING_GAP`), nunca
+    saltados. Uma versão em rascunho, ou sem âmbito autorizado, não deve contratos."""
+    eng = Path(eng)
+    if not BLUEPRINT_RE.match(str(blueprint or "")):
+        return []
+    try:
+        obj, _iss = _D()["yl_parse"]((eng / blueprint).read_text(encoding="utf-8"))
+    except OSError:
+        return []
+    obj = obj if isinstance(obj, dict) else {}
+    arch = obj.get("architecture")
+    scopes = arch if isinstance(arch, list) else [arch] if isinstance(arch, dict) else []
+    autorizado = any(isinstance(a, dict) and str(a.get("authorization", "")).strip() in
+                     ("authorized", "authorized-bounded") for a in scopes)
+    if obj.get("draft") is True or not autorizado:
+        return []
+    data = read_current(eng)["data"]
+    if not data.get("items"):
+        return [{"code": "FC_MISSING", "blueprint": blueprint,
+                 "detail": "nenhum contrato funcional publicado para o âmbito autorizado — "
+                           "publicar com as lacunas (BLOCKING_GAP), nunca saltar o passo"}]
+    base = _blueprint_of(data)
+    if base != blueprint:
+        return [{"code": "FC_OTHER_VERSION", "blueprint": blueprint, "based_on": base,
+                 "detail": "os contratos funcionais assentam em {} — publicar a revisão "
+                           "sobre {} (com revalidação), antes da aprovação".format(
+                               base or "nenhuma versão", blueprint)}]
+    return []
+
+
 # ------------------------------------------------------------------ autorização (F4.2)
 
 def validator_problem(validated_by: str) -> str:
@@ -857,8 +889,9 @@ def main(argv=None) -> int:
             out = render_gate(eng, a.fc, texto)
             rc = 0 if out["final_allowed"] else 4
         elif a.command == "conflicts":
-            out = {"conflicts": conflicts(eng, blueprint=a.blueprint)}
-            rc = 4 if out["conflicts"] else 0
+            out = {"conflicts": conflicts(eng, blueprint=a.blueprint),
+                   "presence": presence(eng, a.blueprint)}
+            rc = 4 if out["conflicts"] or out["presence"] else 0
         elif a.command == "authorization-block":
             print(authorization_block(eng, a.fc, a.validated_by, a.scope))
             return 0

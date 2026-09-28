@@ -7,12 +7,12 @@ description: Render the 6 (or a specific) deliverable(s) for the engagement by E
 
 ## Usage
 
-`/render [<deliverable>|--all] [--dry-run]`
+`/render [<deliverable>|--all] [--dry-run] [--html]`
 
 - `<deliverable>`: render only one — `discovery-report`, `executive-report`, `solution-blueprint`, `implementation-spec`, `claude-design-brief`, `estimate`.
 - `--all`: render every deliverable declared in `library/packs/<pack>/pack.yaml` **whose activation holds** (see *Declarative activation* below). This is the default after `/decide` → `/synthesize`.
 - `--dry-run`: resolve slots and surface gaps without writing to `_render/`. Useful for debugging templates without bumping versions.
-- `--html`: additionally produce `<slug>_discovery-report_v<NN>.html` — the interrogable projection: self-contained HTML (inline CSS, ZERO external requests), every SU id citation rendered as `<span class="prov" title="<estado> · <evidência> · verificado <data> (<validade>)">C-014</span>`, a top banner ("documento gerado do Shared Understanding — cada afirmação é rastreável") and a final **Proveniência** section with the id → lens → evidência → validade table. v3.0 scope: discovery-report only (other deliverables in v3.1).
+- `--html`: additionally produce `<slug>_discovery-report_v<NN>.html` — the interrogable projection: self-contained HTML (inline CSS, ZERO external requests), every SU id citation rendered as `<span class="prov" title="<estado> · <evidência> · verificado <data> (<validade>)">C-014</span>`, a top banner ("documento gerado do Shared Understanding — cada afirmação é rastreável") and a final **Proveniência** section with the id → lens → evidência → validade table. Only the discovery-report has this projection.
 
 ## What this skill is
 
@@ -36,11 +36,11 @@ A transformation is executable exactly when it is **deterministic**, **bounded**
 
 Create new upstream facts · choose an option · choose or change architecture · change scope · resolve an Unknown · promote epistemics · invent work · re-source evidence to re-settle an upstream fact · create a comparator claim · re-grade a proof obligation · mark a condition satisfied · design a far side · blend candidate estimates.
 
-**This skill is not an inference engine.** No new engine, no new skill, no new estimation agent is introduced.
+**This skill is not an inference engine.**
 
-## Phase gate (soft)
+## Phase gate
 
-The engagement should be at `phase == decision` with `_synthesis/` populated (5 topic packs). Earlier `/render` attempts are allowed but most slots will be empty and `render-gaps.md` will scream. See `.claude/rules/render-on-decision-only.md`.
+The engagement should be at `phase == decision` with `_synthesis/` populated (5 topic packs). Before that only `--dry-run` runs — most slots would be empty. See `.claude/rules/render-on-decision-only.md`.
 
 If `phase != decision` AND `--dry-run` is **not** set → stop with: "Render before /decide is forbidden by `.claude/rules/render-on-decision-only.md`. Use `--dry-run` to preview, or finish the engagement first."
 
@@ -82,7 +82,7 @@ open_architecture_choices[] has structural: true
 → Claude Design Brief BLOCKED
 ```
 
-**No new machinery.** And **no exception**: no materiality override, no partial approval, no UX-only approval. A judgement that "the unresolved choice is not UX-material, so the brief can proceed" is **wrong** — the brief's required source does not exist. The Architecture Blueprint still renders, with **both** candidates and **neither chosen**.
+**No exception**: no materiality override, no partial approval, no UX-only approval. A judgement that "the unresolved choice is not UX-material, so the brief can proceed" is **wrong** — the brief's required source does not exist. The Architecture Blueprint still renders, with **both** candidates and **neither chosen**.
 
 ### Which blueprint version each deliverable reads (P-18 / F08)
 
@@ -184,6 +184,7 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
 1. Read the template. Parse the frontmatter: `canonical_deliverable`, `activation` / `blocked_when` / `not_applicable_when`, `authority_sources`, `conditional_sources`, `forbidden_sources`, `permitted_transformations`, `forbidden_transformations`, `required_slots`, `conditional_slots`, `optional_slots`, `slot_conditions`, `slot_sources`, `sub_templates`, and (Estimate only) `owns_calculation` + `input_modes`.
 2. Evaluate activation. `not applicable` → **skip**, log the reason to `render-log.md`, continue. `blocked` → log the block + what would unblock it, continue.
 2b. **Pre-render — the authorities this deliverable needs, before producing anything.**
+   **With a process map**: an obligation that came from the map (`coverage-contract.md` §6.1.1) reaches the render through the same chain — the review of the approved blueprint must be complete for it, and a gap is returned upstream to the design author, never filled here. The render never reopens `inputs/` or the Excel to write the behaviour that went missing; the map in the package is the AS-IS, read with the decisions.
    `coverage-contract.md` §8.2 requires the authorities **that** deliverable declares to be
    current, and §8.3 requires the version it reads to be the one its own template names. Run
    it explicitly — the hook is a convenience, never the mechanism:
@@ -232,7 +233,7 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
       experience.mode == owned-external → fragment-experience-external.md
       experience.mode == inherited      → fragment-experience-inherited.md
       ```
-   d. **Boundary fragment — zero or more instances.** The skill performs the iteration; there is no loop primitive and none is added:
+   d. **Boundary fragment — zero or more instances.** The skill performs the iteration:
       ```text
       for each qualifying recorded component:
           load fragment-boundary-and-imports.md
@@ -248,8 +249,8 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    e. Recursively resolve each fragment's slots from the engagement.
 6. **Headless (`experience.mode: none`)** — for the Implementation Specification: emit **no** required screens, **no** persona section, **no** navigation, **no** UX placeholder. Still project automation, integration, identity and enforcement, environments and release, monitoring, recovery, proof work and operator obligations **in full**. For the Claude Design Brief: the deliverable is **not applicable** — do not emit a persona, screen, navigation or UX-state slot, and do not emit a gap.
 7. **Estimate — execute the bounded calculation** (see below), where and only where `owns_calculation: true`.
-7b. **Functional gate — before a real version** (handoff-v1 F4; `render-contract.md` → *Functional contracts and the final version*). When the composed document cites `FC-NNNN` (it reads behaviour from `_design/functional-contracts.json`, never from synthesis prose), write it to a temporary file and run `python library/kernel/tools/functional.py render-gate --engagement <slug> --file <that file>`. Exit 4 → **no real version**: log the `blocked` reasons in `render-log.md` (a stale authorisation, a contract that rests on a blueprint version that is not the approved one, a missing contract, `STALE_PREMISE` — a contract that rests on a row since resolved, withdrawn or changed in `state`/`criticidade`, handoff-v1 F7; `BASIS_CHANGED`, `DEPENDENCY_UNPINNED`, `HISTORY_MISMATCH`, `PIN_UNREVALIDATED` — a pinned dependency that changed, a dependency never pinned, a contract file not published by the motor, a pin moved without a recorded assessment, external audit 2026-09-24; each returns to the functional author, who republishes with the current reference and a recorded revalidation — never a hash swap), put each `gaps` entry in `render-gaps.md` with `owner: functional`, and leave the document as a preview. Never write the missing value to make the gate pass.
-7c. **Inventory, estimate and scope gate — before a real version** (handoff-v1 F6; `library/kernel/handoff-contract.md` → *Traceability*, *Estimate, backlog and the scope gate*). In an engagement with `_design/work-packages.json`:
+7b. **Functional gate — before a real version** (`render-contract.md` → *Functional contracts and the final version*). When the composed document cites `FC-NNNN` (it reads behaviour from `_design/functional-contracts.json`, never from synthesis prose), write it to a temporary file and run `python library/kernel/tools/functional.py render-gate --engagement <slug> --file <that file>`. Exit 4 → **no real version**: log the `blocked` reasons in `render-log.md` (a stale authorisation, a contract that rests on a blueprint version that is not the approved one, a missing contract, `STALE_PREMISE` — a contract that rests on a row since resolved, withdrawn or changed in `state`/`criticidade`; `BASIS_CHANGED`, `DEPENDENCY_UNPINNED`, `HISTORY_MISMATCH`, `PIN_UNREVALIDATED` — a pinned dependency that changed, a dependency never pinned, a contract file not published by the motor, a pin moved without a recorded assessment; each returns to the functional author, who republishes with the current reference and a recorded revalidation — never a hash swap), put each `gaps` entry in `render-gaps.md` with `owner: functional`, and leave the document as a preview. Never write the missing value to make the gate pass.
+7c. **Inventory, estimate and scope gate — before a real version** (`library/kernel/handoff-contract.md` → *Traceability*, *Estimate, backlog and the scope gate*). In an engagement with `_design/work-packages.json`:
    - before composing the implementation-spec or the estimate, run `python library/kernel/tools/trace.py show --engagement <slug>` and `trace.py scope-gate --engagement <slug>`. Every finding (an orphan, a proof without work, an open viability proof) and every blocker — including the scope's and the inventory's own gaps (`SCOPE_NOT_AUTHORIZED`, `MISSING_ACCEPTANCE`, `MISSING_DEFINITION_OF_DONE`, …) and the work pinned to a contract or a design that changed (`CONTRACT_CHANGED`, `BASIS_CHANGED`) — goes to `render-gaps.md` with its owner (`implementation` for inventory findings, `functional` for contracts, `architecture` for proofs); `delivery: blocked` means no real version — a preview may still render, labelled;
    - the implementation-spec renders `work_package_inventory` from the file, one row per `WP-NNNN`, with `inventário r<N>`; never a WP added, merged or sequenced here, never a duration;
    - after composing the estimate, run `trace.py estimate-check --engagement <slug> --file <draft> --spec <the current implementation-spec>`: `UNESTIMATED_WP`, `DUPLICATE_ESTIMATE`, `UNKNOWN_WP`, `STALE_INVENTORY`, `NO_INVENTORY_REVISION`, `EFFORT_IN_SPEC` block the real version and return to the estimate's author (or, for the spec, to `implementation`). Never adjust the inventory to make the estimate pass.
@@ -262,7 +263,13 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    record or the deliverable changes. Where the hook did not fire, run it: `python .claude/hooks/render-validate.py
    --engagement <slug> --deliverable <id>`.
 
-9b. **Post-render — did the document carry what the contract selected?** Step 9 says the
+9b. **Post-render — did the document carry what the contract selected?** Required for
+   every deliverable written as a real version, one record per file. Skipping it is not
+   `not_evaluated`: that word describes an engagement with no coverage records (§10), never
+   a step left out. A file without its current, complete record is **not verified** — say so
+   in `render-log.md` and in the output, and never call it complete; `release.py build`
+   keeps the package `preliminary` while the specification or the estimate lacks one.
+   Step 9 says the
    file is sufficient by content. It says nothing about whether the obligations the projection
    contract selected survived into it. That is a **stage `render`** coverage review of the file
    just written, and it is written, not computed (`coverage-contract.md` §9): one
@@ -271,8 +278,14 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    passes — source → target (each obligation, and where it landed) and target → source (each
    material mechanism the document states, and where it came from).
 
-   Three rules this step exists for, and each has already been the defect:
+   Four rules:
 
+   - **Every id says what its row says.** `render-validate.py --engagement <slug>
+     --deliverable <id> --file <file> --dry-run --json` → `cited_rows` lists each Shared
+     Understanding row the file cites, with its state and its text. In the target → source
+     pass read every sentence that names an id against that row: the right row, in its state
+     — an open question is never said answered, and two ids after two subjects follow the
+     same order. An id with no row is a gap (`SU_ID_MISSING`).
    - **An id in a comment is a reference, not a projection.** The motor refuses it as an
      anchor; do not reinstate it by declaring the item `covered` anyway.
    - **The anchor lives in the file under review.** A section of `v02` never proves the
@@ -301,13 +314,13 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
       skipped: { <id>: "<reason>", … }
       blocked: { <id>: "<reason> — unblocked by <what>", … }
     ```
-10b. **Release (handoff-v1 F6.5, `--all` only).** After a real `--all` render in an engagement with `_design/work-packages.json`, package it: `python library/kernel/tools/release.py build --engagement <slug>` writes `_release/r<NNNN>/` with `handoff-index.json` — hashes, revisions read, scope and authorised exclusions, approvals, proofs performed and pending, limitations — and a **computed** `delivery_level` (`preliminary` while any trace finding, scope blocker, missing or disagreeing spec/estimate remains; `ready_for_receiver_review` only when all pass; never `implemented_verified`). A secret anywhere refuses the build (the package carries the reference, never the value). The build also refuses over a state still to rebuild (`RECOVERY_REQUIRED`: recover first) and when the engagement changed while it ran (`STALE_INPUT`: nothing is published — build again once nothing else is writing), so the package is exactly what passed the checks. Report the level and its reasons verbatim; never call a preliminary package ready. The receiver's acceptance is a separate act of the receiving team: only when they accept, through `AskUserQuestion` naming the release, its scope and its conditions, generate `release.py acceptance-block --engagement <slug> --revision <N> --validated-by "<role> (… via AskUserQuestion)" --scope <SCOPE-NNNN> --conditions "<…>"` (`--simulated` for a rehearsal) and publish it into `decisions.md` by draft/publish; `release.py status` then reads `accepted_by_receiver` — and only from a complete block: the index's sha, a scope of this release, conditions, an explicit `Simulated`, a human validator and a date not before the build (external audit 2026-09-24, A1). `release.py verify` refuses a package changed after the release.
-11. Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as entregas prontas (render)`): 4-8 frases na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
+10b. **Release (`--all` only).** After a real `--all` render in an engagement with `_design/work-packages.json`, package it: `python library/kernel/tools/release.py build --engagement <slug>` writes `_release/r<NNNN>/` with `handoff-index.json` — hashes, revisions read, scope and authorised exclusions, approvals, proofs performed and pending, limitations — and a **computed** `delivery_level` (`preliminary` while any trace finding, scope blocker, missing or disagreeing spec/estimate remains; `ready_for_receiver_review` only when all pass; never `implemented_verified`). A secret anywhere refuses the build (the package carries the reference, never the value). The build also refuses over a state still to rebuild (`RECOVERY_REQUIRED`: recover first) and when the engagement changed while it ran (`STALE_INPUT`: nothing is published — build again once nothing else is writing), so the package is exactly what passed the checks. Report the level and its reasons verbatim; never call a preliminary package ready. A package built without `_design/work-packages.json` is a snapshot of the state, not a delivery, and the index says so in `limitations`, together with the current design version when it is not the approved one and the produced documents the package does not carry — report those lines too. The receiver's acceptance is a separate act of the receiving team: only when they accept, through `AskUserQuestion` naming the release, its scope and its conditions, generate `release.py acceptance-block --engagement <slug> --revision <N> --validated-by "<role> (… via AskUserQuestion)" --scope <SCOPE-NNNN> --conditions "<…>"` (`--simulated` for a rehearsal) and publish it into `decisions.md` by draft/publish; `release.py status` then reads `accepted_by_receiver` — and only from a complete block: the index's sha, a scope of this release, conditions, an explicit `Simulated`, a human validator and a date not before the build. `release.py verify` refuses a package changed after the release.
+11. Append one narrative episode to `<engagement>/story.md` (`## Episódio <N> — <data> — as entregas prontas (render)`): um parágrafo curto na voz do sponsor, sem jargão de kernel, máx. 2 ids citados. Create the file with `# Story — <slug>` if missing (pre-v2.3 engagements).
 12. Output to the user (business language — `CLAUDE.md` → *Duas línguas*; kernel labels and ids only between parentheses). `--all` uses the first two lines; a single deliverable the third; `--dry-run` the fourth (print the resolved template inline, truncated at 50 lines, plus the gap list — write nothing). The `A seguir:` line closes every variant:
     ```user-output
     Documentos finais: <N> de <M> produzidos em `_render/` (versão <NN>). Não aplicáveis a esta escolha: <N> (razão em `_render/render-log.md`).
     Lacunas — o que o registo ainda não sabe e os documentos precisavam: <N> (lista em `_render/render-gaps.md`) <| nenhuma>.
-    Do que foi pedido, ficou nos documentos: <N> de <M> temas <| ainda por verificar neste passo>.
+    Do que foi pedido, ficou nos documentos: <N> de <M> temas, conferido depois de cada documento<; sem essa conferência, não verificados: <documentos>>.
     <Um documento: «<nome>» versão <NN> em `_render/<ficheiro>` — lacunas: <N>. | Não aplicável: <razão>. | Bloqueado: <razão> — desbloqueia com <o quê>.>
     <Ensaio (--dry-run): o documento resolvido segue abaixo, truncado a 50 linhas, e a lista de lacunas; nada foi escrito.>
     A seguir: fecha as lacunas → `/answer <id> "…"` (ou uma passagem `/round`); depois `/render --all` outra vez — sai a versão seguinte.
@@ -367,7 +380,7 @@ NEITHER BASIS PRESENT → the Estimate is BLOCKED or NOT APPLICABLE, as appropri
 
 - **Contingency honesty.** Every structural open choice and every decision-changing Unknown that affects effort renders as a **named** uncertainty line — *the open item · the effort it swings · what would settle it · its `U-NNN`*. Contingency is a number **over** the named items, never a substitute for them.
 - **No price.** No licence price, no SKU price, no platform rate card, no quota presented as a cost fact. **Person-days** are the denominator absent a valid engagement-provided delivery rate (which would be an engagement input with provenance, not a pack fact).
-- **S8 stays separate.** The Estimate never decides whether this platform is cheaper or more attractive; that is decision economics, and it belongs to the Executive Report. The estimation model is never used comparatively — its own banner forbids it.
+- **Decision economics stays separate.** The Estimate never decides whether this platform is cheaper or more attractive; that is decision economics, and it belongs to the Executive Report. The estimation model is never used comparatively — its own banner forbids it.
 - **Category 3 is never estimated** — no allowance, no placeholder, no contingency band for an unevaluated destination.
 - **Confidence must match** the epistemic state of the inputs. Mode B is lower-confidence by construction and says so.
 - **No discovery re-read.** `_synthesis/as-is.md` is **not** an Estimate input in either mode — not required, not conditional, not fallback, not point-of-need. As-is friction, as-is timing, as-is exceptions and any discovery narrative may **never** become an Estimate work unit, effort figure or operational-impact baseline. Where a discovery fact should alter implementation work but is absent from the authoritative inventory: **mode A** → log an **open work item** against the Implementation Specification (owner `implementation`), never an Estimate line; **mode B** → use it only if it is already a candidate-specific **KNOWN** architecture obligation, otherwise **preserve the uncertainty**. The Estimate calculates only over work whose authority it can name.
@@ -389,7 +402,7 @@ Four classes, per `library/kernel/render-contract.md`. **Not every missing slot 
 owner ∈ { architecture | implementation | design | estimate | evidence | functional }
 ```
 
-This generalizes the former *architecture work item* label; semantics, trigger and behaviour are unchanged. **No fifth class. No parallel taxonomy.** `functional` is the functional author (handoff-v1 F4): a behaviour the deliverable needs that no authorised functional contract carries goes back to that author, never filled here.
+**No fifth class. No parallel taxonomy.** `functional` is the functional author: a behaviour the deliverable needs that no authorised functional contract carries goes back to that author, never filled here.
 
 A decision-blocked outcome belongs to the decision layer: this skill may **repeat** it and never derive it. Where no architecture was authorized, state the actual reason — outcome unreachable **or** selected solution outside the active pack's architecture authority — and keep the two distinct.
 
@@ -398,7 +411,7 @@ A decision-blocked outcome belongs to the decision layer: this skill may **repea
 1. **Append-only on `_render/`.** Never overwrite an existing version. User edits to `v01` are preserved; the next render produces `v02`.
 2. **Missing required slot ≠ silent failure.** Every gap goes to `render-gaps.md` AND to the inline placeholder in the rendered file (`⚠️ missing: <slot>`), with its owner.
 3. **Skips never pollute `render-gaps.md`.** A `not applicable` deliverable or section is a skip in `render-log.md`. `render-gaps.md` is the file that screams; skips must not dilute it.
-4. **No vendor names in vendor-neutral deliverables.** `discovery-report.md` is technology-neutral by construction; if a `_synthesis/business-story.md` section drifts into vendor naming, the chairman or a re-synthesis must fix it — `aisa-render` only composes, it does not re-write.
+4. **No vendor names in vendor-neutral deliverables.** `discovery-report.md` is technology-neutral by construction; if a `_synthesis/business-story.md` section drifts into vendor naming, a re-synthesis (`/synthesize`) must fix it — `aisa-render` only composes, it does not re-write.
 5. **Execute the contract, nothing more.** A transformation not declared in `permitted_transformations` is not executed, however obvious it looks. When something is missing, log an open work item with its owner — never invent the content.
 6. **Idempotence.** `--dry-run` is side-effect-free. A real render only writes a new version of each deliverable and appends to the gap/log files.
 7. **Structure, coverage, approval and end-to-end are four questions.** A sufficient document never meant a covered one; a covered one never meant an approved one; an approval never meant the solution was proved end to end. Each is answered by its own check and reported on its own line, and none is ever announced on behalf of another. `not_evaluated` is the honest answer where no review exists (`coverage-contract.md` §10).

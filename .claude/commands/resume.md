@@ -21,7 +21,10 @@ parentheses, after the business phrase).
 2. **Alerta** — only when there is one: a revision condition fired (named FIRST; its command
    is `/revisit TW-n`), a grave fact expired, the topic summaries predate the approval.
 3. **O que falta para o próximo passo** — abbreviated: the top-3 items in one line each
-   (tema · quem · comando). No "também importa" list.
+   (tema · quem · comando). No "também importa" list. Every item has a command: an open structural
+   choice or an `Assumed` row whose authority is someone else (IT, a committee) closes with
+   that authority's answer through `/answer <id> "…"`, then `/blueprint` — the obligation's
+   `command` in the model says so. Never "no command" or "outside `/answer`".
 4. **Para retomar** — the derived read set for the current phase (`Read to resume`).
 
 Skip the other blocks (the meeting agenda, the delta since the last round, the confidence
@@ -30,6 +33,8 @@ questions, do not read Domain Knowledge. Close with the `A seguir:` line — the
 any, then the exact command: `/answer <id> "…"`, `/round`, `/frame`, `/options`, `/decide`,
 `/blueprint`, `/blueprint --refresh`, `/synthesize` or `/render --all`, whichever the
 milestone actually names.
+
+**The process map** (process-map M4): when the resume carries `process_map` with `status: ok`, add ONE line to block 1 — the process in business words (how many steps, outputs and who receives them, from `process_map.blocks`), the owner's validation, and whatever blocks it (`process_map.blockers`). A map that moved under the read (`retry`) means repeating the resume; no map (`absent`) is said once as a capacity not evaluated.
 
 A fresh session needs no previous transcript: everything above is derived from
 `_state.json` and the repository state, through the same model `/status` reads.

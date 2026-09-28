@@ -91,6 +91,37 @@ def _latest_render(eng: Path, deliverable: str) -> str:
     return "_render/" + max(vs)[1].name if vs else ""
 
 
+def absences(eng: Path, rels: list) -> list:
+    """M5 F14: o que existe no engagement e o pacote não leva, dito no índice. Um pacote sem
+    inventário de trabalho é um retrato de estado, não uma entrega; o desenho corrente que
+    não é o aprovado e os documentos produzidos que não vão são nomeados, nunca omitidos em
+    silêncio."""
+    eng = Path(eng)
+    out = []
+    if not (eng / "_design" / "work-packages.json").is_file():
+        out.append("sem inventário de trabalho (_design/work-packages.json): o pacote é um "
+                   "retrato de estado, não uma entrega")
+    vs = []
+    for p in (eng / "_blueprint").glob("ux-blueprint_v*.yaml"):
+        m = re.fullmatch(r"ux-blueprint_v(\d{2,3})\.yaml", p.name)
+        if m:
+            vs.append((int(m.group(1)), "_blueprint/" + p.name))
+    if vs and max(vs)[1] not in rels:
+        out.append("desenho corrente {} fora do pacote: não é a versão aprovada".format(
+            max(vs)[1]))
+    fora = []
+    for p in sorted((eng / "_render").glob("*_v*.md")):
+        m = re.fullmatch(r".+_([a-z-]+)_v\d{2,3}\.md", p.name)
+        if m:
+            rel = _latest_render(eng, m.group(1))
+            if rel and rel not in rels and rel not in fora:
+                fora.append(rel)
+    if fora:
+        out.append("documentos produzidos fora do pacote: {}".format(
+            ", ".join(Path(r).name for r in fora)))
+    return out
+
+
 def _text_secrets(p: Path) -> list:
     try:
         texto = p.read_text(encoding="utf-8")
@@ -133,6 +164,137 @@ def _state_digest(eng: Path) -> dict:
         if rel.split("/", 1)[0] in VOLATILE:
             continue
         out[rel] = _sha(p)
+    return out
+
+
+def _verdict(C, eng: Path, stage: str, target) -> dict:
+    """O veredicto de uma revisão de cobertura, lido do motor: absent · invalid · stale ·
+    gaps · complete · not_evaluated · unexpected."""
+    try:
+        r = C["coverage_state"](eng, stage, target)
+    except Exception as exc:                                    # noqa: BLE001
+        return {"state": "unexpected", "detail": "{}: {}".format(type(exc).__name__,
+                                                                exc)}
+    rec = r.get("record") or {}
+    if not rec:
+        state = "absent"
+    elif r.get("contract_validity") in ("invalid", "unsupported"):
+        state = "invalid"
+    elif r.get("freshness") != "current":
+        state = "stale"
+    elif r.get("coverage") == "gaps":
+        state = "gaps"
+    elif r.get("coverage") == "complete":
+        state = "complete"
+    else:
+        state = "not_evaluated"
+    return {"state": state, "record": rec.get("file", ""),
+            "contract_validity": r.get("contract_validity"),
+            "freshness": r.get("freshness"), "coverage": r.get("coverage"),
+            "gaps": [dict(g) for g in r.get("gaps") or []]}
+
+
+_LABEL = {"absent": "ausente", "stale": "desactualizada", "invalid": "inválida",
+          "gaps": "com lacunas", "not_evaluated": "não avaliada",
+          "unexpected": "não avaliável"}
+
+
+def process_coverage(eng) -> dict:
+    """process-map M3: a cobertura do processo, lida dos motores — o mapa, a reconciliação
+    e a revisão do desenho aprovado. Nunca declarada.
+
+    Sem mapa publicado é capacidade **não avaliada** (engagement anterior ao mapa): não
+    bloqueia o que já passava, e diz-se. Com mapa, a entrega só fica pronta quando a
+    reconciliação e a revisão do desenho aprovado existem, são válidas, estão actuais e não
+    têm lacunas — ausente, `stale`, inválida ou com lacuna bloqueante nunca é completa.
+    A validação do mapa pelo dono acompanha como limitação; nunca é inventada."""
+    eng = Path(eng)
+    P, C, F = _mod("process_map"), _mod("coverage"), _mod("functional")
+    st = P["load"](eng)
+    out = {"evaluated": False, "map": st["status"], "map_version": "", "validation": "",
+           "reconciliation": {}, "blueprint": {}, "reasons": [], "limitations": []}
+    if st["status"] == "absent":
+        out["limitations"].append("sem mapa do processo: a cobertura do processo não foi "
+                                  "avaliada")
+        return out
+    out["evaluated"] = True
+    if st["status"] != "ok":
+        out["reasons"].append("mapa do processo {} ({})".format(st["status"], st["detail"]))
+        return out
+    out["map_version"] = st["map"].get("version", "")
+    val = P["validation"](eng)
+    out["validation"] = val["status"]
+    if val["status"] != "validated":
+        out["limitations"].append("mapa do processo {} não validado pelo dono ({})".format(
+            out["map_version"], val["status"]))
+
+    labels = {el["id"]: el.get("label") or el.get("question", "")
+              for c in ("nodes", "edges", "details", "gaps") for el in st["map"].get(c) or []}
+
+    out["reconciliation"] = _verdict(C, eng, "reconciliation", None)
+    bp = F["approved_blueprint"](eng)
+    if bp:
+        out["blueprint"] = _verdict(C, eng, "blueprint", {"file": bp, "identity":
+                                                 C["target_identity"](eng, "blueprint", bp)})
+    else:
+        out["blueprint"] = {"state": "absent", "detail": "sem desenho aprovado"}
+    # A origem de cada lacuna do desenho: as unidades do mapa (e da captura) que a
+    # reconciliação ligou à mesma obrigação — o achado diz de onde a funcionalidade veio.
+    origin: dict = {}
+    rrel = out["reconciliation"].get("record")
+    if rrel:
+        try:
+            rrec = json.loads((eng / rrel).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            rrec = {}
+        for item in rrec.get("coverage") or []:
+            key = tuple(sorted(set(str(x) for x in item.get("requirement_refs") or [])))
+            origin.setdefault(key, set()).update(str(u) for u in
+                                                 item.get("source_unit_refs") or [])
+    for g in out["blueprint"].get("gaps") or []:
+        key = tuple(sorted(set(str(x) for x in g.get("requirement_refs") or [])))
+        units = sorted(origin.get(key, set()))
+        g["origin"] = [{"unit": u, "label": labels.get(u.split("#", 1)[-1], "")}
+                       for u in units]
+    for stage, name in (("reconciliation", "reconciliação"),
+                        ("blueprint", "revisão do desenho aprovado")):
+        s = out[stage].get("state")
+        if s != "complete":
+            out["reasons"].append("cobertura do processo: {} {}".format(name,
+                                                                        _LABEL.get(s, s)))
+    return out
+
+
+def render_coverage(eng, docs) -> dict:
+    """M5 F11: cada documento do pacote com a sua revisão de projecção (etapa `render`,
+    `aisa-render` passo 9b), actual e completa. Um documento que ninguém conferiu contra o
+    que o contrato seleccionou não é entrega pronta, por muito suficiente que seja por
+    conteúdo. Engagement sem a cadeia de cobertura do desenho (nenhum registo de
+    reconciliação, desenho ou render) é capacidade não avaliada: diz-se, não bloqueia (§10)."""
+    eng = Path(eng)
+    C = _mod("coverage")
+    out = {"evaluated": False, "documents": {}, "reasons": [], "limitations": []}
+    docs = [d for d in docs if d]
+    etapas = set()
+    for p in sorted((eng / "_coverage").glob("coverage_v*.json")):
+        try:
+            etapas.add(json.loads(p.read_text(encoding="utf-8")).get("stage"))
+        except (OSError, ValueError):
+            etapas.add("unreadable")
+    if not docs:
+        return out
+    if not etapas - {"lens"}:
+        out["limitations"].append("sem registos de cobertura do desenho: a cobertura dos "
+                                  "documentos não foi avaliada")
+        return out
+    out["evaluated"] = True
+    for rel in docs:
+        v = _verdict(C, eng, "render", {"file": rel, "identity":
+                                        C["target_identity"](eng, "render", rel)})
+        out["documents"][rel] = v
+        if v["state"] != "complete":
+            out["reasons"].append("cobertura do documento {}: revisão depois do render {}"
+                                  .format(Path(rel).name, _LABEL.get(v["state"], v["state"])))
     return out
 
 
@@ -181,7 +343,12 @@ def readiness(eng) -> dict:
     ap = F["blueprint_approval_state"](eng)
     if ap["state"] != "current":
         motivos.append("aprovação do desenho {}".format(ap["state"]))
+    pc = process_coverage(eng)
+    motivos += pc["reasons"]
+    rc = render_coverage(eng, [spec, est])
+    motivos += rc["reasons"]
     return {"ready": not motivos, "reasons": motivos, "delivery": gate["delivery"],
+            "process_coverage": pc, "render_coverage": rc,
             "trace_findings": trace["findings"], "gate": gate, "render_checks": checks,
             "blueprint_approval": ap, "spec": spec, "estimate": est,
             "proofs": trace["proofs"], "viability_blockers": trace["viability_blockers"]}
@@ -268,6 +435,17 @@ def build(eng, out: str | None = None) -> dict:
     rels += [r for r in (rd["spec"], rd["estimate"]) if r]
     rels += sorted(p.relative_to(eng).as_posix() for p in (eng / "inputs").glob("*")
                    if p.is_file())
+    # process-map M3: o mapa efectivamente consumido (a revisão corrente e o seu snapshot),
+    # a vista, e os registos de cobertura que o veredicto leu — o pacote interpreta-se sem
+    # voltar ao engagement. A validação do dono já viaja em decisions.md.
+    pc = rd["process_coverage"]
+    if pc["map"] == "ok":
+        rels += [r for r in ("_map/map.json", "_map/history/{}.json".format(pc["map_version"]),
+                             "process-map.html") if (eng / r).is_file()]
+        rels += [r for r in (pc["reconciliation"].get("record"),
+                             pc["blueprint"].get("record")) if r and (eng / r).is_file()]
+    rels += sorted({v["record"] for v in rd["render_coverage"]["documents"].values()
+                    if v.get("record") and (eng / v["record"]).is_file()} - set(rels))
     repo_rels = list(CONTRACTS) + sorted(
         "library/kernel/schemas/" + p.name for p in (REPO / "library/kernel/schemas").glob(
             "handoff-*.schema.json"))
@@ -340,7 +518,8 @@ def build(eng, out: str | None = None) -> dict:
                                        "excludes": s.get("excludes"),
                                        "authorized_by": s.get("authorized_by")}
                              for s in scope.get("items") or []},
-        "limitations": list(rd["reasons"]),
+        "limitations": list(rd["reasons"]) + rd["process_coverage"]["limitations"]
+        + rd["render_coverage"]["limitations"] + absences(eng, rels),
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     # T43 R4: uma decisão com data posterior ao build é incoerência de relógio ou de registo
     try:

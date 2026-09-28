@@ -11,6 +11,7 @@ declares in `sufficiency:` against the APPROVED blueprint's record and the rende
 import io
 import json
 import runpy
+import shutil
 import sys
 import tempfile
 import unittest
@@ -19,6 +20,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+FX_SU = ROOT / ".claude" / "tests" / "fixtures" / "coverage" / "fx-coverage-f06" / "shared-understanding.md"
 V = runpy.run_path(str(ROOT / ".claude" / "hooks" / "render-validate.py"))
 
 DECISIONS = """# Decisions
@@ -333,6 +335,39 @@ class HookMode(Harness):
     def test_broken_input_is_fail_open(self):
         with patch.object(sys, "stdin", io.StringIO("not json")):
             self.assertEqual(V["main"]([]), 0)
+
+
+class LinhasCitadas(Harness):
+    """M5 F12: o relatório disse «topologia, headcount … (A-007, A-008)» — o segundo id era
+    outra linha, e o headcount continuava em aberto. O validador não julga a frase; lista cada
+    linha citada com o estado e o texto, para a passagem destino → fonte (9b), e um id sem
+    linha na SU é lacuna."""
+
+    def eng_with(self, text):
+        eng, _r = mk(self.tmp)
+        shutil.copy(FX_SU, eng / "shared-understanding.md")
+        rendered = eng / "_render" / "eng_executive-report_v01.md"
+        rendered.write_text(text, encoding="utf-8")
+        return eng, rendered
+
+    def test_each_cited_row_comes_with_its_state_and_text_in_citation_order(self):
+        eng, r = self.eng_with("A regra (C-002) e o pressuposto (A-001); de novo C-002.\n")
+        rows = V["validate"](eng, "executive-report", r)["cited_rows"]
+        self.assertEqual([(x["id"], x["state"], x["exists"]) for x in rows],
+                         [("C-002", "Confirmed", True), ("A-001", "Assumed", True)])
+        self.assertTrue(all(x["text"] for x in rows))
+
+    def test_an_id_the_su_does_not_have_is_a_gap(self):
+        eng, r = self.eng_with("O limiar (A-001) e o headcount (U-999).\n")
+        res = V["validate"](eng, "executive-report", r)
+        self.assertEqual([(g["rule"], g["detail"].split()[0]) for g in res["gaps"]],
+                         [("SU_ID_MISSING", "U-999")])
+        self.assertIn("sem linha na SU: U-999", V["cited_line"](res))
+
+    def test_owner_invariants_are_read_too(self):
+        eng, r = self.eng_with("O invariante do dono (M-1).\n")
+        self.assertEqual([x["id"] for x in V["validate"](eng, "executive-report", r)
+                          ["cited_rows"]], ["M-1"])
 
 
 class RealPilot1(unittest.TestCase):

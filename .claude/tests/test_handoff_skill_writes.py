@@ -156,11 +156,16 @@ class LinhaDeDecisao(unittest.TestCase):
             self.assertEqual(sorted(a["ids"]), ["C-011", "C-012", "C-013"])
             self.assertEqual(a["com_locator"], 1)
 
-    def test_the_decide_template_has_the_seven_confirmed_cells(self):
-        """D09: a linha tinha 5 células numa tabela de 7."""
+    def test_the_decide_template_has_the_confirmed_width(self):
+        """D09: a linha tinha 5 células numa tabela de 7. process-map M3: a secção
+        `Confirmed` ganhou `elementos` — a linha tem a largura do esqueleto (8)."""
         t = texto(ROOT / ".claude" / "skills" / "aisa-decide" / "SKILL.md")
         linha = next(l for l in t.splitlines() if l.startswith("| D-NNN |"))
-        self.assertEqual(linha.count("|") - 1, 7, linha)
+        start = texto(ROOT / ".claude" / "skills" / "aisa-start" / "SKILL.md")
+        cab = next(l.strip() for l in start.splitlines()
+                   if l.strip().startswith("| id | lens | claim | evidência"))
+        self.assertEqual(linha.count("|") - 1, cab.count("|") - 1, linha)
+        self.assertEqual(linha.count("|") - 1, 8, linha)
 
 
 class CaptureRun(unittest.TestCase):

@@ -32,7 +32,7 @@ TRIGGER_FILES = {
     "premortem.md",
 }
 TRIGGER_DIRS = ("_capture/", "_synthesis/", "_render/", "_blueprint/",
-                "_simulation/", "_retro/", "lens-outputs/", "_coverage/")
+                "_simulation/", "_retro/", "lens-outputs/", "_coverage/", "_map/")
 # `_coverage/` joins the list because `status.coverage` is part of the model the page
 # projects, and a published review changes it (coverage phase 4). It cannot loop: the
 # engine's `finalize` writes with open() + os.replace() in a subprocess, which is
