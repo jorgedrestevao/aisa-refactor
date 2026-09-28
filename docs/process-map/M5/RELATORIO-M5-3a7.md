@@ -224,3 +224,45 @@ Escolha do mantenedor: motor + regra de texto.
 - o filtro de `MAP21_Variantes` passa a aceitar os motivos «cobertura do documento».
 
 **Verificação** (`enforce`): completa 3242/0, stdlib 2444/0.
+
+## Seguimento — etapa do desenho repetida sobre a v01 (sessão B3)
+
+**Montagem:**
+- sessão nova sobre `f50418b` (F7 + F3 + F11), sem memória do desenho nem dos achados;
+- cópia do engagement da A (`.tar.gz`, sha256 conferido), em `/tmp`. A linha principal fica intacta;
+- sem leitura dos registos de cobertura antigos, da versão 02 do desenho, dos documentos finais nem de `docs/`.
+
+Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resultado do piloto (commit `f50418b`).
+
+**1. Estado actual, motor novo (registo v11, o da v02):** inválido para passar, como devia.
+- `COV-MAP-AGGREGATED` ×2: um item com 4 saídas/exceções (MAPN-007/008/009/011) e 11 passos sob D-003;
+- 55 `COV-STALE`, porque o engagement mudou depois do registo;
+- `eligible: false`.
+
+**2. Reconciliação nova (v15), à primeira tentativa:**
+- 35 itens: 9 `covered`, 25 `partial` (lacunas declaradas com dono) e 1 `excluded`;
+- cada saída e cada exceção do mapa tem item próprio (MAPN-006/007/008/009/011/013/014 em 7 itens distintos);
+- a exclusão (MAPN-007) cita a autoridade do âmbito: a resposta do dono em C-015;
+- `eligible: true`.
+
+**3. Revisão da cobertura da v01 (v16), sobre a v15:**
+- as unidades do mapa passam para a etapa blueprint (na corrida 3, a v09 tinha-as perdido);
+- as 3 saídas que a corrida 3 não detectou ficam todas assinaladas:
+
+  | Saída | Nó | Estado |
+  |---|---|---|
+  | ficheiro para o sistema a jusante | MAPN-013 | `missing` |
+  | relatório de produtos com biocomponente | MAPN-014 | `missing` |
+  | preço por porto | MAPN-006 | `partial` |
+
+- o passo de comparação (MAPN-012), antes excluído sem autoridade, fica `partial`;
+- a estimativa semanal (C-009, MAPN-008) passa de `partial` a `missing`;
+- totais: 29 `partial`, 3 `missing`, 2 `covered`, 1 `excluded`;
+- `eligible: false`: a v01 já não pode ser posta à aprovação.
+
+**Veredicto MAP-17 (omissão no desenho):** detectado pela cobertura, sem o dono. Na corrida 3 não tinha sido.
+
+**Limitações:**
+- n = 1, e sobre o mesmo engagement onde o defeito foi encontrado;
+- o autor B3 é outra instância do mesmo modelo, com as regras do F7 já no texto da skill. A detecção deve-se à regra, não a um revisor independente da regra;
+- a revisão semântica continua a ser do agente: um item com o grão certo e um juízo `covered` errado não é apanhado pelo motor.
