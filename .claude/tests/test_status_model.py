@@ -545,6 +545,19 @@ class TestOwnerAndClosure(Harness):
         obl = next(o for o in it["obligations"] if o["kind"] == "structural-choice")
         self.assertTrue(obl["owner"]["unassigned"])          # `owner: not recorded`
 
+    def test_m5_f9_a_structural_choice_names_its_command(self):
+        # A retoma disse «sem comando, confirmação fora do `/answer`» para uma escolha que
+        # fecha com a resposta da autoridade pela transição da linha e uma versão nova.
+        eng = mk_eng(self.tmp, slug="fx-cmd", files={
+            "decisions.md": DECISIONS_SOLUTION_THEN_APPROVALS,
+            "_blueprint/ux-blueprint_v03.yaml": BP_WITH_STRUCTURAL},
+            sections={"Unknown": [
+                ["U-036", "data", "p", "IT", "Critical", "documento", "decisivo: x",
+                 "R-02"]]})
+        it = {i["id"]: i for i in model(eng)["status"]["items"]}["U-036"]
+        obl = next(o for o in it["obligations"] if o["kind"] == "structural-choice")
+        self.assertEqual(obl["command"], '/answer U-036 "…" → /blueprint')
+
     def test_a_proof_owner_citation_does_not_become_an_open_item(self):
         # `owner: "IT centralizado (C-063)"` cites an id to identify a team.
         # Scanning it pulled Confirmed evidence rows in as if they were open work.

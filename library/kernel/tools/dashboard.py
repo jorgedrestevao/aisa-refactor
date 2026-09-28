@@ -4623,6 +4623,9 @@ def su_items(rows: list[dict], agenda: dict, bp: dict, tw: dict,
                 "source": cur_rel + "#architecture.open_architecture_choices",
                 "rule": "blueprint-contract.md regra 5 — bloqueia aprovação, nunca a "
                         "produção da versão",
+                # a resposta de quem tem a autoridade entra pela transição da linha, e a
+                # escolha fecha numa versão nova do desenho — há sempre um comando
+                "command": '/answer {} "…" → /blueprint'.format(rid),
             })
 
     for q in (bp.get("proof_obligations") or []):

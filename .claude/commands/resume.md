@@ -21,7 +21,10 @@ parentheses, after the business phrase).
 2. **Alerta** — only when there is one: a revision condition fired (named FIRST; its command
    is `/revisit TW-n`), a grave fact expired, the topic summaries predate the approval.
 3. **O que falta para o próximo passo** — abbreviated: the top-3 items in one line each
-   (tema · quem · comando). No "também importa" list.
+   (tema · quem · comando). No "também importa" list. Every item has a command: an open structural
+   choice or an `Assumed` row whose authority is someone else (IT, a committee) closes with
+   that authority's answer through `/answer <id> "…"`, then `/blueprint` — the obligation's
+   `command` in the model says so. Never "no command" or "outside `/answer`".
 4. **Para retomar** — the derived read set for the current phase (`Read to resume`).
 
 Skip the other blocks (the meeting agenda, the delta since the last round, the confidence

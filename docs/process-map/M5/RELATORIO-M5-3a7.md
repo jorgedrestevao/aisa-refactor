@@ -317,3 +317,15 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Limite:** a troca de ids em si continua a depender do juízo no 9b.
 
 **Verificação** (`enforce`): completa 3249/0, stdlib 2451/0.
+
+## Seguimento — F9 (retoma sem comando para uma escolha estrutural)
+
+**Causa:** para a topologia (A-007) e o limiar do Comité (A-008), a retoma escreveu «sem comando SU ainda, confirmação directa fora do fluxo `/answer`». O modelo de estado dava, para cada escolha estrutural em aberto, o dono e o critério de fecho, mas nenhum comando. O agente preencheu o vazio e errou.
+
+**Correcção:**
+- `dashboard.py`: a obrigação `structural-choice` leva `command`: `/answer <id> "…" → /blueprint`. A resposta de quem tem a autoridade entra pela transição da linha, e a escolha fecha numa versão nova do desenho;
+- `/resume` (bloco 3): cada item tem comando. Uma escolha estrutural, ou um `Assumed` cuja autoridade é outra pessoa, fecha com `/answer <id>` e depois `/blueprint`. Nunca «sem comando».
+
+**Teste:** 1 em `test_status_model.py`.
+
+**Verificação** (`enforce`): completa 3250/0, stdlib 2452/0.
