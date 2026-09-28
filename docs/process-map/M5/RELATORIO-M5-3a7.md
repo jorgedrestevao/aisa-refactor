@@ -297,3 +297,23 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Limite:** a pergunta depende de o dono a ler e responder. Uma folha declarada intermédia por engano passa, e a cobertura do desenho só apanha a saída se ela chegar à SU.
 
 **Verificação** (`enforce`): completa 3246/0, stdlib 2448/0.
+
+## Seguimento — F12 (id trocado no relatório executivo)
+
+**Causa:** a frase «Duas (topologia, headcount) receberam resposta do dono (A-007, A-008)». A-008 é o limiar de delegação; o headcount é U-019, que continua em aberto. O relatório dá como respondida uma pergunta em aberto.
+
+**O que é determinista e o que não é:** casar uma frase com uma linha é juízo. O motor não o faz, e o 9b agora obrigatório (F11) é onde se faz. Faltava o material para essa conferência ser barata.
+
+**Correcção:**
+- `render-validate.py` devolve `cited_rows`: cada linha da SU citada no documento, por ordem, com o estado e o texto. O hook escreve a contagem numa linha;
+- um id citado que a SU não tem passa a lacuna (`SU_ID_MISSING`, dono `render`);
+- `aisa-render` 9b ganha a regra «cada id diz o que a sua linha diz»: a linha certa, no estado dela. Uma pergunta em aberto nunca aparece como respondida, e dois ids depois de dois sujeitos seguem a mesma ordem;
+- `HOOKS.md` actualizado.
+
+**Nos dados reais:** o relatório v01 cita 18 linhas, e a listagem mostra U-019 `Unknown` ao lado do texto. As minhas cópias da SU são anteriores ao render e não têm A-007/A-008, por isso apareceram «sem linha». É defeito dos dados de avaliação, não achado.
+
+**Testes:** 3 em `test_render_validate.py` (`LinhasCitadas`).
+
+**Limite:** a troca de ids em si continua a depender do juízo no 9b.
+
+**Verificação** (`enforce`): completa 3249/0, stdlib 2451/0.

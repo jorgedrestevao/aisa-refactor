@@ -303,6 +303,13 @@ def gap(slot, rule, detail, owner="architecture", resolves=""):
     return {"slot": slot, "rule": rule, "detail": detail, "owner": owner, "resolves": resolves}
 
 
+def _dead_id_gaps(deliverable: str, ids: list) -> list[dict]:
+    return [gap("ids", "SU_ID_MISSING", "{} citado no documento e sem linha na SU".format(i),
+                owner="render", resolves="citar a linha que existe, ou retirar a referência — "
+                                         "nunca criar a linha para a fazer existir")
+            for i in ids]
+
+
 def check_entities(record: dict, sec: str | None) -> list[dict]:
     gaps: list[dict] = []
     text = sec or ""
@@ -440,9 +447,12 @@ def validate(eng: Path, deliverable: str, rendered: Path, version_override: str 
     result = {"tool": "render-validate.py " + TOOL_VERSION, "engagement": eng.name, "deliverable": deliverable,
               "file": rendered.name, "template": tpl.name if tpl.is_file() else None,
               "sufficiency_slots": slots, "blueprint": None, "gaps": [], "notes": []}
+    result["cited_rows"] = cited_rows(eng, rendered.read_text(encoding="utf-8") if rendered.is_file() else "")
+    mortos = [r["id"] for r in result["cited_rows"] if not r["exists"]]
     if not slots:
         result["notes"].append("template sem bloco `sufficiency:` — nada a verificar por conteúdo")
         result["gaps"] = inventory_gaps(eng, deliverable, rendered)
+        result["gaps"] += _dead_id_gaps(deliverable, mortos)
         result["coverage"] = coverage_report(eng, rendered)
         return result
     md = rendered.read_text(encoding="utf-8") if rendered.is_file() else ""
@@ -500,10 +510,44 @@ def validate(eng: Path, deliverable: str, rendered: Path, version_override: str 
     if "integrations" in slots:
         gaps += check_integrations(section_for(secs, "integrations"))
     gaps += inventory_gaps(eng, deliverable, rendered)
+    gaps += _dead_id_gaps(deliverable, mortos)
     result["gaps"] = gaps
     result["record"] = {"domains": len(record["domains"]), "entities": len(record["entities"])}
     result["coverage"] = coverage_report(eng, rendered)
     return result
+
+
+SU_ID_RE = re.compile(r"\b(?:[CAUXR]-\d{3,4}|M-\d{1,3})\b")
+
+
+def cited_rows(eng: Path, md: str) -> list:
+    """As linhas da SU que o documento cita, por ordem de primeira citação, com o estado e o
+    texto da linha. Não julga: é o material da passagem destino → fonte (`aisa-render` 9b),
+    onde cada frase que nomeia um id tem de dizer o que a linha diz, no estado dela. Um id
+    que a SU não tem é referência inventada, e esse sim é lacuna."""
+    D = _load_dashboard()
+    rows = {r["id"]: r for r in D.parse_su(D._read(eng / "shared-understanding.md") or "")[1]
+            if r.get("id")}
+    out, vistos = [], set()
+    for m in SU_ID_RE.finditer(md):
+        i = m.group(0)
+        if i in vistos:
+            continue
+        vistos.add(i)
+        r = rows.get(i)
+        out.append({"id": i, "exists": bool(r),
+                    "state": (r or {}).get("state", ""),
+                    "resolved": bool((r or {}).get("resolved")),
+                    "text": " ".join(str((r or {}).get("claim", "")).split())[:140]})
+    return out
+
+
+def cited_line(result: dict) -> str:
+    rows = result.get("cited_rows") or []
+    mortos = [r["id"] for r in rows if not r["exists"]]
+    return ("[render-validate] {} linha(s) da SU citadas — conferir cada frase contra a linha "
+            "e o estado (passo 9b; `--json` → `cited_rows`){}".format(
+                len(rows), "; sem linha na SU: " + ", ".join(mortos) if mortos else ""))
 
 
 def coverage_line(result: dict) -> str:
@@ -578,6 +622,7 @@ def hook_main(raw: str) -> int:
             print("[render-validate] {}: 0 lacunas por conteúdo nas regras de `sufficiency:` ({})".format(
                 rendered.name, ", ".join(result["sufficiency_slots"]) or "sem regras"), file=sys.stderr)
         print(coverage_line(result), file=sys.stderr)
+        print(cited_line(result), file=sys.stderr)
     except Exception as exc:  # noqa: BLE001 — fail-open, never block a write
         print("[render-validate] verificação incompleta — {}: {}".format(type(exc).__name__, exc), file=sys.stderr)
     return 0
@@ -620,6 +665,11 @@ def cli_main(argv: list[str]) -> int:
         for n in result["notes"]:
             print("  · " + n)
         print(coverage_line(result))
+        print(cited_line(result))
+        for r in result.get("cited_rows") or []:
+            print("  = {} ({}{}): {}".format(r["id"], r["state"] or "sem linha",
+                                             ", resolvida" if r["resolved"] else "",
+                                             r["text"] or "—"))
     return 0
 
 

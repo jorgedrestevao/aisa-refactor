@@ -278,8 +278,14 @@ Where `authorization: authorized-bounded`, or wherever more than one `(scope, ou
    passes — source → target (each obligation, and where it landed) and target → source (each
    material mechanism the document states, and where it came from).
 
-   Three rules:
+   Four rules:
 
+   - **Every id says what its row says.** `render-validate.py --engagement <slug>
+     --deliverable <id> --file <file> --dry-run --json` → `cited_rows` lists each Shared
+     Understanding row the file cites, with its state and its text. In the target → source
+     pass read every sentence that names an id against that row: the right row, in its state
+     — an open question is never said answered, and two ids after two subjects follow the
+     same order. An id with no row is a gap (`SU_ID_MISSING`).
    - **An id in a comment is a reference, not a projection.** The motor refuses it as an
      anchor; do not reinstate it by declaring the item `covered` anyway.
    - **The anchor lives in the file under review.** A section of `v02` never proves the
