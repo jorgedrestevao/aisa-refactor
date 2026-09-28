@@ -125,7 +125,7 @@ The session runs the technical author's mandate, `.claude/agents/solution-archit
    | `platform-constrained` | variations of architecture and implementation **inside** the imposed platform (`imposed_platform`, `imposition_ref` = the route's authority); one viable candidate is admitted with its reason — no artificial shortlist of platforms |
    | `change-impact` | the delta on a `baseline_ref`, with its `impact_refs` and the decisions to reopen |
 
-3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, a missing architecture or reversibility) stays visible and may be published.
+3. `review.py check-candidates --engagement <slug> --draft <id>` → an `INTEGRITY_FAILURE` is fixed in the draft; a `BLOCKING_GAP` (an order of magnitude without source, an `ANALOGY` that names no analogous case — `ANALOGY_UNNAMED`, a missing architecture or reversibility) stays visible and may be published.
 4. `review.py publish-candidates --engagement <slug> --draft <id>` — one coordinator operation, revision + immutable history. **No reviewer runs before this**: a candidate still under construction is never reviewed. The next revision is refused (`BLOCKING_GAP`, `REVIEWS_PENDING`) while a mandate of the current revision has no received review: publishing first turns every return into `STALE_INPUT` and loses it. Receive every return (step 5a) before republishing; a review that will not come (the reviewer failed twice) is published with `--unreceived-reason "<why>"`, written to the ledger in the same operation and shown as `not_received`.
 
 ### 5. Route the review and publish the mandates

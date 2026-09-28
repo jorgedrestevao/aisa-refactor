@@ -224,6 +224,12 @@ def candidate_gaps(data: dict) -> list:
             out.append(_problem("NO_ORDER_OF_MAGNITUDE", c["id"],
                                 "ordem de grandeza sem fonte, nem declarada indisponível com o "
                                 "que falta"))
+        fonte = str(om.get("source") or "")
+        if re.search(r"\bANALOGY\b", fonte) and \
+                not re.search(r"\w{3,}", re.sub(r"\bANALOGY\b", "", fonte)):
+            out.append(_problem("ANALOGY_UNNAMED", c["id"],
+                                "`ANALOGY` sem o caso análogo nomeado — que engagement, o que "
+                                "é igual e porquê; senão outra fonte, ou indisponível"))
         for campo in ("architecture", "reversibility"):
             if not str(c.get(campo) or "").strip():
                 out.append(_problem("MISSING_" + campo.upper(), c["id"],

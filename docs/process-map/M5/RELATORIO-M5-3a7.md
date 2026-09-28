@@ -348,3 +348,15 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Testes:** 3 em `test_functional_coherence.py` (`Presenca`).
 
 **Verificação** (`enforce`): completa 3253/0, stdlib 2455/0.
+
+## Seguimento — F4 (analogia sem caso nomeado)
+
+**Causa:** duas opções saíram com ordem de grandeza «`ANALOGY`» sem nomear o caso análogo. O contrato (`chairman-synthesis`) pede o engagement anterior, o que é igual e porquê.
+
+**Correcção:** `review.py candidate_gaps` ganha `ANALOGY_UNNAMED` (lacuna visível, não recusa) quando a fonte diz `ANALOGY` e mais nada que nomeie um caso. `aisa-options` passo 3 lista-o.
+
+**Limite:** o motor verifica que há um nome, não que a analogia se aguenta. «ANALOGY (sintético)» passa. O juízo continua do revisor de custo.
+
+**Teste:** 1 em `test_review_candidates.py`.
+
+**Verificação** (`enforce`): completa 3254/0, stdlib 2456/0.
