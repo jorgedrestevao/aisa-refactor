@@ -329,3 +329,22 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Teste:** 1 em `test_status_model.py`.
 
 **Verificação** (`enforce`): completa 3250/0, stdlib 2452/0.
+
+## Seguimento — F8 (contratos funcionais saltados)
+
+**Causa:** nas versões v01 e v02 do desenho, o passo 13c foi registado como «adiado», porque as regras de cálculo ainda eram `Unknown` (U-004, U-018). A skill manda publicar com as lacunas (`BLOCKING_GAP`). A conferência de coerência do passo 15 (iii) passava em vazio: sem contratos não há conflitos.
+
+**Correcção:**
+- `functional.py` ganha `presence`, lida pelo mesmo `conflicts --blueprint`. Uma versão fora de rascunho e com âmbito autorizado precisa de contratos publicados sobre ela:
+  - nenhum → `FC_MISSING`;
+  - contratos sobre outra versão → `FC_OTHER_VERSION`;
+  - nos dois casos, saída 4: a aprovação é recusada;
+- rascunho, ou versão sem âmbito autorizado → não deve contratos;
+- `aisa-blueprint` 13c: regras `Unknown` não são motivo para saltar; publica-se com as lacunas. O passo 15 (iii) explica os dois códigos novos;
+- `handoff-contract.md` (*Coherence with the blueprint*).
+
+**Nos dados reais:** as v01 e v02 da corrida 3 são autorizadas e não têm contratos. Com o motor novo, a aprovação de qualquer delas teria mais esta recusa, além das escolhas estruturais em aberto.
+
+**Testes:** 3 em `test_functional_coherence.py` (`Presenca`).
+
+**Verificação** (`enforce`): completa 3253/0, stdlib 2455/0.
