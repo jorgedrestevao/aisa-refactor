@@ -1113,6 +1113,16 @@
      "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M5/RELATORIO-M5-3a7.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório das tarefas 3 a 7 do M5 (corrida 3): cita as autoridades (SU, decisions.md, coverage, _state.json) ao avaliar o piloto. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M5/RELATORIO-M5-3a7.md",
+     "confidence": "verified",
+     "source": "inventory"
     }
    ],
    "mention_only": [
@@ -2477,6 +2487,16 @@
      "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
      "via": "",
      "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M5/RELATORIO-M5-3a7.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório das tarefas 3 a 7 do M5 (corrida 3): cita as autoridades (SU, decisions.md, coverage, _state.json) ao avaliar o piloto. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M5/RELATORIO-M5-3a7.md",
      "confidence": "verified",
      "source": "inventory"
     }
@@ -4432,6 +4452,16 @@
      "mechanism": "Relatório do prompt audit de 2026-09-25: cita as autoridades (_state.json, answers.md, decisions.md, SU) ao descrever as instruções auditadas. Documentação, não runtime.",
      "via": "",
      "evidence": "docs/prompt-audit/2026-09-25-RELATORIO.md",
+     "confidence": "verified",
+     "source": "inventory"
+    },
+    {
+     "file": "docs/process-map/M5/RELATORIO-M5-3a7.md",
+     "kind": "doc",
+     "role": "declares-contract",
+     "mechanism": "Relatório das tarefas 3 a 7 do M5 (corrida 3): cita as autoridades (SU, decisions.md, coverage, _state.json) ao avaliar o piloto. Documentação, não runtime.",
+     "via": "",
+     "evidence": "docs/process-map/M5/RELATORIO-M5-3a7.md",
      "confidence": "verified",
      "source": "inventory"
     }
