@@ -6,7 +6,7 @@ Cada pasta `fx-hv1-NN-*` é um *source pack*, com dois elementos:
 - `scenario.json`: âmbito, rota, restrições e resultados esperados;
 - `sources/`: as fontes que um engagement receberia.
 
-Os resultados esperados descrevem conhecimento, decisão e rastreabilidade, e citam os IDs de cenário de `docs/handoff-v1/plan/06_VALIDACAO.md`. Não fixam texto de output.
+Os resultados esperados descrevem conhecimento, decisão e rastreabilidade, e citam os IDs de cenário T01–T46 do plano de validação (fora do repositório; o conjunto está em `test_handoff_f0.py`). Não fixam texto de output.
 
 As âncoras `[X1]` nas fontes são os pontos que `source_refs` cita (`<ficheiro>#X1`). Mudar uma fonte obriga a rever os `expected` que a citam.
 
@@ -18,6 +18,6 @@ As âncoras `[X1]` nas fontes são os pontos que `source_refs` cita (`<ficheiro>
 | `fx-hv1-04-headless` | `platform-constrained`, headless | 4 — headless |
 | `fx-hv1-05-migration` | `platform-constrained`, migração | 5 — substituição/migração |
 
-O registo completo, incluindo as fixtures existentes reutilizadas e as que ficam fora, está em `docs/handoff-v1/F0/fixture-registry.json`.
+O registo completo, incluindo as fixtures existentes reutilizadas e as que ficam fora, está em `.claude/tests/fixtures/f0/fixture-registry.json`.
 
 Em F0 estas fixtures são só dados. Os testes que as executam nascem com o perfil novo (F1 em diante). `.claude/tests/test_handoff_f0.py` valida apenas a estrutura, a proveniência e as referências.

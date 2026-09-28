@@ -974,7 +974,6 @@ class F16IsInstalled(unittest.TestCase):
     patch; este teste existe para que «entregue» e «instalado» não se confundam outra
     vez."""
 
-    PATCH = ROOT / "docs" / "runtime-hardening" / "patches" / "f16-decision-ref-alias.patch"
 
     def setUp(self):
         self.D = runpy.run_path(str(ROOT / "library" / "kernel" / "tools" / "dashboard.py"))
@@ -996,12 +995,6 @@ class F16IsInstalled(unittest.TestCase):
     def test_a_file_with_neither_key_gets_no_invented_id(self):
         """Normalizar não é inventar: sem chave nenhuma, o id é vazio."""
         self.assertEqual(self.D["bp_decision_id"]("version: v01\ndraft: false\n"), "")
-
-    def test_the_patch_file_is_kept_as_the_record_of_the_change(self):
-        self.assertTrue(self.PATCH.is_file())
-        body = self.PATCH.read_text(encoding="utf-8")
-        self.assertIn("concretizes_decision", body)
-        self.assertIn("decision_id", body)
 
 
 if __name__ == "__main__":

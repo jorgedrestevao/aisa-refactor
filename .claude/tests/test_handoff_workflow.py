@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 W = runpy.run_path(str(ROOT / "library" / "kernel" / "tools" / "workflow.py"))
-EXAMPLES = ROOT / "docs" / "handoff-v1" / "plan" / "examples"
+EXAMPLES = ROOT / ".claude" / "tests" / "fixtures" / "f0" / "examples"   # os exemplos do plano, que saiu do repositório
 SCHEMAS = ("handoff-state", "handoff-pack", "handoff-response", "handoff-work",
            "handoff-functional", "handoff-index")
 

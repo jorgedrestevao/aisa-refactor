@@ -1,7 +1,6 @@
 # Coverage Contract — Kernel v0.2.0 · schema v1
 
-> **Estado: activo nas três etapas.** Desde a fase 4 do plano de implementação
-> (`docs/runtime-hardening/coverage-reconciliation-implementation-plan.md` §12) as etapas
+> **Estado: activo nas três etapas.** Desde a fase 4 do plano de implementação, as etapas
 > `reconciliation` e `blueprint` estão **ligadas ao runtime**: `/blueprint` corre a
 > reconciliação antes de produzir (passo 1b) e a revisão da versão depois (passo 13b), e a
 > condição de **nova** aprovação da §8.1 vale a partir daqui; `/answer` e `/capture` calculam

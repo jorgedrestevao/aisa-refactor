@@ -123,7 +123,7 @@ If a revision has the orchestrator scoring evidence relevance, ranking signals, 
 
 ## Writing an authority (`handoff-v1`)
 
-The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place (`docs/handoff-v1/F2/DESENHO.md` §3). One protocol, every skill:
+The six authorities — `_state.json`, `shared-understanding.md`, `answers.md`, `decisions.md`, `context.json`, `enquadramento.md` — are written **through the coordinator**, never in place. One protocol, every skill:
 
 1. **Open a draft** for everything the step writes, authorities and their companions together (`lens-outputs/<lens>.md`, `council-log.md`, `story.md`), declaring what the step read to decide: `python library/kernel/tools/resolve.py draft --engagement <slug> --files <rel>... --reads <rel|glob>... --json`. The draft copies the files to `_drafts/<id>/` and records their base.
 2. **Edit the copies** under the returned `path` — Edit/Write on `_drafts/<id>/<rel>`, never on the engagement file. A draft is nobody's truth: no reader, gate or render consumes it.

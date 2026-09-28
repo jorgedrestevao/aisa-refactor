@@ -158,7 +158,7 @@ Every Unknown carries a price and a return, so discovery INVESTS in questions in
 
 `cosmético` is legitimate and useful — it is what lets `/status` say "do not spend meeting time on this". `/status` renders the **meeting agenda** from these columns; `/simulate`'s value-of-information section consumes the classes and corrects them when the evidence disagrees (a sanctioned metadata edit, noted in its output).
 
-**Admission of a question** (handoff-v1 — replaces P-26). An `Unknown` is written only when its answer can change **at least one of five aspects** of the scope (plan `docs/handoff-v1/plan/02_CONTRATOS.md` §4):
+**Admission of a question** (handoff-v1 — replaces P-26). An `Unknown` is written only when its answer can change **at least one of five aspects** of the scope:
 
 1. `solucao` — the solution or architecture decision, including the technical axes that decide it: `tecnologia` · `padrão arquitetural` · `componentes` · `modelo de dados` · `plano de imposição de permissões` · `esforço de alto nível` · `custo` · `risco técnico`;
 2. `funcional` — functional correctness, a calculation, a transition, an exception or a business result;

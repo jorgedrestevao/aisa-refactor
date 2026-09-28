@@ -32,7 +32,7 @@ Vale para qualquer subagente — definido em `.claude/agents/` ou lançado na ho
 - **Na dúvida, na sessão.**
 - **Paralelismo é outra escolha**: só entre trabalhos independentes entre si (extracções deterministas, revisores do mesmo artefacto publicado) e com ganho real. Um revisor corre depois de o que revê estar escrito — nunca ao lado.
 
-Aplicação por fase: `library/kernel/orchestration.md` (*Mode declaration*, *When a subagent is justified*). Aplicações concretas ficam nas skills — p. ex. a L2 da captura corre inline (`aisa-capture` → *Execution boundary — process-model authoring*). Origem: `docs/handoff-v1/README.md` → *Regras de execução*, que documenta o refactor; a regra do runtime é esta.
+Aplicação por fase: `library/kernel/orchestration.md` (*Mode declaration*, *When a subagent is justified*). Aplicações concretas ficam nas skills — p. ex. a L2 da captura corre inline (`aisa-capture` → *Execution boundary — process-model authoring*).
 
 ## Key paths
 

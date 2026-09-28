@@ -176,6 +176,9 @@ RETIRED_TOKEN_ALLOWED = {
     # Names the field only to record that it was REMOVED from the decision
     # serialization; the negation itself is asserted below.
     ".claude/skills/aisa-decide/SKILL.md",
+    # The F0 consumer inventory records historical mentions as data; it moved from
+    # docs/handoff-v1/F0/ (excluded as docs) when that directory left the repository.
+    ".claude/tests/fixtures/f0/consumer-matrix.json",
 }
 
 
@@ -788,8 +791,8 @@ class P15NoBrokenActiveReferences(unittest.TestCase):
         broken = []
         for path in _active_files():
             rel = _rel(path)
-            if rel.startswith("docs/"):
-                continue          # docs carry historical planning references
+            if rel.startswith("docs/") or rel == ".claude/tests/fixtures/f0/consumer-matrix.json":
+                continue          # docs and the F0 inventory carry historical references
             for match in PATH_RE.finditer(_read(path)):
                 target = match.group(1)
                 if any(ch in target for ch in "<>{}*"):

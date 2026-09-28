@@ -18,7 +18,7 @@ description: Transition Discovery → Framing. Checks Discovery's soft exit gate
 - **To**: `phase: framing`, `round: F-01` (subsequent framing rounds become `F-02`, `F-03`, …, by re-running `/frame`).
 - **Mode**: integrated analyst + one independent reviewer (`library/kernel/orchestration.md` → *Framing mode*). Nothing else runs in Framing: no other role, no antithesis round.
 
-The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (`CLAUDE.md` → *Delegação a subagentes*; `docs/handoff-v1/F3/DESENHO.md` §0).
+The analyst proposes inline — it needs the whole engagement, and its detail is the product. The reviewer is the one subagent: it must not have the analyst's context, and only its findings come back. The synthesis applies the chairman's evidence rules to both (`CLAUDE.md` → *Delegação a subagentes*).
 
 ## Inputs (read)
 

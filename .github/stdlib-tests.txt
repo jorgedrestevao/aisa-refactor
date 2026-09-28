@@ -31,7 +31,6 @@
 .claude/tests/test_dependents.py
 .claude/tests/test_drift_authority.py
 .claude/tests/test_extraction_limits.py
-.claude/tests/test_f8_tools.py
 .claude/tests/test_frame_identity.py
 .claude/tests/test_graph_birth.py
 .claude/tests/test_graph_inspection.py
@@ -54,8 +53,6 @@
 .claude/tests/test_operation_concurrency.py
 .claude/tests/test_operation_recovery.py
 .claude/tests/test_options_artefact.py
-.claude/tests/test_p8_comparator.py
-.claude/tests/test_p8_report_schema.py
 .claude/tests/test_pp_architecture_templates.py
 .claude/tests/test_process_map_capture.py
 .claude/tests/test_process_map_passages.py
