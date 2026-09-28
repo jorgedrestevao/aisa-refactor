@@ -3527,6 +3527,16 @@
      "evidence": "docs/process-map/M3/demo.py",
      "confidence": "verified",
      "source": "inventory"
+    },
+    {
+     "file": "library/kernel/tools/release.py",
+     "kind": "engine",
+     "role": "reader",
+     "via": "",
+     "confidence": "verified",
+     "source": "M5 F14",
+     "mechanism": "absences: lê o nome da última versão _blueprint/ux-blueprint_vNN.yaml e, quando não é a aprovada que o pacote leva, declara-a fora do pacote em limitations. Nunca a copia nem a escreve.",
+     "evidence": "library/kernel/tools/release.py → absences"
     }
    ],
    "mention_only": [

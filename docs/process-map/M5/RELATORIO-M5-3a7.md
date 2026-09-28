@@ -360,3 +360,19 @@ Antes de a criar, tirei da skill `aisa-blueprint` 1e a frase que contava o resul
 **Teste:** 1 em `test_review_candidates.py`.
 
 **Verificação** (`enforce`): completa 3254/0, stdlib 2456/0.
+
+## Seguimento — F14 (pacote preliminar calado sobre o que não leva)
+
+**Causa:** na corrida 3 o pacote foi construído sem inventário de trabalho, fora do que o passo 10b prevê, e o motor não recusou. Saiu preliminar e honesto nos motivos, mas não disse que deixava de fora os 3 documentos produzidos e o desenho corrente (v02, não aprovado).
+
+**Escolha do mantenedor: declarar o que falta.**
+- `release.py absences` → `limitations` do índice:
+  - sem inventário de trabalho: o pacote é um retrato de estado, não uma entrega;
+  - desenho corrente fora do pacote, quando não é o aprovado;
+  - documentos produzidos fora do pacote, pelo nome;
+- o conteúdo do pacote não muda. Nada novo que o destinatário possa ler como desenho a construir;
+- `aisa-render` 10b e `handoff-contract.md` (*Release*).
+
+**Teste:** 1 em `test_release.py`.
+
+**Verificação** (`enforce`): completa 3255/0, stdlib 2457/0. `release.py` registado na matriz F0 como leitor da autoridade `blueprint`.

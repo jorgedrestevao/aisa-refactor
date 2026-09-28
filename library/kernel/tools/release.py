@@ -91,6 +91,37 @@ def _latest_render(eng: Path, deliverable: str) -> str:
     return "_render/" + max(vs)[1].name if vs else ""
 
 
+def absences(eng: Path, rels: list) -> list:
+    """M5 F14: o que existe no engagement e o pacote não leva, dito no índice. Um pacote sem
+    inventário de trabalho é um retrato de estado, não uma entrega; o desenho corrente que
+    não é o aprovado e os documentos produzidos que não vão são nomeados, nunca omitidos em
+    silêncio."""
+    eng = Path(eng)
+    out = []
+    if not (eng / "_design" / "work-packages.json").is_file():
+        out.append("sem inventário de trabalho (_design/work-packages.json): o pacote é um "
+                   "retrato de estado, não uma entrega")
+    vs = []
+    for p in (eng / "_blueprint").glob("ux-blueprint_v*.yaml"):
+        m = re.fullmatch(r"ux-blueprint_v(\d{2,3})\.yaml", p.name)
+        if m:
+            vs.append((int(m.group(1)), "_blueprint/" + p.name))
+    if vs and max(vs)[1] not in rels:
+        out.append("desenho corrente {} fora do pacote: não é a versão aprovada".format(
+            max(vs)[1]))
+    fora = []
+    for p in sorted((eng / "_render").glob("*_v*.md")):
+        m = re.fullmatch(r".+_([a-z-]+)_v\d{2,3}\.md", p.name)
+        if m:
+            rel = _latest_render(eng, m.group(1))
+            if rel and rel not in rels and rel not in fora:
+                fora.append(rel)
+    if fora:
+        out.append("documentos produzidos fora do pacote: {}".format(
+            ", ".join(Path(r).name for r in fora)))
+    return out
+
+
 def _text_secrets(p: Path) -> list:
     try:
         texto = p.read_text(encoding="utf-8")
@@ -488,7 +519,7 @@ def build(eng, out: str | None = None) -> dict:
                                        "authorized_by": s.get("authorized_by")}
                              for s in scope.get("items") or []},
         "limitations": list(rd["reasons"]) + rd["process_coverage"]["limitations"]
-        + rd["render_coverage"]["limitations"],
+        + rd["render_coverage"]["limitations"] + absences(eng, rels),
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     # T43 R4: uma decisão com data posterior ao build é incoerência de relógio ou de registo
     try:

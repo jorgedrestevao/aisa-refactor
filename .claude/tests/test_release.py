@@ -111,6 +111,22 @@ class Build(unittest.TestCase):
             self.assertEqual(r["delivery_level"], "preliminary")
             self.assertTrue(any("gate de âmbito bloqueado" in m for m in r["reasons"]))
 
+    def test_m5_f14_what_the_package_leaves_out_is_named(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            eng = pronto(tmp)
+            (eng / "_render" / "fx_executive-report_v02.md").write_text("# x\n", encoding="utf-8")
+            v1 = (eng / IT["BP"]).read_text(encoding="utf-8")
+            (eng / "_blueprint" / "ux-blueprint_v02.yaml").write_text(v1, encoding="utf-8")
+            (eng / "_design" / "work-packages.json").rename(eng / "wp.json")
+            idx = json.loads((Path(REL["build"](eng)["path"]) / "handoff-index.json")
+                             .read_text(encoding="utf-8"))
+            lim = idx["limitations"]
+            self.assertTrue(any(l.startswith("sem inventário de trabalho") for l in lim), lim)
+            self.assertIn("desenho corrente _blueprint/ux-blueprint_v02.yaml fora do pacote: não "
+                          "é a versão aprovada", lim)
+            self.assertIn("documentos produzidos fora do pacote: fx_executive-report_v02.md", lim)
+            self.assertFalse(any("fx_estimate_v01" in l for l in lim), "a estimativa vai")
+
     def test_each_release_is_a_new_immutable_revision(self):
         with tempfile.TemporaryDirectory() as tmp:
             eng = pronto(tmp)
